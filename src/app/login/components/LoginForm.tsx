@@ -73,6 +73,17 @@ export default function LoginForm() {
             localStorage.setItem("email", btoa(email));
             localStorage.setItem("user_id", btoa(user_id));
 
+            // Set cookie for middleware access (works in production)
+            // Middleware runs on server and can only access cookies, not localStorage
+            const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+            const cookieOptions = isHttps 
+                ? 'SameSite=None; Secure; Path=/; Max-Age=86400' // 24 hours, secure for HTTPS (production)
+                : 'SameSite=Lax; Path=/; Max-Age=86400'; // 24 hours, works for localhost (development)
+            
+            if (typeof document !== 'undefined') {
+                document.cookie = `client-token=${encodeURIComponent(token)}; ${cookieOptions}`;
+            }
+
             router.push("/dashboard");
         } catch (err) {
             const errorMessage = (err as Error)?.message || "An unknown error occurred";

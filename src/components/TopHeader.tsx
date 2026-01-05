@@ -373,6 +373,9 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                         onClick={() => {
                             if (typeof window !== 'undefined') {
                                 localStorage.clear();
+                                // Clear the cookie used by middleware
+                                document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax';
+                                document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=None; Secure';
                                 router.push('/login');
                             }
                         }}

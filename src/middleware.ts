@@ -18,10 +18,12 @@ export async function middleware(req: NextRequest) {
   }
 
   const token = req.cookies.get('client-token')?.value;
-  console.log('token', token); // Debugging
+  console.log('token', token ? 'Token found' : 'Token not found'); // Debugging
+  console.log('All cookies:', req.cookies.getAll().map(c => c.name)); // Debug all cookies
+  
   if (!token) {
-  const message = 'Token expired or not valid please login again.';
-   return NextResponse.redirect(new URL(`/login?message=${encodeURIComponent(message)}`, req.url));
+    const message = 'Token expired or not valid please login again.';
+    return NextResponse.redirect(new URL(`/login?message=${encodeURIComponent(message)}`, req.url));
   }
 
   try {
