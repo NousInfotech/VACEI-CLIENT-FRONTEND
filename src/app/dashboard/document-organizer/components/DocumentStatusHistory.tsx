@@ -47,24 +47,24 @@ interface CommentModalProps {
 const CommentModal: React.FC<CommentModalProps> = ({ comment, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 font-sans">
-      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-auto flex flex-col">
-        <div className="flex justify-between items-center pb-3 border-b border-gray-300 mb-4">
-          <h3 className="text-xl font-bold text-gray-900">Full Comment</h3>
+      <div className="bg-card rounded-2xl shadow-2xl p-6 w-full max-w-md mx-auto flex flex-col">
+        <div className="flex justify-between items-center pb-3 border-b border-border mb-4">
+          <h3 className="text-xl font-bold text-brand-body">Full Comment</h3>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-3xl font-bold rounded-full w-8 h-8 flex items-center justify-center"
+            className="text-muted-foreground hover:text-brand-body text-3xl font-bold rounded-full w-8 h-8 flex items-center justify-center"
             aria-label="Close modal"
           >
             &times;
           </button>
         </div>
-        <div className="flex-grow overflow-y-auto text-gray-700 text-base mb-4">
+        <div className="flex-grow overflow-y-auto text-brand-body text-base mb-4">
           <p className="whitespace-pre-wrap">{comment}</p> {/* Use pre-wrap to preserve newlines */}
         </div>
         <div className="flex justify-end">
           <button
             onClick={onClose}
-            className="bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 px-4 rounded-md transition duration-150"
+            className="bg-sidebar-hover hover:bg-sidebar-background text-card-foreground font-semibold py-2 px-4 rounded-md transition duration-150"
           >
             Close
           </button>
@@ -148,7 +148,7 @@ const DocumentStatusHistoryDisplay: React.FC<DocumentStatusHistoryDisplayProps> 
 
   if (loading) {
     return (
-      <div className="bg-white p-6 rounded-2xl shadow-lg animate-pulse">
+      <div className="bg-card p-6 rounded-2xl shadow-lg animate-pulse">
         <h3 className="text-xl font-semibold text-gray-800 mb-4">Status History</h3>
         <div className="space-y-3">
           <div className="h-6 bg-gray-200 rounded w-full"></div>
@@ -170,7 +170,7 @@ const DocumentStatusHistoryDisplay: React.FC<DocumentStatusHistoryDisplayProps> 
 
   if (!history || history.length === 0) {
     return (
-      <div className="bg-white p-6 rounded-2xl shadow-lg text-gray-600 text-center">
+      <div className="bg-card p-6 rounded-2xl shadow-lg text-muted-foreground text-center">
         <h3 className="text-xl font-semibold text-gray-800 mb-4">Status History</h3>
         <p>No status history found for this document.</p>
       </div>
@@ -178,56 +178,56 @@ const DocumentStatusHistoryDisplay: React.FC<DocumentStatusHistoryDisplayProps> 
   }
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-lg">
+    <div className="bg-card p-6 rounded-2xl shadow-lg">
       <h3 className="text-xl font-semibold text-gray-800 mb-4">Status History</h3>
       {/* Added border and rounded corners to the table container */}
-      <div className="overflow-x-auto border border-gray-200 rounded-lg">
+      <div className="overflow-x-auto border border-border rounded-lg">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-brand-body">
             <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider rounded-tl-lg">
                 Changed By
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Previous Status
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 New Status
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Changed At
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider rounded-tr-lg">
                 Comments
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-card divide-y divide-gray-200">
             {history.map((entry) => (
-              <tr key={entry.id} className="even:bg-gray-50"> {/* Added even:bg-gray-50 here */}
-                <td className="px-6 py-4  text-sm font-medium text-gray-900">
+              <tr key={entry.id} className="even:bg-brand-body"> {/* Added even:bg-brand-body here */}
+                <td className="px-6 py-4  text-sm font-medium text-brand-body">
                   {/* Show username and email in brackets */}
                   {entry.changedBy ? 
                     `${entry.changedBy.username || 'N/A'} ${entry.changedBy.email ? `(${entry.changedBy.email})` : ''}`.trim()
                     : 'N/A'
                   }
                 </td>
-                <td className="px-6 py-4  text-sm text-gray-500">
+                <td className="px-6 py-4  text-sm text-muted-foreground">
                   {entry.previousStatus?.name || 'N/A'}
                 </td>
-                <td className="px-6 py-4  text-sm text-gray-900 font-semibold">
+                <td className="px-6 py-4  text-sm text-brand-body font-semibold">
                   {entry.newStatus?.name || 'N/A'}
                 </td>
-                <td className="px-6 py-4  text-sm text-gray-500">
+                <td className="px-6 py-4  text-sm text-muted-foreground">
                   {new Date(entry.changedAt).toLocaleString()}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500 max-w-xs"> {/* Removed whitespace-normal */}
+                <td className="px-6 py-4 text-sm text-muted-foreground max-w-xs"> {/* Removed whitespace-normal */}
                   {entry.comments && entry.comments.length > COMMENT_TRUNCATE_LENGTH ? (
                     <>
                       {`${entry.comments.substring(0, COMMENT_TRUNCATE_LENGTH)}... `}
                       <button 
                         onClick={() => handleReadMoreClick(entry.comments!)} // Use ! to assert non-null
-                        className="text-blue-600 hover:text-blue-800 font-medium"
+                        className="text-brand-primary hover:text-brand-primary800 font-medium"
                       >
                         Read More
                       </button>

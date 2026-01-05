@@ -326,8 +326,8 @@ function SchedulePageContent() {
 
   return (
      <section className="mx-auto max-w-[1400px] w-full pt-5">
-     <div className="bg-white border border-gray-200 rounded-[10px] px-5 py-6 overflow-hidden">
-          <h1 className="text-xl leading-normal text-black capitalize font-medium">
+     <div className="bg-card border border-border rounded-[10px] px-5 py-6 overflow-hidden">
+          <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">
           {meetingDetails.id ? "Edit Meeting" : "Schedule New Meeting"}
         </h1>
 
@@ -341,7 +341,7 @@ function SchedulePageContent() {
         )}
 
         {loading ? (
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Loading{" "}
             {searchParams.get("meeting")
               ? "meeting details..."

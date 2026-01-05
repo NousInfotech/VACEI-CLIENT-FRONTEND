@@ -12,7 +12,7 @@ interface Account {
 }
 
 const SkeletonRow = () => (
-  <tr className="border-b border-gray-200 animate-pulse bg-gray-50">
+  <tr className="border-b border-border animate-pulse bg-brand-body">
     <td className="px-6 py-4">
       <div className="h-5 bg-gray-300 rounded w-6"></div>
     </td>
@@ -84,16 +84,16 @@ export default function AccountsListContent() {
 
       {/* Filters Container */}
       
-      <div className="bg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md flex flex-wrap gap-6 items-end max-w-8xl">
+      <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md flex flex-wrap gap-6 items-end max-w-8xl">
         <div className="flex flex-col flex-grow min-w-[180px]">
-          <label htmlFor="searchQuery" className="mb-1 text-gray-700 font-medium">
+          <label htmlFor="searchQuery" className="mb-1 text-brand-body font-medium">
             Account Name
           </label>
           <input
             id="searchQuery"
             type="text"
             placeholder="Search accounts..."
-            className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="border border-border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -103,14 +103,14 @@ export default function AccountsListContent() {
           />
         </div>
         <div className="flex flex-col flex-grow min-w-[180px]">
-          <label htmlFor="accountType" className="mb-1 text-gray-700 font-medium">
+          <label htmlFor="accountType" className="mb-1 text-brand-body font-medium">
             Account Type
           </label>
           <input
             id="accountType"
             type="text"
             placeholder="e.g. Asset, Income"
-            className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="border border-border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             value={accountTypeFilter}
             onChange={(e) => {
               setAccountTypeFilter(e.target.value);
@@ -121,14 +121,14 @@ export default function AccountsListContent() {
         </div>
 
         <div className="flex flex-col flex-grow min-w-[180px]">
-          <label htmlFor="accountSubType" className="mb-1 text-gray-700 font-medium">
+          <label htmlFor="accountSubType" className="mb-1 text-brand-body font-medium">
             Sub-Type
           </label>
           <input
             id="accountSubType"
             type="text"
             placeholder="e.g. Bank, Credit Card"
-            className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="border border-border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             value={accountSubTypeFilter}
             onChange={(e) => {
               setAccountSubTypeFilter(e.target.value);
@@ -142,9 +142,9 @@ export default function AccountsListContent() {
       </div>
 
       {/* Table */}
-      <div className="bg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md">
-        <table className="w-full text-sm text-gray-700 border-collapse">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-100">
+      <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
+        <table className="w-full text-sm text-brand-body border-collapse">
+          <thead className="text-xs text-brand-body uppercase bg-brand-muted">
             <tr>
               <th className="text-left px-6 py-3">S.No</th>
               <th className="text-left px-6 py-3">Account Name</th>
@@ -158,7 +158,7 @@ export default function AccountsListContent() {
               ? Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
               : accounts.length > 0
               ? accounts.map((acc, index) => (
-                  <tr key={acc.id} className="border-b border-gray-300">
+                  <tr key={acc.id} className="border-b border-border">
                     <td className="px-6 py-3">{(page - 1) * itemsPerPage + index + 1}</td>
                     <td className="px-6 py-3">{acc.name}</td>
                     <td className="px-6 py-3">{acc.accountType || "-"}</td>
@@ -168,7 +168,7 @@ export default function AccountsListContent() {
                 ))
               : (
                 <tr>
-                  <td colSpan={5} className="p-4 text-center text-gray-500">
+                  <td colSpan={5} className="p-4 text-center text-muted-foreground">
                     No accounts found.
                   </td>
                 </tr>
@@ -181,17 +181,17 @@ export default function AccountsListContent() {
             <button
               disabled={page === 1}
               onClick={() => setPage((p) => Math.max(p - 1, 1))}
-              className="px-3 py-1 border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-100"
+              className="px-3 py-1 border border-border rounded disabled:opacity-40 hover:bg-brand-muted"
             >
               Prev
             </button>
-            <span className="inline-block px-3 py-1 border border-gray-300 rounded">
+            <span className="inline-block px-3 py-1 border border-border rounded">
               {page} / {totalPages}
             </span>
             <button
               disabled={page === totalPages}
               onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-              className="px-3 py-1 border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-100"
+              className="px-3 py-1 border border-border rounded disabled:opacity-40 hover:bg-brand-muted"
             >
               Next
             </button>

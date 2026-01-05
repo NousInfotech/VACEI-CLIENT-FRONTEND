@@ -214,12 +214,12 @@ export default function ReportTable({ reportType }: { reportType: string }) {
     if (metrics.length === 0) {
         return (
             <section className="p-6 flex flex-col justify-center items-center h-40 gap-4">
-                <p className="text-gray-500 text-lg font-medium text-center">
+                <p className="text-muted-foreground text-lg font-medium text-center">
                     No data found. Please try syncing the latest reports data using the button below.
                 </p>
                 <Link
                     href="/dashboard/quickbooks-sync"
-                    className="bg-primary hover:bg-primary/90 text-white font-medium px-4 py-2 rounded-lg shadow-md transition"
+                    className="bg-primary hover:bg-primary/90 text-card-foreground font-medium px-4 py-2 rounded-lg shadow-md transition"
                 >
                     Sync with QuickBooks
                 </Link>
@@ -238,7 +238,7 @@ export default function ReportTable({ reportType }: { reportType: string }) {
                             setStartDate(monthDates[0]);
                             setEndDate(monthDates[11]);
                         }}
-                        className={`px-4 py-2 rounded-md transition-colors cursor-pointer text-sm ${filterType === '12month' ? 'bg-sky-700 text-white hover:bg-sky-800' : 'bg-gray-200'}`}
+                        className={`px-4 py-2 rounded-md transition-colors cursor-pointer text-sm ${filterType === '12month' ? 'bg-sidebar-background text-card-foreground hover:bg-sidebar-background' : 'bg-gray-200'}`}
                     >
                         Last 12 Months
                     </button>
@@ -247,7 +247,7 @@ export default function ReportTable({ reportType }: { reportType: string }) {
                 {filterType === '12month' && (
                     <div>
                         <select
-                            className="border border-gray-200 p-2 text-sm rounded-md"
+                            className="border border-border p-2 text-sm rounded-md"
                             value={quickFilterRange || ''}
                             onChange={e => setQuickFilterRange(e.target.value || null)}
                         >
@@ -269,7 +269,7 @@ export default function ReportTable({ reportType }: { reportType: string }) {
                         }}
                         dateFormat="MMM yyyy"
                         showMonthYearPicker
-                        className="border border-gray-200 p-2 px-4 text-sm rounded-md focus:outline-0"
+                        className="border border-border p-2 px-4 text-sm rounded-md focus:outline-0"
                         minDate={monthDates[0]}
                         maxDate={monthDates[11]}
                     />
@@ -285,7 +285,7 @@ export default function ReportTable({ reportType }: { reportType: string }) {
                         }}
                         dateFormat="MMM yyyy"
                         showMonthYearPicker
-                        className="border border-gray-200 p-2 px-4 text-sm rounded-md focus:outline-0"
+                        className="border border-border p-2 px-4 text-sm rounded-md focus:outline-0"
                         minDate={startDate || monthDates[0]}
                         maxDate={monthDates[11]}
                     />
@@ -293,23 +293,23 @@ export default function ReportTable({ reportType }: { reportType: string }) {
 
                 <button
                     onClick={handleExportToExcel}
-                    className="ml-auto px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors cursor-pointer"
+                    className="ml-auto px-4 py-2 bg-sidebar-background text-sidebar-foreground rounded-md hover:bg-sidebar-hover transition-colors cursor-pointer shadow-md"
                 >
                     Export to Excel
                 </button>
             </div>
             <div className="w-full overflow-x-auto rounded-md border">
                 <ScrollArea className="h-[100vh] xl:max-w-[90vw] md:max-w-[65vw] w-full max-w-[76vw]">
-                    <Table className="table  text-sm text-gray-500 border-collapse  table-auto">
-                        <TableHeader className="text-xs text-gray-700 uppercase bg-gray-50">
+                    <Table className="table  text-sm text-muted-foreground border-collapse  table-auto">
+                        <TableHeader className="text-xs text-brand-body uppercase bg-brand-body">
                             <TableRow>
-                                <TableHead className="  bg-gray-100 z-10 p-2 text-left font-semibold border-gray-200">
+                                <TableHead className="  bg-brand-muted z-10 p-2 text-left font-semibold border-border">
                                     Items
                                 </TableHead>
                                 {filteredMonths.map((month) => (
                                     <TableHead
                                         key={month}
-                                        className="p-2 border-r border-gray-200  text-center font-medium"
+                                        className="p-2 border-r border-border  text-center font-medium"
                                     >
                                         {month}
                                     </TableHead>
@@ -319,10 +319,10 @@ export default function ReportTable({ reportType }: { reportType: string }) {
                         <TableBody>
                             {categorizedMetrics.map((categoryGroup, categoryIdx) => (
                                 <React.Fragment key={categoryGroup.categoryName}>
-                                    <TableRow className="bg-gray-200 border-b border-gray-300">
+                                    <TableRow className="bg-gray-200 border-b border-border">
                                         <TableCell
                                             colSpan={filteredMonths.length + 1}
-                                            className="bg-gray-200 text-gray-700 font-bold p-2 pl-4"
+                                            className="bg-gray-200 text-brand-body font-bold p-2 pl-4"
                                         >
                                             {categoryGroup.categoryName}
                                         </TableCell>
@@ -345,12 +345,12 @@ export default function ReportTable({ reportType }: { reportType: string }) {
                                                 key={metric.key}
                                                 className={`${(categoryIdx % 2 === 0 && rowIdx % 2 === 0) ||
                                                     (categoryIdx % 2 !== 0 && rowIdx % 2 !== 0)
-                                                    ? "bg-white"
-                                                    : "bg-gray-50"
+                                                    ? "bg-card"
+                                                    : "bg-brand-body"
                                                     }`}
                                             >
                                                 <TableCell
-                                                    className={` z-10 p-2 pr-4 border-r border-gray-200 font-medium transition-all duration-200 text-gray-800 ${isLastRow ? "bg-yellow-100 border-t border-gray-200" : ""
+                                                    className={` z-10 p-2 pr-4 border-r border-border font-medium transition-all duration-200 text-gray-800 ${isLastRow ? "bg-yellow-100 border-t border-border" : ""
                                                         }`}
                                                     style={
                                                         isLastRow
@@ -383,7 +383,7 @@ export default function ReportTable({ reportType }: { reportType: string }) {
                                                     return (
                                                         <TableCell
                                                             key={key}
-                                                            className={`text-center  border-r border-gray-200 p-2 transition-all duration-300 text-gray-800 font-normal ${isLastRow ? "bg-yellow-100 border-t border-gray-200" : ""
+                                                            className={`text-center  border-r border-border p-2 transition-all duration-300 text-gray-800 font-normal ${isLastRow ? "bg-yellow-100 border-t border-border" : ""
                                                                 } ${colorClass}`}
                                                             style={
                                                                 isLastRow

@@ -333,8 +333,8 @@ export default function TodoList() {
 
     return (
         <section className="mx-auto max-w-[1400px] w-full pt-5">
-            <div className="bg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md">
-                <h1 className="text-xl leading-normal text-black capitalize font-medium">To-Do List</h1>
+            <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
+                <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">To-Do List</h1>
                 <hr className="my-3 border-t border-gray-100"></hr>
                 {message && <AlertMessage message={message} variant={alertVariant} onClose={() => setMessage("")} duration={6000} />}
                 <TodoListTabs categories={categories} onCategoryClick={handleCategoryClick} />
@@ -346,14 +346,14 @@ export default function TodoList() {
                         placeholder="Search tasks..."
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
-                        className="flex-1 min-w-[200px] border border-blue-200/50 rounded-lg px-3 py-2 bg-white"
+                        className="flex-1 min-w-[200px] border border-border rounded-lg px-3 py-2 bg-card"
                     />
 
                     <select
                         id="priority"
                         value={priorityFilter ?? ""}
                         onChange={(e) => setPriorityFilter(e.target.value)}
-                        className="w-full md:w-auto rounded-md border border-blue-200/50 bg-white focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-gray-700"
+                        className="w-full md:w-auto rounded-md border border-border bg-card focus:border-border focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-brand-body"
                     >
                         <option value="">Select Priority</option>
                         <option value="LOW">Low</option>
@@ -377,7 +377,7 @@ export default function TodoList() {
                         placeholderText="Upto Due date"
                         onKeyDown={(e) => e.preventDefault()}
                         withPortal
-                        className="w-full md:w-auto min-w-[150px] px-3 py-2 text-sm text-gray-900 border-blue-200/50 bg-white border rounded-lg"
+                        className="w-full md:w-auto min-w-[150px] px-3 py-2 text-sm text-brand-body border-border bg-card border rounded-lg"
                     />
 
 
@@ -386,7 +386,7 @@ export default function TodoList() {
                         onChange={(e) =>
                             setAssignedToFilterId(e.target.value ? Number(e.target.value) : null)
                         }
-                        className="w-full md:w-auto rounded-md border  border-blue-200/50 bg-white focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-gray-700"
+                        className="w-full md:w-auto rounded-md border  border-border bg-card focus:border-border focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-brand-body"
                     >
                         <option value="">All Accountants</option>
                         {accountants.map((acc) => (
@@ -399,7 +399,7 @@ export default function TodoList() {
                     <select
                         value={statusFilterId ?? ""}
                         onChange={(e) => setStatusFilterId(e.target.value ? Number(e.target.value) : null)}
-                        className="w-full md:w-auto rounded-md border  border-blue-200/50 bg-white px-3 py-2 text-sm text-gray-700"
+                        className="w-full md:w-auto rounded-md border  border-border bg-card px-3 py-2 text-sm text-brand-body"
                     >
                         <option value="">All Statuses</option>
                         {statuses.map((status) => (
@@ -412,21 +412,21 @@ export default function TodoList() {
                     <Button
                         variant="outline"
                         onClick={clearFilters}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer bg-sky-800 text-white !font-normal"
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer bg-sidebar-background text-card-foreground !font-normal"
                     >
                         Clear
                     </Button>
                 </div>
 
                 {/* Listing Section */}
-                <div className="bg-white border border-blue-200/50 rounded-[16px] shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md">
-                    <h2 className="text-xl font-medium px-5 py-3 border-b border-gray-200">Current Tasks</h2>
+                <div className="bg-card border border-border rounded-[16px] shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
+                    <h2 className="text-xl font-medium px-5 py-3 border-b border-border">Current Tasks</h2>
                     <div className="space-y-3 p-3 max-h-96 overflow-y-auto">
                         {isLoading ? (
                             // Skeleton Loader
                             <div className="space-y-3">
                                 {[...Array(3)].map((_, index) => ( // Render 3 skeleton items
-                                    <div key={index} className="bg-gradient-to-l from-white/80 to-blue-100/50 backdrop-blur[10px] border border-blue-200/50 rounded-[16px] py-3 px-4 flex justify-between items-center animate-pulse">
+                                    <div key={index} className="bg-gradient-to-l from-white/80 to-blue-100/50 backdrop-blur[10px] border border-border rounded-[16px] py-3 px-4 flex justify-between items-center animate-pulse">
                                         <div className="flex-1">
                                             <div className="h-4 bg-black/10 rounded w-3/4 mb-2"></div>
                                             <div className="h-3 bg-black/10 rounded w-1/2"></div>
@@ -436,20 +436,20 @@ export default function TodoList() {
                                 ))}
                             </div>
                         ) : tasks.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-10 text-gray-400">
-                                <svg className="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+                                <svg className="w-16 h-16 mb-4 text-sidebar-foreground" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                 </svg>
                                 <p className="text-lg font-medium">No tasks found</p>
-                                <p className="text-sm text-gray-500">You can create a new task using the form below.</p>
+                                <p className="text-sm text-muted-foreground">You can create a new task using the form below.</p>
                             </div>
                         ) : (
                             tasks.map((task) => (
-                                <div key={task.id} className="bg-white px-4 py-3 flex justify-between items-centerbg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md">
+                                <div key={task.id} className="bg-card px-4 py-3 flex justify-between items-centerbg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
                                     <Link
                                         href={`/dashboard/todo-list/todo-list-view?taskId=${btoa(task.id.toString())}`}
                                         passHref
-                                        className="flex-1 cursor-pointer hover:bg-gray-50 -mx-4 -my-3 px-4 py-3 rounded-lg transition-colors duration-200"
+                                        className="flex-1 cursor-pointer hover:bg-brand-body -mx-4 -my-3 px-4 py-3 rounded-lg transition-colors duration-200"
                                     >
                                         <div>
                                             <TaskInfo
@@ -467,7 +467,7 @@ export default function TodoList() {
                                                 ) : (
                                                     task.otherUser && (
                                                         <span className="text-sm flex gap-2 items-center">
-                                                            <HugeiconsIcon icon={MessageUser01Icon} className="w-4.5 h-4.5 text-blue-700" />
+                                                            <HugeiconsIcon icon={MessageUser01Icon} className="w-4.5 h-4.5 text-brand-primary700" />
                                                             {task.otherUser.username} ({task.otherUser.email})
                                                         </span>
                                                     )
@@ -497,11 +497,11 @@ export default function TodoList() {
                                             {task.createdById === currentUserId && (
                                                 <>
                                                     <button
-                                                        className="cursor-pointer bg-green-700 w-7 h-7 flex items-center justify-center rounded-full"
+                                                        className="cursor-pointer bg-sidebar-background w-7 h-7 flex items-center justify-center rounded-full shadow-md hover:bg-sidebar-hover transition-colors"
                                                         onClick={() => handleEdit(btoa(task.id.toString()))}
                                                         aria-label={`Edit task ${task.title}`}
                                                     >
-                                                        <HugeiconsIcon icon={Edit03Icon} className="w-4.5 h-4.5 text-green-100" />
+                                                        <HugeiconsIcon icon={Edit03Icon} className="w-4.5 h-4.5 text-sidebar-foreground" />
                                                     </button>
                                                     <button
                                                         className="cursor-pointer bg-rose-700 w-7 h-7 flex items-center justify-center rounded-full"
@@ -519,7 +519,7 @@ export default function TodoList() {
                         )}
                     </div>
 
-                    <div className="flex justify-center items-center space-x-2 mt-5 p-5 border-t border-gray-200">
+                    <div className="flex justify-center items-center space-x-2 mt-5 p-5 border-t border-border">
                         <button onClick={() => loadPaginatedTasks(pagination.page - 1)} disabled={pagination.page === 1 || isLoading} className="px-3 py-1 border rounded disabled:opacity-50">Prev</button>
                         <span>Page {pagination.page} of {pagination.totalPages}</span>
                         <button onClick={() => loadPaginatedTasks(pagination.page + 1)} disabled={pagination.page === pagination.totalPages || isLoading} className="px-3 py-1 border rounded disabled:opacity-50">Next</button>
@@ -527,8 +527,8 @@ export default function TodoList() {
                 </div>
 
                 {/* Create or Edit Task Section */}
-                <div className="bg-white border border-blue-200/50 rounded-[16px] shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md overflow-hidden mt-8"> {/* Added mt-8 for spacing */}
-                    <h2 className="text-xl font-medium px-5 py-3 border-b border-gray-200">{editTaskId ? "Edit Task" : "Create New Task"}</h2>
+                <div className="bg-card border border-border rounded-[16px] shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md overflow-hidden mt-8"> {/* Added mt-8 for spacing */}
+                    <h2 className="text-xl font-medium px-5 py-3 border-b border-border">{editTaskId ? "Edit Task" : "Create New Task"}</h2>
                     <div className="p-1" ref={taskFormRef}>
                         <TaskForm
                             title={title}

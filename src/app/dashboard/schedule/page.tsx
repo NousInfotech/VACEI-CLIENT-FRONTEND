@@ -184,9 +184,9 @@ export default function ParentComponent(): JSX.Element {
 
   return (
      <section className="mx-auto max-w-[1400px] w-full pt-5">
-     <div className="bg-white border border-gray-200 rounded-[10px] px-5 py-6 overflow-hidden">
+     <div className="bg-card border border-border rounded-[10px] px-5 py-6 overflow-hidden">
 
-        <h1 className="text-xl leading-normal text-black capitalize font-medium">Schedule Meeting</h1>
+        <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">Schedule Meeting</h1>
 
 
         <div className="flex justify-between items-center mb-4 mt-5">
@@ -194,7 +194,7 @@ export default function ParentComponent(): JSX.Element {
           <div className="flex items-center space-x-2">
             <label
               htmlFor="accountant-filter"
-              className="text-gray-700 flex-shrink-0 w-15"
+              className="text-brand-body flex-shrink-0 w-15"
             >
               Filter by:
             </label>
@@ -205,10 +205,10 @@ export default function ParentComponent(): JSX.Element {
               onChange={handleAccountantFilterChange} // <<-- CRITICAL: Bind onChange to handler
               className={`
               appearance-none block w-full px-3 py-2 pr-8
-              border rounded-md shadow-sm
-              text-gray-900 leading-tight
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-              bg-white
+              border rounded-md shadow-md
+              text-brand-body leading-tight
+              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-brand-primary
+              bg-card
               sm:text-sm
               transition ease-in-out duration-150
             `}
@@ -230,7 +230,7 @@ export default function ParentComponent(): JSX.Element {
         </div>
         {(isLoading || loadingAccountants) && (
           <div className="flex items-center justify-center h-48">
-            <p className="text-gray-600">Loading data...</p>
+            <p className="text-muted-foreground">Loading data...</p>
           </div>
         )}
         {(error || accountantsError) && (

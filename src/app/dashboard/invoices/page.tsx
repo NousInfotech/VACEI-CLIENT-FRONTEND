@@ -51,7 +51,7 @@ type InvoiceStats = {
 const itemsPerPage = 10;
 
 const SkeletonRow = () => (
-    <tr className="border-b border-gray-300 animate-pulse">
+    <tr className="border-b border-border animate-pulse">
         {Array(6)
             .fill(null)
             .map((_, i) => (
@@ -77,10 +77,10 @@ const StatsCard = ({
     colorClass: string;
     currency?: string;
 }) => (
-    <div className="rounded-xl p-3 w-full bg-white backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100">
-        <h3 className="text-sm font-semibold text-gray-900 mb-1">{title}</h3>
+    <div className="rounded-xl p-3 w-full bg-card backdrop-blur-sm shadow-md hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100">
+        <h3 className="text-sm font-semibold text-brand-body mb-1">{title}</h3>
         <div className="flex justify-between items-end">
-            <p className="text-2xl font-semibold text-sky-800 block">
+            <p className="text-2xl font-semibold text-brand-body block">
                 {currency}{total.toFixed(2)}
             </p>
             <p className={`flex items-center justify-center rounded-full font-semibold min-w-7 min-h-7 ${bgcolorClass} ${colorClass}`}>{count}</p>
@@ -189,8 +189,8 @@ export default function InvoiceList() {
 
     return (
         <section className="mx-auto max-w-[1400px] w-full pt-5">
-            <div className="bg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md">
-                <h1 className="text-xl leading-normal text-black capitalize font-medium">Invoices</h1>
+            <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
+                <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">Invoices</h1>
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-6">
@@ -212,8 +212,8 @@ export default function InvoiceList() {
                         title="Total Invoices"
                         count={stats.paidCount + stats.unpaidCount}
                         total={stats.paidTotal + stats.unpaidTotal}
-                        bgcolorClass="bg-blue-600"
-                        colorClass="text-blue-100"
+                        bgcolorClass="bg-brand-primary"
+                        colorClass="text-brand-primary100"
                     />
                     <StatsCard
                         title="Outstanding Balance"
@@ -235,7 +235,7 @@ export default function InvoiceList() {
                                 if (toDate && date && toDate < date) setToDate(date);
                             }}
                             placeholderText="From Date"
-                            className="w-full md:w-auto min-w-[150px] px-3 py-2 text-sm text-black border-blue-200/50 bg-white border rounded-lg"
+                            className="w-full md:w-auto min-w-[150px] px-3 py-2 text-sm text-brand-body border-border bg-card border rounded-lg"
                             dateFormat="yyyy-MM-dd"
                             maxDate={toDate || undefined}
                             isClearable
@@ -252,7 +252,7 @@ export default function InvoiceList() {
                                 setPage(1);
                             }}
                             placeholderText="To Date"
-                            className="w-full md:w-auto min-w-[150px] px-3 py-2 text-sm text-black border-blue-200/50 bg-white border rounded-lg"
+                            className="w-full md:w-auto min-w-[150px] px-3 py-2 text-sm text-brand-body border-border bg-card border rounded-lg"
                             dateFormat="yyyy-MM-dd"
                             minDate={fromDate || undefined}
                             isClearable
@@ -269,7 +269,7 @@ export default function InvoiceList() {
                                 setSearch(e.target.value);
                                 setPage(1); // reset page on search
                             }}
-                            className="w-full md:w-auto min-w-[150px] px-3 py-2 text-sm text-black border-blue-200/50 bg-white border rounded-lg"
+                            className="w-full md:w-auto min-w-[150px] px-3 py-2 text-sm text-brand-body border-border bg-card border rounded-lg"
                         />
                     </div>
                     <div>
@@ -279,7 +279,7 @@ export default function InvoiceList() {
                                 setStatusFilter(e.target.value);
                                 setPage(1); // reset page on status filter change
                             }}
-                            className="w-full md:w-auto min-w-[150px] px-3 py-2 text-sm text-black border-blue-200/50 bg-white border rounded-lg"
+                            className="w-full md:w-auto min-w-[150px] px-3 py-2 text-sm text-brand-body border-border bg-card border rounded-lg"
                         >
                             <option value="">All Statuses</option>
                             <option value="Paid">Paid</option>
@@ -289,7 +289,7 @@ export default function InvoiceList() {
                     <Button
                         variant={"outline"}
                         onClick={clearFilters}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer bg-sky-800 border-sky-800 text-white !font-normal"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer bg-sidebar-background border-sky-800 text-card-foreground !font-normal"
                     >
                         Clear Filters
                     </Button>
@@ -305,7 +305,7 @@ export default function InvoiceList() {
                 <div className="w-full overflow-x-auto rounded-md border">
                     <ScrollArea className="xl:max-w-[90vw] md:max-w-[65vw] w-full max-w-[76vw]">
                         <Table className="w-full text-sm">
-                            <TableHeader className="border-b border-gray-300 bg-gray-50">
+                            <TableHeader className="border-b border-border bg-brand-body">
                                 <TableRow>
                                     {[
                                         "#",
@@ -318,7 +318,7 @@ export default function InvoiceList() {
                                     ].map((col) => (
                                         <TableHead
                                             key={col}
-                                            className="p-2.5 border-r border-gray-200 font-medium text-left px-6"
+                                            className="p-2.5 border-r border-border font-medium text-left px-6"
                                         >
                                             {col}
                                         </TableHead>
@@ -332,7 +332,7 @@ export default function InvoiceList() {
                                         .map((_, i) => <SkeletonRow key={i} />)
                                 ) : invoices.length > 0 ? (
                                     invoices.map((inv, idx) => (
-                                        <TableRow key={inv.id} className="border-b border-gray-200">
+                                        <TableRow key={inv.id} className="border-b border-border">
                                             <TableCell className="p-3 px-6">
                                                 {(page - 1) * itemsPerPage + idx + 1}
                                             </TableCell>
@@ -342,7 +342,7 @@ export default function InvoiceList() {
                                             <TableCell className="p-3 px-6">
                                                 <span
                                                     className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${inv.status?.toLowerCase() === "paid"
-                                                        ? "bg-green-100 text-green-700"
+                                                        ? "bg-sidebar-background text-green-700"
                                                         : "bg-red-100 text-red-700"
                                                         }`}
                                                 >
@@ -352,7 +352,7 @@ export default function InvoiceList() {
                                             <TableCell className="p-3 px-6">€{inv.totalAmount?.toFixed(2)}</TableCell>
                                             <TableCell className="p-3 px-6 flex items-center gap-2">
                                                 <button
-                                                    className="w-6 h-6 text-white bg-green-700 hover:bg-green-800 rounded-full text-sm text-center flex items-center cursor-pointer justify-center"
+                                                    className="w-6 h-6 text-sidebar-foreground bg-sidebar-background hover:bg-sidebar-hover rounded-full text-sm text-center flex items-center cursor-pointer justify-center shadow-sm"
                                                     onClick={() => setSelectedInvoice(inv)}
                                                 >
                                                     <i className="fi fi-rr-eye leading-0" title="View"></i>
@@ -360,7 +360,7 @@ export default function InvoiceList() {
                                                 {inv.balance > 0 && (
                                                     <button
                                                         onClick={() => setPaymentInvoice(inv)}
-                                                        className="w-6 h-6 text-white bg-green-700 hover:bg-green-800 rounded-full text-sm text-center flex items-center cursor-pointer justify-center"
+                                                        className="w-6 h-6 text-sidebar-foreground bg-sidebar-background hover:bg-sidebar-hover rounded-full text-sm text-center flex items-center cursor-pointer justify-center shadow-sm"
                                                     >
                                                         <i className="fi fi-rr-credit-card leading-0" title="Record Payment"></i>
                                                     </button>
@@ -371,7 +371,7 @@ export default function InvoiceList() {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center text-gray-500 p-4">
+                                        <TableCell colSpan={7} className="text-center text-muted-foreground p-4">
                                             No invoices found.
                                         </TableCell>
                                     </TableRow>
@@ -393,17 +393,17 @@ export default function InvoiceList() {
                         <button
                             disabled={page === 1}
                             onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                            className="px-3 py-1 border border-gray-300 rounded disabled:opacity-40"
+                            className="px-3 py-1 border border-border rounded disabled:opacity-40"
                         >
                             Prev
                         </button>
-                        <span className="px-3 py-1 border border-gray-300 rounded">
+                        <span className="px-3 py-1 border border-border rounded">
                             {page} / {totalPages}
                         </span>
                         <button
                             disabled={page === totalPages}
                             onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-                            className="px-3 py-1 border border-gray-300 rounded disabled:opacity-40"
+                            className="px-3 py-1 border border-border rounded disabled:opacity-40"
                         >
                             Next
                         </button>

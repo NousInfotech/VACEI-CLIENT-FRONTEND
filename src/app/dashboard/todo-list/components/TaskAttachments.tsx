@@ -19,12 +19,12 @@ export default function TaskAttachments({
     if (!attachments.length) return null;
     return (
         <div className="mt-4 mb-5 space-y-2">
-            <h3 className="text-sm font-normal text-black">Attachments:</h3>
+            <h3 className="text-sm font-normal text-brand-body">Attachments:</h3>
             {attachments.map(att => (
                 <div key={att.id}
                     className="flex items-center justify-between bg-gradient-to-r
-                    from-blue-100/50  to-blue-100/50 backdrop-blur[10px] border border-blue-200/50 rounded-lg py-3 px-4 space-x-2">
-                    <HugeiconsIcon icon={AttachmentIcon} size={20} className="text-sky-800" />
+                    from-blue-100/50  to-blue-100/50 backdrop-blur[10px] border border-border rounded-lg py-3 px-4 space-x-2">
+                    <HugeiconsIcon icon={AttachmentIcon} size={20} className="text-brand-body" />
                     <a
                         href={`${backendUrl.replace(/\/$/, "")}/${att.filePath.replace(/^\//, "")}`}
                         target="_blank"

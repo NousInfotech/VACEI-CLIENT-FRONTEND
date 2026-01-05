@@ -13,8 +13,8 @@ export default function ReportTabs() {
   const pathname = usePathname();  // <-- get current path here
 
   return (
-    <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
-      <ul className="flex flex-wrap -mb-px text-sm font-medium text-center text-gray-500 dark:text-gray-400">
+    <div className="mb-6 border-b border-border dark:border-gray-700">
+      <ul className="flex flex-wrap -mb-px text-sm font-medium text-center text-muted-foreground dark:text-muted-foreground">
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;
           return (
@@ -23,8 +23,8 @@ export default function ReportTabs() {
                 onClick={() => router.push(tab.href)}
                 className={`inline-flex items-center gap-2 px-2 py-3 border-b-2 text-sm transition-all cursor-pointer ${
                   isActive
-                    ? "text-sky-800 border-sky-800 active font-medium"
-                    : "border-transparent text-black font-normal"
+                    ? "text-brand-body border-sky-800 active font-medium"
+                    : "border-transparent text-brand-body font-normal"
                 }`}
                 type="button"
               >

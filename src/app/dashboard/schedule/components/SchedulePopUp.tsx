@@ -33,13 +33,13 @@ const getStatusDisplayName = (statusCode: number): string => {
 // Helper function to make URLs in text clickable
 const renderDescriptionWithLinks = (text?: string) => {
   if (!text) {
-    return '<p class="text-gray-500 italic">No description provided for this meeting.</p>';
+    return '<p class="text-muted-foreground italic">No description provided for this meeting.</p>';
   }
 
   const urlRegex = /(https?:\/\/[^\s]+)/g;
 
   const htmlContent = text.replace(urlRegex, (url) => {
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline break-all">${url}</a>`;
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-brand-primary hover:underline break-all">${url}</a>`;
   });
 
   // Use a div instead of a p if the content might have multiple paragraphs or other block elements
@@ -106,9 +106,9 @@ const MeetingInfoPopup: React.FC<MeetingInfoPopupProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4 sm:p-6">
+    <div className="fixed inset-0 bg-sidebar-background bg-opacity-75 flex items-center justify-center z-50 p-4 sm:p-6">
       {/* Modal Container - Smaller border-radius, more subtle shadow */}
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-2xl h-[80vh] mx-auto flex flex-col overflow-hidden">
+      <div className="bg-card rounded-xl shadow-lg w-full max-w-2xl h-[80vh] mx-auto flex flex-col overflow-hidden">
         {message && (
           <div className="p-4 sm:p-5 flex-shrink-0">
             <AlertMessage message={message} variant={alertVariant} onClose={() => setMessage("")} duration={3000} />
@@ -116,15 +116,15 @@ const MeetingInfoPopup: React.FC<MeetingInfoPopupProps> = ({
         )}
 
         {/* Modal Header - Gmail-like header with actions */}
-        <div className="flex items-center justify-between p-4 sm:px-6 border-b border-gray-200 flex-shrink-0">
-          <h3 className="text-xl sm:text-2xl font-bold text-gray-900 truncate pr-8">
+        <div className="flex items-center justify-between p-4 sm:px-6 border-b border-border flex-shrink-0">
+          <h3 className="text-xl sm:text-2xl font-bold text-brand-body truncate pr-8">
             {meeting.title}
           </h3>
           <div className="flex items-center space-x-2"> {/* Grouping header actions */}
             {/* Conditional rendering for Edit and Delete buttons */}
              <button
                   onClick={() => onView(meeting.id!)} // Use non-null assertion as we checked for meeting.id
-                  className="p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 rounded-full text-muted-foreground hover:bg-brand-muted hover:text-brand-body focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="View Meeting"
                  
                 >
@@ -135,7 +135,7 @@ const MeetingInfoPopup: React.FC<MeetingInfoPopupProps> = ({
                 {/* Edit Icon Button in Header */}
                 <button
                   onClick={() => onEdit(meeting.id!)} // Use non-null assertion as we checked for meeting.id
-                  className="p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 rounded-full text-muted-foreground hover:bg-brand-muted hover:text-brand-body focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Edit Meeting"
                   disabled={isDeleting}
                 >
@@ -145,12 +145,12 @@ const MeetingInfoPopup: React.FC<MeetingInfoPopupProps> = ({
                 {/* Delete Icon Button in Header */}
                 <button
                   onClick={handleDeleteClick}
-                  className="p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 rounded-full text-muted-foreground hover:bg-brand-muted hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Delete Meeting"
                   disabled={isDeleting}
                 >
                   {isDeleting ? (
-                    <svg className="animate-spin h-5 w-5 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin h-5 w-5 text-brand-body" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -164,7 +164,7 @@ const MeetingInfoPopup: React.FC<MeetingInfoPopupProps> = ({
             {/* Close Button in Header (always visible) */}
             <button
               onClick={onClose}
-              className="p-2 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              className="p-2 rounded-full text-muted-foreground hover:bg-brand-muted hover:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
               aria-label="Close"
               disabled={isDeleting}
             >
@@ -175,28 +175,28 @@ const MeetingInfoPopup: React.FC<MeetingInfoPopupProps> = ({
 
         {/* Modal Body (Content) - Updated text sizes and spacing */}
         <div className="flex-grow overflow-y-auto p-4 sm:p-6">
-          <div className="mb-6 pb-4 border-b border-gray-200">
+          <div className="mb-6 pb-4 border-b border-border">
             <div className="flex justify-between items-center mb-2">
               {/* Display Client and Accountant */}
               <div className="text-gray-800 font-medium text-base">
                 <p className="mb-1">
-                  Client: <span className="text-blue-600">{clientDisplayName}</span>
+                  Client: <span className="text-brand-primary">{clientDisplayName}</span>
                 </p>
                 <p>
-                  Accountant: <span className="text-blue-600">{accountantDisplayName}</span>
+                  Accountant: <span className="text-brand-primary">{accountantDisplayName}</span>
                 </p>
               </div>
               <span
                 className={`inline-flex items-center px-3 py-0.5 rounded-full text-sm font-semibold ${
                   meeting.status === 1
-                    ? "bg-green-100 text-green-800"
+                    ? "bg-sidebar-background text-green-800"
                     : "bg-red-100 text-red-800"
                 }`}
               >
                 {statusDisplayName}
               </span>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               <span className="font-medium">Date:</span>{" "}
               {meeting.start.toLocaleDateString()}
               <span className="mx-2">|</span>

@@ -17,7 +17,7 @@ import {
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area" 
 
 const SkeletonRow = () => (
-    <tr className="border-b border-gray-300 animate-pulse">
+    <tr className="border-b border-border animate-pulse">
         {[40, 24, 32, 16, 20, 24].map((w, i) => (
             <td key={i} className="p-3 px-8">
                 <div className={`h-4 bg-gray-300 rounded-0 w-${w}`}></div>
@@ -26,9 +26,9 @@ const SkeletonRow = () => (
     </tr>
 );
 const SkeletonCard = () => (
-    <div className="rounded-xl p-3 w-full bg-white backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100 animate-pulse">
+    <div className="rounded-xl p-3 w-full bg-card backdrop-blur-sm shadow-md hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100 animate-pulse">
         <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-gray-900">Loading...</p>
+            <p className="text-sm font-semibold text-brand-body">Loading...</p>
             <div className="h-6 bg-gray-300 rounded w-[30px]"></div>
         </div>
     </div>
@@ -128,8 +128,8 @@ export default function JournalList() {
 
     return (
         <section className="mx-auto max-w-[1400px] w-full pt-5">
-            <div className="bg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md">
-                <h1 className="text-xl leading-normal text-black capitalize font-medium">General Ledger</h1>
+            <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
+                <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">General Ledger</h1>
                 <hr className="my-3 border-t border-gray-100" />
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                     {loading ? (
@@ -140,9 +140,9 @@ export default function JournalList() {
                         </>
                     ) : (
                         <>
-                            <div className="rounded-xl p-3 w-full bg-white backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-blue-200/50">
+                            <div className="rounded-xl p-3 w-full bg-card backdrop-blur-sm shadow-md hover:shadow-md transition-all duration-300 cursor-pointer border border-border">
                                 <div className="flex items-center justify-between">
-                                    <p className="text-sm font-semibold text-gray-900">
+                                    <p className="text-sm font-semibold text-brand-body">
                                         Total Debit
                                     </p>
                                     <p className="text-2xl font-semibold text-red-600">
@@ -150,9 +150,9 @@ export default function JournalList() {
                                     </p>
                                 </div>
                             </div>
-                            <div className="rounded-xl p-3 w-full bg-white backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-blue-200/50">
+                            <div className="rounded-xl p-3 w-full bg-card backdrop-blur-sm shadow-md hover:shadow-md transition-all duration-300 cursor-pointer border border-border">
                                 <div className="flex items-center justify-between">
-                                    <p className="text-sm font-semibold text-gray-900">
+                                    <p className="text-sm font-semibold text-brand-body">
                                         Total Credit
                                     </p>
                                     <p className="text-2xl font-semibold text-green-600">
@@ -160,9 +160,9 @@ export default function JournalList() {
                                     </p>
                                 </div>
                             </div>
-                            <div className="rounded-xl p-3 w-full bg-white backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-blue-200/50">
+                            <div className="rounded-xl p-3 w-full bg-card backdrop-blur-sm shadow-md hover:shadow-md transition-all duration-300 cursor-pointer border border-border">
                                 <div className="flex items-center justify-between">
-                                    <p className="text-sm font-semibold text-gray-900">
+                                    <p className="text-sm font-semibold text-brand-body">
                                         Closing Balance
                                     </p>
                                     <p className="text-2xl font-semibold text-gray-800">
@@ -182,7 +182,7 @@ export default function JournalList() {
                                 onChange={handleFromDateChange}
                                 dateFormat="yyyy-MM-dd"
                                 placeholderText="From date"
-                                className="w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none"
+                                className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
                                 maxDate={toDate || undefined} // Prevent fromDate > toDate
                                 isClearable
                             />
@@ -194,7 +194,7 @@ export default function JournalList() {
                                 onChange={handleToDateChange}
                                 dateFormat="yyyy-MM-dd"
                                 placeholderText="To date"
-                                className="w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none"
+                                className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
                                 minDate={fromDate || undefined} // Prevent toDate < fromDate
                                 isClearable
                             />
@@ -205,7 +205,7 @@ export default function JournalList() {
                             placeholder="Search by Reference"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none"
+                            className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
                         />
                     </div>
 
@@ -219,13 +219,13 @@ export default function JournalList() {
                     <div className="w-full overflow-x-auto rounded-md border">
                         <ScrollArea className="xl:max-w-[90vw] md:max-w-[65vw] w-full max-w-[76vw]">
                             <table className="w-full text-sm">
-                                <thead className="border-b border-gray-300 bg-gray-50">
+                                <thead className="border-b border-border bg-brand-body">
                                     <tr>
                                         {["Sr No", "Transaction Date", "Reference", "Action"].map(
                                             (title) => (
                                                 <th
                                                     key={title}
-                                                    className="p-2.5 border-r border-gray-200 font-medium text-start px-8"
+                                                    className="p-2.5 border-r border-border font-medium text-start px-8"
                                                 >
                                                     {title}
                                                 </th>
@@ -240,7 +240,7 @@ export default function JournalList() {
                                             .map((_, i) => <SkeletonRow key={i} />)
                                         : journalEntries.length
                                             ? journalEntries.map((entry, index) => (
-                                                <tr key={entry.id} className="border-b border-gray-300">
+                                                <tr key={entry.id} className="border-b border-border">
                                                     <td className="p-3 px-8">
                                                         {(page - 1) * itemsPerPage + index + 1}
                                                     </td>
@@ -252,7 +252,7 @@ export default function JournalList() {
                                                     <td className="p-3 px-8">{entry.privateNote}</td>
                                                     <td className="p-3 px-8">
                                                         <button
-                                                            className="w-6 h-6 text-white bg-green-700 hover:bg-green-800 rounded-full text-sm text-center flex items-center cursor-pointer justify-center"
+                                                            className="w-6 h-6 text-card-foreground bg-sidebar-hover hover:bg-sidebar-background rounded-full text-sm text-center flex items-center cursor-pointer justify-center"
                                                             onClick={() => handleView(entry)}
                                                         >
                                                             <i
@@ -265,7 +265,7 @@ export default function JournalList() {
                                             ))
                                             : (
                                                 <tr>
-                                                    <td colSpan={5} className="p-4 text-center text-gray-500">
+                                                    <td colSpan={5} className="p-4 text-center text-muted-foreground">
                                                         No journal entries found.
                                                     </td>
                                                 </tr>
@@ -279,17 +279,17 @@ export default function JournalList() {
                             <button
                                 disabled={page === 1}
                                 onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                                className="px-3 py-1 border border-gray-300 rounded disabled:opacity-40"
+                                className="px-3 py-1 border border-border rounded disabled:opacity-40"
                             >
                                 Prev
                             </button>
-                            <span className="inline-block px-3 py-1 border border-gray-300 rounded">
+                            <span className="inline-block px-3 py-1 border border-border rounded">
                                 {page} / {totalPages}
                             </span>
                             <button
                                 disabled={page === totalPages}
                                 onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-                                className="px-3 py-1 border border-gray-300 rounded disabled:opacity-40"
+                                className="px-3 py-1 border border-border rounded disabled:opacity-40"
                             >
                                 Next
                             </button>

@@ -31,19 +31,19 @@ export default function TodoListTabs({ categories }: TodoListTabsProps) {
   }
 
   return (
-    <div className="mb-6 border-b border-gray-200">
-      <ul className="flex flex-wrap -mb-px text-sm font-medium text-center text-gray-500 dark:text-gray-400">
+    <div className="mb-6 border-b border-border">
+      <ul className="flex flex-wrap -mb-px text-sm font-medium text-center text-muted-foreground dark:text-muted-foreground">
         {categories.map((cat) => (
           <li className="me-5" key={cat.id} role="presentation">
             <button
               onClick={() => handleCategoryClick(cat.id)}
               className={`inline-flex items-center gap-2 px-2 py-3 border-b-2 text-sm transition-all cursor-pointer
-                ${categoryFilterId === cat.id ? "text-sky-800 border-sky-800 active font-medium" : "border-transparent text-black font-normal"}`}
+                ${categoryFilterId === cat.id ? "text-brand-body border-brand-primary active font-medium" : "border-transparent text-brand-body font-normal"}`}
             >
               {cat.name}
               {typeof cat.taskCount === "number" && (
                 <span
-                  className="inline-flex items-center justify-center max-w-[20px] w-[20px] min-h-[20px] text-white text-xs font-normal rounded-full bg-sky-800 border border-sky-800 shadow-sm">
+                  className="inline-flex items-center justify-center max-w-[20px] w-[20px] min-h-[20px] text-sidebar-foreground text-xs font-normal rounded-full bg-sidebar-background border border-sidebar-border shadow-md">
                   {cat.taskCount}
                 </span>
               )}

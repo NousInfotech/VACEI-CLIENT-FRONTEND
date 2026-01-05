@@ -515,7 +515,7 @@ export default function CollapsibleFacebookChat() {
                         shouldScrollToBottomRef.current = true;
                     }}
                     aria-label="Open chat"
-                    className="fixed bottom-6 right-6 w-15 h-15 rounded-full bg-sky-800 text-white flex items-center justify-center select-none shadow-lg z-50 transition-all duration-300 hover:scale-105"
+                    className="fixed bottom-6 right-6 w-15 h-15 rounded-full bg-sidebar-background text-sidebar-foreground flex items-center justify-center select-none shadow-lg z-50 transition-all duration-300 hover:scale-105 hover:shadow-xl"
                 >
                     <HugeiconsIcon icon={Message01Icon} className="h-8 w-8" />
                     {/* NEW: New message indicator */}
@@ -527,11 +527,11 @@ export default function CollapsibleFacebookChat() {
 
             {isOpen && (
                 <div
-                    className={`fixed bottom-6 right-6 rounded-xl shadow-2xl bg-white flex flex-col font-sans z-50 transition-all duration-300
+                    className={`fixed bottom-6 right-6 rounded-xl shadow-2xl bg-card flex flex-col font-sans z-50 transition-all duration-300
             ${isMaximized ? 'w-[90vw] h-[80vh] sm:w-[90vw] sm:h-[90vh]' : 'w-[400px] h-[500px]'}`}
                 >
                     {/* Header */}
-                    <div className="p-4 border-b border-gray-200 flex justify-between items-center font-semibold text-lg text-primary">
+                    <div className="p-4 border-b border-border flex justify-between items-center font-semibold text-lg text-primary">
                         <div>
                             {assignments.length === 0 || !selectedAssignment
                                 ? 'Chat'
@@ -543,7 +543,7 @@ export default function CollapsibleFacebookChat() {
                                 disabled={assignments.length === 0}
                                 onClick={() => setIsMaximized(!isMaximized)}
                                 aria-label={isMaximized ? 'Restore window' : 'Maximize window'}
-                                className={`text-gray-600 ${buttonCommonClasses} focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1`}
+                                className={`text-muted-foreground ${buttonCommonClasses} focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1`}
                             >
                                 {isMaximized ? (
                                     <HugeiconsIcon icon={SquareArrowShrink01Icon} className="h-6 w-6" />
@@ -557,7 +557,7 @@ export default function CollapsibleFacebookChat() {
                                     setIsMaximized(false);
                                 }}
                                 aria-label="Close chat"
-                                className={`text-gray-600 ${buttonCommonClasses} focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1`}
+                                className={`text-muted-foreground ${buttonCommonClasses} focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1`}
                             >
                                 <HugeiconsIcon icon={Cancel01Icon} className="h-6 w-6" />
                             </button>
@@ -566,9 +566,9 @@ export default function CollapsibleFacebookChat() {
 
                     <div className="flex flex-grow overflow-hidden">
                         {/* Sidebar (Chat Partner List) */}
-                        <div className="w-24 border-r border-gray-200 bg-gray-50 overflow-y-auto p-2">
+                        <div className="w-24 border-r border-border bg-brand-body overflow-y-auto p-2">
                             {assignments.length === 0 ? (
-                                <div className="text-sm text-gray-400 text-center mt-5 select-none">
+                                <div className="text-sm text-muted-foreground text-center mt-5 select-none">
                                     No users found
                                 </div>
                             ) : (
@@ -585,11 +585,11 @@ export default function CollapsibleFacebookChat() {
                                                 setSelectedAssignment(a);
                                             }}
                                             className={`cursor-pointer mb-3 p-1 rounded-lg flex flex-col items-center transition-colors duration-200
-                        ${isSelected ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
+                        ${isSelected ? 'bg-sidebar-hover/50' : 'hover:bg-brand-muted'}`}
                                         >
                                             <div
                                                 className="w-12 h-12 flex items-center justify-center rounded-full font-semibold text-lg select-none
-                            bg-gray-100 "
+                            bg-brand-muted "
                                                 title={a.accountant.name}
                                             >
                                                 {getInitials(a.accountant.name)}
@@ -597,7 +597,7 @@ export default function CollapsibleFacebookChat() {
                                             <div
                                                 title={`${a.accountant.first_name} ${a.accountant.last_name}`}
                                                 className={`text-xs text-center overflow-hidden text-ellipsis w-full
-                            ${isSelected ? 'text-gray-900 font-semibold' : 'text-gray-700'}`}
+                            ${isSelected ? 'text-brand-body font-semibold' : 'text-brand-body'}`}
                                             >
                                                 {a.accountant.first_name}
                                             </div>
@@ -611,17 +611,17 @@ export default function CollapsibleFacebookChat() {
                         <div
                             ref={chatContainerRef}
                             className={`flex-grow flex flex-col p-3
-                ${(assignments.length === 0 || !selectedAssignment) ? 'justify-center items-center text-gray-400 text-sm' : ''}`}
+                ${(assignments.length === 0 || !selectedAssignment) ? 'justify-center items-center text-muted-foreground text-sm' : ''}`}
                         >
                             {isChatLoading &&
                                 selectedAssignment &&
                                 (!messages[selectedAssignment.assignmentId] ||
                                     messages[selectedAssignment.assignmentId]?.length === 0) ? (
-                                <div className="text-gray-400 text-center mt-10">
+                                <div className="text-muted-foreground text-center mt-10">
                                     Loading chat...
                                 </div>
                             ) : assignments.length === 0 || !selectedAssignment ? (
-                                <div className="text-gray-400 text-center mt-10">
+                                <div className="text-muted-foreground text-center mt-10">
                                     Select a user to chat.
                                 </div>
                             ) : (
@@ -642,7 +642,7 @@ export default function CollapsibleFacebookChat() {
                                         )}
                                         {(messages[selectedAssignment.assignmentId] || []).length ===
                                             0 && !isChatLoading ? (
-                                            <div className="text-gray-400 text-center mt-10">
+                                            <div className="text-muted-foreground text-center mt-10">
                                                 No messages found. Start a conversation!
                                             </div>
                                         ) : (
@@ -662,7 +662,7 @@ export default function CollapsibleFacebookChat() {
                                                             {!isUser && (
                                                                 <div
                                                                     className="w-7 h-7 flex items-center justify-center rounded-full font-semibold text-xs select-none mr-2
-                                            bg-gray-100 text-gray-900"
+                                            bg-brand-muted text-brand-body"
                                                                     title={senderName}
                                                                 >
                                                                     {getInitials(senderName)}
@@ -671,8 +671,8 @@ export default function CollapsibleFacebookChat() {
                                                             <div
                                                                 className={`max-w-[70%] p-2 rounded-2xl text-sm leading-tight
                                             ${isUser
-                                                                        ? 'bg-primary text-white rounded-tr-sm'
-                                                                        : 'bg-gray-100 text-gray-900 rounded-tl-sm'
+                                                                        ? 'bg-primary text-card-foreground rounded-tr-sm'
+                                                                        : 'bg-brand-muted text-brand-body rounded-tl-sm'
                                                                     }
                                             ${msg.isOptimistic ? 'opacity-70' : 'opacity-100'}
                                             `}
@@ -680,7 +680,7 @@ export default function CollapsibleFacebookChat() {
                                                                 {msg.message}
                                                                 <div
                                                                     className={`text-[10px] mt-1 text-right
-                                                ${isUser ? 'text-white/70' : 'text-gray-500'}`}
+                                                ${isUser ? 'text-card-foreground/70' : 'text-muted-foreground'}`}
                                                                 >
                                                                     {msg.createdAt.toLocaleTimeString([], {
                                                                         hour: '2-digit',
@@ -690,7 +690,7 @@ export default function CollapsibleFacebookChat() {
                                                             </div>
                                                             {isUser && (
                                                                 <div
-                                                                    className="w-7 h-7 flex items-center justify-center text-white rounded-full font-semibold text-xs select-none ml-2
+                                                                    className="w-7 h-7 flex items-center justify-center text-card-foreground rounded-full font-semibold text-xs select-none ml-2
                                             bg-primary"
                                                                     title={username}
                                                                 >
@@ -706,20 +706,20 @@ export default function CollapsibleFacebookChat() {
                                     </div>
 
                                     {/* Message Input Area */}
-                                    <div className="flex border-t border-gray-200 pt-2">
+                                    <div className="flex border-t border-border pt-2">
                                         <input
                                             type="text"
                                             placeholder="Type a message..."
                                             value={input}
                                             onChange={(e) => setInput(e.target.value)}
                                             onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                                            className="flex-grow rounded-full border border-gray-300 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                                            className="flex-grow rounded-full border border-border px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                                             disabled={!selectedAssignment || userId === null || isChatLoading}
                                         />
                                         <button
                                             onClick={sendMessage}
                                             aria-label="Send message"
-                                            className="ml-2 bg-primary text-white rounded-full w-9 h-9 flex items-center justify-center cursor-pointer transition-all duration-200 hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                                            className="ml-2 bg-primary text-card-foreground rounded-full w-9 h-9 flex items-center justify-center cursor-pointer transition-all duration-200 hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
                                             disabled={!selectedAssignment || !input.trim() || userId === null || isChatLoading}
                                         >
                                             <HugeiconsIcon icon={BubbleChatAddIcon} className="h-6 w-6" />

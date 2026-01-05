@@ -16,12 +16,12 @@ const PriorityBadge: React.FC<PriorityBadgeProps> = ({ priority }) => {
     if (!priority) return null;
 
     const colors: Record<Priority, string> = {
-        [Priority.HIGH]: "bg-red-500 text-white",
-        [Priority.MEDIUM]: "bg-yellow-400 text-black",
-        [Priority.LOW]: "bg-green-800 text-white",
+        [Priority.HIGH]: "bg-red-500 text-card-foreground",
+        [Priority.MEDIUM]: "bg-brand-accent text-brand-body",
+        [Priority.LOW]: "bg-sidebar-background text-sidebar-foreground",
     };
 
-    const colorClass = colors[priority] ?? "bg-gray-300 text-black";
+    const colorClass = colors[priority] ?? "bg-gray-300 text-brand-body";
 
     return (
         <span

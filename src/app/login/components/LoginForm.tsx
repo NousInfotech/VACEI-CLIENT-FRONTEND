@@ -1,20 +1,21 @@
 'use client';
 
 import Image from "next/image";
-import Link from "next/link"; // Import Link
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AlertMessage from "../../../components/AlertMessage";
 import { Button } from "@/components/ui/button";
+// Using Flaticon icons that are already available in the project
 
 export default function LoginForm() {
-
     const router = useRouter();
     const searchParams = useSearchParams();
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
     const [loading, setLoading] = useState(false);
     const [alertMessage, setAlertMessage] = useState<string | null>(null);
@@ -82,10 +83,94 @@ export default function LoginForm() {
     };
 
     return (
-        <section className="banner_section min-h-screen flex items-center justify-center">
-            <div className="mx-auto max-w-[1200px] px-8 w-full">
-                <section className="login_section flex justify-center">
-                    <div className="bg-white border border-blue-200/50 rounded-[16px] shadow-sm p-8 w-full max-w-md">
+        <div className="min-h-screen flex" style={{ backgroundColor: `hsl(var(--background))` }}>
+            {/* Left Sidebar - Dark Theme */}
+            <div 
+                className="hidden lg:flex w-1/2 relative overflow-hidden"
+                style={{ backgroundColor: `hsl(var(--sidebar-background))` }}
+            >
+                <div className="relative z-10 flex items-center justify-center h-full p-12">
+                    <div className="text-center space-y-8 max-w-lg" style={{ color: `hsl(var(--sidebar-foreground))` }}>
+                        <div className="flex items-center justify-center space-x-4 mb-8">
+                            <div 
+                                className="w-16 h-16 rounded-2xl flex items-center justify-center border"
+                                style={{ 
+                                    backgroundColor: `hsl(var(--sidebar-foreground) / 0.2)`,
+                                    borderColor: `hsl(var(--sidebar-foreground) / 0.3)`
+                                }}
+                            >
+                                <Image
+                                    src="/logo.svg"
+                                    alt="Logo"
+                                    width={56}
+                                    height={56}
+                                    className="object-contain rounded"
+                                />
+                            </div>
+                            <div className="text-left">
+                                <span className="text-3xl font-bold block" style={{ color: `hsl(var(--sidebar-foreground))` }}>Audit Portal</span>
+                                <span className="text-xs font-medium uppercase tracking-wider opacity-70 block" style={{ color: `hsl(var(--sidebar-foreground))` }}>AUDIT & COMPLIANCE</span>
+                            </div>
+                        </div>
+
+                        <h1 className="text-5xl font-bold leading-tight" style={{ color: `hsl(var(--sidebar-foreground))` }}>
+                            Welcome to <span className="block opacity-70" style={{ color: `hsl(var(--sidebar-foreground))` }}>Audit Portal</span>
+                        </h1>
+
+                        <p className="text-xl leading-relaxed opacity-80" style={{ color: `hsl(var(--sidebar-foreground))` }}>
+                            Streamline your audit processes with our modern platform designed for professionals.
+                        </p>
+
+                        <div className="grid grid-cols-1 gap-4 mt-12">
+                            <div 
+                                className="rounded-2xl p-4 border"
+                                style={{ 
+                                    backgroundColor: `hsl(var(--sidebar-foreground) / 0.1)`,
+                                    borderColor: `hsl(var(--sidebar-foreground) / 0.2)`
+                                }}
+                            >
+                                <div className="flex items-center space-x-3">
+                                    <div 
+                                        className="w-10 h-10 rounded-xl flex items-center justify-center"
+                                        style={{ backgroundColor: `hsl(var(--sidebar-foreground) / 0.2)` }}
+                                    >
+                                        <i className="fi fi-rr-check-circle h-5 w-5" style={{ color: `hsl(var(--sidebar-foreground))` }}></i>
+                                    </div>
+                                    <div className="text-left">
+                                        <h3 className="font-semibold" style={{ color: `hsl(var(--sidebar-foreground))` }}>Smart Automation</h3>
+                                        <p className="text-sm opacity-80" style={{ color: `hsl(var(--sidebar-foreground))` }}>AI-powered audit procedures</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div 
+                                className="rounded-2xl p-4 border"
+                                style={{ 
+                                    backgroundColor: `hsl(var(--sidebar-foreground) / 0.1)`,
+                                    borderColor: `hsl(var(--sidebar-foreground) / 0.2)`
+                                }}
+                            >
+                                <div className="flex items-center space-x-3">
+                                    <div 
+                                        className="w-10 h-10 rounded-xl flex items-center justify-center"
+                                        style={{ backgroundColor: `hsl(var(--sidebar-foreground) / 0.2)` }}
+                                    >
+                                        <i className="fi fi-rr-users h-5 w-5" style={{ color: `hsl(var(--sidebar-foreground))` }}></i>
+                                    </div>
+                                    <div className="text-left">
+                                        <h3 className="font-semibold" style={{ color: `hsl(var(--sidebar-foreground))` }}>Team Collaboration</h3>
+                                        <p className="text-sm opacity-80" style={{ color: `hsl(var(--sidebar-foreground))` }}>Seamless team coordination</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Right Section - Light Theme */}
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-16" style={{ backgroundColor: `hsl(var(--background))` }}>
+                <div className="relative w-full max-w-md space-y-8">
                         {alertMessage && (
                             <AlertMessage
                                 message={alertMessage}
@@ -95,67 +180,167 @@ export default function LoginForm() {
                             />
                         )}
 
-                        <div className="login_card_header flex flex-col items-center mb-6">
+                    <div className="space-y-6 text-center lg:text-left">
+                        <div className="flex items-center justify-center lg:justify-start space-x-3">
+                            <div 
+                                className="w-12 h-12 rounded-xl flex items-center justify-center"
+                                style={{ backgroundColor: `hsl(var(--primary))` }}
+                            >
                             <Image
                                 src="/logo.svg"
-                                alt="logo"
-                                width={150}
-                                height={150}
-                                style={{ objectFit: "contain" }}
-                            />
+                                    alt="Logo"
+                                    width={40}
+                                    height={40}
+                                    className="object-contain rounded"
+                                />
+                            </div>
+                            <div>
+                                <span className="text-2xl font-bold block" style={{ color: `hsl(var(--foreground))` }}>Audit Portal</span>
+                                <span className="text-xs font-medium uppercase tracking-wider opacity-70" style={{ color: `hsl(var(--muted-foreground))` }}>AUDIT & COMPLIANCE</span>
+                            </div>
                         </div>
 
-                        <div className="login_card_body text-center">
-                            <p className="mb-6 text-gray-600">Please enter your credentials to continue..</p>
-
-                            <form className="flex flex-col gap-4" onSubmit={handleLogin}>
-                                <div>
-                                    <input
-                                        type="text"
-                                        placeholder="Email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none w-full p-2"
-                                    />
-                                    {errors.email && (
-                                        <p className="text-red-500 text-sm text-start pt-1">{errors.email}</p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <input
-                                        type="password"
-                                        placeholder="Password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none"
-                                    />
-                                    {errors.password && (
-                                        <p className="text-red-500 text-sm text-start pt-1">{errors.password}</p>
-                                    )}
-                                </div>
-
-                                <Button
-                                    variant={"outline"}
-                                    type="submit"
-                                    className="px-4 py-2 rounded-lg text-sm cursor-pointer bg-sky-700 border-sky-800 hover:border-black hover:bg-black/85 hover:text-white text-white h-[40px] font-normal mt-2"
-                                    disabled={loading}
-                                >
-                                    {loading ? "Logging in..." : "Login"}
-                                </Button>
-                            </form>
-                        </div>
-
-                        <div className="login_card_footer mt-6 text-center text-sm text-gray-700">
-                            <p className="mt-2">
-                                <Link href="/forgot-password" className="text-sky-800 font-medium hover:underline">
-                                    Forgot Password?
-                                </Link>
-                            </p>
+                        <div className="space-y-3">
+                            <h1 className="text-4xl font-bold leading-tight" style={{ color: `hsl(var(--foreground))` }}>Welcome back</h1>
+                            <p className="text-lg opacity-70" style={{ color: `hsl(var(--muted-foreground))` }}>Sign in to your account</p>
                         </div>
                     </div>
-                </section>
+
+                    {/* Form */}
+                    <div 
+                        className="border rounded-2xl shadow-lg p-8"
+                        style={{ 
+                            backgroundColor: `hsl(var(--card))`,
+                            borderColor: `hsl(var(--border))`
+                        }}
+                    >
+                        <form onSubmit={handleLogin} className="space-y-6">
+                            {errors.email && !errors.password && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                    <p className="text-red-800 font-medium">{errors.email}</p>
+                                </div>
+                            )}
+
+                            <div className="space-y-3">
+                                <label htmlFor="email" className="text-sm font-medium" style={{ color: `hsl(var(--foreground))` }}>Email Address</label>
+                                <div className="relative">
+                                    <i className="fi fi-rr-envelope absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5" style={{ color: `hsl(var(--muted-foreground))` }}></i>
+                                    <input
+                                        id="email"
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="Enter your email"
+                                        className="h-12 pl-12 pr-4 w-full border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+                                        style={{
+                                            backgroundColor: `hsl(var(--input))`,
+                                            borderColor: `hsl(var(--border))`,
+                                            color: `hsl(var(--foreground))`
+                                        }}
+                                        onFocus={(e) => {
+                                            e.target.style.borderColor = `hsl(var(--ring))`;
+                                            e.target.style.boxShadow = `0 0 0 2px hsl(var(--ring) / 0.2)`;
+                                        }}
+                                        onBlur={(e) => {
+                                            e.target.style.borderColor = `hsl(var(--border))`;
+                                            e.target.style.boxShadow = 'none';
+                                        }}
+                                        required
+                                    />
+                                </div>
+                                    {errors.email && (
+                                    <p className="text-red-500 text-sm">{errors.email}</p>
+                                    )}
+                                </div>
+
+                            <div className="space-y-3">
+                                <label htmlFor="password" className="text-sm font-medium" style={{ color: `hsl(var(--foreground))` }}>Password</label>
+                                <div className="relative">
+                                    <i className="fi fi-rr-lock absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5" style={{ color: `hsl(var(--muted-foreground))` }}></i>
+                                    <input
+                                        id="password"
+                                        type={showPassword ? "text" : "password"}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="Enter your password"
+                                        className="h-12 pl-12 pr-12 w-full border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+                                        style={{
+                                            backgroundColor: `hsl(var(--input))`,
+                                            borderColor: `hsl(var(--border))`,
+                                            color: `hsl(var(--foreground))`
+                                        }}
+                                        onFocus={(e) => {
+                                            e.target.style.borderColor = `hsl(var(--ring))`;
+                                            e.target.style.boxShadow = `0 0 0 2px hsl(var(--ring) / 0.2)`;
+                                        }}
+                                        onBlur={(e) => {
+                                            e.target.style.borderColor = `hsl(var(--border))`;
+                                            e.target.style.boxShadow = 'none';
+                                        }}
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100 transition-opacity"
+                                        style={{ color: `hsl(var(--muted-foreground))` }}
+                                    >
+                                        {showPassword ? (
+                                            <i className="fi fi-rr-eye-crossed h-5 w-5"></i>
+                                        ) : (
+                                            <i className="fi fi-rr-eye h-5 w-5"></i>
+                                        )}
+                                    </button>
+                                </div>
+                                    {errors.password && (
+                                    <p className="text-red-500 text-sm">{errors.password}</p>
+                                    )}
+                                </div>
+
+                            <div className="flex items-center justify-end">
+                                <Link 
+                                    href="/forgot-password" 
+                                    className="text-sm font-medium hover:opacity-80 transition-opacity"
+                                    style={{ color: `hsl(var(--primary))` }}
+                                >
+                                    Forgot password?
+                                </Link>
+                        </div>
+
+                            <Button
+                                type="submit"
+                                className="w-full h-12 rounded-lg font-semibold transition-colors"
+                                style={{ 
+                                    backgroundColor: `hsl(var(--sidebar-background))`,
+                                    color: `hsl(var(--sidebar-foreground))`
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor = `hsl(var(--sidebar-hover))`;
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor = `hsl(var(--sidebar-background))`;
+                                }}
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <span className="flex items-center justify-center">
+                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5" style={{ color: `hsl(var(--sidebar-foreground))` }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Logging in...
+                                    </span>
+                                ) : (
+                                    <span className="flex items-center justify-center">
+                                        <i className="fi fi-rr-lock mr-2 h-5 w-5"></i>
+                                        Sign In
+                                    </span>
+                                )}
+                            </Button>
+                        </form>
+                    </div>
+                </div>
             </div>
-        </section>
+        </div>
     );
 }

@@ -22,18 +22,18 @@ export default function CommentsSection({
     onScroll: React.UIEventHandler<HTMLDivElement>;
 }) {
     return (
-        <div className="mb-4 max-h-[400px] overflow-y-auto border border-blue-200/50 rounded-lg bg-gray-1 p-4" onScroll={onScroll}>
+        <div className="mb-4 max-h-[400px] overflow-y-auto border border-border rounded-lg bg-gray-1 p-4" onScroll={onScroll}>
             {loadingOlder &&
-                <div className="text-center text-sm text-gray-400">Loading older messages...</div>
+                <div className="text-center text-sm text-muted-foreground">Loading older messages...</div>
             }
             {messages.length === 0 ? (
-                <div className="py-10 text-center text-gray-400">No comments found</div>
+                <div className="py-10 text-center text-muted-foreground">No comments found</div>
             ) : (messages.map(msg => (
                 <div key={msg.id} className={`mb-3 flex ${msg.sender === "self" ? "justify-end" : "justify-start"}`}>
-                    <div className={` max-w-[80%] relative border border-blue-200/50 rounded-[16px] py-2 px-3 ${msg.sender === "self" ? "bg-gradient-to-r from-white/80 to-blue-100/50 backdrop-blur[10px] text-black" : "border bg-white"} `}>
+                    <div className={` max-w-[80%] relative border border-border rounded-[16px] py-2 px-3 ${msg.sender === "self" ? "bg-card backdrop-blur[10px] text-brand-body" : "border bg-card"} `}>
                         {/* Display Commenter's Initials */}
                         {msg.commentedBy && (
-                            <div className={` absolute -top-2 ${msg.sender === "self" ? "-right-2 bg-sky-700 text-white" : "-left-2 bg-gray-200 text-gray-800"} w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ring-2 ${msg.sender === "self" ? "ring-0" : "ring-gray-300"} `} title={`${msg.commentedBy.name || msg.commentedBy.username || msg.commentedBy.email}`}>
+                            <div className={` absolute -top-2 ${msg.sender === "self" ? "-right-2 bg-sidebar-background text-card-foreground" : "-left-2 bg-gray-200 text-gray-800"} w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ring-2 ${msg.sender === "self" ? "ring-0" : "ring-gray-300"} `} title={`${msg.commentedBy.name || msg.commentedBy.username || msg.commentedBy.email}`}>
                                 {getInitials(msg.commentedBy.first_name, msg.commentedBy.last_name)}
                             </div>
                         )}
@@ -43,7 +43,7 @@ export default function CommentsSection({
                         {msg.attachments && msg.attachments.length > 0 && (
                             <div className="mt-2 text-sm mb-2">
                                 {msg.attachments.map((attachment) => (
-                                    <div key={attachment.id} className="flex items-center gap-2 mb-1 text-black">
+                                    <div key={attachment.id} className="flex items-center gap-2 mb-1 text-brand-body">
                                         {/* You can add an icon based on mimetype here */}
                                         {attachment.mimetype.startsWith('image/') && attachment.filepath ? (
                                             <img src={`${backendUrl.replace(/\/$/, '')}/${attachment.filepath.replace(/^\//, '')}`} className="w-10 h-10 object-cover border border-sky-600 rounded-full" alt={attachment.filename || "Attachment image"} />
@@ -53,7 +53,7 @@ export default function CommentsSection({
                                             </svg>
                                         )}
                                         {attachment.filepath && (
-                                            <a href={`${backendUrl.replace(/\/$/, '')}/${attachment.filepath.replace(/^\//, '')}`} target="_blank" rel="noopener noreferrer" className={`underline ${msg.sender === "self" ? "text-black" : "text-sky-700"}`}>
+                                            <a href={`${backendUrl.replace(/\/$/, '')}/${attachment.filepath.replace(/^\//, '')}`} target="_blank" rel="noopener noreferrer" className={`underline ${msg.sender === "self" ? "text-brand-body" : "text-brand-primary"}`}>
                                                 {attachment.filename}
                                             </a>
                                         )}

@@ -29,10 +29,10 @@ interface TaskItemProps {
 
 export default function TaskItem({ task, currentUserId, onView, onEdit, onDelete }: TaskItemProps) {
   return (
-    <div className="bg-white shadow rounded-lg px-4 py-3 flex justify-between items-center">
+    <div className="bg-card shadow rounded-lg px-4 py-3 flex justify-between items-center">
       <div>
         <span className="text-base font-medium text-dark block">{task.title}</span>
-        <div className="flex flex-wrap gap-3 mt-1.5 text-gray-500">
+        <div className="flex flex-wrap gap-3 mt-1.5 text-muted-foreground">
           <span className="text-xs flex gap-2 items-center">
             <HugeiconsIcon icon={MessageUser01Icon} className="w-4 h-4 text-primary" />
             {task.otherUser.username} ({task.otherUser.email})
@@ -57,7 +57,7 @@ export default function TaskItem({ task, currentUserId, onView, onEdit, onDelete
       </div>
 
       <div className="flex items-center gap-4">
-        <span className="text-xs text-black/40 font-medium">{new Date(task.createdAt).toLocaleDateString()}</span>
+        <span className="text-xs text-brand-body/40 font-medium">{new Date(task.createdAt).toLocaleDateString()}</span>
         <div className="flex gap-2">
           <button className="cursor-pointer" onClick={() => onView(btoa(task.id.toString()))}>
             <HugeiconsIcon icon={ViewIcon} className="w-4 h-4 text-primary" />

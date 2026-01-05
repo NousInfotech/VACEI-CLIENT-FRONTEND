@@ -75,10 +75,10 @@ export default function Insights() {
 
     return (
         <section className="mx-auto max-w-[1400px] w-full pt-5">
-            <div className="bg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md">
-                <h1 className="text-xl leading-normal text-black capitalize font-medium"> Insights</h1>
+            <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
+                <h1 className="text-xl leading-normal text-brand-body capitalize font-medium"> Insights</h1>
 
-                <div className="bg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto mt-5 transition-all duration-300 hover:shadow-md mb-5">
+                <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto mt-5 transition-all duration-300 hover:shadow-md mb-5">
                     <div className="flex gap-4 items-center">
                         <div className="image flex-1/6">
                             <Image
@@ -89,7 +89,7 @@ export default function Insights() {
                             />
                         </div>
                         <div className="content">
-                            <h2 className="text-xl leading-normal text-sky-800 capitalize font-semibold mb-2">About Recurring Expenses</h2>
+                            <h2 className="text-xl leading-normal text-brand-body capitalize font-semibold mb-2">About Recurring Expenses</h2>
                             <p>
                                 The report contains the prepaid subscriptions and recurring expenses we've detected on your books.
                                 Click a vendor below to see more details about the monthly trend and payment history.
@@ -98,13 +98,13 @@ export default function Insights() {
                     </div>
                 </div>
 
-                <div className="bg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto mt-5 transition-all duration-300 hover:shadow-md mb-5">
+                <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto mt-5 transition-all duration-300 hover:shadow-md mb-5">
                     <div className="relative overflow-x-auto border">
-                        <table className="w-full text-sm text-left text-gray-500">
-                            <thead className="text-xs text-gray-700 uppercase bg-gray-100">
+                        <table className="w-full text-sm text-left text-muted-foreground">
+                            <thead className="text-xs text-brand-body uppercase bg-brand-muted">
                                 <tr>
-                                    <th className="text-foreground h-10 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px] p-2 border-r border-gray-200 text-center font-medium w-1/2">Vendor</th>
-                                    <th className="text-foreground h-10 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px] p-2 border-r border-gray-200 text-center font-medium">Current Amount</th>
+                                    <th className="text-foreground h-10 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px] p-2 border-r border-border text-center font-medium w-1/2">Vendor</th>
+                                    <th className="text-foreground h-10 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px] p-2 border-r border-border text-center font-medium">Current Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -125,16 +125,16 @@ export default function Insights() {
                                         return (
                                             <tr
                                                 key={expense.id}
-                                                className="bg-white border-b border-gray-200 cursor-pointer hover:bg-gray-50"
+                                                className="bg-card border-b border-border cursor-pointer hover:bg-brand-body"
                                                 onClick={() => handleRowClick(expense)}
                                             >
-                                                <th scope="row" className="flex items-center px-6 py-4 font-medium text-gray-900">
+                                                <th scope="row" className="flex items-center px-6 py-4 font-medium text-brand-body">
                                                     <div className="ps-3">
                                                         <div className="text-base font-semibold">{expense.vendorName}</div>
                                                     </div>
                                                 </th>
                                                 <td className="px-6 py-4">
-                                                    <span className="font-medium text-black">{formatAmount(expense.totalAmount)}</span>
+                                                    <span className="font-medium text-brand-body">{formatAmount(expense.totalAmount)}</span>
                                                 </td>
                                             </tr>
                                         );
@@ -150,12 +150,12 @@ export default function Insights() {
                    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50 transition-all">
   <div
     ref={modalRef}
-    className="relative bg-white shadow-2xl rounded-2xl p-8 w-full max-w-5xl animate-fade-in border border-gray-200"
+    className="relative bg-card shadow-2xl rounded-2xl p-8 w-full max-w-5xl animate-fade-in border border-border"
   >
     {/* Close button */}
     <button
       onClick={() => setIsModalOpen(false)}
-      className="absolute top-5 right-5 text-gray-400 hover:text-gray-700 transition"
+      className="absolute top-5 right-5 text-muted-foreground hover:text-brand-body transition"
       aria-label="Close"
     >
       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none"
@@ -165,27 +165,27 @@ export default function Insights() {
     </button>
 
     {/* Header */}
-    <div className="pb-6 border-b border-gray-200 mb-6 flex justify-between items-center">
+    <div className="pb-6 border-b border-border mb-6 flex justify-between items-center">
       <h2 className="text-3xl font-bold text-gray-800">
         {selectedVendor.vendorName} — Overview
       </h2>
     </div>
 
     {/* Vendor Details - Grid */}
-    <div className="grid grid-cols-2 gap-6 text-sm text-gray-700 mb-8">
+    <div className="grid grid-cols-2 gap-6 text-sm text-brand-body mb-8">
       <div>
-        <span className="font-semibold text-gray-900 block">Current Amount:</span>
-        <span className="text-lg font-bold text-blue-600">{formatAmount(selectedVendor.totalAmount)}</span>
+        <span className="font-semibold text-brand-body block">Current Amount:</span>
+        <span className="text-lg font-bold text-brand-primary">{formatAmount(selectedVendor.totalAmount)}</span>
       </div>
       <div>
-        <span className="font-semibold text-gray-900 block">Transaction Count:</span>
+        <span className="font-semibold text-brand-body block">Transaction Count:</span>
         <span>{selectedVendor.transactionCount}</span>
       </div>
       <div>
-        <span className="font-semibold text-gray-900 block">Active:</span>
+        <span className="font-semibold text-brand-body block">Active:</span>
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium ${selectedVendor.active
-            ? "bg-green-100 text-green-700"
+            ? "bg-sidebar-background text-green-700"
             : "bg-red-100 text-red-700"
             }`}
         >
@@ -193,7 +193,7 @@ export default function Insights() {
         </span>
       </div>
       <div>
-        <span className="font-semibold text-gray-900 block">Created At:</span>
+        <span className="font-semibold text-brand-body block">Created At:</span>
         <span>{new Date(selectedVendor.createdAt).toLocaleDateString("en-GB", { year: "numeric", month: "short", day: "numeric" })}</span>
       </div>
     </div>
@@ -205,9 +205,9 @@ export default function Insights() {
     <h3 className="text-2xl font-semibold text-gray-800 mb-4">
       Transactions History
     </h3>
-    <div className="max-h-[28rem] overflow-y-auto border border-gray-200 rounded-xl shadow-inner">
-      <table className="w-full text-sm text-left text-gray-600">
-        <thead className="text-xs text-gray-700 uppercase bg-gray-100 sticky top-0 z-10 border-b">
+    <div className="max-h-[28rem] overflow-y-auto border border-border rounded-xl shadow-inner">
+      <table className="w-full text-sm text-left text-muted-foreground">
+        <thead className="text-xs text-brand-body uppercase bg-brand-muted sticky top-0 z-10 border-b">
           <tr>
             <th className="px-5 py-3">#</th>
             <th className="px-5 py-3">Date</th>
@@ -225,11 +225,11 @@ export default function Insights() {
               <tr
                 key={transaction.id}
                 className={`border-b last:border-0 transition ${
-                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                } hover:bg-blue-50`}
+                  index % 2 === 0 ? "bg-card" : "bg-brand-body"
+                } hover:bg-brand-primary50`}
               >
                 {/* Index */}
-                <td className="px-5 py-3 font-medium text-gray-500">
+                <td className="px-5 py-3 font-medium text-muted-foreground">
                   {index + 1}
                 </td>
 
@@ -265,7 +265,7 @@ export default function Insights() {
                             href={fullUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center px-2 py-1 text-xs rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                            className="inline-flex items-center px-2 py-1 text-xs rounded-md bg-brand-primary100 text-brand-primary700 hover:bg-brand-primary200 transition"
                           >
                               <HugeiconsIcon icon={AttachmentIcon} /> {att.fileName} 
                           </a>
@@ -273,7 +273,7 @@ export default function Insights() {
                       })}
                     </div>
                   ) : (
-                    <span className="text-gray-400 italic">None</span>
+                    <span className="text-muted-foreground italic">None</span>
                   )}
                 </td>
               </tr>
@@ -283,7 +283,7 @@ export default function Insights() {
     </div>
   </div>
 ) : (
-  <div className="mt-6 p-6 text-center text-gray-500 bg-gray-50 border border-gray-200 rounded-lg">
+  <div className="mt-6 p-6 text-center text-muted-foreground bg-brand-body border border-border rounded-lg">
     <p className="text-base font-medium">
       No transactions available for this vendor yet.
     </p>

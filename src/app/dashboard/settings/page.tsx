@@ -128,13 +128,13 @@ function SettingsContent() {
 
     return (
         <section className="mx-auto max-w-[1400px] w-full pt-5">
-            <div className="bg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md">
-                <h1 className="text-xl leading-normal text-black capitalize font-medium">Settings</h1>
+            <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
+                <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">Settings</h1>
                 <hr className="my-3 border-t border-gray-100" />
                 
                 {/* Change Password Section */}
                 <div className="mt-3">
-                    <h2 className="text-xl leading-normal text-black capitalize font-medium mb-3">Change Password</h2>
+                    <h2 className="text-xl leading-normal text-brand-body capitalize font-medium mb-3">Change Password</h2>
                     {/* Render the AlertMessage component here */}
                     {alert && (
                         <div className="mb-4"> {/* Added a div for consistent spacing */}
@@ -149,7 +149,7 @@ function SettingsContent() {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
-                            <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="currentPassword" className="block text-sm font-medium text-brand-body mb-1">
                                 Current Password
                             </label>
                             <input
@@ -159,7 +159,7 @@ function SettingsContent() {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 value={formData.currentPassword}
-                                className="block w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-blue-500 focus:border-brand-primary sm:text-sm"
                             />
                             {touched.currentPassword && errors.currentPassword ? (
                                 <div className="text-red-600 text-sm mt-1">{errors.currentPassword}</div>
@@ -167,7 +167,7 @@ function SettingsContent() {
                         </div>
 
                         <div>
-                            <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="newPassword" className="block text-sm font-medium text-brand-body mb-1">
                                 New Password
                             </label>
                             <input
@@ -177,7 +177,7 @@ function SettingsContent() {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 value={formData.newPassword}
-                                className="block w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-blue-500 focus:border-brand-primary sm:text-sm"
                             />
                             {touched.newPassword && errors.newPassword ? (
                                 <div className="text-red-600 text-sm mt-1">{errors.newPassword}</div>
@@ -185,7 +185,7 @@ function SettingsContent() {
                         </div>
 
                         <div>
-                            <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-brand-body mb-1">
                                 Confirm New Password
                             </label>
                             <input
@@ -195,7 +195,7 @@ function SettingsContent() {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 value={formData.confirmNewPassword}
-                                className="block w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-blue-500 focus:border-brand-primary sm:text-sm"
                             />
                             {touched.confirmNewPassword && errors.confirmNewPassword ? (
                                 <div className="text-red-600 text-sm mt-1">{errors.confirmNewPassword}</div>
@@ -204,9 +204,9 @@ function SettingsContent() {
 
                         <div className="flex">
                             <Button
-                                variant={"outline"}
+                                variant={"default"}
                                 type="submit"
-                                className="px-4 py-2 bg-green-600 text-white rounded-md transition-colors mr-2 cursor-pointer font-normal border-green-600 hover:text-green-600 hover:bg-white"
+                                className="px-4 py-2 bg-sidebar-background text-sidebar-foreground rounded-md transition-colors mr-2 cursor-pointer font-normal shadow-md hover:bg-sidebar-hover"
                                 disabled={isSubmitting}
                             >
                                 {isSubmitting ? 'Updating...' : 'Change Password'}

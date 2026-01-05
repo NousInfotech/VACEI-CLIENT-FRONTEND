@@ -70,9 +70,9 @@ export default function AccountsPayablePage() {
     return (
         <section className="mx-auto max-w-[1400px] w-full pt-5">
             {/* AP Aging Section */}
-            <div className="bg-white border border-gray-200 rounded-[10px] px-5 py-6 overflow-hidden mb-8">
-                <h1 className="text-xl leading-normal text-black capitalize font-medium">Accounts Payable Aging</h1>
-                    <p className="text-sm text-gray-600 mt-2 mb-4">
+            <div className="bg-card border border-border rounded-[10px] px-5 py-6 overflow-hidden mb-8">
+                <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">Accounts Payable Aging</h1>
+                    <p className="text-sm text-muted-foreground mt-2 mb-4">
                     Note: The Accounts Receivable aging report on this page displays data as of the End Date selected. This means the aging buckets (Current, 1-30 Days, etc.) are calculated based on how old the outstanding balances were relative to that specific End Date.
                 </p>
 
@@ -81,7 +81,7 @@ export default function AccountsPayablePage() {
                     <div className="flex flex-col sm:flex-row gap-4">
                         {/* Start Date Picker */}
                         <div className="flex items-center gap-2">
-                            <label htmlFor="startDatePicker" className="text-sm font-medium text-gray-700">Start Date:</label>
+                            <label htmlFor="startDatePicker" className="text-sm font-medium text-brand-body">Start Date:</label>
                             <DatePicker
                                 id="startDatePicker"
                                 selected={startDate}
@@ -94,7 +94,7 @@ export default function AccountsPayablePage() {
                                     setStartDate(date);
                                 }}
                                 dateFormat="yyyy-MM-dd"
-                                className="border border-gray-300 rounded-md p-2 text-sm focus:ring-blue-500 focus:border-blue-500 w-full sm:w-auto"
+                                className="border border-border rounded-md p-2 text-sm focus:ring-blue-500 focus:border-brand-primary w-full sm:w-auto"
                                 maxDate={new Date()}
                                 showMonthDropdown
                                 showYearDropdown
@@ -104,7 +104,7 @@ export default function AccountsPayablePage() {
 
                         {/* End Date Picker */}
                         <div className="flex items-center gap-2">
-                            <label htmlFor="endDatePicker" className="text-sm font-medium text-gray-700">End Date:</label>
+                            <label htmlFor="endDatePicker" className="text-sm font-medium text-brand-body">End Date:</label>
                             <DatePicker
                                 id="endDatePicker"
                                 selected={endDate}
@@ -112,7 +112,7 @@ export default function AccountsPayablePage() {
                                     setEndDate(date);
                                 }}
                                 dateFormat="yyyy-MM-dd"
-                                className="border border-gray-300 rounded-md p-2 text-sm focus:ring-blue-500 focus:border-blue-500 w-full sm:w-auto"
+                                className="border border-border rounded-md p-2 text-sm focus:ring-blue-500 focus:border-brand-primary w-full sm:w-auto"
                                 minDate={startDate || undefined}
                                 maxDate={new Date()}
                                 showMonthDropdown
@@ -124,7 +124,7 @@ export default function AccountsPayablePage() {
 
                     {/* Button to AR Page */}
                     <Link href="/dashboard/ap-ar-aging/account-receivable-aging" passHref>
-                        <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors w-full md:w-auto">
+                        <button className="bg-sidebar-background hover:bg-sidebar-hover text-sidebar-foreground font-bold py-2 px-4 rounded transition-colors w-full md:w-auto shadow-md">
                             Go to Account Receivable Aging
                         </button>
                     </Link>
@@ -137,7 +137,7 @@ export default function AccountsPayablePage() {
                         {/* Skeleton for Summary Row */}
                         <div className="grid grid-cols-1 md:grid-cols-6 gap-4 pt-4">
                             {[...Array(6)].map((_, i) => (
-                                <div key={i} className="border border-neutral-200 bg-white p-4 animate-pulse">
+                                <div key={i} className="border border-neutral-200 bg-card p-4 animate-pulse">
                                     <div className="h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
                                     <div className="h-6 bg-gray-300 rounded w-1/2"></div>
                                 </div>
@@ -145,7 +145,7 @@ export default function AccountsPayablePage() {
                         </div>
 
                         {/* Skeleton for Table */}
-                        <div className="bg-white shadow-sm p-4 mt-4">
+                        <div className="bg-card shadow-md p-4 mt-4">
                             <div className="border border-neutral-200 rounded-md overflow-hidden">
                                 <table className="w-full text-sm text-neutral-800">
                                     <thead className="bg-neutral-100 text-left uppercase text-xs tracking-wide text-neutral-500">
@@ -174,34 +174,34 @@ export default function AccountsPayablePage() {
                     <>
                         {/* Summary Row for AP Aging */}
                         <div className="grid grid-cols-1 md:grid-cols-6 gap-4 pt-4">
-                            <div className="border border-neutral-200 bg-white p-4">
+                            <div className="border border-neutral-200 bg-card p-4">
                                 <p className="text-xs text-neutral-500 uppercase mb-1">Current</p>
                                 <p className="text-lg font-semibold text-neutral-800">{formatCurrency(apAgingData.current)}</p>
                             </div>
-                            <div className="border border-neutral-200 bg-white p-4">
+                            <div className="border border-neutral-200 bg-card p-4">
                                 <p className="text-xs text-neutral-500 uppercase mb-1">1-30 Days</p>
                                 <p className="text-lg font-semibold text-neutral-800">{formatCurrency(apAgingData.agingBucket1_30)}</p>
                             </div>
-                            <div className="border border-neutral-200 bg-white p-4">
+                            <div className="border border-neutral-200 bg-card p-4">
                                 <p className="text-xs text-neutral-500 uppercase mb-1">31-60 Days</p>
                                 <p className="text-lg font-semibold text-neutral-800">{formatCurrency(apAgingData.agingBucket31_60)}</p>
                             </div>
-                            <div className="border border-neutral-200 bg-white p-4">
+                            <div className="border border-neutral-200 bg-card p-4">
                                 <p className="text-xs text-neutral-500 uppercase mb-1">61-90 Days</p>
                                 <p className="text-lg font-semibold text-neutral-800">{formatCurrency(apAgingData.agingBucket61_90)}</p>
                             </div>
-                            <div className="border border-neutral-200 bg-white p-4">
+                            <div className="border border-neutral-200 bg-card p-4">
                                 <p className="text-xs text-neutral-500 uppercase mb-1">91+ Days</p>
                                 <p className="text-lg font-semibold text-neutral-800">{formatCurrency(apAgingData.agingBucket91Over)}</p>
                             </div>
-                            <div className="border border-neutral-200 bg-white p-4">
+                            <div className="border border-neutral-200 bg-card p-4">
                                 <p className="text-xs text-neutral-500 uppercase mb-1">Total Outstanding AP</p>
                                 <p className="text-lg font-semibold text-neutral-800">{formatCurrency(apAgingData.total)}</p>
                             </div>
                         </div>
 
                         {/* Table for AP Aging */}
-                        <div className="bg-white shadow-sm p-4 mt-4">
+                        <div className="bg-card shadow-md p-4 mt-4">
                             <div className="border border-neutral-200 rounded-md overflow-hidden">
                                 <table className="w-full text-sm text-neutral-800">
                                     <thead className="bg-neutral-100 text-left uppercase text-xs tracking-wide text-neutral-500">

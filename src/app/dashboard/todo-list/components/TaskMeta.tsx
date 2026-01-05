@@ -46,14 +46,14 @@ export default function TaskMeta({
     return (
         <div className="my-3 flex flex-wrap items-end justify-between text-sm">
             <div className="flex flex-wrap items-center gap-4">
-                <p>Status: <span className="text-sky-800 font-medium">{task.status}</span></p>
-                <p>Category: <span className="text-sky-800 font-medium">{task.category}</span></p>
+                <p>Status: <span className="text-brand-body font-medium">{task.status}</span></p>
+                <p>Category: <span className="text-brand-body font-medium">{task.category}</span></p>
 
                 {/* Display multiple assigned accountants */}
                 {task.assignedAccountants && task.assignedAccountants.length > 0 && (
                     <span>
                         Assigned To:{" "}
-                        <span className="text-sky-800 font-medium">
+                        <span className="text-brand-body font-medium">
                             {task.assignedAccountants.map((accountant, index) => (
                                 <React.Fragment key={accountant.id}>
                                     {accountant.name} ({accountant.email})
@@ -84,7 +84,7 @@ export default function TaskMeta({
             {(canUpdateStatus && (!isResolved || currentUserId === task.createdById)) && (
                 <div className="mt-3 flex items-center gap-2 sm:mt-0">
                     <select
-                        className="border border-blue-200/50 rounded-lg px-3 py-2 bg-white text-sm text-gray-900 focus:outline-none focus:ring-0 h-[36px]"
+                        className="border border-border rounded-lg px-3 py-2 bg-card text-sm text-brand-body focus:outline-none focus:ring-0 h-[36px]"
                         value={selectedStatusId ?? ""}
                         onChange={e => setSelectedStatusId(parseInt(e.target.value))}
                         // Disable if resolved and not creator
@@ -100,7 +100,7 @@ export default function TaskMeta({
                     </select>
                     <Button
                         variant={"outline"}
-                        className="cursor-pointer text-white py-3 ps-3 pe-4 bg-sky-700 hover:bg-white hover:text-sky-800 border-sky-800"
+                        className="cursor-pointer text-card-foreground py-3 ps-3 pe-4 bg-sidebar-background hover:bg-card hover:text-brand-body border-sky-800"
                         onClick={handleStatusUpdate}
                         // Disable if resolved and not creator
                         disabled={isResolved && currentUserId !== task.createdById}

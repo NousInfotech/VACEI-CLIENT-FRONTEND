@@ -89,16 +89,16 @@ const AccountSelector: React.FC = () => {
     <div className="account-dropdown p-4">
       
       <select
-        className="w-full border rounded px-3 py-2 text-gray-700 focus:outline-none focus:ring bg-gray-800 text-white"
+        className="w-full border rounded px-3 py-2 text-brand-body focus:outline-none focus:ring bg-sidebar-hover text-card-foreground"
         disabled={loading}
         value={selectedAccount ?? ""}
         onChange={handleChange}
       >
-        <option value="" disabled className="text-white bg-gray-800">
+        <option value="" disabled className="text-card-foreground bg-sidebar-hover">
           {loading ? "Loading Accounts..." : "Select Account"}
         </option>
         {accounts.map((account) => (
-          <option key={account.id} value={account.id} className="text-white bg-gray-800">
+          <option key={account.id} value={account.id} className="text-card-foreground bg-sidebar-hover">
             {account.realmId}
           </option>
         ))}

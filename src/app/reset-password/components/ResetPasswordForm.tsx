@@ -98,7 +98,7 @@ export default function ResetPasswordForm() {
         <section className="banner_section min-h-screen flex items-center justify-center">
             <div className="mx-auto max-w-[1200px] px-8 w-full">
                 <section className="login_section flex justify-center">
-                    <div className="bg-white border border-blue-200/50 rounded-[16px] shadow-sm p-8 w-full max-w-md">
+                    <div className="bg-card border border-border rounded-[16px] shadow-md p-8 w-full max-w-md">
                         {alertMessage && (
                             <AlertMessage
                                 message={alertMessage}
@@ -120,7 +120,7 @@ export default function ResetPasswordForm() {
 
                         <div className="login_card_body text-center">
                             <h2 className="text-2xl font-bold mb-4 text-gray-800">Reset Your Password</h2>
-                            <p className="mb-6 text-gray-600">Enter your new password below.</p>
+                            <p className="mb-6 text-muted-foreground">Enter your new password below.</p>
 
                             <form className="flex flex-col gap-4" onSubmit={handleResetPassword}>
                                 <div>
@@ -150,7 +150,7 @@ export default function ResetPasswordForm() {
 
                                 <button
                                     type="submit"
-                                    className="bg-primary text-white py-3 rounded"
+                                    className="bg-primary text-card-foreground py-3 rounded"
                                     disabled={loading}
                                 >
                                     {loading ? "Resetting..." : "Reset Password"}
@@ -158,7 +158,7 @@ export default function ResetPasswordForm() {
                             </form>
                         </div>
 
-                        <div className="login_card_footer mt-6 text-center text-sm text-gray-700">
+                        <div className="login_card_footer mt-6 text-center text-sm text-brand-body">
                             <p className="mt-2">
                                 <Link href="/login" className="text-primary font-semibold hover:underline">
                                     Back to Login

@@ -26,7 +26,7 @@ const formatTimeForSelect = (dateObj: Date | null): string => {
 // Reusable TextInput component for consistency
 const TextInput: React.FC<TextInputProps> = ({ label, value, onChange, error, placeholder, className, type = 'text', textarea = false }) => (
     <div className={`mt-5 mb-5 ${className}`}> {/* Increased mb for better spacing */}
-        <label htmlFor={label} className="block text-gray-700 text-sm font-medium mb-2"> {/* Font-medium for label */}
+        <label htmlFor={label} className="block text-brand-body text-sm font-medium mb-2"> {/* Font-medium for label */}
             {label}
         </label>
         {textarea ? (
@@ -37,12 +37,12 @@ const TextInput: React.FC<TextInputProps> = ({ label, value, onChange, error, pl
                 placeholder={placeholder}
                 rows={4} // Default rows for textarea
                 className={`
-                    shadow-sm block w-full px-3 py-2
+                    shadow-md block w-full px-3 py-2
                     border rounded-md
-                    text-gray-900 placeholder-gray-400
-                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                    text-brand-body placeholder-gray-400
+                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-brand-primary
                     sm:text-sm
-                    ${error ? 'border-red-500' : 'border-gray-300'}
+                    ${error ? 'border-red-500' : 'border-border'}
                     transition ease-in-out duration-150
                 `}
             />
@@ -54,12 +54,12 @@ const TextInput: React.FC<TextInputProps> = ({ label, value, onChange, error, pl
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
                 placeholder={placeholder}
                 className={`
-                    shadow-sm block w-full px-3 py-2
+                    shadow-md block w-full px-3 py-2
                     border rounded-md
-                    text-gray-900 placeholder-gray-400
-                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                    text-brand-body placeholder-gray-400
+                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-brand-primary
                     sm:text-sm
-                    ${error ? 'border-red-500' : 'border-gray-300'}
+                    ${error ? 'border-red-500' : 'border-border'}
                     transition ease-in-out duration-150
                 `}
             />
@@ -77,7 +77,7 @@ const TimeSelect: React.FC<{
     error?: string;
 }> = ({ id, label, value, onChange, error }) => (
     <div className="mb-5"> {/* Consistent mb for better spacing */}
-        <label htmlFor={id} className="block text-gray-700 text-sm font-medium mb-2">
+        <label htmlFor={id} className="block text-brand-body text-sm font-medium mb-2">
             {label}:
         </label>
         <div className="relative"> {/* Added relative for custom arrow */}
@@ -88,12 +88,12 @@ const TimeSelect: React.FC<{
                 onChange={(e) => onChange(e.target.value)}
                 className={`
                     appearance-none block w-full px-3 py-2 pr-8 // pr-8 for arrow space
-                    border rounded-md shadow-sm
-                    text-gray-900 leading-tight
-                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                    bg-white
+                    border rounded-md shadow-md
+                    text-brand-body leading-tight
+                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-brand-primary
+                    bg-card
                     sm:text-sm
-                    ${error ? 'border-red-500' : 'border-gray-300'}
+                    ${error ? 'border-red-500' : 'border-border'}
                     transition ease-in-out duration-150
                 `}
             >
@@ -105,7 +105,7 @@ const TimeSelect: React.FC<{
                 ))}
             </select>
             {/* Custom arrow for select dropdown */}
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500"> {/* Adjusted text-gray-700 to text-gray-500 for a softer arrow */}
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground"> {/* Adjusted text-brand-body to text-muted-foreground for a softer arrow */}
 
             </div>
         </div>
@@ -151,7 +151,7 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
             />
 
             <div> {/* Wrapped accountant select in a div for consistent spacing */}
-                <label htmlFor="accountantId" className="block text-gray-700 text-sm font-medium mb-2">
+                <label htmlFor="accountantId" className="block text-brand-body text-sm font-medium mb-2">
                     Assign Accountant:
                 </label>
                 <div className="relative"> {/* Added relative for custom arrow */}
@@ -162,12 +162,12 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onFormChange('accountantId', e.target.value)}
                         className={`
                             appearance-none block w-full px-3 py-2 pr-8
-                            border rounded-md shadow-sm
-                            text-gray-900 leading-tight
-                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                            bg-white
+                            border rounded-md shadow-md
+                            text-brand-body leading-tight
+                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-brand-primary
+                            bg-card
                             sm:text-sm
-                            ${validationErrors.accountantId ? 'border-red-500' : 'border-gray-300'}
+                            ${validationErrors.accountantId ? 'border-red-500' : 'border-border'}
                             transition ease-in-out duration-150
                         `}
                     >
@@ -182,7 +182,7 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
                             <option disabled>No accountants available.</option>
                         )}
                     </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
 
                     </div>
                 </div>
@@ -190,21 +190,21 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
                     <p className="mt-1 text-xs text-red-600">{validationErrors.accountantId}</p>
                 )}
                 {accountants.length === 0 && (
-                    <p className="text-xs text-gray-500 mt-1">No accountants found. Please ensure data is loaded correctly.</p>
+                    <p className="text-xs text-muted-foreground mt-1">No accountants found. Please ensure data is loaded correctly.</p>
                 )}
             </div>
 
             <div className="flex flex-col sm:flex-row sm:space-x-4">
                 <div className="w-full sm:w-1/2">
-                    <label className="block text-gray-700 text-sm font-medium mb-2">
+                    <label className="block text-brand-body text-sm font-medium mb-2">
                         Selected Date:
                     </label>
                     <input
                         type="text"
                         value={selectedDateDisplay}
-                        className="shadow-sm block w-full px-3 py-2
-                                   border border-gray-300 rounded-md
-                                   text-gray-700 bg-gray-100 cursor-not-allowed
+                        className="shadow-md block w-full px-3 py-2
+                                   border border-border rounded-md
+                                   text-brand-body bg-brand-muted cursor-not-allowed
                                    sm:text-sm"
                         readOnly
                     />
@@ -231,7 +231,7 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
                     />
                 </div>
                 <div className="w-full sm:w-1/2">
-                    <label htmlFor="status" className="block text-gray-700 text-sm font-medium mb-2">
+                    <label htmlFor="status" className="block text-brand-body text-sm font-medium mb-2">
                         Status
                     </label>
                     <div className="relative">
@@ -242,12 +242,12 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
                             onChange={(e) => onFormChange('status', parseInt(e.target.value, 10))}
                             className={`
                                 appearance-none block w-full px-3 py-2 pr-8
-                                border rounded-md shadow-sm
-                                text-gray-900 leading-tight
-                                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                                bg-white
+                                border rounded-md shadow-md
+                                text-brand-body leading-tight
+                                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-brand-primary
+                                bg-card
                                 sm:text-sm
-                                ${validationErrors.status ? 'border-red-500' : 'border-gray-300'}
+                                ${validationErrors.status ? 'border-red-500' : 'border-border'}
                                 transition ease-in-out duration-150
                             `}
                         >
@@ -264,9 +264,9 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
                 <button
                     type="button"
                     onClick={onCancel}
-                    className="px-5 py-2 border border-gray-300 rounded-md
-                               text-gray-700 bg-white
-                               hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400
+                    className="px-5 py-2 border border-border rounded-md
+                               text-brand-body bg-card
+                               hover:bg-brand-body focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400
                                transition duration-150 ease-in-out text-sm font-medium"
                 >
                     Cancel
@@ -274,9 +274,9 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
                 <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-5 py-2 bg-green-600 text-white rounded-md
-                               hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500
-                               transition duration-150 ease-in-out disabled:opacity-50 text-sm font-medium"
+                    className="px-5 py-2 bg-sidebar-background text-sidebar-foreground rounded-md
+                               hover:bg-sidebar-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring/50
+                               transition duration-150 ease-in-out disabled:opacity-50 text-sm font-medium shadow-md"
                 >
                     {isSubmitting ? 'Saving...' : 'Save'}
                 </button>

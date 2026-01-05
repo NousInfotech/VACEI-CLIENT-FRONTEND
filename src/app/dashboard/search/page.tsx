@@ -119,17 +119,17 @@ function SearchContent() {
 
   return (
     <section className="mx-auto max-w-[1400px] w-full pt-5">
-      <div className="bg-white border border-gray-200 rounded-[10px] px-5 py-6 overflow-hidden">
-        <h1 className="text-xl leading-normal text-black capitalize font-medium">
+      <div className="bg-card border border-border rounded-[10px] px-5 py-6 overflow-hidden">
+        <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">
           Search Results
           {searchQuery && (
-            <span className="text-xl font-normal text-gray-500 ml-3">
+            <span className="text-xl font-normal text-muted-foreground ml-3">
               for "{searchQuery}"
             </span>
           )}
         </h1>
 
-        <div className="bg-white border border-gray-200 rounded-[10px] shadow-sm overflow-hidden p-6">
+        <div className="bg-card border border-border rounded-[10px] shadow-md overflow-hidden p-6">
           {loading ? (
             // Render skeleton loaders when loading is true
             <ul>
@@ -138,7 +138,7 @@ function SearchContent() {
               ))}
             </ul>
           ) : error ? (
-            <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
               <p className="text-lg font-medium">{error}</p>
             </div>
           ) : apiResults.length > 0 ? (
@@ -147,31 +147,31 @@ function SearchContent() {
                 <li key={result.id} className="mb-4 pb-4 border-b border-gray-100 last:border-b-0">
                   <Link
                     href={result.link}
-                    className="block p-3 -m-3 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
+                    className="block p-3 -m-3 rounded-md hover:bg-brand-body focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
                   >
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <h2 className="text-lg font-medium text-gray-800">{result.title}</h2>
                         {result.type && (
-                          <span className="flex items-center text-xs font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-full uppercase">
+                          <span className="flex items-center text-xs font-semibold text-brand-body bg-brand-muted px-3 py-1 rounded-full uppercase">
                             {getTypeIcon(result.type)}
                             {result.type}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 leading-relaxed">{result.description}</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{result.description}</p>
                       {result.type === 'Task' && (
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                           <span className="font-medium">Status:</span> {result.status} | <span className="font-medium">Category:</span> {result.category} | <span className="font-medium">Created By:</span> {result.createdBy}
                         </p>
                       )}
                       {result.type === 'Document' && (
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                           <span className="font-medium">Uploaded By:</span> {result.uploadedBy} | <span className="font-medium">Status:</span> {result.status} | <span className="font-medium">Year:</span> {result.year}
                         </p>
                       )}
                       {result.type === 'Meeting' && (
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                           <span className="font-medium">Client:</span> {result.client} | <span className="font-medium">Accountant:</span> {result.accountant} | <span className="font-medium">Time:</span> {new Date(result.startTime!).toLocaleTimeString()}
                         </p>
                       )}
@@ -181,12 +181,12 @@ function SearchContent() {
               ))}
             </ul>
           ) : (
-            <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
               <p className="text-lg font-medium">No results found</p>
               {searchQuery ? (
-                <p className="text-sm text-gray-500">for "{searchQuery}".</p>
+                <p className="text-sm text-muted-foreground">for "{searchQuery}".</p>
               ) : (
-                <p className="text-sm text-gray-500">Use "?q=yourquery" in the URL to search.</p>
+                <p className="text-sm text-muted-foreground">Use "?q=yourquery" in the URL to search.</p>
               )}
             </div>
           )}
@@ -194,17 +194,17 @@ function SearchContent() {
           {totalPages > 1 && !loading && ( // Only show pagination if not loading
             <div className="flex justify-center items-center space-x-2 mt-6">
               <button
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-brand-body bg-card hover:bg-brand-body disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                 onClick={() => setPage(page - 1)}
                 disabled={page === 1}
               >
                 Previous
               </button>
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-muted-foreground">
                 Page {page} of {totalPages}
               </span>
               <button
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-brand-body bg-card hover:bg-brand-body disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                 onClick={() => setPage(page + 1)}
                 disabled={page === totalPages}
               >

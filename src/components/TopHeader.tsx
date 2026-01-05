@@ -1,14 +1,14 @@
-'use client'; // This is correct for App Router client components
+'use client';
 
 import Link from "next/link";
-import ChatWrapper from "../components/ChatWrapper";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'; // Correctly imported
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Notification01Icon, Upload04Icon, Video01Icon } from '@hugeicons/core-free-icons';
-import { cn } from "@/lib/utils"
+import { PanelLeft, PanelLeftClose } from 'lucide-react';
+import { cn } from "@/lib/utils";
 
 import {
     Notification,
@@ -31,21 +31,21 @@ const HeaderNotificationItem: React.FC<HeaderNotificationItemProps> = ({ notific
         case 'meeting_scheduled':
         case 'meeting_updated':
         case 'task_assigned':
-            bgColorClass = notification.read ? 'bg-blue-50' : 'bg-blue-100';
-            textColorClass = notification.read ? 'text-blue-600' : 'text-blue-800';
+            bgColorClass = notification.read ? 'bg-brand-muted' : 'bg-brand-primary/10';
+            textColorClass = notification.read ? 'text-brand-primary' : 'text-brand-body';
             break;
         case 'meeting_canceled':
         case 'error':
-            bgColorClass = notification.read ? 'bg-red-50' : 'bg-red-100';
-            textColorClass = notification.read ? 'text-red-600' : 'text-red-800';
+            bgColorClass = notification.read ? 'bg-destructive/10' : 'bg-destructive/20';
+            textColorClass = notification.read ? 'text-destructive' : 'text-destructive';
             break;
         case 'chat_message':
-            bgColorClass = notification.read ? 'bg-sky-50' : 'bg-sky-100';
-            textColorClass = notification.read ? 'text-red-700' : 'text-sky-800';
+            bgColorClass = notification.read ? 'bg-brand-muted' : 'bg-sidebar-hover/30';
+            textColorClass = notification.read ? 'text-brand-body' : 'text-brand-body';
             break;
         default:
-            bgColorClass = notification.read ? 'bg-gray-50' : 'bg-sky-100/70';
-            textColorClass = notification.read ? 'text-gray-600' : 'text-gray-800';
+            bgColorClass = notification.read ? 'bg-brand-body' : 'bg-brand-muted';
+            textColorClass = notification.read ? 'text-muted-foreground' : 'text-brand-body';
     }
 
     // Truncate message for display in dropdown
@@ -58,10 +58,10 @@ const HeaderNotificationItem: React.FC<HeaderNotificationItemProps> = ({ notific
             {/* Added min-w-0 to allow the flex item to shrink below its content size.
                 Added overflow-hidden, text-ellipsis, and for visual truncation of text. */}
             <div className="flex-1 min-w-0">
-                <p className={`font-semibold text-sm ${textColorClass} overflow-hidden text-sky-800 text-ellipsis `}>
+                <p className={`font-semibold text-sm ${textColorClass} overflow-hidden text-ellipsis `}>
                     {displayMessage}
                 </p>
-                <small className="text-black text-xs">
+                <small className="text-brand-body text-xs">
                     {new Date(notification.createdAt).toLocaleString()}
                     {notification.read ? ' (Read)' : ' (Unread)'}
                 </small>
@@ -74,7 +74,7 @@ const HeaderNotificationItem: React.FC<HeaderNotificationItemProps> = ({ notific
                         onMarkAsRead(notification.id);
                     }}
                     // Added flex-shrink-0 to prevent the button from shrinking when space is tight.
-                    className="ml-2 !px-3 py-1 bg-sky-700 text-white rounded-md hover:bg-sky-700 transition-colors text-xs flex-shrink-0 cursor-pointer"
+                    className="ml-2 !px-3 py-1 bg-sidebar-background text-sidebar-foreground rounded-md hover:bg-sidebar-hover transition-colors text-xs flex-shrink-0 cursor-pointer shadow-md"
                 >
                     Mark
                 </Button>
@@ -84,12 +84,18 @@ const HeaderNotificationItem: React.FC<HeaderNotificationItemProps> = ({ notific
 };
 
 
-export default function TopHeader() {
+interface TopHeaderProps {
+    onSidebarToggle?: () => void;
+    isSidebarCollapsed?: boolean;
+}
+
+export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false }: TopHeaderProps) {
     const [unreadCount, setUnreadCount] = useState(0);
     const [showNotifications, setShowNotifications] = useState(false);
     const [latestNotifications, setLatestNotifications] = useState<Notification[]>([]);
     const notificationRef = useRef<HTMLDivElement>(null);
     const [searchTerm, setSearchTerm] = useState(''); // State for search input
+    const [username, setUsername] = useState<string>('User'); // State for username to avoid hydration error
 
     const router = useRouter();
     const pathname = usePathname();
@@ -124,6 +130,20 @@ export default function TopHeader() {
             setLatestNotifications(response.notifications);
         } catch (error) {
             console.error("Failed to fetch latest notifications:", error);
+        }
+    }, []);
+
+    // Set username on client side to avoid hydration error
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const storedUsername = localStorage.getItem("username");
+            if (storedUsername) {
+                try {
+                    setUsername(atob(storedUsername));
+                } catch (e) {
+                    setUsername('User');
+                }
+            }
         }
     }, []);
 
@@ -185,15 +205,37 @@ export default function TopHeader() {
     };
 
     return (
-        <>
-            <div className="bg-gradient-to-r from-white/80 to-blue-100/50 backdrop-blur[10px] border border-blue-200/50 rounded-[16px] py-3 px-4">
-                <div className="flex flex-wrap justify-between items-center lg:gap-10 gap-5">
-                    <div className="flex items-center gap-2 max-w-[350px]">
+        <header 
+            className="h-16 backdrop-blur-xl border flex items-center justify-between px-6 sticky top-0 z-40 rounded-[2rem] m-2 mb-0 mr-2 bg-background/80 shadow-lg"
+            style={{
+                borderColor: `hsl(var(--border))`,
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)'
+            }}
+        >
+            <div className="flex items-center gap-4">
+                {/* Sidebar toggle - visible on desktop only */}
+                {onSidebarToggle && (
+                    <button
+                        className="hidden md:flex p-2 rounded-2xl hover:bg-[hsl(var(--muted))] transition-colors group"
+                        onClick={onSidebarToggle}
+                        aria-label={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                        title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                    >
+                        {isSidebarCollapsed ? (
+                            <PanelLeft className="h-5 w-5 group-hover:scale-110 transition-transform text-[hsl(var(--foreground))]" />
+                        ) : (
+                            <PanelLeftClose className="h-5 w-5 group-hover:scale-110 transition-transform text-[hsl(var(--foreground))]" />
+                        )}
+                    </button>
+                )}
+
+                {/* Search */}
+                <div className="flex items-center gap-2 max-w-[350px] flex-1">
                         <div className="relative flex w-full">
                             <Input
                                 type="text"
                                 placeholder="Search..."
-                                className="caret-sky-700 bg-white capitalize text-[#3D3D3D] border-blue-200/50 border-r-0 placeholder-[#3D3D3D] rounded-lg rounded-r-none focus:outline-none w-full h-[37px] ps-4 focus:ring-0 focus-visible:ring-0"
+                            className="caret-[hsl(var(--primary))] bg-card capitalize text-[hsl(var(--foreground))] border-[hsl(var(--border))] border-r-0 placeholder-gray-500 rounded-lg rounded-r-none focus:outline-none w-full h-[37px] ps-4 focus:ring-2 focus:ring-[hsl(var(--ring))] focus-visible:ring-2"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 onKeyPress={(e) => {
@@ -204,41 +246,47 @@ export default function TopHeader() {
                             />
                             <Button
                                 onClick={handleSearchClick}
-                                className="bg-sky-700 text-white py-3 ps-3 pe-4 rounded-s-none font-medium cursor-pointer hover:bg-sky-700 transition-colors focus:outline-none focus:ring-2 focus:ring-sky-600"
+                            className="bg-[hsl(var(--primary))] text-card-foreground py-3 ps-3 pe-4 rounded-s-none font-medium cursor-pointer hover:bg-[hsl(var(--primary-hover))] transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
                             >
-                                <i className="fi fi-rr-search text-base leading-0 block"></i>
+                                <i className="fi fi-rr-search text-base leading-0 block" style={{ color: '#ffffff' }}></i>
                             </Button>
                         </div>
                     </div>
-                    <ChatWrapper />
-                    <div className="flex flex-wrap items-center lg:gap-3 gap-5">
+            </div>
+
+            <div className="flex items-center gap-3">
+                {/* Quick Actions */}
                         <Link href="/dashboard/document-organizer/document-upload">
-                            <Button variant="outline" className="flex size-custom gap-1 rounded-lg text-xs cursor-pointer transition-colors focus:outline-none focus:ring-2">
-                                <HugeiconsIcon icon={Upload04Icon} className="w-5 h-5 size-custom" />Upload
+                    <Button variant="outline" className="flex items-center gap-1 rounded-2xl text-xs cursor-pointer transition-colors focus:outline-none focus:ring-2 border-[hsl(var(--border))] hover:bg-[hsl(var(--muted))]">
+                        <HugeiconsIcon icon={Upload04Icon} className="w-5 h-5" />
+                        Upload
                             </Button>
                         </Link>
+                
                         <Link href="/dashboard/schedule">
-                            <Button variant="outline" className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs cursor-pointer">
-                                <HugeiconsIcon icon={Video01Icon} className="w-5 h-5 size-custom" />
+                    <Button variant="outline" className="flex items-center gap-2 px-4 py-2 rounded-2xl text-xs cursor-pointer border-[hsl(var(--border))] hover:bg-[hsl(var(--muted))]">
+                        <HugeiconsIcon icon={Video01Icon} className="w-5 h-5" />
                                 Schedule a Call
                             </Button>
                         </Link>
+
+                {/* Notifications */}
                         <div className="relative" ref={notificationRef}>
                             <Button
-                                variant="link"
+                        variant="ghost"
                                 onClick={toggleNotifications}
-                                className="text-[#3D3D3D] cursor-pointer relative p-0 size-custom"
+                        className="h-9 w-9 rounded-2xl hover:bg-[hsl(var(--muted))] cursor-pointer relative"
                             >
-                                <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5 size-custom" />
+                        <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5 text-[hsl(var(--foreground))]" />
                                 {unreadCount > 0 && (
-                                    <span className="absolute -top-0 right-1.5 bg-sky-700 text-white !text-[10px] size-custom rounded-full h-4 w-4 flex items-center justify-center">
+                            <span className="absolute -top-0 right-1.5 bg-[hsl(var(--primary))] text-card-foreground !text-[10px] rounded-full h-4 w-4 flex items-center justify-center">
                                         {unreadCount}
                                     </span>
                                 )}
                             </Button>
                             {showNotifications && (
-                                <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4 max-h-96 overflow-y-auto">
-                                    <h3 className="text-lg font-semibold mb-3 !text-sky-700 hover:text-sky-700">Latest Notifications</h3>
+                        <div className="absolute right-0 mt-2 w-80 bg-card border border-[hsl(var(--border))] rounded-2xl shadow-lg z-50 p-4 max-h-96 overflow-y-auto">
+                            <h3 className="text-lg font-semibold mb-3 text-[hsl(var(--foreground))]">Latest Notifications</h3>
                                     {latestNotifications.length > 0 ? (
                                         latestNotifications.map((notification) => (
                                             <Link href={notification.link || '#'} key={notification.id} passHref>
@@ -262,13 +310,13 @@ export default function TopHeader() {
                                             </Link>
                                         ))
                                     ) : (
-                                        <p className="text-gray-600 text-sm">No new notifications.</p>
+                                        <p className="text-muted-foreground text-sm">No new notifications.</p>
                                     )}
                                     <div className="text-center mt-3">
-                                        <Link href="/dashboard/notifications" passHref className="">
+                                <Link href="/dashboard/notifications" passHref>
                                             <Button
                                                 variant="link"
-                                                className="!text-sky-700 hover:text-sky-700 hover:underline text-sm cursor-pointer font-medium !py-0 h-fit"
+                                        className="text-[hsl(var(--primary))] hover:text-[hsl(var(--primary-hover))] hover:underline text-sm cursor-pointer font-medium !py-0 h-fit"
                                                 onClick={() => setShowNotifications(false)}
                                             >
                                                 Read More
@@ -278,9 +326,62 @@ export default function TopHeader() {
                                 </div>
                             )}
                         </div>
+
+                {/* Settings */}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-2xl hover:bg-[hsl(var(--muted))]"
+                    aria-label="Open settings"
+                    title="Settings"
+                >
+                    <i className="fi fi-rr-settings text-[hsl(var(--foreground))]"></i>
+                </Button>
+
+                {/* User profile */}
+                <div 
+                    className="flex items-center gap-3 pl-3 border-l"
+                    style={{ borderColor: `hsl(var(--border))` }}
+                >
+                    <div className="hidden sm:block text-right">
+                        <p className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                            {username}
+                        </p>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] capitalize">
+                            Employee
+                        </p>
                     </div>
+
+                    {/* User avatar */}
+                    <div className="relative">
+                        <div 
+                            className="w-8 h-8 rounded-2xl flex items-center justify-center bg-[hsl(var(--muted))]"
+                        >
+                            <span className="text-[hsl(var(--foreground))] text-xs font-semibold">
+                                {username.charAt(0).toUpperCase()}
+                            </span>
+                        </div>
+                        <div 
+                            className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background"
+                        ></div>
+                    </div>
+
+                    {/* Logout button */}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                            if (typeof window !== 'undefined') {
+                                localStorage.clear();
+                                router.push('/login');
+                            }
+                        }}
+                        className="h-9 w-9 rounded-2xl text-red-400 hover:text-red-300 hover:bg-red-900/20 transition-colors"
+                    >
+                        <i className="fi fi-rr-sign-out-alt"></i>
+                    </Button>
                 </div>
             </div>
-        </>
+        </header>
     );
 }

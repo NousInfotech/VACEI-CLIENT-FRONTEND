@@ -17,15 +17,8 @@ export default function ChatWrapper() {
 
   return (
     <div
+      className="fixed bottom-4 right-4 z-50"
       style={{
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        width: "100%",
-        backgroundColor: "#fff",
-        borderTop: "1px solid #ccc",
-        boxShadow: "0 -2px 8px rgba(0,0,0,0.1)",
-        zIndex: 1000,
         maxHeight: "300px",
         overflow: "auto",
       }}

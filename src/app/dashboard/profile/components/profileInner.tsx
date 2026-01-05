@@ -13,7 +13,7 @@ interface UserProfile {
 }
 
 const SkeletonInput = () => (
-  <div className="w-full bg-white shadow-lg rounded-xl p-6 sm:p-8 space-y-6 border border-gray-200"> </div>
+  <div className="w-full bg-card shadow-lg rounded-xl p-6 sm:p-8 space-y-6 border border-border"> </div>
 );
 
 const ProfilePage: React.FC = () => {
@@ -116,7 +116,7 @@ const ProfilePage: React.FC = () => {
 
         {/* Show skeletons while loading */}
       {loading && (
-        <div className="w-full bg-white shadow-lg rounded-xl p-6 sm:p-8 space-y-4 border border-gray-200"> {/* Main container for skeleton */}
+        <div className="w-full bg-card shadow-lg rounded-xl p-6 sm:p-8 space-y-4 border border-border"> {/* Main container for skeleton */}
           {/* Readonly Fields Skeletons */}
           <div className="space-y-4">
             <SkeletonInput /> {/* Email */}
@@ -153,7 +153,7 @@ const ProfilePage: React.FC = () => {
               label="Email"
               value={userProfile.email}
               onChange={() => {}}
-              className="bg-gray-50 text-gray-600 cursor-not-allowed  rounded-md " // Enhanced styling for readonly
+              className="bg-brand-body text-muted-foreground cursor-not-allowed  rounded-md " // Enhanced styling for readonly
               type="email"
               {...{ readOnly: true }}
             />
@@ -161,7 +161,7 @@ const ProfilePage: React.FC = () => {
               label="Username"
               value={userProfile.username || ''}
               onChange={() => {}}
-              className="bg-gray-50 text-gray-600 cursor-not-allowed rounded-md"
+              className="bg-brand-body text-muted-foreground cursor-not-allowed rounded-md"
               {...{ readOnly: true }}
             />
             <TextInput
@@ -176,7 +176,7 @@ const ProfilePage: React.FC = () => {
                   : 'Unknown'
               }
               onChange={() => {}}
-              className="bg-gray-50 text-gray-600 cursor-not-allowed  rounded-md"
+              className="bg-brand-body text-muted-foreground cursor-not-allowed  rounded-md"
               {...{ readOnly: true }}
             />
           </div>
@@ -226,8 +226,8 @@ const ProfilePage: React.FC = () => {
           <button
             type="submit"
             disabled={saving}
-            className={`w-full sm:w-auto mt-6 px-6 py-3 rounded-lg text-white font-semibold transition duration-300 ease-in-out
-              ${saving ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2'}`}
+            className={`w-full sm:w-auto mt-6 px-6 py-3 rounded-lg text-card-foreground font-semibold transition duration-300 ease-in-out
+              ${saving ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-sidebar-hover focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2'}`}
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </button>

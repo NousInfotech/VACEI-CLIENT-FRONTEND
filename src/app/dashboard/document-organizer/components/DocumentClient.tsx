@@ -83,8 +83,8 @@ function DocumentViewPageInner() {
               onClick={() => setPreviewFile(file)}
               className={`border p-2 text-sm cursor-pointer rounded ${
                 previewFile?.id === file.id
-                  ? "bg-blue-100 border-blue-500"
-                  : "border-gray-300"
+                  ? "bg-brand-primary100 border-brand-primary"
+                  : "border-border"
               }`}
             >
               {file.fileName}

@@ -5,8 +5,20 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { MenuItem } from "@/lib/menuData";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { cn } from "@/lib/utils";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-export default function SidebarMenu({ menu }: { menu: MenuItem[] }) {
+interface SidebarMenuProps {
+    menu: MenuItem[];
+    isCollapsed?: boolean;
+}
+
+export default function SidebarMenu({ menu, isCollapsed = false }: SidebarMenuProps) {
     const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
     const pathname = usePathname();
 
@@ -17,55 +29,168 @@ export default function SidebarMenu({ menu }: { menu: MenuItem[] }) {
         }));
     };
 
-    return (
-        <ul className="menu">
-            {menu.map((item) => {
+    const menuItems = menu.map((item) => {
                 const hasChildren = item.children && item.children.length > 0;
                 const isOpen = openItems[item.slug];
                 const isActive = pathname === item.href;
                 const hasActiveChild = item.children?.some((child) => pathname === child.href);
 
-                return (
-                    <li
-                        key={item.slug}
-                        className={`sidebar-item ${isOpen ? "open" : ""} ${hasChildren ? "has-children" : ""} ${isActive || hasActiveChild ? "active" : ""
-                            }`}
-                    >
-                        <div className="sidebar-item flex items-center gap-2">
-                            <Link href={item.href}
-                                className={`flex-1 flex items-center gap-2 p-2 hover:text-sky-600 rounded-lg ${isActive ? 'text-sky-600' : 'text-gray-700 hover:bg-gray-100'}`}>
-                                <HugeiconsIcon icon={item.icon} className="w-6 h-6" />
-                                <span className="flex-1 text-base font-normal">{item.label}</span>
-                            </Link>
-                            {hasChildren && (
-                                <i
-                                    className={`${isOpen ? "fi fi-br-angle-up" : "fi fi-br-angle-down"} arrows`}
-                                    onClick={() => toggleItem(item.slug)}
-                                />
-                            )}
-                        </div>
+        const linkContent = (
+            <Link
+                key={item.href}
+                href={item.href}
+                onClick={(e) => {
+                    if (hasChildren && !isCollapsed) {
+                        e.preventDefault();
+                        toggleItem(item.slug);
+                    }
+                }}
+                className={cn(
+                    'group relative flex items-center transition-all duration-300 ease-out',
+                    isCollapsed 
+                        ? 'justify-center px-2 py-3 rounded-2xl' 
+                        : 'gap-4 px-4 py-3 rounded-2xl',
+                    'hover:scale-[1.02] hover:shadow-lg border'
+                )}
+                style={{
+                    backgroundColor: isActive || hasActiveChild ? `hsl(var(--sidebar-active))` : 'transparent',
+                    color: isActive || hasActiveChild ? `hsl(var(--sidebar-foreground))` : `hsl(var(--sidebar-foreground) / 0.8)`,
+                    borderColor: isActive || hasActiveChild ? `hsl(var(--sidebar-border))` : 'transparent'
+                }}
+                onMouseEnter={(e) => {
+                    if (!isActive && !hasActiveChild) {
+                        e.currentTarget.style.backgroundColor = `hsl(var(--sidebar-hover))`;
+                        e.currentTarget.style.color = `hsl(var(--sidebar-foreground))`;
+                    }
+                }}
+                onMouseLeave={(e) => {
+                    if (!isActive && !hasActiveChild) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = `hsl(var(--sidebar-foreground) / 0.8)`;
+                    }
+                }}
+            >
+                {/* Active indicator */}
+                {(isActive || hasActiveChild) && !isCollapsed && (
+                    <div 
+                        className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full"
+                        style={{ backgroundColor: `hsl(var(--accent))` }}
+                    ></div>
+                )}
+                
+                {/* Icon container */}
+                <div 
+                    className={cn(
+                        'relative flex items-center justify-center transition-all duration-300',
+                        isCollapsed ? 'w-8 h-8' : 'w-10 h-10',
+                        'rounded-xl'
+                    )}
+                    style={{
+                        backgroundColor: isActive || hasActiveChild ? `hsl(var(--accent))` : `hsl(var(--sidebar-hover))`,
+                        color: isActive || hasActiveChild ? `hsl(var(--accent-foreground))` : `hsl(var(--sidebar-foreground))`
+                    }}
+                >
+                    <HugeiconsIcon icon={item.icon} className={cn(isCollapsed ? "h-4 w-4" : "h-5 w-5")} />
+                </div>
 
-                        {hasChildren && isOpen && item.children && (
-                            <ul className="mt-1 space-y-1 bg-gradient-to-r from-blue-100 to-blue-100/50 backdrop-blur[10px] border border-blue-200/50 rounded-[16px]">
-                                {item.children.map((child) => {
-                                    const isChildActive = pathname === child.href;
-                                    return (
-                                        <li key={child.label} className={isChildActive ? "active_submenu" : ""}>
-                                            <Link
-                                                href={child.href}
-                                                className="flex items-center !gap-2 text-gray-600 hover:underline hover:!text-sky-800"
-                                            >
-                                                <HugeiconsIcon icon={child.icon} className="w-4.5 h-4.5" />
-                                                <span className="text-sm font-normal">{child.label}</span>
-                                            </Link>
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        )}
-                    </li>
-                );
-            })}
+                {/* Text content */}
+                {!isCollapsed && (
+                    <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-sm truncate">{item.label}</div>
+                    </div>
+                )}
+
+                {/* Arrow for children */}
+                {hasChildren && !isCollapsed && (
+                    <i
+                        className={`${isOpen ? "fi fi-br-angle-up" : "fi fi-br-angle-down"} arrows`}
+                        style={{ color: `hsl(var(--sidebar-foreground))` }}
+                    />
+                )}
+
+                {/* Hover effect */}
+                <div className={cn(
+                    'absolute inset-0 transition-opacity duration-300 rounded-2xl pointer-events-none',
+                    isActive || hasActiveChild ? 'opacity-0' : 'opacity-0 group-hover:opacity-10'
+                )}
+                style={{ backgroundColor: `hsl(var(--sidebar-foreground))` }}
+                ></div>
+            </Link>
+        );
+
+        const menuItemContent = (
+            <>
+                {linkContent}
+
+                {/* Children menu - only show when not collapsed */}
+                {hasChildren && isOpen && item.children && !isCollapsed && (
+                    <ul className="mt-2 ml-4 space-y-1 border-l-2 pl-4" style={{ borderColor: `hsl(var(--sidebar-border))` }}>
+                        {item.children.map((child) => {
+                            const isChildActive = pathname === child.href;
+                            return (
+                                <li key={child.label}>
+                                    <Link
+                                        href={child.href}
+                                        className={cn(
+                                            "flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all",
+                                            isChildActive ? "font-semibold" : "opacity-80"
+                                        )}
+                                        style={{
+                                            color: isChildActive ? `hsl(var(--accent))` : `hsl(var(--sidebar-foreground) / 0.8)`,
+                                            backgroundColor: isChildActive ? `hsl(var(--sidebar-hover))` : 'transparent'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (!isChildActive) {
+                                                e.currentTarget.style.backgroundColor = `hsl(var(--sidebar-hover))`;
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (!isChildActive) {
+                                                e.currentTarget.style.backgroundColor = 'transparent';
+                                            }
+                                        }}
+                                    >
+                                        <HugeiconsIcon icon={child.icon} className="h-4 w-4" />
+                                        <span>{child.label}</span>
+                                    </Link>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
+            </>
+        );
+
+        // Wrap with tooltip when collapsed
+        if (isCollapsed) {
+            return (
+                <Tooltip key={item.slug}>
+                    <TooltipTrigger asChild>
+                        {linkContent}
+                    </TooltipTrigger>
+                    <TooltipContent 
+                        side="right" 
+                        className="shadow-lg"
+                        style={{
+                            backgroundColor: `hsl(var(--sidebar-accent))`,
+                            color: `hsl(var(--sidebar-accent-foreground))`,
+                            borderColor: `hsl(var(--sidebar-border))`
+                        }}
+                    >
+                        <p className="font-semibold">{item.label}</p>
+                    </TooltipContent>
+                </Tooltip>
+            );
+        }
+
+        return <li key={item.slug}>{menuItemContent}</li>;
+    });
+
+    return (
+        <TooltipProvider delayDuration={300}>
+            <ul className="menu space-y-2">
+                {menuItems}
         </ul>
+        </TooltipProvider>
     );
 }

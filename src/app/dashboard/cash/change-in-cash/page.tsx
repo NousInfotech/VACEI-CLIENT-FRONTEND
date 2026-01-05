@@ -9,13 +9,13 @@ import {
 } from '@/api/financialReportsApi';
 
 const CurrentBalanceDisplay = ({ label, value, isEstimated = true }: { label: string; value: string; isEstimated?: boolean }) => {
-    const valueColorClass = parseFloat(value.replace(/€|,/g, '')) < 0 ? 'text-red-600' : 'text-2xl font-semibold text-sky-800';
+    const valueColorClass = parseFloat(value.replace(/€|,/g, '')) < 0 ? 'text-red-600' : 'text-2xl font-semibold text-brand-body';
     return (
-        <div className="rounded-xl p-3 w-full bg-white backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100">
-            <p className="text-sm font-semibold text-gray-900">{label}</p>
+        <div className="rounded-xl p-3 w-full bg-card backdrop-blur-sm shadow-md hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100">
+            <p className="text-sm font-semibold text-brand-body">{label}</p>
             <p className="text-2xl font-bold flex items-center justify-between">
                 {isEstimated && (
-                    <span className="text-xs text-sky-700">
+                    <span className="text-xs text-brand-primary">
                         Estimated
                     </span>
                 )}
@@ -78,8 +78,8 @@ export default function ChangeInCashPage() {
 
     return (
         <section className="mx-auto max-w-[1400px] w-full pt-5">
-            <div className="bg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md">
-                <h1 className="text-xl leading-normal text-black capitalize font-medium">
+            <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
+                <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">
                     Change in Cash
                 </h1>
                 <p className="text-md text-neutral-600 mb-4 mt-1">
@@ -89,11 +89,11 @@ export default function ChangeInCashPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-5">
                     {isLoading ? (
                         <>
-                            <div className="rounded-xl p-3 w-full bg-white backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100 animate-pulse">
+                            <div className="rounded-xl p-3 w-full bg-card backdrop-blur-sm shadow-md hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100 animate-pulse">
                                 <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
                                 <div className="h-8 bg-gray-200 rounded w-3/4"></div>
                             </div>
-                            <div className="rounded-xl p-3 w-full bg-white backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100 animate-pulse">
+                            <div className="rounded-xl p-3 w-full bg-card backdrop-blur-sm shadow-md hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100 animate-pulse">
                                 <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
                                 <div className="h-8 bg-gray-200 rounded w-3/4"></div>
                             </div>
@@ -121,7 +121,7 @@ export default function ChangeInCashPage() {
                 </div>
 
                 {isLoading ? (
-                    <div className="bg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md">
+                    <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
                         <div className="flex justify-between items-center mb-4">
                             <div className="h-6 bg-gray-200 rounded w-1/4"></div>
                             <div className="flex space-x-2">
@@ -130,7 +130,7 @@ export default function ChangeInCashPage() {
                                 <div className="h-8 bg-gray-200 rounded w-20"></div>
                             </div>
                         </div>
-                        <div className="h-[350px] bg-gray-100 rounded"></div>
+                        <div className="h-[350px] bg-brand-muted rounded"></div>
                     </div>
                 ) : showDataContent ? (
                     <div className="mt-">
@@ -142,19 +142,19 @@ export default function ChangeInCashPage() {
                     </div>
                 )}
 
-                <h2 className="text-xl leading-normal text-black capitalize font-medium mt-10 mb-6 border-t pt-6 border-gray-200">
+                <h2 className="text-xl leading-normal text-brand-body capitalize font-medium mt-10 mb-6 border-t pt-6 border-border">
                     Detailed Cash Flow Report
                 </h2>
-                <div className="bg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md">
+                <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
                     {isLoading ? (
                         <div className="w-full overflow-x-auto">
                             <div className="min-w-[800px]">
-                                <table className="w-full text-sm text-black border-collapse table_custom1">
-                                    <thead className="text-xs text-black uppercase bg-gray-50">
+                                <table className="w-full text-sm text-brand-body border-collapse table_custom1">
+                                    <thead className="text-xs text-brand-body uppercase bg-brand-body">
                                         <tr>
-                                            <th className="bg-gray-100 z-10 p-2 px-8 w-60 text-left font-semibold border-gray-200"></th>
+                                            <th className="bg-brand-muted z-10 p-2 px-8 w-60 text-left font-semibold border-border"></th>
                                             {Array.from({ length: 6 }).map((_, index) => (
-                                                <th key={index} className="bg-gray-100 z-10 p-2 px-8 w-60 text-left font-semibold border-gray-200">
+                                                <th key={index} className="bg-brand-muted z-10 p-2 px-8 w-60 text-left font-semibold border-border">
                                                     <div className="h-4 bg-gray-200 rounded w-24"></div>
                                                 </th>
                                             ))}
@@ -177,14 +177,14 @@ export default function ChangeInCashPage() {
                     ) : (
                         <div className="w-full overflow-x-auto">
                             <div className="min-w-[800px]">
-                                <table className="w-full text-sm text-black border-collapse table_custom1">
-                                    <thead className="text-xs text-black uppercase bg-gray-50">
+                                <table className="w-full text-sm text-brand-body border-collapse table_custom1">
+                                    <thead className="text-xs text-brand-body uppercase bg-brand-body">
                                         <tr>
-                                            <th className="bg-gray-100 z-10 p-2 px-8 w-60 text-left font-semibold border-gray-200 sticky left-0">
+                                            <th className="bg-brand-muted z-10 p-2 px-8 w-60 text-left font-semibold border-border sticky left-0">
                                                 Category
                                             </th>
                                             {monthlyCashFlowData.months.map((month, index) => (
-                                                <th key={index} className="bg-gray-100 z-10 p-2 px-8 w-60 text-left font-semibold border-gray-200">
+                                                <th key={index} className="bg-brand-muted z-10 p-2 px-8 w-60 text-left font-semibold border-border">
                                                     {month}
                                                 </th>
                                             ))}
@@ -193,7 +193,7 @@ export default function ChangeInCashPage() {
                                     <tbody>
                                         {monthlyCashFlowData.data.map((row, rowIndex) => (
                                             <tr key={rowIndex} className="border-b border-gray-100 last:border-b-0">
-                                                <th className={`px-4 py-3 text-left bg-white sticky left-0 ${row.name === 'Ending Bank Balance' ? 'font-bold text-black' : 'text-neutral-700'}`}>
+                                                <th className={`px-4 py-3 text-left bg-card sticky left-0 ${row.name === 'Ending Bank Balance' ? 'font-bold text-brand-body' : 'text-neutral-700'}`}>
                                                     {row.name}
                                                 </th>
                                                 {monthlyCashFlowData.months.map((monthHeader, colIndex) => {
@@ -210,7 +210,7 @@ export default function ChangeInCashPage() {
                                                     return (
                                                         <td
                                                             key={`${rowIndex}-${colIndex}`}
-                                                            className={`px-4 py-3 text-right ${isNegative ? 'text-red-700' : ''} ${isEndingBalance ? 'font-bold text-black' : 'text-neutral-700'}`}
+                                                            className={`px-4 py-3 text-right ${isNegative ? 'text-red-700' : ''} ${isEndingBalance ? 'font-bold text-brand-body' : 'text-neutral-700'}`}
                                                         >
                                                             {formatCurrency(value)}
                                                         </td>

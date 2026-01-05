@@ -68,12 +68,12 @@ export default function ProfitLossChart() {
   }, [view, backendUrl]);
 
   return (
-    <div className="bg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md">
+    <div className="bg-card border-border border rounded-card p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-lg card-hover">
       <div className="flex justify-between items-center mb-4 flex-wrap gap-3">
         <div className="flex gap-2 items-center">
           <div>
-            <h2 className="text-lg font-semibold text-gray-800">Gross Profit - {view}</h2>
-            <p className="text-xs text-gray-400">Based on latest entries</p>
+            <h2 className="text-lg font-semibold text-brand-body">Gross Profit - {view}</h2>
+            <p className="text-xs text-muted-foreground">Based on latest entries</p>
           </div>
         </div>
 
@@ -81,10 +81,10 @@ export default function ProfitLossChart() {
           {(['Monthly'] as const).map((option) => (
             <button
               key={option}
-              className={`px-3 py-1.5 text-sm border rounded-md cursor-pointer transition focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-none ${
+              className={`px-3 py-1.5 text-sm border rounded-md cursor-pointer transition focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-ring/50 ${
                 view === option
-                  ? 'bg-sky-800  text-white border-sky-800'
-                  : 'text-gray-700 border-main'
+                  ? 'bg-sidebar-background text-sidebar-foreground border-sidebar-border shadow-md'
+                  : 'text-brand-body border-border hover:bg-muted'
               }`}
               onClick={() => setView(option)}
             >
@@ -100,10 +100,10 @@ export default function ProfitLossChart() {
         <div className="animate-pulse space-y-3">
           <div className="h-6 bg-gray-200 rounded w-1/4"></div>
           <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-          <div className="h-[350px] bg-white rounded"></div>
+          <div className="h-[350px] bg-card rounded"></div>
         </div>
       ) : dataError || data.length === 0 ? (
-        <div className="flex items-center justify-center h-[350px] text-gray-500 text-lg">
+        <div className="flex items-center justify-center h-[350px] text-muted-foreground text-lg">
           No data found for this period.
         </div>
       ) : (

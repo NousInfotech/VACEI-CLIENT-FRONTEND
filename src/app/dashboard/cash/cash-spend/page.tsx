@@ -64,24 +64,24 @@ export default function ChangeInCashPage() {
 
     return (
         <section className="mx-auto max-w-[1400px] w-full pt-5">
-            <div className="bg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md">
-                <div className="flex flex-col md:flex-row gap-4 mb-5 md:items-center justify-between border-b border-gray-200 pb-3">
+            <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
+                <div className="flex flex-col md:flex-row gap-4 mb-5 md:items-center justify-between border-b border-border pb-3">
                     <div className="">
-                        <h1 className="text-xl leading-normal text-black capitalize font-medium">Cash Spend Report</h1>
+                        <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">Cash Spend Report</h1>
                     </div>
                     <div className='flex flex-col md:flex-row gap-3 items-center'>
                         {currentMonthLabel && (
-                            <p className="w-full md:w-auto border border-blue-200/50 rounded-lg bg-white focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-green-700">
+                            <p className="w-full md:w-auto border border-border rounded-lg bg-card focus:border-border focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-green-700">
                                 {currentMonthLabel}
                             </p>
                         )}
                         {todayStr && (
-                            <p className="w-full md:w-auto border border-blue-200/50 rounded-lg bg-white focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-green-700">
+                            <p className="w-full md:w-auto border border-border rounded-lg bg-card focus:border-border focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-green-700">
                                 {todayStr}
                             </p>
                         )}
                         <select
-                            className="w-full md:w-auto border border-blue-200/50 rounded-lg bg-white focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-gray-700"
+                            className="w-full md:w-auto border border-border rounded-lg bg-card focus:border-border focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-brand-body"
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(Number(e.target.value))}
                         >
@@ -90,7 +90,7 @@ export default function ChangeInCashPage() {
                             ))}
                         </select>
                         <select
-                            className="w-full md:w-auto border border-blue-200/50 rounded-lg bg-white focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-gray-700"
+                            className="w-full md:w-auto border border-border rounded-lg bg-card focus:border-border focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-brand-body"
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(Number(e.target.value))}
                         >
@@ -116,7 +116,7 @@ export default function ChangeInCashPage() {
                     <table className="w-full">
                         <tbody>
                             {cashFlowOutflows.map((item, idx) => (
-                                <tr key={idx} className="border-b border-gray-300">
+                                <tr key={idx} className="border-b border-border">
                                     <td className="py-2 px-1 text-gray-800">{item.category}</td>
                                     <td className="py-2 px-1 text-right text-gray-800 font-medium">
                                         -€{item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
@@ -134,7 +134,7 @@ export default function ChangeInCashPage() {
                         </tfoot>
                     </table>
                 ) : (
-                    <p className="text-center text-gray-600 py-4">No Cash Outflow Data</p>
+                    <p className="text-center text-muted-foreground py-4">No Cash Outflow Data</p>
                 )}
             </div>
         </section>

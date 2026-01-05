@@ -110,7 +110,7 @@ export default function TaskForm({
 
             <div className="relative">
                 {isSubmitting && (
-                    <div className="absolute inset-0 bg-white bg-opacity-60 z-10 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-card bg-opacity-60 z-10 flex items-center justify-center">
                         <Spinner />
                     </div>
                 )}
@@ -118,13 +118,13 @@ export default function TaskForm({
                 <form onSubmit={handleSubmit} encType="multipart/form-data">
                     <input
                         type="text"
-                        className="w-full mb-3 text-sm text-gray-900 border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none"
+                        className="w-full mb-3 text-sm text-brand-body border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
                         placeholder="Task Title"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                     />
                     <textarea
-                        className="w-full text-sm border border-blue-200/50 rounded-lg px-3 py-2 bg-white mb-3 focus:outline-none"
+                        className="w-full text-sm border border-border rounded-lg px-3 py-2 bg-card mb-3 focus:outline-none"
                         rows={3}
                         placeholder="Task Description"
                         value={description}
@@ -154,7 +154,7 @@ export default function TaskForm({
                                 minDate={new Date()}
                                 placeholderText="Due date"
                                 onKeyDown={(e) => e.preventDefault()}
-                                className=" block w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white text-sm text-gray-900 focus:outline-none focus:ring-0 h-[42px]"
+                                className=" block w-full border border-border rounded-lg px-3 py-2 bg-card text-sm text-brand-body focus:outline-none focus:ring-0 h-[42px]"
                             />
                         </div>
 
@@ -171,7 +171,7 @@ export default function TaskForm({
                                 }
                                 className="
                   block w-full
-                  border border-blue-200/50 rounded-lg px-3 py-2 bg-white text-sm text-gray-900
+                  border border-border rounded-lg px-3 py-2 bg-card text-sm text-brand-body
                   focus:outline-none focus:ring-0
                   h-[42px]
                 "
@@ -196,7 +196,7 @@ export default function TaskForm({
                                 value={assignedToIds.map(String)}
                                 onChange={handleAssignedToChange}
                                 className="
-                  block min-w-[510px] border border-blue-200/50 rounded-lg px-3 py-2 bg-white text-sm text-gray-900
+                  block min-w-[510px] border border-border rounded-lg px-3 py-2 bg-card text-sm text-brand-body
                   focus:outline-none focus:ring-0
                   h-40 overflow-y-auto resize-y
                 "
@@ -222,7 +222,7 @@ export default function TaskForm({
                                 value={statusId ?? ""}
                                 onChange={(e) => setStatusId(Number(e.target.value))}
                                 className="
-                  block w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white text-sm text-gray-900
+                  block w-full border border-border rounded-lg px-3 py-2 bg-card text-sm text-brand-body
                   focus:outline-none focus:ring-0
                   h-[42px]
                 "
@@ -240,13 +240,13 @@ export default function TaskForm({
                     {/* Existing Attachments */}
                     {existingAttachments.length > 0 && (
                         <div className="mt-2 mb-4 space-y-2">
-                            <h3 className="text-sm font-medium text-gray-700">
+                            <h3 className="text-sm font-medium text-brand-body">
                                 Existing Attachments:
                             </h3>
                             {existingAttachments.map((attachment) => (
                                 <div
                                     key={attachment.id}
-                                    className="flex items-center border border-gray-300 bg-gray-50 rounded-lg p-3 space-x-3"
+                                    className="flex items-center border border-border bg-brand-body rounded-lg p-3 space-x-3"
                                 >
                                     <HugeiconsIcon icon={AttachmentIcon} size={20} className="text-primary" />
                                     <div className="flex-1">
@@ -254,7 +254,7 @@ export default function TaskForm({
                                             href={`${attachment.filePath.replace(/^\//, "")}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="text-sm text-blue-600 hover:underline break-all"
+                                            className="text-sm text-brand-primary hover:underline break-all"
                                         >
                                             {attachment.fileName}
                                         </a>
@@ -277,7 +277,7 @@ export default function TaskForm({
                     <div className="flex flex-col gap-2 w-full mb-4">
                         <label
                             htmlFor="file-upload"
-                            className="cursor-pointer p-2.5 border rounded-lg flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition"
+                            className="cursor-pointer p-2.5 border rounded-lg flex items-center justify-center bg-brand-muted hover:bg-gray-200 transition"
                         >
                             <HugeiconsIcon icon={AttachmentIcon} size={20} className="mr-2" />
                             <span>Attach File(s)</span>
@@ -292,14 +292,14 @@ export default function TaskForm({
                         </label>
 
                         {attachmentFiles.length > 0 && (
-                            <div className="flex flex-col space-y-2 mt-2 bg-white border border-blue-200/50 rounded-[16px] shadow-sm p-3">
-                                <h3 className="text-sm font-medium text-gray-700">
+                            <div className="flex flex-col space-y-2 mt-2 bg-card border border-border rounded-[16px] shadow-md p-3">
+                                <h3 className="text-sm font-medium text-brand-body">
                                     Selected New Attachments:
                                 </h3>
                                 {attachmentFiles.map((attachedFile) => (
                                     <div
                                         key={attachedFile.id}
-                                        className="flex items-center justify-between bg-gradient-to-r from-blue-100/50  to-blue-100/50 backdrop-blur[10px] border border-blue-200/50 rounded-lg py-2 px-4"
+                                        className="flex items-center justify-between bg-gradient-to-r from-blue-100/50  to-blue-100/50 backdrop-blur[10px] border border-border rounded-lg py-2 px-4"
                                     >
                                         <span className="text-xs text-gray-800 font-medium truncate flex-1 pr-2">
                                             {attachedFile.file.name}
@@ -322,7 +322,7 @@ export default function TaskForm({
                         <Button
 
                             type="submit"
-                            className={`cursor-pointer text-white py-3 ps-3 pe-4 ${isSubmitting ? "bg-gray-400" : "bg-green-700 hover:bg-green-800"}`}
+                            className={`cursor-pointer text-sidebar-foreground py-3 ps-3 pe-4 shadow-md ${isSubmitting ? "bg-gray-400" : "bg-sidebar-background hover:bg-sidebar-hover"}`}
                             disabled={isSubmitting}
                         >
                             {editTaskId
@@ -337,7 +337,7 @@ export default function TaskForm({
                             <Button
                                 type="button"
                                 onClick={resetForm}
-                                className={`cursor-pointer text-white py-3 ps-3 pe-4 ${isSubmitting ? "bg-gray-400" : "bg-rose-700 hover:bg-rose-800"}`}
+                                className={`cursor-pointer text-card-foreground py-3 ps-3 pe-4 ${isSubmitting ? "bg-gray-400" : "bg-rose-700 hover:bg-rose-800"}`}
                                 disabled={isSubmitting}
                             >
                                 Cancel

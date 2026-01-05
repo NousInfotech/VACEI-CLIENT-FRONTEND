@@ -65,7 +65,7 @@ export default function ForgotPasswordForm() {
     <section className="banner_section min-h-screen flex items-center justify-center">
       <div className="mx-auto max-w-[1200px] px-8 w-full">
         <section className="login_section flex justify-center">
-          <div className="bg-white border border-blue-200/50 rounded-[16px] shadow-sm p-8 w-full max-w-md">
+          <div className="bg-card border border-border rounded-[16px] shadow-md p-8 w-full max-w-md">
             {alertMessage && (
               <AlertMessage
                 message={alertMessage}
@@ -86,7 +86,7 @@ export default function ForgotPasswordForm() {
             </div>
 
             <div className="login_card_body text-center">
-              <p className="mb-6 text-gray-600">Enter your email to receive a password reset link.</p>
+              <p className="mb-6 text-muted-foreground">Enter your email to receive a password reset link.</p>
 
               <form className="flex flex-col gap-4" onSubmit={handleForgotPassword}>
                 <div>
@@ -95,7 +95,7 @@ export default function ForgotPasswordForm() {
                     placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none w-full p-2"
+                    className="border border-border rounded-lg px-3 py-2 bg-card focus:outline-none w-full p-2"
                   />
                   {errors.email && (
                     <p className="text-red-500 text-sm text-start pt-1">{errors.email}</p>
@@ -105,7 +105,7 @@ export default function ForgotPasswordForm() {
                 <Button
                   variant={"outline"}
                   type="submit"
-                  className="px-4 py-2 rounded-lg text-sm cursor-pointer bg-sky-700 border-sky-800 hover:border-black hover:bg-black/85 hover:text-white text-white h-[40px] font-normal mt-2"
+                  className="px-4 py-2 rounded-lg text-sm cursor-pointer bg-sidebar-background border-sky-800 hover:border-black hover:bg-black/85 hover:text-card-foreground text-card-foreground h-[40px] font-normal mt-2"
                   disabled={loading}
                 >
                   {loading ? "Sending..." : "Send Reset Link"}
@@ -113,10 +113,10 @@ export default function ForgotPasswordForm() {
               </form>
             </div>
 
-            <div className="login_card_footer mt-6 text-center text-sm text-gray-700">
+            <div className="login_card_footer mt-6 text-center text-sm text-brand-body">
               <p className="mt-2">
                 Remember your password?{" "}
-               <Link href="/login" className="text-sky-800 font-semibold hover:underline">
+               <Link href="/login" className="text-brand-body font-semibold hover:underline">
                   Back to Login
                 </Link>
               </p>

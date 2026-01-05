@@ -57,14 +57,14 @@ export default function CommentInput({
 
   return (
     <>
-      <div className="flex flex-col gap-2 bg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto transition-all duration-300">
+      <div className="flex flex-col gap-2 bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300">
         {/* Attachment preview */}
         {attachments.length > 0 && (
           <div className="flex flex-wrap gap-2 text-sm">
             {attachments.map((file, index) => (
               <span
                 key={index}
-                className="flex items-center justify-between bg-gradient-to-r from-blue-100/50  to-blue-100/50 backdrop-blur[10px] border border-blue-200/50 rounded-lg py-2 px-4 gap-3"
+                className="flex items-center justify-between bg-gradient-to-r from-blue-100/50  to-blue-100/50 backdrop-blur[10px] border border-border rounded-lg py-2 px-4 gap-3"
               >
                 {file.name}
                 <button
@@ -83,7 +83,7 @@ export default function CommentInput({
           <textarea
             ref={messageInputRef}
             rows={2}
-            className="flex-1 w-full mb-3 text-sm text-gray-900 border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none"
+            className="flex-1 w-full mb-3 text-sm text-brand-body border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
             placeholder="Type your message..."
             onKeyDown={(e) => {
               if (messageError) setMessageError(null);
@@ -94,7 +94,7 @@ export default function CommentInput({
             }}
           />
           {/* File input button */}
-          <label className="cursor-pointer rounded-lg bg-gray-50 border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+          <label className="cursor-pointer rounded-lg bg-brand-body border border-border px-4 py-2 text-sm text-brand-body hover:bg-brand-muted">
             Attach Files
             <input
               key={fileInputKey} // Apply the key here to force re-render on reset
@@ -108,7 +108,7 @@ export default function CommentInput({
           </label>
           <Button
             variant={"outline"}
-            className="cursor-pointer text-white py-3 ps-3 pe-4 bg-sky-700 hover:bg-white hover:text-sky-800 border-sky-800"
+            className="cursor-pointer text-card-foreground py-3 ps-3 pe-4 bg-sidebar-background hover:bg-card hover:text-brand-body border-sky-800"
             onClick={handleSendAndClear} // Call the new function to send and clear
           >
             Send

@@ -96,9 +96,9 @@ const PaymentModal = ({ invoice, onClose, onPaymentSuccess }: PaymentModalProps)
 
   return (
     <div className="fixed inset-0 bg-black/10 backdrop-blur-xs bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white border border-blue-200/50 rounded-[16px] shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md max-w-md relative">
+      <div className="bg-card border border-border rounded-[16px] shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md max-w-md relative">
         <div className="flex items-center justify-between px-4 pt-3">
-          <h2 className="text-xl leading-normal text-black capitalize font-medium">
+          <h2 className="text-xl leading-normal text-brand-body capitalize font-medium">
             Record Payment for Invoice #{invoice.docNumber}
           </h2>
           <button
@@ -108,7 +108,7 @@ const PaymentModal = ({ invoice, onClose, onPaymentSuccess }: PaymentModalProps)
             ✕
           </button>
         </div>
-        <hr className="mt-3 mb-4 border-t border-gray-200"></hr>
+        <hr className="mt-3 mb-4 border-t border-border"></hr>
 
         <div className="pt-0 p-4">
           {/* Amount */}
@@ -121,7 +121,7 @@ const PaymentModal = ({ invoice, onClose, onPaymentSuccess }: PaymentModalProps)
               id="amount"
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value))}
-              className="w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none"
+              className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
             />
             {errors.amount && <p className="text-red-600 text-xs mt-1">{errors.amount}</p>}
           </div>
@@ -135,7 +135,7 @@ const PaymentModal = ({ invoice, onClose, onPaymentSuccess }: PaymentModalProps)
               id="paymentDate"
               selected={date}
               onChange={(d) => setDate(d)}
-              className="w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none"
+              className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
               dateFormat="yyyy-MM-dd"
             />
             {errors.date && <p className="text-red-600 text-xs mt-1">{errors.date}</p>}
@@ -150,7 +150,7 @@ const PaymentModal = ({ invoice, onClose, onPaymentSuccess }: PaymentModalProps)
               id="paymentMode"
               value={mode}
               onChange={(e) => setMode(e.target.value)}
-              className="w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none"
+              className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
             >
               <option value="">Select</option>
               <option value="Cash">Cash</option>
@@ -171,7 +171,7 @@ const PaymentModal = ({ invoice, onClose, onPaymentSuccess }: PaymentModalProps)
               id="txnId"
               value={txnId}
               onChange={(e) => setTxnId(e.target.value)}
-              className="w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none"
+              className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
               placeholder="Optional"
             />
           </div>
@@ -185,7 +185,7 @@ const PaymentModal = ({ invoice, onClose, onPaymentSuccess }: PaymentModalProps)
               id="note"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none"
+              className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
               rows={2}
             />
           </div>
@@ -212,7 +212,7 @@ const PaymentModal = ({ invoice, onClose, onPaymentSuccess }: PaymentModalProps)
           <div className="flex justify-end gap-2 mt-6">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-rose-700 text-white cursor-pointer hover:bg-rose-800"
+              className="px-4 py-2 rounded-lg bg-rose-700 text-card-foreground cursor-pointer hover:bg-rose-800"
               disabled={loading}
             >
               Cancel
@@ -220,7 +220,7 @@ const PaymentModal = ({ invoice, onClose, onPaymentSuccess }: PaymentModalProps)
             <button
               onClick={submitPayment}
               disabled={loading}
-              className="px-4 py-2 rounded-lg bg-sky-700 hover:bg-sky-800 cursor-pointer text-white disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-sidebar-background hover:bg-sidebar-background cursor-pointer text-card-foreground disabled:opacity-50"
             >
               {loading ? "Saving..." : "Record Payment"}
             </button>

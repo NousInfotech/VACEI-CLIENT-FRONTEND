@@ -22,11 +22,11 @@ const getStatusDisplayName = (statusCode: number): string => {
 // Helper function to render description with clickable links
 const renderDescriptionWithLinks = (text?: string) => {
   if (!text) {
-    return '<p class="text-gray-500 italic">No description provided for this meeting.</p>';
+    return '<p class="text-muted-foreground italic">No description provided for this meeting.</p>';
   }
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const htmlContent = text.replace(urlRegex, (url) => {
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline break-all">${url}</a>`;
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-brand-primary hover:underline break-all">${url}</a>`;
   });
   return `<div class="whitespace-pre-wrap">${htmlContent}</div>`;
 };
@@ -125,10 +125,10 @@ const MeetingViewInner: React.FC = () => {
   // Loading state
   if (isLoading) {
     return (
-      <section className="min-h-screen px-4 py-10 bg-gray-50 flex flex-col items-center justify-center">
-        <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6 text-center text-gray-700">
+      <section className="min-h-screen px-4 py-10 bg-brand-body flex flex-col items-center justify-center">
+        <div className="w-full max-w-md bg-card rounded-xl shadow-lg p-6 text-center text-brand-body">
           <svg
-            className="animate-spin h-8 w-8 text-blue-600 mx-auto mb-3"
+            className="animate-spin h-8 w-8 text-brand-primary mx-auto mb-3"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -156,13 +156,13 @@ const MeetingViewInner: React.FC = () => {
   // Error or Not Found state
   if (error || notFound) {
     return (
-      <section className="min-h-screen px-4 py-10 bg-gray-50 flex items-center justify-center">
-        <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6 text-center text-red-600">
+      <section className="min-h-screen px-4 py-10 bg-brand-body flex items-center justify-center">
+        <div className="w-full max-w-md bg-card rounded-xl shadow-lg p-6 text-center text-red-600">
           <p className="text-xl font-bold mb-4">Error Loading Meeting</p>
           <p className="text-lg mb-4">{error || "The meeting could not be found."}</p>
           <button
             onClick={() => router.push("/dashboard/schedule")}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors cursor-pointer" // Added cursor-pointer here
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-md text-card-foreground bg-brand-primary hover:bg-brand-primary700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors cursor-pointer" // Added cursor-pointer here
           >
             <HugeiconsIcon icon={ArrowLeft01Icon} className="h-5 w-5 mr-2" />
             Go to Schedule
@@ -175,13 +175,13 @@ const MeetingViewInner: React.FC = () => {
   // No Meeting Data (should ideally be covered by error/notFound but as a fallback)
   if (!meeting) {
     return (
-      <section className="min-h-screen px-4 py-10 bg-gray-50 flex items-center justify-center">
-        <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6 text-center text-gray-700">
+      <section className="min-h-screen px-4 py-10 bg-brand-body flex items-center justify-center">
+        <div className="w-full max-w-md bg-card rounded-xl shadow-lg p-6 text-center text-brand-body">
           <p className="text-xl font-bold mb-4">No Meeting Data</p>
           <p className="text-lg mb-4">No meeting data is available.</p>
           <button
             onClick={() => router.push("/dashboard/schedule")}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-md text-card-foreground bg-brand-primary hover:bg-brand-primary700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
           >
             <HugeiconsIcon icon={ArrowLeft01Icon} className="h-5 w-5 mr-2" />
             Go to Schedule
@@ -196,35 +196,35 @@ const MeetingViewInner: React.FC = () => {
       <div className="">
        
 
-        <hr className="border-gray-200 mb-6" />
+        <hr className="border-border mb-6" />
 
         {/* Meeting Details Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 mb-8">
            {/* Client */}
           <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">Title:</p>
-           <p className="text-lg text-gray-900 font-medium">
+            <p className="text-sm font-medium text-muted-foreground mb-1">Title:</p>
+           <p className="text-lg text-brand-body font-medium">
               {meeting.title}
             </p>
           </div>
           {/* Client */}
           <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">Client:</p>
-            <p className="text-lg text-blue-700 font-semibold break-words">
+            <p className="text-sm font-medium text-muted-foreground mb-1">Client:</p>
+            <p className="text-lg text-brand-primary700 font-semibold break-words">
               {clientDisplayName}
             </p>
           </div>
           {/* Accountant */}
           <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">Accountant:</p>
-            <p className="text-lg text-blue-700 font-semibold break-words">
+            <p className="text-sm font-medium text-muted-foreground mb-1">Accountant:</p>
+            <p className="text-lg text-brand-primary700 font-semibold break-words">
               {accountantDisplayName}
             </p>
           </div>
           {/* Date */}
           <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">Date:</p>
-            <p className="text-lg text-gray-900 font-medium">
+            <p className="text-sm font-medium text-muted-foreground mb-1">Date:</p>
+            <p className="text-lg text-brand-body font-medium">
               {meeting.start.toLocaleDateString(undefined, {
                 weekday: "long",
                 year: "numeric",
@@ -235,8 +235,8 @@ const MeetingViewInner: React.FC = () => {
           </div>
           {/* Time */}
           <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">Time:</p>
-            <p className="text-lg text-gray-900 font-medium">
+            <p className="text-sm font-medium text-muted-foreground mb-1">Time:</p>
+            <p className="text-lg text-brand-body font-medium">
               {meeting.start.toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -250,10 +250,10 @@ const MeetingViewInner: React.FC = () => {
           </div>
           {/* Status */}
           <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">Status:</p>
+            <p className="text-sm font-medium text-muted-foreground mb-1">Status:</p>
             <span
               className={`inline-flex items-center px-4 py-1 rounded-full text-sm font-semibold ${meeting.status === 1
-                  ? "bg-green-100 text-green-800"
+                  ? "bg-sidebar-background text-green-800"
                   : "bg-red-100 text-red-800"
                 }`}
             >
@@ -263,9 +263,9 @@ const MeetingViewInner: React.FC = () => {
         </div>
 
         {/* Description Section */}
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900 mb-3">Description:</h2>
-          <div className="prose max-w-none text-gray-700 leading-relaxed">
+        <div className="mt-8 pt-6 border-t border-border">
+          <h2 className="text-xl font-bold text-brand-body mb-3">Description:</h2>
+          <div className="prose max-w-none text-brand-body leading-relaxed">
             <div dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
           </div>
         </div>

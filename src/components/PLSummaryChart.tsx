@@ -101,21 +101,21 @@ export default function PnLChart() {
   const data = chartData[view] || [];
 
   return (
-    <div className="bg-white border border-blue-200/50 rounded-[16px] py-6 shadow-sm w-full mx-auto mt-5 transition-all duration-300 hover:shadow-md">
+    <div className="bg-card border-border border rounded-card py-6 shadow-md w-full mx-auto mt-5 transition-all duration-300 hover:shadow-lg card-hover">
       <div className="flex justify-between items-center mb-3 flex-wrap gap-3 px-5">
         <div>
-          <h2 className="text-xl leading-normal text-black capitalize font-medium">Profit & Loss Summary</h2>
-          <p className="text-xs text-sky-700 font-normal">{view === "Monthly" ? "Last 3 months" : view === "YTD" ? "Year to Date" : "Last 12 months"} Overview</p>
+          <h2 className="text-xl leading-normal text-brand-body capitalize font-medium">Profit & Loss Summary</h2>
+          <p className="text-xs text-muted-foreground font-normal">{view === "Monthly" ? "Last 3 months" : view === "YTD" ? "Year to Date" : "Last 12 months"} Overview</p>
         </div>
-        <div className="flex items-center gap-2 bg-sky-50 rounded-full p-1 shadow-inner">
+        <div className="flex items-center gap-2 bg-brand-muted rounded-full p-1 shadow-inner">
           {["Monthly", "YTD", "12 Month"].map((v) => (
             <button
               key={v}
               onClick={() => setView(v as any)}
-              className={`px-4 py-2 rounded-full text-xs font-semibold
+              className={`px-4 py-2 rounded-full text-xs font-semibold transition-all
                 ${view === v 
-                  ? "bg-gradient-to-br from-sky-700 to-sky-800 text-white shadow-md cursor-pointer" 
-                  : " text-gray-600 hover:text-white hover:bg-sky-800 cursor-pointer"
+                  ? "bg-sidebar-background text-sidebar-foreground shadow-md" 
+                  : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-hover"
                 }`}
             >
               {v}
@@ -123,7 +123,7 @@ export default function PnLChart() {
           ))}
           <div
             onClick={() => router.push('/dashboard/financial-statements/profit-loss')}
-            className="cursor-pointer ml-2 pt-1 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+            className="cursor-pointer ml-2 pt-1 text-muted-foreground hover:text-brand-body transition-colors duration-200"
             title="View full report"
           >
             <i className="fi fi-rr-angle-small-right text-2xl"></i>
@@ -131,16 +131,16 @@ export default function PnLChart() {
         </div>
       </div>
 
-      <hr className="my-5 border-t border-gray-100" />
+      <hr className="my-5 border-t border-border" />
 
       {loading ? (
         <div className="animate-pulse space-y-4">
           <div className="h-7 bg-gray-200 rounded w-1/5"></div>
           <div className="h-5 bg-gray-200 rounded w-2/3"></div>
-          <div className="h-[350px] bg-gray-100 rounded-lg"></div>
+          <div className="h-[350px] bg-brand-muted rounded-lg"></div>
         </div>
       ) : data.length === 0 ? (
-        <div className="flex items-center justify-center h-[350px] text-gray-500 text-lg bg-gray-50 rounded-lg border border-dashed border-gray-200">
+        <div className="flex items-center justify-center h-[350px] text-muted-foreground text-lg bg-brand-body rounded-lg border border-dashed border-border">
           <p>No data available for this period.</p>
         </div>
       ) : (
@@ -207,7 +207,7 @@ export default function PnLChart() {
               iconSize={8}
               wrapperStyle={{ padding: '15px 0 0 0', marginTop: '15px', borderTop: '1px solid #F3F4F6' }}
               formatter={(value) => (
-                <span className="text-sm font-medium text-gray-700">{value}</span>
+                <span className="text-sm font-medium text-brand-body">{value}</span>
               )}
               payload={[
                 { value: 'Income', type: 'circle', color: '#4CAF50' },

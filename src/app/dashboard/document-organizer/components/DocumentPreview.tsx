@@ -36,7 +36,7 @@ export default function DocumentPreview({ fileUrl, fileType, fileName }: Documen
   }
 
   const Skeleton = () => (
-    <div className="animate-pulse w-full h-[600px] bg-gray-200 border border-gray-300 rounded-md mb-2"></div>
+    <div className="animate-pulse w-full h-[600px] bg-gray-200 border border-border rounded-md mb-2"></div>
   );
 
   const DownloadLink = () => (
@@ -116,7 +116,7 @@ export default function DocumentPreview({ fileUrl, fileType, fileName }: Documen
 
       {(fileType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
         fileType === "application/vnd.ms-excel") && (
-        <p className="text-center text-gray-700">
+        <p className="text-center text-brand-body">
       Excel file preview is not supported. Please download the file above.
     </p>
       )}

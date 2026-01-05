@@ -7,8 +7,8 @@ const MeetingViewParent: React.FC = () => {
   return (
     <Suspense fallback={<p>Loading...</p>}>
       <section className="mx-auto max-w-[1400px] w-full pt-5">
-        <div className="bg-white border border-gray-200 rounded-[10px] px-5 py-6 overflow-hidden">
-          <h1 className="text-xl leading-normal text-black capitalize font-medium">Edit Profile</h1>
+        <div className="bg-card border border-border rounded-[10px] px-5 py-6 overflow-hidden">
+          <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">Edit Profile</h1>
      
             <ProfileInner />
         

@@ -17,7 +17,7 @@ export default function TaskHeader({ task }: { task: any }) {
         />
 
       {/* Description below */}
-      <p className="text-gray-700">{task.description}</p>
+      <p className="text-brand-body">{task.description}</p>
     </div>
   );
 }

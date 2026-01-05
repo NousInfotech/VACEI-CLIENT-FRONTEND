@@ -235,14 +235,14 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
   return (
     <div className="mt-6 pt-4  bg-gradient-to-tr from-white to-gray-50 rounded-xl shadow-lg p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="font-semibold text-2xl text-gray-900 tracking-wide">Comments</h3>
+        <h3 className="font-semibold text-2xl text-brand-body tracking-wide">Comments</h3>
         <select
           value={selectedTarget}
           onChange={(e) => {
             setSelectedTarget(e.target.value);
             setNewCommentTarget(e.target.value);
           }}
-          className="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          className="text-sm border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
           aria-label="Select file to comment on"
         >
           {files.map((file) => (
@@ -263,19 +263,19 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
       )}
 
       {initialLoading ? (
-        <p className="text-center text-gray-500 italic">Loading comments...</p>
+        <p className="text-center text-muted-foreground italic">Loading comments...</p>
       ) : (
         <div className="space-y-5 max-h-96 overflow-y-auto pr-3 scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-gray-200">
           {comments.length === 0 ? (
-            <p className="text-center text-gray-500 italic select-none">No comments yet.</p>
+            <p className="text-center text-muted-foreground italic select-none">No comments yet.</p>
           ) : (
             comments.map((comment) => (
               <div
                 key={comment.id}
-                className="flex items-start space-x-4 bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition duration-300"
+                className="flex items-start space-x-4 bg-card rounded-xl p-4 shadow-md hover:shadow-md transition duration-300"
               >
                 <div
-                  className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-400 text-white rounded-full font-semibold text-lg select-none"
+                  className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-400 text-card-foreground rounded-full font-semibold text-lg select-none"
                   title={comment.createdBy}
                 >
                   {comment.createdBy?.charAt(0).toUpperCase() || "U"}
@@ -283,10 +283,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-semibold text-gray-900 text-base truncate" title={comment.createdBy}>
+                    <span className="font-semibold text-brand-body text-base truncate" title={comment.createdBy}>
                       {comment.createdBy || "Unknown"}
                     </span>
-                    <span className="text-xs text-gray-400 select-none" title={new Date(comment.createdAt).toLocaleString()}>
+                    <span className="text-xs text-muted-foreground select-none" title={new Date(comment.createdAt).toLocaleString()}>
                       {new Date(comment.createdAt).toLocaleString(undefined, {
                         dateStyle: "medium",
                         timeStyle: "short",
@@ -297,7 +297,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
                   {editingId === comment.id ? (
                     <>
                       <textarea
-                        className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        className="w-full border border-border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                         rows={3}
                         value={editingText}
                         onChange={(e) => setEditingText(e.target.value)}
@@ -316,7 +316,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
                         <button
                           onClick={() => saveEdit(comment.id)}
                           disabled={submitting || !editingText.trim()}
-                          className="px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700
+                          className="px-3 py-1.5 bg-brand-primary text-card-foreground rounded-md hover:bg-brand-primary700
                disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition"
                         >
                           Save
@@ -330,7 +330,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
                         <div className="mt-3 flex space-x-4 text-sm select-none">
                           <button
                             onClick={() => startEditing(comment.id, comment.message)}
-                            className="text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-0 rounded-full p-1 -ml-1 transition duration-200"
+                            className="text-brand-primary hover:text-brand-primary800 focus:outline-none focus:ring-0 rounded-full p-1 -ml-1 transition duration-200"
                             title="Edit comment"
                           >
                             <HugeiconsIcon icon={Edit03Icon} className="w-5 h-5" />
@@ -353,12 +353,12 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
         </div>
       )}
 
-      <div className="mt-8 bg-white p-5 rounded-xl shadow-md border border-gray-200">
+      <div className="mt-8 bg-card p-5 rounded-xl shadow-md border border-border">
         <textarea
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full border border-gray-300 rounded-lg p-4 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition"
+          className="w-full border border-border rounded-lg p-4 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition"
           rows={4}
           placeholder="Write a comment..."
           disabled={submitting}
@@ -368,9 +368,9 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
           <button
             onClick={handleAddComment}
             disabled={!newComment.trim() || submitting}
-            className={`px-6 py-3 rounded-lg text-white font-semibold text-sm transition ${!newComment.trim() || submitting
+            className={`px-6 py-3 rounded-lg text-card-foreground font-semibold text-sm transition ${!newComment.trim() || submitting
               ? "bg-gray-400 cursor-not-allowed"
-              : "bg-blue-600 hover:bg-blue-700"
+              : "bg-brand-primary hover:bg-brand-primary700"
               }`}
           >
             Comment

@@ -29,8 +29,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMar
         case 'task_status_updated': // Added for task status update notification
         case 'task_attachment_deleted': // Added for task attachment deletion notification
         case 'task_updated': // Added for general task update notification
-            bgColorClass = notification.read ? 'bg-blue-50' : 'bg-blue-100 border-blue-400';
-            textColorClass = notification.read ? 'text-blue-600' : 'text-blue-800';
+            bgColorClass = notification.read ? 'bg-brand-primary50' : 'bg-brand-primary100 border-border';
+            textColorClass = notification.read ? 'text-brand-primary' : 'text-brand-primary800';
             break;
         case 'meeting_canceled':
         case 'error':
@@ -39,12 +39,12 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMar
             textColorClass = notification.read ? 'text-red-600' : 'text-red-800';
             break;
         case 'chat_message':
-            bgColorClass = notification.read ? 'bg-green-50' : 'bg-green-100 border-green-400';
+            bgColorClass = notification.read ? 'bg-sidebar-background' : 'bg-sidebar-background border-green-400';
             textColorClass = notification.read ? 'text-green-600' : 'text-green-800';
             break;
         default:
-            bgColorClass = notification.read ? 'bg-gray-50' : 'bg-gray-100 border-gray-300';
-            textColorClass = notification.read ? 'text-gray-600' : 'text-gray-800';
+            bgColorClass = notification.read ? 'bg-brand-body' : 'bg-brand-muted border-border';
+            textColorClass = notification.read ? 'text-muted-foreground' : 'text-gray-800';
     }
 
     // Determine if the notification should be wrapped in a Link component
@@ -61,12 +61,12 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMar
 
     const content = (
         <div
-            className={`p-4 border-l-4 rounded-md shadow-sm flex justify-between items-center ${bgColorClass} ${shouldBeLink ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
+            className={`p-4 border-l-4 rounded-md shadow-md flex justify-between items-center ${bgColorClass} ${shouldBeLink ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
             onClick={!shouldBeLink ? handleClick : undefined} // Only attach onClick if it's not a link
         >
             <div>
                 <p className={`font-semibold ${textColorClass}`}>{notification.message}</p>
-                <small className="text-gray-500">
+                <small className="text-muted-foreground">
                     {new Date(notification.createdAt).toLocaleString()}
                     {notification.read ? ' (Read)' : ' (Unread)'}
                 </small>
@@ -91,7 +91,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMar
 // --- NEW SKELETON COMPONENT ---
 const NotificationSkeleton: React.FC = () => {
     return (
-        <div className="p-4 border-l-4 border-gray-200 rounded-md shadow-sm mb-4 flex justify-between items-center bg-gray-100 animate-pulse">
+        <div className="p-4 border-l-4 border-border rounded-md shadow-md mb-4 flex justify-between items-center bg-brand-muted animate-pulse">
             <div className="flex-1">
                 <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
                 <div className="h-3 bg-gray-300 rounded w-1/2"></div>
@@ -196,21 +196,21 @@ export default function NotificationsPage() {
 
     return (
         <section className="mx-auto max-w-[1400px] w-full pt-5">
-            <div className="bg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md">
-                <h1 className="text-xl leading-normal text-black capitalize font-medium"> Notifications ({unreadCount} Unread)</h1>
+            <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
+                <h1 className="text-xl leading-normal text-brand-body capitalize font-medium"> Notifications ({unreadCount} Unread)</h1>
 
                 <div className="flex justify-between items-center mt-4 mb-4">
                     <div>
                         <button
                             onClick={handleMarkAllAsRead}
-                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors mr-2" // Already green
+                            className="px-4 py-2 bg-sidebar-background text-sidebar-foreground rounded-md hover:bg-sidebar-hover transition-colors mr-2 shadow-md"
                             disabled={unreadCount === 0 || loading}
                         >
                             Mark All As Read
                         </button>
                         <button
                             onClick={handleToggleShowUnread}
-                            className={`px-4 py-2 rounded-md transition-colors ${showUnreadOnly ? 'bg-green-700 text-white hover:bg-green-800 cursor-pointer' : 'cursor-pointer bg-sky-700 text-white hover:bg-sky-800' // Changed to green for "Show Unread Only"
+                            className={`px-4 py-2 rounded-md transition-colors shadow-md ${showUnreadOnly ? 'bg-sidebar-background text-sidebar-foreground hover:bg-sidebar-hover cursor-pointer' : 'cursor-pointer bg-sidebar-background text-sidebar-foreground hover:bg-sidebar-hover'
                                 }`}
                             disabled={loading}
                         >
@@ -235,7 +235,7 @@ export default function NotificationsPage() {
                             />
                         ))
                     ) : (
-                        <p className="text-gray-600">
+                        <p className="text-muted-foreground">
                             No notifications found{' '}
                             {showUnreadOnly ? ' (showing unread only).' : '.'}
                         </p>
@@ -248,7 +248,7 @@ export default function NotificationsPage() {
                         <button
                             onClick={() => handlePageChange(currentPage - 1)}
                             disabled={currentPage === 1 || loading}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 disabled:opacity-50" // Added border for clarity
+                            className="px-4 py-2 border border-border rounded-md text-brand-body hover:bg-brand-muted disabled:opacity-50" // Added border for clarity
                         >
                             Previous
                         </button>
@@ -256,7 +256,7 @@ export default function NotificationsPage() {
                         <button
                             onClick={() => handlePageChange(currentPage + 1)}
                             disabled={currentPage === totalPages || loading}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 disabled:opacity-50" // Added border for clarity
+                            className="px-4 py-2 border border-border rounded-md text-brand-body hover:bg-brand-muted disabled:opacity-50" // Added border for clarity
                         >
                             Next
                         </button>

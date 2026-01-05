@@ -327,7 +327,7 @@ function DocumentFormContent() {
 
     if (initialLoading || saving) {
         return (
-            <div className="relative space-y-5 p-4 mx-auto bg-white">
+            <div className="relative space-y-5 p-4 mx-auto bg-card">
                 <div className="grid md:grid-cols-3 gap-6">
                     <div className={`${skeletonClass} h-10 w-full`} />
                     <div className={`${skeletonClass} h-10 w-full`} />
@@ -349,7 +349,7 @@ function DocumentFormContent() {
     return (
         <>
             {uploadSuccess && (
-                <div className="mb-4 p-4 rounded-lg bg-green-50 text-green-800 border border-green-200 shadow-sm flex items-center justify-between">
+                <div className="mb-4 p-4 rounded-lg bg-sidebar-background text-green-800 border border-green-200 shadow-md flex items-center justify-between">
                     <div className="flex items-center">
                         <svg
                             className="w-5 h-5 text-green-600 mr-2"
@@ -367,7 +367,7 @@ function DocumentFormContent() {
                     <button
                         type="button"
                         onClick={() => setUploadSuccess(false)}
-                        className="ml-4 p-1 rounded-full hover:bg-green-100 text-green-600 transition-colors"
+                        className="ml-4 p-1 rounded-full hover:bg-sidebar-background text-green-600 transition-colors"
                         aria-label="Close"
                     >
                         <svg
@@ -398,7 +398,7 @@ function DocumentFormContent() {
                         error={typeof errors.category === "string" ? errors.category : undefined} placeholder="Select Category"
                     />
                     {loadingSubCategories ? (
-                        <div className="py-2 italic text-gray-500"></div>
+                        <div className="py-2 italic text-muted-foreground"></div>
                     ) : (
                         subCategories.length > 0 && (
                             <div>
@@ -406,7 +406,7 @@ function DocumentFormContent() {
                                 <select
                                     value={form.subCategory}
                                     onChange={(e) => setField("subCategory", e.target.value)}
-                                    className="w-full border p-2 text-sm focus:outline-none border-gray-300"
+                                    className="w-full border p-2 text-sm focus:outline-none border-border"
                                 >
                                     <option value="">Select Subcategory (optional)</option>
                                     {subCategories.map((sub) => (
@@ -421,7 +421,7 @@ function DocumentFormContent() {
                 </div>
                 <div style={{ display: "none" }}>
                     <label className="block text-sm mb-1">Tags</label>
-                    <div className="border border-gray-300 p-2 bg-white max-h-48 overflow-x-auto flex flex-wrap gap-2">
+                    <div className="border border-border p-2 bg-card max-h-48 overflow-x-auto flex flex-wrap gap-2">
                         {tags.map((tag) => {
                             const isSelected = form.selectedTags.includes(String(tag.id));
                             return (
@@ -440,12 +440,12 @@ function DocumentFormContent() {
                                     <label className="relative flex items-center w-5 h-5">
                                         <input
                                             type="checkbox"
-                                            className="peer appearance-none w-4 h-4 border border-gray-300 rounded-none checked:border-[#00799c] checked:bg-[#00799c]"
+                                            className="peer appearance-none w-4 h-4 border border-border rounded-none checked:border-[#00799c] checked:bg-[#00799c]"
                                             checked={isSelected}
                                             readOnly
                                         />
                                         <svg
-                                            className="absolute w-3 h-3 text-white hidden peer-checked:block pointer-events-none left-0.5 top-1"
+                                            className="absolute w-3 h-3 text-card-foreground hidden peer-checked:block pointer-events-none left-0.5 top-1"
                                             viewBox="0 0 24 24"
                                             fill="none"
                                             stroke="currentColor"
@@ -474,7 +474,7 @@ function DocumentFormContent() {
                     ref={dropRef}
                     onDrop={handleDrop}
                     onDragOver={(e) => e.preventDefault()}
-                    className={`w-full border-1 bg-gradient-to-r from-white/80 to-blue-100/50 backdrop-blur[10px] border-dashed border-blue-200/50 rounded-lg block py-15 px-8 text-center text-sm text-gray-500 ${errors.files ? "border-red-500" : "border-blue-300"}`}
+                    className={`w-full border-1 bg-card backdrop-blur[10px] border-dashed border-border rounded-lg block py-15 px-8 text-center text-sm text-muted-foreground ${errors.files ? "border-red-500" : "border-border"}`}
                     onClick={() => {
                         const input = dropRef.current?.querySelector('input[type="file"]') as HTMLInputElement | null;
                         if (input) input.click();
@@ -488,17 +488,17 @@ function DocumentFormContent() {
                         accept=".pdf,image/jpeg,image/png,.xlsx,.xls"
                     />
                     <>
-                        <div className="bg-white rounded-lg w-12 h-12 border-1 items-center justify-center mx-auto flex shadow-xs mb-4">
+                        <div className="bg-card rounded-lg w-12 h-12 border-1 items-center justify-center mx-auto flex shadow-sm mb-4">
                             <img src="/upload_doc.svg" alt="Upload Doc" className="w-7 h-7 opacity-25" />
                         </div>
-                        <p className="font-[300]"><span className="text-blue-900 font-medium pe-1.25">Choose a file</span> Or <span className="ps-1.25 text-black/70 font-medium">Drag and Drop</span></p>
-                        <span className="cursor-pointer text-black/40 block mt-2.5">PDF, JPEG, PNG, and Excel (XLSX, XLS) formats</span>
+                        <p className="font-[300]"><span className="text-brand-primary900 font-medium pe-1.25">Choose a file</span> Or <span className="ps-1.25 text-brand-body/70 font-medium">Drag and Drop</span></p>
+                        <span className="cursor-pointer text-brand-body/40 block mt-2.5">PDF, JPEG, PNG, and Excel (XLSX, XLS) formats</span>
                     </>
                     {errors.files && <p className="text-red-500 text-xs mt-1">{errors.files}</p>}
                 </div>
 
                 {files.length > 0 && (
-                    <ul className="text-left text-black mt-2 max-h-48 overflow-auto list-none">
+                    <ul className="text-left text-brand-body mt-2 max-h-48 overflow-auto list-none">
                         {files.map((file, i) => {
                             if (!file || !file.name) {
                                 console.warn(`Invalid file at index ${i}`, file);
@@ -535,7 +535,7 @@ function DocumentFormContent() {
                             return (
                                 <li
                                     key={i}
-                                    className="text-sm p-3 bg-gradient-to-r from-white/80 to-blue-100/50 backdrop-blur[10px] border mb-3 rounded-lg border-blue-200"
+                                    className="text-sm p-3 bg-card backdrop-blur[10px] border mb-3 rounded-lg border-blue-200"
                                 >
                                     <div className="flex justify-between items-start mb-1">
                                         <div className="flex gap-1.5 items-center">
@@ -544,9 +544,9 @@ function DocumentFormContent() {
                                             </div>
                                             <div>
                                                 <span className="font-normal block">{file.name}</span>
-                                                <p className="block mt-0.5 text-black/40 font-medium">
+                                                <p className="block mt-0.5 text-brand-body/40 font-medium">
                                                     {formatFileSize(file.size)}{" "}
-                                                    <span className={statusLabel === "Completed" ? "text-green-600" : "text-sky-700"} font-normal text-xs>
+                                                    <span className={statusLabel === "Completed" ? "text-green-600" : "text-brand-primary"} font-normal text-xs>
                                                         {statusLabel}
                                                     </span>
                                                 </p>
@@ -568,7 +568,7 @@ function DocumentFormContent() {
                                         <div className="w-13 block"></div>
                                         <div className="bg-gray-200 rounded-full h-2.5 w-full flex-1 mr-2">
                                             <div
-                                                className="bg-sky-700 h-2.5 rounded-full transition-all duration-300 ease-in-out flex items-center justify-end pr-2 text-xs text-white"
+                                                className="bg-sidebar-background h-2.5 rounded-full transition-all duration-300 ease-in-out flex items-center justify-end pr-2 text-xs text-card-foreground"
                                                 style={{ width: `${progress}%` }}
                                             ></div>
                                         </div>
@@ -581,7 +581,7 @@ function DocumentFormContent() {
                 )}
 
                 {(existingFiles.length > 0 || files.length > 0) && (
-                    <ul className="text-left text-black mt-4">
+                    <ul className="text-left text-brand-body mt-4">
                         {existingFiles.length > 0 && (
                             <li className="text-sm mb-2">
                                 Previously Uploaded Files
@@ -590,13 +590,13 @@ function DocumentFormContent() {
                         {existingFiles.map((existingFile) => (
                             <li
                                 key={`existing-${existingFile.id}`}
-                                className="flex items-center justify-between text-sm px-4 py-2 border border-gray-200 cursor-pointer mb-2"
+                                className="flex items-center justify-between text-sm px-4 py-2 border border-border cursor-pointer mb-2"
                             >
                                 <a
                                     href={`${backendUploadPath}/${existingFile.fileUrl}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex-1 truncate text-black"
+                                    className="flex-1 truncate text-brand-body"
                                     title={existingFile.fileName}
                                 >
                                     <i className="fi fi-sr-document leading-0 mr-1 text-primary text-base"></i> {existingFile.fileName}
@@ -620,7 +620,7 @@ function DocumentFormContent() {
                     variant="outline"
                     type="submit"
                     disabled={saving}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer border-sky-800 bg-sky-800 text-white !font-normal"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer border-sky-800 bg-sidebar-background text-card-foreground !font-normal"
                 >
                     {saving ? "Uploading..." : "Submit"}
                 </Button>

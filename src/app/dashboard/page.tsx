@@ -26,6 +26,17 @@ export default function DashboardPage() {
   const [uploadLoading, setUploadLoading] = useState(true);
   const [revenueYTD, setRevenueYTD] = useState<{ amount: string; change: string } | null>(null);
   const [netIncomeYTD, setNetIncomeYTD] = useState<{ amount: string; change: string } | null>(null);
+  const [username, setUsername] = useState<string>(''); // State for username to avoid hydration error
+
+  // Set username on client side to avoid hydration error
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const decoded = getDecodedUsername();
+      if (decoded) {
+        setUsername(decoded);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -118,15 +129,15 @@ export default function DashboardPage() {
 
   return (
     <section className="mx-auto max-w-[1400px] w-full pt-5"> 
-      <div className="bg-gradient-to-r from-white/80 to-blue-100/50 backdrop-blur[10px] border border-blue-200/50 rounded-[16px] px-5 py-6">
+      <div className="bg-card border-border border rounded-card shadow-md px-5 py-6">
         <div className="md:flex justify-between items-center mb-4 ">
-          <h1 className="text-[32px] leading-normal text-black capitalize font-light">
-            Welcome back, <span className="font-semibold text-sky-800">{getDecodedUsername()}</span>
+          <h1 className="text-[32px] leading-normal text-brand-body capitalize font-light">
+            Welcome back, <span className="font-semibold text-brand-body">{username || 'User'}</span>
           </h1>
           <Button
-            variant="outline"
+            variant="default"
             onClick={handleContactAccountantClick}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer bg-sky-800 text-white !font-normal"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer !font-normal"
           >
             <HugeiconsIcon icon={AddressBookIcon} className="w-4.5 h-4.5 size-custom" />
             Contact Accountant
@@ -134,7 +145,7 @@ export default function DashboardPage() {
         </div>
 
         {!uploadLoading && uploadSummary?.filesUploadedThisMonth === 0 && (
-          <div className="mb-8 flex items-start gap-2 p-3 border-l-4 border-red-600 bg-red-100/50 backdrop-blur-lg text-red-800 rounded-lg shadow-lg shadow-black/10">
+          <div className="mb-8 flex items-start gap-2 p-3 border-l-4 border-destructive bg-destructive/10 text-destructive rounded-lg shadow-md">
             <HugeiconsIcon icon={Alert02Icon} className="w-6 h-6" />
             <p className="m-0">
               <strong className="font-semibold">Warning:</strong> No documents uploaded this month.
@@ -172,7 +183,7 @@ export default function DashboardPage() {
               stats.map((stat) => <StatCard key={stat.title} {...stat} />)
             ) : (
               <div className="col-span-full text-center py-10">
-                <p className="text-xl font-medium text-gray-500">No financial data found for cards.</p>
+                <p className="text-xl font-medium text-muted-foreground">No financial data found for cards.</p>
               </div>
             )}
           </div>
@@ -184,9 +195,9 @@ export default function DashboardPage() {
             <PLSummaryChart />
           </div>
           <div className="lg:w-4/12 w-full">
-            <div className="bg-white border border-blue-200/50 rounded-[16px] shadow-sm mb-5">
-              <div className="pt-3 px-5 pb-3 border-b border-blue-100">
-                <h3 className="text-xl leading-normal text-black capitalize font-medium">
+            <div className="bg-card border-border border rounded-card shadow-md mb-5">
+              <div className="pt-3 px-5 pb-3 border-b border-border">
+                <h3 className="text-xl leading-normal text-brand-body capitalize font-medium">
                   Upload Status Summary
                 </h3>
               </div>
@@ -215,11 +226,10 @@ export default function DashboardPage() {
                           passHref
                         >
                           <div
-                            className="bg-sky-800 w-6 h-6 rounded-full relative flex items-center justify-center cursor-pointer"
-                            style={{ boxShadow: "4px 4px 10px 0px #254FDA40" }}
+                            className="bg-sidebar-background text-sidebar-foreground w-6 h-6 rounded-full relative flex items-center justify-center cursor-pointer shadow-md hover:shadow-lg transition-all"
                             title="View Uploaded Documents"
                           >
-                            <i className="fi fi-br-plus text-white text-[10px] block leading-0"></i>
+                            <i className="fi fi-br-plus text-sidebar-foreground text-[10px] block leading-0"></i>
                           </div>
                         </Link>
                       </div>
@@ -241,11 +251,10 @@ export default function DashboardPage() {
                         </div>
                         <Link href={`/dashboard/document-organizer/document-listing?status=${encodedProcessedStatus}`} passHref>
                           <div
-                            className="bg-sky-800 w-6 h-6 rounded-full relative flex items-center justify-center cursor-pointer"
-                            style={{ boxShadow: "4px 4px 10px 0px #254FDA40" }}
+                            className="bg-sidebar-background text-sidebar-foreground w-6 h-6 rounded-full relative flex items-center justify-center cursor-pointer shadow-md hover:shadow-lg transition-all"
                             title="Upload New Document"
                           >
-                            <i className="fi fi-br-plus text-white text-[10px] block leading-0"></i>
+                            <i className="fi fi-br-plus text-sidebar-foreground text-[10px] block leading-0"></i>
                           </div>
                         </Link>
                       </div>
@@ -269,11 +278,10 @@ export default function DashboardPage() {
                         </div>
                         <Link href={`/dashboard/document-organizer/document-listing?status=${encodedPendingStatus}`} passHref>
                           <div
-                            className="bg-sky-800 w-6 h-6 rounded-full relative flex items-center justify-center cursor-pointer"
-                            style={{ boxShadow: "4px 4px 10px 0px #254FDA40" }}
+                            className="bg-sidebar-background text-sidebar-foreground w-6 h-6 rounded-full relative flex items-center justify-center cursor-pointer shadow-md hover:shadow-lg transition-all"
                             title="Upload New Document"
                           >
-                            <i className="fi fi-br-plus text-white text-[10px] block leading-0"></i>
+                            <i className="fi fi-br-plus text-sidebar-foreground text-[10px] block leading-0"></i>
                           </div>
                         </Link>
                       </div>
@@ -297,11 +305,10 @@ export default function DashboardPage() {
                         </div>
                         <Link href={`/dashboard/document-organizer/document-listing?status=${encodedNeedCorrectionStatus}`} passHref>
                           <div
-                            className="bg-sky-800  w-6 h-6 rounded-full relative flex items-center justify-center cursor-pointer"
-                            style={{ boxShadow: "4px 4px 10px 0px #254FDA40" }}
+                            className="bg-sidebar-background text-sidebar-foreground w-6 h-6 rounded-full relative flex items-center justify-center cursor-pointer shadow-md hover:shadow-lg transition-all"
                             title="Upload New Document"
                           >
-                            <i className="fi fi-br-plus text-white text-[10px] block leading-0"></i>
+                            <i className="fi fi-br-plus text-sidebar-foreground text-[10px] block leading-0"></i>
                           </div>
                         </Link>
                       </div>
@@ -316,15 +323,15 @@ export default function DashboardPage() {
                   </>
                 ) : (
                   <div className="col-span-full text-center py-5">
-                    <p className="text-base font-medium text-gray-500">No upload data available.</p>
+                    <p className="text-base font-medium text-muted-foreground">No upload data available.</p>
                   </div>
                 )}
               </div>
             </div>
             {(netIncomeYTD) && (
-              <div className="bg-white border border-blue-200/50 rounded-[16px] shadow-sm">
-                <div className="pt-3 px-5 pb-3 border-b border-blue-100">
-                  <h3 className="text-xl leading-normal text-black capitalize font-medium">
+              <div className="bg-card border-border border rounded-card shadow-md">
+                <div className="pt-3 px-5 pb-3 border-b border-border">
+                  <h3 className="text-xl leading-normal text-brand-body capitalize font-medium">
                     Yearly Progress
                   </h3>
                 </div>
@@ -340,7 +347,7 @@ export default function DashboardPage() {
                         />
                       ))
                   ) : (
-                    <div className="bg-green-700 rounded-full px-5 py-[7px] flex items-center justify-between text-white mb-3">
+                    <div className="bg-sidebar-background rounded-full px-5 py-[7px] flex items-center justify-between text-success-foreground mb-3 shadow-md">
                       <p className="font-medium text-sm">Income</p>
                       <p className="flex items-center font-medium text-sm">
                         {netIncomeYTD.change}{" "}

@@ -204,7 +204,7 @@ export default function TodoListViewInner() {
 
   return (
     <section className="mx-auto w-full max-w-[1400px] pt-5">
-      <div className="bg-white border border-blue-200/50 rounded-[16px] p-4 shadow-sm w-full mx-auto transition-all duration-300 hover:shadow-md">
+      <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
         <TaskHeader task={task} />
         <TaskAttachments attachments={task.attachments || []} backendUrl={backendUrl} />
         <TaskMeta

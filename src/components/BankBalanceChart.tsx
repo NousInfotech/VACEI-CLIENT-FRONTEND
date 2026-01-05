@@ -58,7 +58,7 @@ export default function BankBalanceChart() {
             iconSize={10}
             wrapperStyle={{ padding: '0 10px', marginBottom: '10px' }}
             formatter={(value) => (
-              <span className="text-sm text-gray-600">{value}</span>
+              <span className="text-sm text-muted-foreground">{value}</span>
             )}
             layout="horizontal"
             align="center"

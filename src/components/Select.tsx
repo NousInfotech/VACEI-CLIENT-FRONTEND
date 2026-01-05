@@ -34,8 +34,8 @@ const Select: React.FC<SelectProps> = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className={`w-full border rounded-lg px-3 py-2 bg-white focus:outline-none ${
-          error ? "border-red-500" : "border-blue-200/50"
+        className={`w-full border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all ${
+          error ? "border-destructive" : "border-border"
         }`}
       >
         <option value="" >

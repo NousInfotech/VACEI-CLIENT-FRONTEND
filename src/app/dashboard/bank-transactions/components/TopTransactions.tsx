@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 
 function SkeletonTransaction() {
   return (
-    <div className="flex justify-between items-center p-4 border-l-2 shadow-sm animate-pulse bg-gray-100 border-gray-300">
+    <div className="flex justify-between items-center p-4 border-l-2 shadow-md animate-pulse bg-brand-muted border-border">
       <div className="flex items-center gap-4">
         <div className="w-10 h-10 rounded bg-gray-300"></div>
         <div className="flex flex-col space-y-2">
@@ -149,13 +149,13 @@ export default function TopTransactions() {
           ))}
         </div>
       ) : error ? (
-        <div className="text-gray-400 text-center py-8 font-medium"> {/* Changed text-red-600 to text-gray-400 */}
+        <div className="text-muted-foreground text-center py-8 font-medium"> {/* Changed text-red-600 to text-muted-foreground */}
           <p className="mb-2">Oops! Something went wrong.</p>
           <p>{error}</p>
           <p className="mt-4">Please try again later.</p>
         </div>
       ) : noDataFound ? (
-        <div className="text-center text-gray-400 py-8 font-medium">
+        <div className="text-center text-muted-foreground py-8 font-medium">
           No transactions found for the selected criteria.
         </div>
       ) : (
@@ -163,14 +163,14 @@ export default function TopTransactions() {
           {transactions.map((transaction) => (
             <div
               key={transaction.id}
-              className={`flex justify-between items-center p-4 border-l-2 shadow-sm transition-transform duration-300 hover:scale-[1.01] ${transaction.type === 'income'
-                  ? 'bg-white border-[#00799c]'
-                  : 'bg-white border-[#b11107]'
+              className={`flex justify-between items-center p-4 border-l-2 shadow-md transition-transform duration-300 hover:scale-[1.01] ${transaction.type === 'income'
+                  ? 'bg-card border-[#00799c]'
+                  : 'bg-card border-[#b11107]'
                 }`}
             >
               <div className="flex items-center gap-4">
                 <div
-                  className={`w-10 h-10 flex items-center justify-center shadow-sm ${transaction.type === 'income'
+                  className={`w-10 h-10 flex items-center justify-center shadow-md ${transaction.type === 'income'
                       ? 'bg-[#e0f3f7] text-[#00799c]'
                       : 'bg-[#fce8e7] text-[#b11107]'
                     }`}
@@ -185,7 +185,7 @@ export default function TopTransactions() {
                 </div>
 
                 <div className="flex flex-col">
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-muted-foreground">
                     {new Date(transaction.date).toLocaleDateString()}
                   </span>
                   <span className="text-sm font-medium text-gray-800">

@@ -33,14 +33,14 @@ import {
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 
 const statusStyles: Record<string, string> = {
-    Approved: "bg-green-100 text-green-800 border border-green-300 rounded-0",
+    Approved: "bg-sidebar-background text-green-800 border border-green-300 rounded-0",
     "Awaiting Review":
         "bg-yellow-100 text-yellow-800 border border-yellow-300 rounded-0",
     Rejected: "bg-red-100 text-red-800 border border-red-300 rounded",
 };
 
 const SkeletonRow = () => (
-    <tr className="border-b border-gray-300 animate-pulse">
+    <tr className="border-b border-border animate-pulse">
         {[40, 24, 32, 16, 20, 24].map((w, i) => (
             <td key={i} className="p-3 px-8">
                 <div className={`h-4 bg-gray-300 rounded-0 w-${w}`}></div>
@@ -224,20 +224,20 @@ export default function DocumentList() {
                     <>
                         <div className="grid md:grid-cols-3 gap-6 mb-6">
                             {/* Documents This Month */}
-                            <div className="rounded-xl p-3 w-full bg-white backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100">
+                            <div className="rounded-xl p-3 w-full bg-card backdrop-blur-sm shadow-md hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100">
                                 <div className="flex items-center gap-3">
-                                    <div className="bg-sky-700 text-white rounded-full w-9 h-9 flex items-center justify-center shadow-sm">
+                                    <div className="bg-sidebar-background text-card-foreground rounded-full w-9 h-9 flex items-center justify-center shadow-md">
                                         <FolderPlus className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-semibold text-gray-900">Documents</h3>
-                                        <p className="text-xs text-sky-700">This Month</p>
+                                        <h3 className="text-sm font-semibold text-brand-body">Documents</h3>
+                                        <p className="text-xs text-brand-primary">This Month</p>
                                     </div>
                                 </div>
                                 <div>
                                     {summary.filesUploadedThisMonth > 0 ? (
                                         <div className="flex justify-between items-end">
-                                            <span className="text-2xl font-semibold text-sky-800 block"> {summary.filesUploadedThisMonth}</span>
+                                            <span className="text-2xl font-semibold text-brand-body block"> {summary.filesUploadedThisMonth}</span>
                                         </div>
                                     ) : (
                                         <p className="text-sm text-gray-800 mt-3 text-center block">No data to show</p>
@@ -246,14 +246,14 @@ export default function DocumentList() {
                             </div>
 
                             {/* Documents By Category */}
-                            <div className="rounded-xl p-3 w-full bg-white backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100">
+                            <div className="rounded-xl p-3 w-full bg-card backdrop-blur-sm shadow-md hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100">
                                 <div className="flex items-center gap-3">
-                                    <div className="bg-sky-700 text-white rounded-full w-9 h-9 flex items-center justify-center shadow-sm">
+                                    <div className="bg-sidebar-background text-card-foreground rounded-full w-9 h-9 flex items-center justify-center shadow-md">
                                         <FileText className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-semibold text-gray-900">Documents</h3>
-                                        <p className="text-xs text-sky-700">By Category</p>
+                                        <h3 className="text-sm font-semibold text-brand-body">Documents</h3>
+                                        <p className="text-xs text-brand-primary">By Category</p>
                                     </div>
                                 </div>
                                 <div>
@@ -262,7 +262,7 @@ export default function DocumentList() {
                                             value > 0 ? (
                                                 <div key={key} className="flex justify-between items-end">
                                                     <p className="text-[11px] font-medium">{key}</p>
-                                                    <p className="text-2xl font-semibold text-sky-800 block">{value}</p>
+                                                    <p className="text-2xl font-semibold text-brand-body block">{value}</p>
                                                 </div>
                                             ) : null
                                         )
@@ -273,14 +273,14 @@ export default function DocumentList() {
                             </div>
 
                             {/* Documents By Status */}
-                            <div className="rounded-xl p-3 w-full bg-white backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100">
+                            <div className="rounded-xl p-3 w-full bg-card backdrop-blur-sm shadow-md hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100">
                                 <div className="flex items-center gap-3">
-                                    <div className="bg-sky-700 text-white rounded-full w-9 h-9 flex items-center justify-center shadow-sm">
+                                    <div className="bg-sidebar-background text-card-foreground rounded-full w-9 h-9 flex items-center justify-center shadow-md">
                                         <CheckCircle className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-semibold text-gray-900">Documents</h3>
-                                        <p className="text-xs text-sky-700">By Status</p>
+                                        <h3 className="text-sm font-semibold text-brand-body">Documents</h3>
+                                        <p className="text-xs text-brand-primary">By Status</p>
                                     </div>
                                 </div>
                                 <div>
@@ -289,7 +289,7 @@ export default function DocumentList() {
                                             value > 0 ? (
                                                 <div key={key} className="flex justify-between items-end">
                                                     <p className="text-[11px] font-medium">{key}</p>
-                                                    <span className="text-2xl font-semibold text-sky-800 block">{value}</span>
+                                                    <span className="text-2xl font-semibold text-brand-body block">{value}</span>
                                                 </div>
                                             ) : null
                                         )
@@ -306,12 +306,12 @@ export default function DocumentList() {
                                 placeholder="Search by Title or notes"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none"
+                                className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
                             />
                             <select
                                 value={filterCategory}
                                 onChange={(e) => setFilterCategory(e.target.value)}
-                                className="w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none"
+                                className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
                             >
                                 <option value="">All Categories</option>
                                 {categories.map(({ id, name }) => (
@@ -323,7 +323,7 @@ export default function DocumentList() {
                             <select
                                 value={filterYear}
                                 onChange={(e) => setFilterYear(e.target.value)}
-                                className="w-full md:w-auto rounded-md border border-blue-200/50 bg-white focus:border-blue-400 focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-gray-700 focus:outline-none"
+                                className="w-full md:w-auto rounded-md border border-border bg-card focus:border-border focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-brand-body focus:outline-none"
                             >
                                 <option value="">All Years</option>
                                 {years.map((y) => (
@@ -335,7 +335,7 @@ export default function DocumentList() {
                             <select
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value)}
-                                className="w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none"
+                                className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
                             >
                                 <option value="">All Statuses</option>
                                 {statuses.map(({ id, name }) => (
@@ -347,7 +347,7 @@ export default function DocumentList() {
                             <select
                                 value={filterMonth}
                                 onChange={(e) => setFilterMonth(e.target.value)}
-                                className="w-full border border-blue-200/50 rounded-lg px-3 py-2 bg-white focus:outline-none"
+                                className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
                             >
                                 <option value="">All Months</option>
                                 {Array.from({ length: 12 }, (_, i) => (
@@ -365,23 +365,23 @@ export default function DocumentList() {
                 {!initialLoading && tags.length > 0 && (
                     <div className="mb-5">
                         <label className="block text-sm mb-1">Tags</label>
-                        <div className="border border-blue-200/50 rounded-lg px-3 py-2 bg-white max-h-48 overflow-x-auto flex flex-wrap gap-2">
+                        <div className="border border-border rounded-lg px-3 py-2 bg-card max-h-48 overflow-x-auto flex flex-wrap gap-2">
                             {tags.map((tag) => {
                                 const isSelected = selectedTags.includes(String(tag.id));
                                 return (
                                     <label
                                         key={tag.id}
-                                        className={`relative flex items-center gap-2 cursor-pointer select-none w-full mb-1 ${isSelected ? "bg-white" : ""}`}
+                                        className={`relative flex items-center gap-2 cursor-pointer select-none w-full mb-1 ${isSelected ? "bg-card" : ""}`}
                                         onClick={() => handleTagToggle(String(tag.id))}
                                     >
                                         <input
                                             type="checkbox"
                                             checked={isSelected}
                                             readOnly
-                                            className="peer appearance-none w-4 h-4 border border-gray-300 rounded-none checked:border-[#00799c] checked:bg-[#00799c]"
+                                            className="peer appearance-none w-4 h-4 border border-border rounded-none checked:border-[#00799c] checked:bg-[#00799c]"
                                         />
                                         <svg
-                                            className="absolute w-3 h-3 text-white hidden peer-checked:block pointer-events-none left-0.5 top-0.5"
+                                            className="absolute w-3 h-3 text-card-foreground hidden peer-checked:block pointer-events-none left-0.5 top-0.5"
                                             viewBox="0 0 24 24"
                                             fill="none"
                                             stroke="currentColor"
@@ -410,7 +410,7 @@ export default function DocumentList() {
                 <div className="w-full overflow-x-auto rounded-md border">
                     <ScrollArea className="xl:max-w-[90vw] md:max-w-[65vw] w-full max-w-[76vw]">
                         <table className="w-full text-sm">
-                            <thead className="border-b border-gray-300 bg-gray-50">
+                            <thead className="border-b border-border bg-brand-body">
                                 <tr>
                                     {[
                                         "Title",
@@ -424,7 +424,7 @@ export default function DocumentList() {
                                     ].map((title) => (
                                         <th
                                             key={title}
-                                            className="p-2.5 border-r border-gray-200 font-medium text-start px-8"
+                                            className="p-2.5 border-r border-border font-medium text-start px-8"
                                         >
                                             {title}
                                         </th>
@@ -438,16 +438,16 @@ export default function DocumentList() {
                                         .map((_, i) => <SkeletonRow key={i} />)
                                     : documents.length
                                         ? documents.map((doc) => (
-                                            <tr key={doc.id} className="border-b border-gray-300">
-                                                <td className="p-3 px-8 border-gray-300 text-gray-700">
+                                            <tr key={doc.id} className="border-b border-border">
+                                                <td className="p-3 px-8 border-border text-brand-body">
                                                     {doc.document_title}
                                                 </td>
-                                                <td className="p-3 px-8 border-gray-300 text-gray-700">
+                                                <td className="p-3 px-8 border-border text-brand-body">
                                                     {doc.categories?.length
                                                         ? doc.categories.map((c: any) => c.name).join(", ")
                                                         : "N/A"}
                                                 </td>
-                                                <td className="p-3 px-8 border-gray-300 text-gray-700">
+                                                <td className="p-3 px-8 border-border text-brand-body">
                                                     {doc.tags && doc.tags.length > 0 ? (
                                                         <div className="flex flex-wrap gap-2">
                                                             {doc.tags.map(({ id, name, color }: any, idx: number) => (
@@ -464,24 +464,24 @@ export default function DocumentList() {
                                                             ))}
                                                         </div>
                                                     ) : (
-                                                        <span className="text-gray-500 italic">N/A</span>
+                                                        <span className="text-muted-foreground italic">N/A</span>
                                                     )}
                                                 </td>
-                                                <td className="p-3 px-8 border-gray-300 text-gray-700">
+                                                <td className="p-3 px-8 border-border text-brand-body">
                                                     <span
-                                                        className={`inline-block text-[10px] font-medium px-2 py-0.5 ${statusStyles[doc.statusName] ?? "bg-gray-200 text-gray-800 border border-gray-300"
+                                                        className={`inline-block text-[10px] font-medium px-2 py-0.5 ${statusStyles[doc.statusName] ?? "bg-gray-200 text-gray-800 border border-border"
                                                             }`}
                                                     >
                                                         {doc.statusName || "Unknown"}
                                                     </span>
                                                 </td>
 
-                                                <td className="p-3 px-8 border-gray-300 text-gray-700">
+                                                <td className="p-3 px-8 border-border text-brand-body">
                                                     {doc.files.every(
                                                         (file: { azureAnalysisResult: any; extractedKeyValuePairs: any[] }) =>
                                                             file.azureAnalysisResult || file.extractedKeyValuePairs.length > 0
                                                     ) ? (
-                                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-sidebar-background text-green-800">
                                                             Done
                                                         </span>
                                                     ) : (
@@ -492,7 +492,7 @@ export default function DocumentList() {
                                                 </td>
 
 
-                                                <td className="p-3 px-8 border-gray-300 text-gray-700">
+                                                <td className="p-3 px-8 border-border text-brand-body">
                                                     {doc.year && doc.month
                                                         ? `${new Date(
                                                             doc.year,
@@ -504,10 +504,10 @@ export default function DocumentList() {
                                                         : doc.createdAt?.slice(0, 10)}
                                                 </td>
 
-                                                <td className="p-3 px-8 border-gray-300">
+                                                <td className="p-3 px-8 border-border">
                                                     <div className="flex gap-3">
                                                         <button
-                                                            className="text-gray-500 hover:text-blue-600 transition-colors duration-200 cursor-pointer"
+                                                            className="text-muted-foreground hover:text-brand-primary transition-colors duration-200 cursor-pointer"
                                                             onClick={() => handleView(doc)}
                                                             title="View"
                                                         >
@@ -515,7 +515,7 @@ export default function DocumentList() {
                                                         </button>
 
                                                         <button
-                                                            className="text-gray-500 hover:text-blue-600 transition-colors duration-200 cursor-pointer"
+                                                            className="text-muted-foreground hover:text-brand-primary transition-colors duration-200 cursor-pointer"
                                                             onClick={() => handleEdit(doc)}
                                                             title="Edit"
                                                         >
@@ -523,7 +523,7 @@ export default function DocumentList() {
                                                         </button>
 
                                                         <button
-                                                            className="text-gray-500 hover:text-blue-600 transition-colors duration-200 cursor-pointer"
+                                                            className="text-muted-foreground hover:text-brand-primary transition-colors duration-200 cursor-pointer"
                                                             onClick={() => handleDelete(doc)}
                                                             title="Delete"
                                                         >
@@ -535,7 +535,7 @@ export default function DocumentList() {
                                         ))
                                         : (
                                             <tr>
-                                                <td colSpan={6} className="p-4 text-center text-gray-500">
+                                                <td colSpan={6} className="p-4 text-center text-muted-foreground">
                                                     No documents found.
                                                 </td>
                                             </tr>

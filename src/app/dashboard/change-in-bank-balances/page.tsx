@@ -19,21 +19,21 @@ export default function ChangeInBankBalancesPage() {
 
     return (
          <section className="mx-auto max-w-[1400px] w-full pt-5">
-              <div className="bg-white border border-gray-200 rounded-[10px] px-5 py-6 overflow-hidden">
+              <div className="bg-card border border-border rounded-[10px] px-5 py-6 overflow-hidden">
     
-             <h1 className="text-xl leading-normal text-black capitalize font-medium">    Change in Bank Balances</h1>
+             <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">    Change in Bank Balances</h1>
 
             {/* Summary Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="border border-neutral-200 bg-white p-4">
+                <div className="border border-neutral-200 bg-card p-4">
                     <p className="text-xs text-neutral-500 uppercase mb-1">Opening Balance</p>
                     <p className="text-lg font-semibold text-neutral-800">{formatCurrency(totalOpening)}</p>
                 </div>
-                <div className="border border-neutral-200 bg-white p-4">
+                <div className="border border-neutral-200 bg-card p-4">
                     <p className="text-xs text-neutral-500 uppercase mb-1">Closing Balance</p>
                     <p className="text-lg font-semibold text-neutral-800">{formatCurrency(totalClosing)}</p>
                 </div>
-                <div className="border border-neutral-200 bg-white p-4">
+                <div className="border border-neutral-200 bg-card p-4">
                     <p className="text-xs text-neutral-500 uppercase mb-1">Net Change</p>
                     <p className={`text-lg font-semibold ${netChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {netChange >= 0 ? '+' : '-'}
@@ -43,7 +43,7 @@ export default function ChangeInBankBalancesPage() {
             </div>
 
             {/* Table */}
-            <div className="bg-white shadow p-4">
+            <div className="bg-card shadow p-4">
                 <div className="border border-neutral-200">
                     <table className="w-full text-sm text-neutral-800">
                         <thead className="bg-neutral-100 text-left uppercase text-xs tracking-wide text-neutral-500">
@@ -82,7 +82,7 @@ export default function ChangeInBankBalancesPage() {
                     </table>
                 </div>
             </div>
-            <div className="bg-white shadow p-4">
+            <div className="bg-card shadow p-4">
                 <BankBalanceChart />
             </div>
         </div>

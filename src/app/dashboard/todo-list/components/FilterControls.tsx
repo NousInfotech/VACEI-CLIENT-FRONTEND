@@ -40,7 +40,7 @@ export default function FilterControls({
         placeholder="Search tasks..."
         value={searchText}
         onChange={(e) => setSearchText(e.target.value)}
-        className="w-full border border-gray-300 rounded-lg px-3 py-2"
+        className="w-full border border-border rounded-lg px-3 py-2"
       />
 
       
@@ -70,7 +70,7 @@ export default function FilterControls({
         ))}
       </select>
 
-      <button onClick={clearFilters} className="p-2 border rounded-lg bg-gray-100">
+      <button onClick={clearFilters} className="p-2 border rounded-lg bg-brand-muted">
         Clear
       </button>
     </div>

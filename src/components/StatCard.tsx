@@ -31,19 +31,19 @@ export default function StatCard({
     const finalIcon = iconClass || "chart-line";
 
     const cardContent = (
-        <div className="rounded-xl p-3 w-full bg-white backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100">
+        <div className="rounded-xl p-3 w-full bg-card shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer border border-border card-hover">
             <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
-                    <div className="bg-sky-700 text-white rounded-full w-9 h-9 flex items-center justify-center shadow-sm">
+                    <div className="bg-sidebar-background text-sidebar-foreground rounded-full w-9 h-9 flex items-center justify-center shadow-md">
                         <i className={`fr leading-0 fi-rr-${finalIcon} text-base`} />
                     </div>
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-900">
+                        <h3 className="text-sm font-semibold text-brand-body">
                             {title}
                         </h3>
-                        {note && <p className="text-xs text-sky-700">{note}</p>}
+                        {note && <p className="text-xs text-brand-primary">{note}</p>}
                         {(param1 || param2) && (
-                            <div className="flex flex-col text-gray-500">
+                            <div className="flex flex-col text-muted-foreground">
                                 {param1 && <span className="text-[11px]">{param1}</span>}
                                 {param2 && <span className="text-[11px]">{param2}</span>}
                             </div>
@@ -53,12 +53,12 @@ export default function StatCard({
             </div>
 
             <div className="flex justify-between items-end">
-                <p className={`flex items-center text-[11px] font-medium ${isPositive ? "text-emerald-600" : "text-rose-600"}`}>
+                <p className={`flex items-center text-[11px] font-medium ${isPositive ? "text-success" : "text-destructive"}`}>
                     <i className={`fi ${isPositive ? "fi-rr-arrow-trend-up" : "fi-rr-arrow-trend-down"} mr-1 text-[11px]`}></i>
                     {change}
-                    <span className="ml-1 text-black font-normal">vs last month</span>
+                    <span className="ml-1 text-brand-body font-normal">vs last month</span>
                 </p>
-                <span className="text-2xl font-semibold text-sky-800 block">
+                <span className="text-2xl font-semibold text-brand-body block">
                     {amount}
                 </span>
             </div>
