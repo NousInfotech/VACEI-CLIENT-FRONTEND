@@ -2,14 +2,12 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-export default function DocumentDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const docId = decodeURIComponent(params.id || "");
+export default function DocumentDetailPage() {
+  const params = useParams<{ id: string }>();
+  const docId = decodeURIComponent((params?.id as string) || "");
 
   // UI-only placeholder data; replace with real fetch when backend endpoint is ready.
   const doc = useMemo(
