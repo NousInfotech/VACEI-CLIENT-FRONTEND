@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { MenuItem } from "@/lib/menuData";
+import { MenuItem, MenuSection } from "@/lib/menuData";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
 import {
@@ -29,7 +29,7 @@ export default function SidebarMenu({ menu, isCollapsed = false }: SidebarMenuPr
         }));
     };
 
-    const menuItems = menu.map((item) => {
+    const renderMenuItem = (item: MenuItem) => {
                 const hasChildren = item.children && item.children.length > 0;
                 const isOpen = openItems[item.slug];
                 const isActive = pathname === item.href;
@@ -184,13 +184,50 @@ export default function SidebarMenu({ menu, isCollapsed = false }: SidebarMenuPr
         }
 
         return <li key={item.slug}>{menuItemContent}</li>;
+    };
+
+    const sections: { id: MenuSection; label: string }[] = [
+        { id: "primary", label: "Client portal" },
+        { id: "workspaces", label: "Workspaces & insights" },
+        { id: "operations", label: "Operations & tools" },
+        { id: "settings", label: "Settings" },
+    ];
+
+    const grouped: Record<MenuSection, MenuItem[]> = {
+        primary: [],
+        workspaces: [],
+        operations: [],
+        settings: [],
+    };
+
+    menu.forEach((item) => {
+        const section = item.section || "primary";
+        grouped[section].push(item);
     });
 
     return (
         <TooltipProvider delayDuration={300}>
-            <ul className="menu space-y-2">
-                {menuItems}
-        </ul>
+            <ul className="menu space-y-4">
+                {sections.map((section) => {
+                    const items = grouped[section.id];
+                    if (!items.length) return null;
+                    return (
+                        <li key={section.id} className="space-y-1">
+                            {!isCollapsed && (
+                                <p className="px-4 py-1.5 mt-1 text-[11px] font-semibold tracking-wide uppercase text-[hsl(var(--sidebar-foreground)/0.6)]">
+                                    {section.label}
+                                </p>
+                            )}
+                            <ul className="space-y-2">
+                                {items.map((item) => renderMenuItem(item))}
+                            </ul>
+                            {isCollapsed && (
+                                <div className="mx-2 mt-2 h-px bg-[hsl(var(--sidebar-border)/0.5)]" />
+                            )}
+                        </li>
+                    );
+                })}
+            </ul>
         </TooltipProvider>
     );
 }

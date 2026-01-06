@@ -96,6 +96,11 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
     const notificationRef = useRef<HTMLDivElement>(null);
     const [searchTerm, setSearchTerm] = useState(''); // State for search input
     const [username, setUsername] = useState<string>('User'); // State for username to avoid hydration error
+    const [role, setRole] = useState<string>('Client');
+    const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
+    const [activeCompany, setActiveCompany] = useState<string>("");
+    const [showQuickActions, setShowQuickActions] = useState(false);
+    const quickActionsRef = useRef<HTMLDivElement>(null);
 
     const router = useRouter();
     const pathname = usePathname();
@@ -133,19 +138,39 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
         }
     }, []);
 
-    // Set username on client side to avoid hydration error
+    // Set username/role on client side to avoid hydration error
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const storedUsername = localStorage.getItem("username");
+            const storedRole = localStorage.getItem("role");
+            const storedCompanies = localStorage.getItem("vacei-companies");
+            const storedActiveCompany = localStorage.getItem("vacei-active-company");
+
             if (storedUsername) {
-                try {
-                    setUsername(atob(storedUsername));
-                } catch (e) {
-                    setUsername('User');
-                }
+                try { setUsername(atob(storedUsername)); } catch { setUsername('User'); }
+            }
+            if (storedRole) {
+                try { setRole(atob(storedRole)); } catch { setRole(storedRole); }
+            }
+            if (storedCompanies) {
+                try { setCompanies(JSON.parse(storedCompanies)); } catch { /* ignore */ }
+            } else {
+                const defaults = [
+                    { id: "c1", name: "Acme Ltd" },
+                    { id: "c2", name: "Beta Holdings" },
+                ];
+                setCompanies(defaults);
+                localStorage.setItem("vacei-companies", JSON.stringify(defaults));
+            }
+            if (storedActiveCompany) {
+                setActiveCompany(storedActiveCompany);
+            } else {
+                const first = companies?.[0]?.id || "c1";
+                setActiveCompany(first);
+                localStorage.setItem("vacei-active-company", first);
             }
         }
-    }, []);
+    }, [companies]);
 
     useEffect(() => {
         getUnreadCount();
@@ -160,11 +185,15 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
         };
     }, [pathname, getUnreadCount]);
 
-    // Click outside handler (separate useEffect as it doesn't depend on pathname or getUnreadCount)
+    // Click outside handler (notifications + quick actions)
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+            const target = event.target as Node;
+            if (notificationRef.current && !notificationRef.current.contains(target)) {
                 setShowNotifications(false);
+            }
+            if (quickActionsRef.current && !quickActionsRef.current.contains(target)) {
+                setShowQuickActions(false);
             }
         };
 
@@ -255,20 +284,66 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             </div>
 
             <div className="flex items-center gap-3">
-                {/* Quick Actions */}
-                        <Link href="/dashboard/document-organizer/document-upload">
-                    <Button variant="outline" className="flex items-center gap-1 rounded-2xl text-xs cursor-pointer transition-colors focus:outline-none focus:ring-2 border-[hsl(var(--border))] hover:bg-[hsl(var(--muted))]">
-                        <HugeiconsIcon icon={Upload04Icon} className="w-5 h-5" />
-                        Upload
-                            </Button>
-                        </Link>
-                
-                        <Link href="/dashboard/schedule">
-                    <Button variant="outline" className="flex items-center gap-2 px-4 py-2 rounded-2xl text-xs cursor-pointer border-[hsl(var(--border))] hover:bg-[hsl(var(--muted))]">
-                        <HugeiconsIcon icon={Video01Icon} className="w-5 h-5" />
-                                Schedule a Call
-                            </Button>
-                        </Link>
+                {/* Company selector */}
+                <div className="hidden md:flex items-center gap-2">
+                    <select
+                        value={activeCompany}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            setActiveCompany(val);
+                            if (typeof window !== "undefined") localStorage.setItem("vacei-active-company", val);
+                        }}
+                        className="rounded-2xl border border-[hsl(var(--border))] bg-card px-3 py-2 text-xs text-[hsl(var(--foreground))] cursor-pointer"
+                    >
+                        {companies.map((c) => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                    </select>
+                </div>
+                {/* Quick Actions dropdown (cleaner top header) */}
+                <div className="relative" ref={quickActionsRef}>
+                    <Button
+                        variant="outline"
+                        className="flex items-center gap-2 px-3 py-2 rounded-2xl text-xs cursor-pointer border-[hsl(var(--border))] hover:bg-[hsl(var(--muted))]"
+                        onClick={() => setShowQuickActions((prev) => !prev)}
+                    >
+                        <i className="fi fi-rr-menu-burger text-sm" />
+                        <span className="hidden md:inline">Quick actions</span>
+                    </Button>
+                    {showQuickActions && (
+                        <div className="absolute right-0 mt-2 w-60 bg-card border border-[hsl(var(--border))] rounded-2xl shadow-lg z-50 p-2 space-y-1">
+                            <Link href="/dashboard/document-organizer/document-upload" onClick={() => setShowQuickActions(false)}>
+                                <Button
+                                    variant="ghost"
+                                    className="w-full justify-start gap-2 rounded-xl text-xs px-3 py-2 hover:bg-[hsl(var(--muted))]"
+                                >
+                                    <HugeiconsIcon icon={Upload04Icon} className="w-4 h-4" />
+                                    Upload documents
+                                </Button>
+                            </Link>
+                            {role.toLowerCase() !== "viewer" && (
+                                <Link href="/dashboard/services/request" onClick={() => setShowQuickActions(false)}>
+                                    <Button
+                                        variant="ghost"
+                                        className="w-full justify-start gap-2 rounded-xl text-xs px-3 py-2 hover:bg-[hsl(var(--muted))]"
+                                    >
+                                        <HugeiconsIcon icon={Video01Icon} className="w-4 h-4" />
+                                        Request service
+                                    </Button>
+                                </Link>
+                            )}
+                            <Link href="/dashboard/schedule" onClick={() => setShowQuickActions(false)}>
+                                <Button
+                                    variant="ghost"
+                                    className="w-full justify-start gap-2 rounded-xl text-xs px-3 py-2 hover:bg-[hsl(var(--muted))]"
+                                >
+                                    <HugeiconsIcon icon={Video01Icon} className="w-4 h-4" />
+                                    Schedule a call
+                                </Button>
+                            </Link>
+                        </div>
+                    )}
+                </div>
 
                 {/* Notifications */}
                         <div className="relative" ref={notificationRef}>
@@ -348,7 +423,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                             {username}
                         </p>
                         <p className="text-xs text-[hsl(var(--muted-foreground))] capitalize">
-                            Employee
+                            {role || "Client"}
                         </p>
                     </div>
 

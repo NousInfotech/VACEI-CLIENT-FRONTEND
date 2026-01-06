@@ -1,0 +1,72 @@
+"use client";
+
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+
+export default function PayrollWorkspacePage() {
+  return (
+    <section className="mx-auto max-w-[1200px] w-full pt-5 space-y-6">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-semibold text-brand-body">Payroll</h1>
+          <p className="text-sm text-muted-foreground">
+            Payslips, run status, history, and payroll requests.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Link href="/dashboard/document-organizer/document-upload">
+            <Button className="rounded-full text-xs px-4">Upload payroll docs</Button>
+          </Link>
+          <Link href="/dashboard/todo-list">
+            <Button variant="outline" className="rounded-full text-xs px-4">
+              View requests
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid gap-5 md:grid-cols-[1.3fr,1fr]">
+        <div className="space-y-5">
+          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+            <h3 className="text-base font-semibold text-brand-body">Payslips</h3>
+            <ul className="space-y-2 text-sm">
+              {["Jan 2025", "Feb 2025", "Mar 2025"].map((m) => (
+                <li
+                  key={m}
+                  className="flex items-center justify-between rounded-lg border border-border/70 bg-muted/40 px-3 py-2"
+                >
+                  <span>{m}</span>
+                  <Button size="sm" variant="ghost" className="text-xs rounded-full">Download</Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+            <h3 className="text-base font-semibold text-brand-body">Payroll run status</h3>
+            <p className="text-sm text-muted-foreground">Next run: — | Status: —</p>
+          </div>
+        </div>
+
+        <div className="space-y-5">
+          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+            <h3 className="text-base font-semibold text-brand-body">Payroll history</h3>
+            <p className="text-sm text-muted-foreground">Previous runs and requests will appear here.</p>
+          </div>
+
+          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+            <h3 className="text-base font-semibold text-brand-body">Payroll requests</h3>
+            <p className="text-sm text-muted-foreground">
+              Use To-Do list to track client requests related to payroll.
+            </p>
+            <Link href="/dashboard/todo-list">
+              <Button variant="outline" size="sm" className="rounded-full text-xs">Open To-Do</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+

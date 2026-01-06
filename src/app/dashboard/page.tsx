@@ -7,6 +7,8 @@ import PLSummaryChart from "@/components/PLSummaryChart";
 import { getDecodedUsername } from "@/utils/authUtils";
 import { fetchDashboardSummary, ProcessedDashboardStat } from "@/api/financialReportsApi";
 import { fetchUploadStatusSummary } from "@/api/documentApi";
+import { fetchTasks } from "@/api/taskService";
+import type { Task } from "@/interfaces";
 import { HugeiconsIcon } from '@hugeicons/react';
 import { AddressBookIcon, Alert02Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
@@ -27,6 +29,8 @@ export default function DashboardPage() {
   const [revenueYTD, setRevenueYTD] = useState<{ amount: string; change: string } | null>(null);
   const [netIncomeYTD, setNetIncomeYTD] = useState<{ amount: string; change: string } | null>(null);
   const [username, setUsername] = useState<string>(''); // State for username to avoid hydration error
+  const [complianceCounts, setComplianceCounts] = useState({ overdue: 0, dueSoon: 0, waiting: 0, done: 0 });
+  const [pendingTasks, setPendingTasks] = useState<Task[]>([]);
 
   // Set username on client side to avoid hydration error
   useEffect(() => {
@@ -101,6 +105,36 @@ export default function DashboardPage() {
       }
     };
     loadUploadSummary();
+  }, []);
+
+  useEffect(() => {
+    const loadTasks = async () => {
+      try {
+        const taskResponse = await fetchTasks({ page: 1 });
+        const tasks = taskResponse.data || [];
+        const now = new Date();
+        let overdue = 0, dueSoon = 0, waiting = 0, done = 0;
+        tasks.forEach((t: any) => {
+          const status = (t.status || "").toLowerCase();
+          const due = t.dueDate ? new Date(t.dueDate) : null;
+          if (status.includes("resolved") || status.includes("done")) {
+            done += 1;
+            return;
+          }
+          if (due) {
+            const diff = (due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+            if (diff < 0) overdue += 1;
+            else if (diff <= 7) dueSoon += 1;
+          }
+          waiting += 1;
+        });
+        setComplianceCounts({ overdue, dueSoon, waiting, done });
+        setPendingTasks(tasks.slice(0, 5));
+      } catch (e) {
+        console.error("Failed to load tasks for compliance snapshot", e);
+      }
+    };
+    loadTasks();
   }, []);
 
   const handleContactAccountantClick = () => {
@@ -195,6 +229,27 @@ export default function DashboardPage() {
             <PLSummaryChart />
           </div>
           <div className="lg:w-4/12 w-full">
+            <div className="bg-card border-border border rounded-card shadow-md mb-5">
+              <div className="pt-3 px-5 pb-3 border-b border-border">
+                <h3 className="text-xl leading-normal text-brand-body capitalize font-medium">
+                  Compliance snapshot
+                </h3>
+              </div>
+              <div className="grid grid-cols-2 gap-3 py-5 px-5 text-sm">
+                <Kpi label="Overdue" value={complianceCounts.overdue} tone="danger" />
+                <Kpi label="Due soon" value={complianceCounts.dueSoon} tone="warning" />
+                <Kpi label="Waiting" value={complianceCounts.waiting} tone="info" />
+                <Kpi label="Done" value={complianceCounts.done} tone="success" />
+              </div>
+              <div className="px-5 pb-4">
+                <Link href="/dashboard/compliance/list">
+                  <Button variant="outline" size="sm" className="rounded-full text-xs">
+                    View compliance list
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
             <div className="bg-card border-border border rounded-card shadow-md mb-5">
               <div className="pt-3 px-5 pb-3 border-b border-border">
                 <h3 className="text-xl leading-normal text-brand-body capitalize font-medium">
@@ -363,7 +418,61 @@ export default function DashboardPage() {
 
           </div>
         </div>
+
+        {/* Pending actions (tasks) */}
+        <div className="bg-card border-border border rounded-card shadow-md px-5 py-6 mt-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xl leading-normal text-brand-body capitalize font-medium">
+              Pending actions
+            </h3>
+            <Link href="/dashboard/compliance/list">
+              <Button variant="outline" size="sm" className="rounded-full text-xs">
+                Compliance list
+              </Button>
+            </Link>
+          </div>
+          {pendingTasks.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No pending actions found.</p>
+          ) : (
+            <div className="space-y-2">
+              {pendingTasks.map((task) => (
+                <Link
+                  key={task.id}
+                  href={`/dashboard/compliance/detail?taskId=${btoa(task.id.toString())}`}
+                  className="flex items-center justify-between rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-sm hover:bg-muted/50"
+                >
+                  <div>
+                    <p className="font-medium text-brand-body">{task.title}</p>
+                    {task.dueDate && (
+                      <p className="text-xs text-muted-foreground">
+                        Due {new Date(task.dueDate).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-[11px] rounded-full bg-primary/10 px-2 py-1 text-primary">
+                    {task.status || "Open"}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </section>
+  );
+}
+
+function Kpi({ label, value, tone }: { label: string; value: number; tone: "danger" | "warning" | "info" | "success" }) {
+  const toneClasses: Record<typeof tone, string> = {
+    danger: "border-red-200 bg-red-50 text-red-800",
+    warning: "border-amber-200 bg-amber-50 text-amber-800",
+    info: "border-sky-200 bg-sky-50 text-sky-800",
+    success: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  };
+  return (
+    <div className={`rounded-[12px] border px-3 py-2 text-xs shadow-sm ${toneClasses[tone]}`}>
+      <p className="font-medium">{label}</p>
+      <p className="mt-1 text-lg font-semibold">{value}</p>
+    </div>
   );
 }

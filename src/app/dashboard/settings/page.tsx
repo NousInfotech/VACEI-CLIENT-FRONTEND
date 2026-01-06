@@ -6,6 +6,14 @@ import { ValidationError } from 'yup';
 import { changePassword } from '@/api/authService';
 import AlertMessage, { AlertVariant } from '@/components/AlertMessage'; // Import AlertMessage
 import { Button } from '@/components/ui/button';
+import { Input } from "@/components/ui/input";
+// Simple textarea using Input styling
+const Textarea = (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+    <textarea
+        {...props}
+        className={`block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-blue-500 focus:border-brand-primary sm:text-sm ${props.className || ""}`}
+    />
+);
 
 // Define the shape of your form data
 interface FormData {
@@ -126,23 +134,200 @@ function SettingsContent() {
         }
     };
 
+    // --- Local UI state for profile/settings (UI-only, stored locally) ---
+    const [profile, setProfile] = useState<{ companyName: string; regNumber: string; address: string; contact: string; }>(() => {
+        if (typeof window !== "undefined") {
+            const raw = localStorage.getItem("vacei-settings-profile");
+            if (raw) {
+                try { return JSON.parse(raw); } catch { /* ignore */ }
+            }
+        }
+        return { companyName: "", regNumber: "", address: "", contact: "" };
+    });
+    const [notifications, setNotifications] = useState<{ emailEnabled: boolean; inAppEnabled: boolean; docRequests: boolean; tasks: boolean; deadlines: boolean; }>(() => {
+        if (typeof window !== "undefined") {
+            const raw = localStorage.getItem("vacei-settings-notifications");
+            if (raw) {
+                try { return JSON.parse(raw); } catch { /* ignore */ }
+            }
+        }
+        return { emailEnabled: true, inAppEnabled: true, docRequests: true, tasks: true, deadlines: true };
+    });
+    const [mfaEnabled, setMfaEnabled] = useState(false);
+    const [sessions, setSessions] = useState<{ id: string; device: string; location: string; lastSeen: string; }[]>(() => [
+        { id: "local-1", device: "Chrome on Windows", location: "Unknown", lastSeen: "Just now" },
+    ]);
+    const [users, setUsers] = useState<{ id: string; name: string; email: string; role: string; }[]>(() => [
+        { id: "1", name: "You", email: "you@example.com", role: "Owner" },
+    ]);
+    const [newUser, setNewUser] = useState<{ name: string; email: string; role: string; }>({ name: "", email: "", role: "Viewer" });
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            localStorage.setItem("vacei-settings-profile", JSON.stringify(profile));
+            localStorage.setItem("vacei-settings-notifications", JSON.stringify(notifications));
+        }
+    }, [profile, notifications]);
+
+    const [activeTab, setActiveTab] = useState<"general" | "users" | "notifications" | "security" | "billing" | "password">("general");
+
     return (
-        <section className="mx-auto max-w-[1400px] w-full pt-5">
-            <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
+        <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-6">
+            <div className="bg-card border border-border rounded-[16px] p-5 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md space-y-6">
                 <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">Settings</h1>
-                <hr className="my-3 border-t border-gray-100" />
-                
-                {/* Change Password Section */}
-                <div className="mt-3">
+
+                {/* Tabs */}
+                <div className="flex flex-wrap gap-2 border-b border-border/60 pb-2 text-xs">
+                    {[
+                        { id: "general", label: "Company profile" },
+                        { id: "users", label: "Users & roles" },
+                        { id: "notifications", label: "Notifications" },
+                        { id: "security", label: "Security & sessions" },
+                        { id: "billing", label: "Billing" },
+                        { id: "password", label: "Password" },
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => setActiveTab(tab.id as any)}
+                            className={`px-3 py-1.5 rounded-full border text-xs ${
+                                activeTab === tab.id
+                                    ? "bg-primary text-primary-foreground border-primary"
+                                    : "bg-muted text-muted-foreground border-border hover:bg-muted/80"
+                            }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Profile */}
+                {activeTab === "general" && (
+                    <div className="space-y-3">
+                        <h2 className="text-lg font-semibold text-brand-body">Company profile (UI-only)</h2>
+                        <div className="grid gap-3 md:grid-cols-2">
+                            <Input placeholder="Company name" value={profile.companyName} onChange={(e)=>setProfile(p=>({...p,companyName:e.target.value}))}/>
+                            <Input placeholder="Registration number" value={profile.regNumber} onChange={(e)=>setProfile(p=>({...p,regNumber:e.target.value}))}/>
+                        </div>
+                        <Textarea rows={2} placeholder="Address" value={profile.address} onChange={(e)=>setProfile(p=>({...p,address:e.target.value}))}/>
+                        <Input placeholder="Contact details" value={profile.contact} onChange={(e)=>setProfile(p=>({...p,contact:e.target.value}))}/>
+                    </div>
+                )}
+
+                {/* Users & roles (UI only) */}
+                {activeTab === "users" && (
+                    <div className="space-y-3">
+                        <h2 className="text-lg font-semibold text-brand-body">Client users & roles (UI-only)</h2>
+                        <div className="flex flex-col gap-2 md:flex-row">
+                            <Input placeholder="Name" value={newUser.name} onChange={(e)=>setNewUser(u=>({...u,name:e.target.value}))}/>
+                            <Input placeholder="Email" value={newUser.email} onChange={(e)=>setNewUser(u=>({...u,email:e.target.value}))}/>
+                            <select className="rounded-lg border border-border bg-card px-3 py-2 text-sm" value={newUser.role} onChange={(e)=>setNewUser(u=>({...u,role:e.target.value}))}>
+                                <option>Owner</option><option>Admin</option><option>Viewer</option>
+                            </select>
+                            <Button className="text-xs rounded-full" onClick={()=>{ if(newUser.name && newUser.email){ setUsers(prev=>[...prev,{...newUser,id:Date.now().toString()}]); setNewUser({name:"",email:"",role:"Viewer"});} }}>Add</Button>
+                        </div>
+                        <div className="space-y-2">
+                            {users.map(u=>(
+                                <div key={u.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
+                                    <div className="flex flex-col">
+                                        <span className="font-semibold text-brand-body">{u.name}</span>
+                                        <span className="text-muted-foreground text-xs">{u.email}</span>
+                                    </div>
+                                    <span className="text-xs rounded-full bg-muted px-2 py-1">{u.role}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Notifications */}
+                {activeTab === "notifications" && (
+                    <div className="space-y-3">
+                        <h2 className="text-lg font-semibold text-brand-body">Notification preferences (UI-only)</h2>
+                        <div className="grid gap-2 md:grid-cols-2">
+                            <label className="flex items-center gap-2 text-sm">
+                                <input type="checkbox" checked={notifications.emailEnabled} onChange={()=>setNotifications(n=>({...n,emailEnabled:!n.emailEnabled}))}/>
+                                Email notifications
+                            </label>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input type="checkbox" checked={notifications.inAppEnabled} onChange={()=>setNotifications(n=>({...n,inAppEnabled:!n.inAppEnabled}))}/>
+                                In-app notifications
+                            </label>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input type="checkbox" checked={notifications.docRequests} onChange={()=>setNotifications(n=>({...n,docRequests:!n.docRequests}))}/>
+                                Document requests
+                            </label>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input type="checkbox" checked={notifications.tasks} onChange={()=>setNotifications(n=>({...n,tasks:!n.tasks}))}/>
+                                Task assignments
+                            </label>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input type="checkbox" checked={notifications.deadlines} onChange={()=>setNotifications(n=>({...n,deadlines:!n.deadlines}))}/>
+                                Deadline reminders
+                            </label>
+                        </div>
+                    </div>
+                )}
+
+                {/* Security / MFA + Sessions */}
+                {activeTab === "security" && (
+                    <div className="space-y-6">
+                        <div className="space-y-3">
+                            <h2 className="text-lg font-semibold text-brand-body">Security (MFA)</h2>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input type="checkbox" checked={mfaEnabled} onChange={()=>setMfaEnabled(!mfaEnabled)}/>
+                                Enable MFA (UI-only; wire to backend)
+                            </label>
+                            {mfaEnabled && (
+                                <p className="text-xs text-muted-foreground">
+                                    After backend is ready, this will show QR / TOTP setup and recovery codes.
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="space-y-3">
+                            <h2 className="text-lg font-semibold text-brand-body">Session history</h2>
+                            <div className="space-y-2 text-sm">
+                                {sessions.map((s)=>(
+                                    <div key={s.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                                        <div>
+                                            <div className="font-medium">{s.device}</div>
+                                            <div className="text-muted-foreground text-xs">{s.location} · {s.lastSeen}</div>
+                                        </div>
+                                        <Button variant="outline" size="sm" className="text-xs rounded-full" onClick={()=>setSessions(prev=>prev.filter(x=>x.id!==s.id))}>
+                                            Revoke
+                                        </Button>
+                                    </div>
+                                ))}
+                                {sessions.length === 0 && (
+                                    <div className="text-muted-foreground text-xs">No active sessions (UI-only).</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Billing (stub) */}
+                {activeTab === "billing" && (
+                    <div className="space-y-2">
+                        <h2 className="text-lg font-semibold text-brand-body">Billing (if enabled)</h2>
+                        <p className="text-sm text-muted-foreground">
+                            UI stub. Add plan selection & payment details once backend is ready.
+                        </p>
+                    </div>
+                )}
+
+                {/* Change Password Section (kept functional) */}
+                {activeTab === "password" && (
+                <div className="mt-1">
                     <h2 className="text-xl leading-normal text-brand-body capitalize font-medium mb-3">Change Password</h2>
-                    {/* Render the AlertMessage component here */}
                     {alert && (
-                        <div className="mb-4"> {/* Added a div for consistent spacing */}
+                        <div className="mb-4">
                             <AlertMessage
                                 message={alert.message}
                                 variant={alert.variant}
-                                onClose={() => setAlert(null)} // Clear the alert when closed
-                                duration={6000} // Optional: Set a duration for auto-dismiss
+                                onClose={() => setAlert(null)}
+                                duration={6000}
                             />
                         </div>
                     )}
@@ -214,6 +399,7 @@ function SettingsContent() {
                         </div>
                     </form>
                 </div>
+                )}
             </div>
         </section>
     );

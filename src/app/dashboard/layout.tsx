@@ -8,6 +8,7 @@ import SidebarMenu from "@/components/SidebarMenu";
 import { menuData } from "@/lib/menuData";
 import UserMenu from "@/components/UserMenu";
 import TopHeader from "@/components/TopHeader";
+import Breadcrumbs from "@/components/layout/Breadcrumbs";
 import ChatWrapper from "@/components/ChatWrapper";
 import { cn } from "@/lib/utils";
 
@@ -111,12 +112,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {/* Desktop Header */}
                 <Suspense fallback={<div className="h-16">Loading header...</div>}>
                     <div className="hidden lg:block">
-                        <TopHeader 
+                        <TopHeader
                             onSidebarToggle={handleSidebarToggle}
                             isSidebarCollapsed={isSidebarCollapsed}
                         />
                     </div>
                 </Suspense>
+
+                {/* Breadcrumbs (desktop only) */}
+                <Breadcrumbs />
 
                 {/* Main Content */}
                 <main className="flex-1 overflow-y-auto overflow-x-hidden bg-brand-body p-4 lg:p-6">

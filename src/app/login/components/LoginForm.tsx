@@ -119,17 +119,21 @@ export default function LoginForm() {
                                 />
                             </div>
                             <div className="text-left">
-                                <span className="text-3xl font-bold block" style={{ color: `hsl(var(--sidebar-foreground))` }}>Audit Portal</span>
-                                <span className="text-xs font-medium uppercase tracking-wider opacity-70 block" style={{ color: `hsl(var(--sidebar-foreground))` }}>AUDIT & COMPLIANCE</span>
+                                <span className="text-3xl font-bold block" style={{ color: `hsl(var(--sidebar-foreground))` }}>Vacei</span>
+                                <span className="text-xs font-medium uppercase tracking-wider opacity-70 block" style={{ color: `hsl(var(--sidebar-foreground))` }}>CLIENT SERVICE PORTAL</span>
                             </div>
                         </div>
 
-                        <h1 className="text-5xl font-bold leading-tight" style={{ color: `hsl(var(--sidebar-foreground))` }}>
-                            Welcome to <span className="block opacity-70" style={{ color: `hsl(var(--sidebar-foreground))` }}>Audit Portal</span>
+                        <h1 className="text-4xl font-bold leading-tight" style={{ color: `hsl(var(--sidebar-foreground))` }}>
+                            The unified hub for{" "}
+                            <span className="block opacity-90" style={{ color: `hsl(var(--sidebar-foreground))` }}>
+                                bookkeeping, VAT, audit & CSP
+                            </span>
                         </h1>
 
                         <p className="text-xl leading-relaxed opacity-80" style={{ color: `hsl(var(--sidebar-foreground))` }}>
-                            Streamline your audit processes with our modern platform designed for professionals.
+                            Vacei is your virtual firm: one client portal to collaborate on accounting, audit,
+                            payroll, liquidations, share transfers, cross‑border mergers and more.
                         </p>
 
                         <div className="grid grid-cols-1 gap-4 mt-12">
@@ -148,8 +152,8 @@ export default function LoginForm() {
                                         <i className="fi fi-rr-check-circle h-5 w-5" style={{ color: `hsl(var(--sidebar-foreground))` }}></i>
                                     </div>
                                     <div className="text-left">
-                                        <h3 className="font-semibold" style={{ color: `hsl(var(--sidebar-foreground))` }}>Smart Automation</h3>
-                                        <p className="text-sm opacity-80" style={{ color: `hsl(var(--sidebar-foreground))` }}>AI-powered audit procedures</p>
+                                        <h3 className="font-semibold" style={{ color: `hsl(var(--sidebar-foreground))` }}>Service-based workspaces</h3>
+                                        <p className="text-sm opacity-80" style={{ color: `hsl(var(--sidebar-foreground))` }}>Bookkeeping, VAT, payroll, audit & CSP in one place.</p>
                                     </div>
                                 </div>
                             </div>
@@ -169,8 +173,8 @@ export default function LoginForm() {
                                         <i className="fi fi-rr-users h-5 w-5" style={{ color: `hsl(var(--sidebar-foreground))` }}></i>
                                     </div>
                                     <div className="text-left">
-                                        <h3 className="font-semibold" style={{ color: `hsl(var(--sidebar-foreground))` }}>Team Collaboration</h3>
-                                        <p className="text-sm opacity-80" style={{ color: `hsl(var(--sidebar-foreground))` }}>Seamless team coordination</p>
+                                        <h3 className="font-semibold" style={{ color: `hsl(var(--sidebar-foreground))` }}>For clients & partner firms</h3>
+                                        <p className="text-sm opacity-80" style={{ color: `hsl(var(--sidebar-foreground))` }}>Invite your accountant or connect with partner firms using Vacei.</p>
                                     </div>
                                 </div>
                             </div>
@@ -206,14 +210,16 @@ export default function LoginForm() {
                                 />
                             </div>
                             <div>
-                                <span className="text-2xl font-bold block" style={{ color: `hsl(var(--foreground))` }}>Audit Portal</span>
-                                <span className="text-xs font-medium uppercase tracking-wider opacity-70" style={{ color: `hsl(var(--muted-foreground))` }}>AUDIT & COMPLIANCE</span>
+                                <span className="text-2xl font-bold block" style={{ color: `hsl(var(--foreground))` }}>Vacei</span>
+                                <span className="text-xs font-medium uppercase tracking-wider opacity-70" style={{ color: `hsl(var(--muted-foreground))` }}>CLIENT SERVICE PORTAL</span>
                             </div>
                         </div>
 
                         <div className="space-y-3">
                             <h1 className="text-4xl font-bold leading-tight" style={{ color: `hsl(var(--foreground))` }}>Welcome back</h1>
-                            <p className="text-lg opacity-70" style={{ color: `hsl(var(--muted-foreground))` }}>Sign in to your account</p>
+                            <p className="text-lg opacity-70" style={{ color: `hsl(var(--muted-foreground))` }}>
+                                Sign in to manage your documents, services and compliance across all entities.
+                            </p>
                         </div>
                     </div>
 

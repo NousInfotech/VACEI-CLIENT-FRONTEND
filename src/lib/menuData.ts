@@ -1,10 +1,14 @@
-import { DashboardSquare02Icon,FileSyncIcon, TaskDaily01Icon, Book02Icon, ArrowRightDoubleIcon, CashbackPoundIcon, TransactionIcon, TaxesIcon, GitPullRequestIcon, DocumentValidationIcon, ProfileIcon, InstallingUpdates02Icon,NotificationIcon,InvoiceIcon } from '@hugeicons/core-free-icons';
+import { DashboardSquare02Icon,FileSyncIcon, TaskDaily01Icon, Book02Icon, ArrowRightDoubleIcon, CashbackPoundIcon, TransactionIcon, TaxesIcon, GitPullRequestIcon, DocumentValidationIcon, ProfileIcon, InstallingUpdates02Icon,NotificationIcon,InvoiceIcon, Message01Icon } from '@hugeicons/core-free-icons';
+
+export type MenuSection = "primary" | "workspaces" | "operations" | "settings";
+
 export interface MenuItem {
     slug: string;
     icon: any;
     label: string;
     href: string;
     children?: MenuItem[];
+    section?: MenuSection;
 }
 
 export const menuData: MenuItem[] = [
@@ -14,6 +18,39 @@ export const menuData: MenuItem[] = [
         label: "Dashboard",
         href: "/dashboard",
         children: [],
+        section: "primary",
+    },
+    {
+        slug: "documents",
+        icon: DocumentValidationIcon,
+        label: "Documents",
+        href: "/dashboard/documents",
+        children: [],
+        section: "primary",
+    },
+    {
+        slug: "services",
+        icon: GitPullRequestIcon,
+        label: "Services",
+        href: "/dashboard/services",
+        children: [],
+        section: "primary",
+    },
+    {
+        slug: "compliance",
+        icon: TaxesIcon,
+        label: "Compliance Calendar",
+        href: "/dashboard/compliance",
+        children: [],
+        section: "primary",
+    },
+    {
+        slug: "messages",
+        icon: Message01Icon,
+        label: "Messages",
+        href: "/dashboard/messages",
+        children: [],
+        section: "primary",
     },
     {
         slug: "todo-list",
@@ -21,13 +58,15 @@ export const menuData: MenuItem[] = [
         label: "To-Do List",
         href: "/dashboard/todo-list",
         children: [],
+        section: "operations",
     },
-      {
+    {
         slug: "notifications",
         icon: NotificationIcon,
         label: "Alerts & Notifications",
         href: "/dashboard/notifications",
         children: [],
+        section: "operations",
     },
     {
         slug: "books",
@@ -59,13 +98,9 @@ export const menuData: MenuItem[] = [
                 label: "AP/AR Aging",
                 href: "/dashboard/ap-ar-aging/account-receivable-aging",
             },
-            /* {
-                slug: "#",
-                icon: ArrowRightDoubleIcon,
-                label: "Revenue Waterfall",
-                href: "#"
-            } */
+            /* more financial reports can be added here */
         ],
+        section: "workspaces",
     },
     {
         slug: "cash/accounts",
@@ -92,6 +127,7 @@ export const menuData: MenuItem[] = [
                 href: "/dashboard/cash/cash-spend"
             }
         ],
+        section: "workspaces",
     },
     {
         slug: "bank-transactions",
@@ -99,6 +135,7 @@ export const menuData: MenuItem[] = [
         label: "Bank Transactions",
         href: "/dashboard/bank-transactions",
         children: [],
+        section: "workspaces",
     },
       {
         slug: "invoices",
@@ -106,6 +143,7 @@ export const menuData: MenuItem[] = [
         label: "Invoice",
         href: "/dashboard/invoices",
         children: [],
+        section: "workspaces",
     },
     {
         slug: "tax",
@@ -113,6 +151,7 @@ export const menuData: MenuItem[] = [
         label: "Tax",
         href: "/dashboard/tax",
         children: [],
+        section: "workspaces",
     },
     /* {
         slug: "#",
@@ -153,7 +192,7 @@ export const menuData: MenuItem[] = [
         ],
     }, */
     {
-       slug: "document-organizer",
+        slug: "document-organizer",
         icon: DocumentValidationIcon,
         label: "Document Organizer",
         href: "#",
@@ -171,6 +210,7 @@ export const menuData: MenuItem[] = [
                 href: "/dashboard/document-organizer/document-listing",
             },
         ],
+        section: "operations",
     },
     {
         slug: "general-ledger",
@@ -178,6 +218,7 @@ export const menuData: MenuItem[] = [
         label: "General Ledger",
         href: "/dashboard/general-ledger",
         children: [],
+        section: "workspaces",
     },
     {
         slug: "quickbooks-sync",
@@ -185,6 +226,7 @@ export const menuData: MenuItem[] = [
         label: "Quickbooks Sync",
         href: "/dashboard/quickbooks-sync",
         children: [],
+        section: "operations",
     },
     {
         slug: "settings",
@@ -192,5 +234,6 @@ export const menuData: MenuItem[] = [
         label: "Settings",
         href: "/dashboard/settings",
         children: [],
+        section: "settings",
     }
 ];
