@@ -5,6 +5,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Notification01Icon, Upload04Icon, Video01Icon } from '@hugeicons/core-free-icons';
 import { PanelLeft, PanelLeftClose } from 'lucide-react';
@@ -286,19 +287,19 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             <div className="flex items-center gap-3">
                 {/* Company selector */}
                 <div className="hidden md:flex items-center gap-2">
-                    <select
+                    <Select
                         value={activeCompany}
                         onChange={(e) => {
                             const val = e.target.value;
                             setActiveCompany(val);
                             if (typeof window !== "undefined") localStorage.setItem("vacei-active-company", val);
                         }}
-                        className="rounded-2xl border border-[hsl(var(--border))] bg-card px-3 py-2 text-xs text-[hsl(var(--foreground))] cursor-pointer"
+                        className="rounded-lg border border-border bg-card px-3 py-2 text-xs text-brand-body cursor-pointer shadow-sm hover:shadow-md transition-shadow min-w-[140px]"
                     >
                         {companies.map((c) => (
                             <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
-                    </select>
+                    </Select>
                 </div>
                 {/* Quick Actions dropdown (cleaner top header) */}
                 <div className="relative" ref={quickActionsRef}>
@@ -354,8 +355,8 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                             >
                         <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5 text-[hsl(var(--foreground))]" />
                                 {unreadCount > 0 && (
-                            <span className="absolute -top-0 right-1.5 bg-[hsl(var(--primary))] text-card-foreground !text-[10px] rounded-full h-4 w-4 flex items-center justify-center">
-                                        {unreadCount}
+                            <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] font-semibold rounded-full h-5 w-5 flex items-center justify-center shadow-md border-2 border-background">
+                                        {unreadCount > 99 ? '99+' : unreadCount}
                                     </span>
                                 )}
                             </Button>

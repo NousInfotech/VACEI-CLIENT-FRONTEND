@@ -18,7 +18,7 @@ const serviceCards = [
     title: "Bookkeeping",
     status: "Waiting docs",
     statusTone: "warning",
-    href: "/dashboard/financial-statements/profit-loss",
+    href: "/dashboard/services/bookkeeping",
     icon: Book02Icon,
     description: "Monthly books, reconciliations and reports.",
   },
@@ -27,7 +27,7 @@ const serviceCards = [
     title: "VAT & Tax",
     status: "Draft",
     statusTone: "info",
-    href: "/dashboard/tax",
+    href: "/dashboard/services/vat",
     icon: TaxesIcon,
     description: "VAT periods, submissions and tax review.",
   },
@@ -36,7 +36,7 @@ const serviceCards = [
     title: "Payroll",
     status: "Done",
     statusTone: "success",
-    href: "/dashboard/invoices",
+    href: "/dashboard/services/payroll",
     icon: CashbackPoundIcon,
     description: "Payslips history via invoice exports.",
   },
@@ -54,7 +54,7 @@ const serviceCards = [
     title: "Projects",
     status: "None",
     statusTone: "muted",
-    href: "/dashboard/todo-list",
+    href: "/dashboard/services/projects",
     icon: GitPullRequestIcon,
     description: "Use the To‑Do list to coordinate projects.",
   },
@@ -140,17 +140,31 @@ function StatusBadge({
   children: React.ReactNode;
 }) {
   const base =
-    "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium border";
-  const toneClasses: Record<typeof tone, string> = {
-    warning:
-      "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-200 dark:border-amber-500/30",
-    info: "bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-500/10 dark:text-sky-200 dark:border-sky-500/30",
-    success:
-      "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-200 dark:border-emerald-500/30",
-    muted:
-      "bg-muted text-muted-foreground border-border/60 dark:bg-muted/60 dark:text-muted-foreground/80",
+    "inline-flex items-center rounded-lg px-2.5 py-0.5 text-xs font-medium border";
+  const toneClasses: Record<typeof tone, { bg: string; text: string; border: string }> = {
+    warning: {
+      bg: "bg-card",
+      text: "text-warning",
+      border: "border-warning/30",
+    },
+    info: {
+      bg: "bg-card",
+      text: "text-info",
+      border: "border-info/30",
+    },
+    success: {
+      bg: "bg-card",
+      text: "text-success",
+      border: "border-success/30",
+    },
+    muted: {
+      bg: "bg-muted",
+      text: "text-muted-foreground",
+      border: "border-border",
+    },
   };
-  return <span className={`${base} ${toneClasses[tone]}`}>{children}</span>;
+  const classes = toneClasses[tone];
+  return <span className={`${base} ${classes.bg} ${classes.text} ${classes.border} shadow-sm`}>{children}</span>;
 }
 
 export default function ServicesHubPage() {
@@ -167,26 +181,26 @@ export default function ServicesHubPage() {
             audit and more.
           </p>
         </div>
-        <Link href="/dashboard/todo-list">
-          <Button variant="outline" className="rounded-full px-4 text-sm">
+        <Link href="/dashboard/compliance/list">
+          <Button variant="outline" className="rounded-lg px-4 text-sm shadow-sm hover:shadow-md transition-shadow">
             View pending actions
           </Button>
         </Link>
       </div>
 
-      <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-5">
+      <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-base md:text-lg font-medium text-brand-body">
+          <h2 className="text-lg font-semibold text-brand-body">
             Service overview
           </h2>
           <div className="flex gap-2">
             <Link href="/dashboard/services/request">
-              <Button variant="default" size="sm" className="rounded-full text-xs">
+              <Button variant="default" size="sm" className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow">
                 Request new service
               </Button>
             </Link>
             <Link href="/dashboard/quickbooks-sync">
-              <Button variant="ghost" size="sm" className="rounded-full text-xs">
+              <Button variant="ghost" size="sm" className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow">
                 Manage integrations
               </Button>
             </Link>
@@ -196,17 +210,17 @@ export default function ServicesHubPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {serviceCards.map((card) => (
             <Link key={card.slug} href={card.href}>
-              <article className="group relative flex h-full cursor-pointer flex-col justify-between rounded-[16px] border border-border bg-background/80 p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md">
+              <article className="group relative flex h-full cursor-pointer flex-col justify-between rounded-lg border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <HugeiconsIcon icon={card.icon} className="h-5 w-5" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted border border-border">
+                      <HugeiconsIcon icon={card.icon} className="h-5 w-5 text-brand-body" />
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-brand-body">
                         {card.title}
                       </h3>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {card.description}
                       </p>
                     </div>
@@ -216,7 +230,7 @@ export default function ServicesHubPage() {
 
                 <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
                   <span>Open workspace</span>
-                  <span className="flex items-center gap-1 text-primary font-medium">
+                  <span className="flex items-center gap-1 text-brand-primary font-medium">
                     Open
                     <span aria-hidden className="text-[10px]">→</span>
                   </span>
@@ -226,18 +240,18 @@ export default function ServicesHubPage() {
           ))}
         </div>
 
-        <div className="mt-2 flex items-center justify-between rounded-[14px] border border-dashed border-border bg-muted/40 px-4 py-3">
+        <div className="mt-2 flex items-center justify-between rounded-lg border border-dashed border-border bg-muted/30 px-4 py-3">
           <div className="space-y-0.5">
             <p className="text-xs font-medium text-brand-body">
               Need something that is not listed?
             </p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Use your existing To‑Do / tasks and chat to coordinate custom
               projects with your accountant.
             </p>
           </div>
-          <Link href="/dashboard/todo-list">
-            <Button size="sm" className="rounded-full text-xs">
+          <Link href="/dashboard/services/request">
+            <Button size="sm" className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow">
               Request new service
             </Button>
           </Link>

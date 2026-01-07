@@ -43,6 +43,9 @@ export default function SidebarMenu({ menu, isCollapsed = false }: SidebarMenuPr
                     if (hasChildren && !isCollapsed) {
                         e.preventDefault();
                         toggleItem(item.slug);
+                    } else {
+                        // Ensure navigation works for items without children
+                        // Don't prevent default for regular links
                     }
                 }}
                 className={cn(

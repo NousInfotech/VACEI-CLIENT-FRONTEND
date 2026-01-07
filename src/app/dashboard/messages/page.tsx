@@ -26,7 +26,7 @@ export default function MessagesPage() {
         </div>
         <Button
           variant="outline"
-          className="rounded-full px-4 text-sm"
+          className="rounded-lg px-4 text-sm shadow-sm hover:shadow-md transition-shadow"
           onClick={() => {
             const btn = document.getElementById("openChatBubble");
             if (btn) btn.click();
@@ -36,13 +36,13 @@ export default function MessagesPage() {
         </Button>
       </div>
 
-      <div className="bg-card border border-border rounded-[16px] shadow-md p-5">
-        <p className="text-sm text-muted-foreground mb-3">
+      <div className="bg-card border border-border rounded-card shadow-md p-6">
+        <p className="text-sm text-muted-foreground mb-4">
           The inbox uses your existing chat threads. If the floating chat is not
-          open, click “Open inbox.”
+          open, click "Open inbox."
         </p>
         {/* Render ChatModule directly so the thread data is available on this page */}
-        <div className="relative min-h-[300px]">
+        <div className="relative min-h-[400px] rounded-lg border border-border bg-muted/20 p-4">
           <ChatModule />
         </div>
       </div>

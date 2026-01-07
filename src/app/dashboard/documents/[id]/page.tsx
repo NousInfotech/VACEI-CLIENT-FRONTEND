@@ -47,11 +47,11 @@ export default function DocumentDetailPage() {
         </div>
         <div className="flex gap-2">
           <Link href="/dashboard/document-organizer/document-upload">
-            <Button variant="outline" className="rounded-full text-xs px-4">
+            <Button variant="outline" className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">
               Upload new version
             </Button>
           </Link>
-          <Button className="rounded-full text-xs px-4" variant="default">
+          <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow" variant="default">
             Download
           </Button>
         </div>
@@ -60,7 +60,7 @@ export default function DocumentDetailPage() {
       <div className="grid gap-5 md:grid-cols-[2fr,1fr]">
         {/* Left column */}
         <div className="space-y-5">
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5">
+          <div className="bg-card border border-border rounded-card shadow-md p-6">
             <div className="grid gap-3 md:grid-cols-2 text-sm">
               <Field label="Status" value={doc.status} />
               <Field label="Service" value={doc.service} />
@@ -73,7 +73,7 @@ export default function DocumentDetailPage() {
               {doc.tags.map((t) => (
                 <span
                   key={t}
-                  className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground"
+                  className="rounded-lg bg-muted border border-border px-2.5 py-1 text-xs font-medium text-brand-body"
                 >
                   {t}
                 </span>
@@ -81,27 +81,27 @@ export default function DocumentDetailPage() {
             </div>
           </div>
 
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
             <h3 className="text-base font-semibold text-brand-body">Preview</h3>
-            <div className="h-[260px] rounded-xl border border-dashed border-border bg-muted/40 flex items-center justify-center text-sm text-muted-foreground">
+            <div className="h-[260px] rounded-lg border border-dashed border-border bg-muted/30 flex items-center justify-center text-sm text-muted-foreground shadow-sm">
               Preview placeholder (wire to file URL when available)
             </div>
           </div>
 
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
             <h3 className="text-base font-semibold text-brand-body">Comments (UI-only)</h3>
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>No comments yet. Add comments when backend endpoint is available.</p>
             </div>
           </div>
 
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
             <h3 className="text-base font-semibold text-brand-body">Audit trail (UI-only)</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-sm">
               {doc.auditTrail.map((item, idx) => (
-                <li key={idx} className="flex items-center justify-between">
-                  <span>{item.action}</span>
-                  <span className="text-[11px]">
+                <li key={idx} className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2 shadow-sm">
+                  <span className="text-brand-body font-medium">{item.action}</span>
+                  <span className="text-xs text-muted-foreground">
                     {item.by} · {item.at}
                   </span>
                 </li>
@@ -112,21 +112,21 @@ export default function DocumentDetailPage() {
 
         {/* Right column */}
         <div className="space-y-5">
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
             <h3 className="text-base font-semibold text-brand-body">Versions</h3>
             <ul className="space-y-2 text-sm">
               {doc.versions.map((v) => (
                 <li
                   key={v.label}
-                  className="flex items-center justify-between rounded-lg border border-border/70 bg-muted/40 px-3 py-2"
+                  className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3 shadow-sm"
                 >
                   <div>
-                    <div className="font-medium text-brand-body">{v.label}</div>
-                    <div className="text-[11px] text-muted-foreground">
+                    <div className="font-semibold text-brand-body">{v.label}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
                       {v.date} · {v.by}
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-xs rounded-full">
+                  <Button variant="ghost" size="sm" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow">
                     Download
                   </Button>
                 </li>
@@ -134,11 +134,11 @@ export default function DocumentDetailPage() {
             </ul>
           </div>
 
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
             <h3 className="text-base font-semibold text-brand-body">Linked items (UI-only)</h3>
             <div className="flex flex-wrap gap-2 text-xs">
               {doc.linked.map((l) => (
-                <span key={l} className="rounded-full bg-muted px-2 py-1 text-muted-foreground">
+                <span key={l} className="rounded-lg bg-muted border border-border px-2.5 py-1 font-medium text-brand-body">
                   {l}
                 </span>
               ))}
@@ -153,7 +153,7 @@ export default function DocumentDetailPage() {
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-1">
-      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="text-sm font-medium text-brand-body">{value}</p>
     </div>
   );

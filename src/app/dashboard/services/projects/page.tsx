@@ -14,9 +14,9 @@ export default function ProjectsWorkspacePage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button className="rounded-full text-xs px-4">Create project</Button>
+          <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">Create project</Button>
           <Link href="/dashboard/todo-list">
-            <Button variant="outline" className="rounded-full text-xs px-4">
+            <Button variant="outline" className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">
               View project tasks
             </Button>
           </Link>
@@ -25,24 +25,24 @@ export default function ProjectsWorkspacePage() {
 
       <div className="grid gap-5 md:grid-cols-[1.3fr,1fr]">
         <div className="space-y-5">
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
             <h3 className="text-base font-semibold text-brand-body">Projects</h3>
             <p className="text-sm text-muted-foreground">List of projects will appear here (UI-only).</p>
           </div>
 
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
             <h3 className="text-base font-semibold text-brand-body">Milestones</h3>
             <p className="text-sm text-muted-foreground">Add milestones and track progress when backend is ready.</p>
           </div>
         </div>
 
         <div className="space-y-5">
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
             <h3 className="text-base font-semibold text-brand-body">Data room</h3>
             <p className="text-sm text-muted-foreground">Use Documents to store and share files; link them here later.</p>
           </div>
 
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
             <h3 className="text-base font-semibold text-brand-body">History</h3>
             <p className="text-sm text-muted-foreground">Timeline of project events will appear here.</p>
           </div>

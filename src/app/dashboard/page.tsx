@@ -163,15 +163,15 @@ export default function DashboardPage() {
 
   return (
     <section className="mx-auto max-w-[1400px] w-full pt-5"> 
-      <div className="bg-card border-border border rounded-card shadow-md px-5 py-6">
-        <div className="md:flex justify-between items-center mb-4 ">
+      <div className="bg-card border border-border rounded-card shadow-md px-6 py-6">
+        <div className="md:flex justify-between items-center mb-6">
           <h1 className="text-[32px] leading-normal text-brand-body capitalize font-light">
             Welcome back, <span className="font-semibold text-brand-body">{username || 'User'}</span>
           </h1>
           <Button
             variant="default"
             onClick={handleContactAccountantClick}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer !font-normal"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer !font-normal shadow-sm hover:shadow-md transition-shadow"
           >
             <HugeiconsIcon icon={AddressBookIcon} className="w-4.5 h-4.5 size-custom" />
             Contact Accountant
@@ -179,9 +179,9 @@ export default function DashboardPage() {
         </div>
 
         {!uploadLoading && uploadSummary?.filesUploadedThisMonth === 0 && (
-          <div className="mb-8 flex items-start gap-2 p-3 border-l-4 border-destructive bg-destructive/10 text-destructive rounded-lg shadow-md">
-            <HugeiconsIcon icon={Alert02Icon} className="w-6 h-6" />
-            <p className="m-0">
+          <div className="mb-6 flex items-start gap-3 p-4 border-l-4 border-warning bg-card border-r border-t border-b border-border rounded-lg shadow-sm">
+            <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
+            <p className="m-0 text-sm text-brand-body">
               <strong className="font-semibold">Warning:</strong> No documents uploaded this month.
             </p>
           </div>
@@ -202,8 +202,8 @@ export default function DashboardPage() {
             Request Upgrade
           </button>
         </div>
-        <div className="mb-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 lg:grid-cols-2 gap-5">
+        <div className="mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 lg:grid-cols-2 gap-4">
             {loading ? (
               Array(3)
                 .fill(null)
@@ -229,13 +229,13 @@ export default function DashboardPage() {
             <PLSummaryChart />
           </div>
           <div className="lg:w-4/12 w-full">
-            <div className="bg-card border-border border rounded-card shadow-md mb-5">
-              <div className="pt-3 px-5 pb-3 border-b border-border">
-                <h3 className="text-xl leading-normal text-brand-body capitalize font-medium">
+            <div className="bg-card border border-border rounded-card shadow-md mb-5">
+              <div className="pt-4 px-5 pb-3 border-b border-border">
+                <h3 className="text-lg font-semibold text-brand-body">
                   Compliance snapshot
                 </h3>
               </div>
-              <div className="grid grid-cols-2 gap-3 py-5 px-5 text-sm">
+              <div className="grid grid-cols-2 gap-3 py-5 px-5">
                 <Kpi label="Overdue" value={complianceCounts.overdue} tone="danger" />
                 <Kpi label="Due soon" value={complianceCounts.dueSoon} tone="warning" />
                 <Kpi label="Waiting" value={complianceCounts.waiting} tone="info" />
@@ -243,20 +243,20 @@ export default function DashboardPage() {
               </div>
               <div className="px-5 pb-4">
                 <Link href="/dashboard/compliance/list">
-                  <Button variant="outline" size="sm" className="rounded-full text-xs">
+                  <Button variant="outline" size="sm" className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow">
                     View compliance list
                   </Button>
                 </Link>
               </div>
             </div>
 
-            <div className="bg-card border-border border rounded-card shadow-md mb-5">
-              <div className="pt-3 px-5 pb-3 border-b border-border">
-                <h3 className="text-xl leading-normal text-brand-body capitalize font-medium">
+            <div className="bg-card border border-border rounded-card shadow-md mb-5">
+              <div className="pt-4 px-5 pb-3 border-b border-border">
+                <h3 className="text-lg font-semibold text-brand-body">
                   Upload Status Summary
                 </h3>
               </div>
-              <div className="space-y-6 py-5 px-5">
+              <div className="space-y-5 py-5 px-5">
                 {uploadLoading ? (
                   Array(3).fill(null).map((_, idx) => (
                     <div key={`upload-skeleton-${idx}`}>
@@ -270,9 +270,9 @@ export default function DashboardPage() {
                       <div className="flex justify-between items-start">
                         <div className="flex gap-2 items-center mb-2.5">
                           <img src="/document-upload.svg" alt="Documents Uploaded" className="w-5 h-5" />
-                          <p className="text-sm text-[#3D3D3D] font-normal leading-6">
+                          <p className="text-sm text-brand-body font-normal leading-6">
                             Documents Uploaded:{" "}
-                            <span className="text-primary font-medium">{uploadSummary.documentsUploaded}</span>
+                            <span className="text-brand-primary font-semibold">{uploadSummary.documentsUploaded}</span>
                           </p>
                         </div>
 
@@ -288,9 +288,9 @@ export default function DashboardPage() {
                           </div>
                         </Link>
                       </div>
-                      <div className="progress bg-[#D9D9D9] h-[4px] w-full rounded-full relative">
+                      <div className="h-[6px] w-full rounded-full bg-muted relative overflow-hidden">
                         {uploadSummary.documentsUploaded > 0 && (
-                          <div className="progress-bar bg-primary h-[4px] w-full rounded-full"></div>
+                          <div className="h-full w-full rounded-full bg-primary"></div>
                         )}
                       </div>
                     </div>
@@ -299,9 +299,9 @@ export default function DashboardPage() {
                       <div className="flex justify-between items-start">
                         <div className="flex gap-2 items-center mb-2.5">
                           <img src="/document-pending.svg" alt="Documents Processed" className="w-5 h-5" />
-                          <p className="text-sm text-[#3D3D3D] font-normal leading-6">
+                          <p className="text-sm text-brand-body font-normal leading-6">
                             Documents Processed:{" "}
-                            <span className="text-[#E53933] font-medium">{uploadSummary.documentsProcessed}</span>
+                            <span className="text-brand-primary font-semibold">{uploadSummary.documentsProcessed}</span>
                           </p>
                         </div>
                         <Link href={`/dashboard/document-organizer/document-listing?status=${encodedProcessedStatus}`} passHref>
@@ -314,9 +314,9 @@ export default function DashboardPage() {
                         </Link>
                       </div>
 
-                      <div className="progress bg-[#D9D9D9] h-[4px] w-full rounded-full relative">
+                      <div className="h-[6px] w-full rounded-full bg-muted relative overflow-hidden">
                         <div
-                          className="progress-bar bg-[#EA9813] h-[4px] rounded-full"
+                          className="h-full rounded-full bg-warning"
                           style={{ width: `${processedPercentage}%` }}
                         ></div>
                       </div>
@@ -326,9 +326,9 @@ export default function DashboardPage() {
                       <div className="flex justify-between items-start">
                         <div className="flex gap-2 items-center mb-2.5">
                           <img src="/document-pending.svg" alt="Documents Processed" className="w-5 h-5" />
-                          <p className="text-sm text-[#3D3D3D] font-normal leading-6">
+                          <p className="text-sm text-brand-body font-normal leading-6">
                             Documents Pending:{" "}
-                            <span className="text-[#E53933] font-medium">{uploadSummary.documentsPending}</span>
+                            <span className="text-brand-primary font-semibold">{uploadSummary.documentsPending}</span>
                           </p>
                         </div>
                         <Link href={`/dashboard/document-organizer/document-listing?status=${encodedPendingStatus}`} passHref>
@@ -341,9 +341,9 @@ export default function DashboardPage() {
                         </Link>
                       </div>
 
-                      <div className="progress bg-[#D9D9D9] h-[4px] w-full rounded-full relative">
+                      <div className="h-[6px] w-full rounded-full bg-muted relative overflow-hidden">
                         <div
-                          className="progress-bar bg-[#E53933] h-[4px] rounded-full"
+                          className="h-full rounded-full bg-destructive"
                           style={{ width: `${pendingPercentage}%` }}
                         ></div>
                       </div>
@@ -353,9 +353,9 @@ export default function DashboardPage() {
                       <div className="flex justify-between items-start">
                         <div className="flex gap-2 items-center mb-2.5">
                           <img src="/document-pending.svg" alt="Documents Processed" className="w-5 h-5" />
-                          <p className="text-sm text-[#3D3D3D] font-normal leading-6">
+                          <p className="text-sm text-brand-body font-normal leading-6">
                             Documents Needs Correction:{" "}
-                            <span className="text-[#E53933] font-medium">{uploadSummary.documentsNeedsCorrection}</span>
+                            <span className="text-brand-primary font-semibold">{uploadSummary.documentsNeedsCorrection}</span>
                           </p>
                         </div>
                         <Link href={`/dashboard/document-organizer/document-listing?status=${encodedNeedCorrectionStatus}`} passHref>
@@ -368,9 +368,9 @@ export default function DashboardPage() {
                         </Link>
                       </div>
 
-                      <div className="progress bg-[#D9D9D9] h-[4px] w-full rounded-full relative">
+                      <div className="h-[6px] w-full rounded-full bg-muted relative overflow-hidden">
                         <div
-                          className="progress-bar bg-[#E53933] h-[4px] rounded-full"
+                          className="h-full rounded-full bg-destructive"
                           style={{ width: `${needCorrectionPercentage}%` }}
                         ></div>
                       </div>
@@ -384,30 +384,30 @@ export default function DashboardPage() {
               </div>
             </div>
             {(netIncomeYTD) && (
-              <div className="bg-card border-border border rounded-card shadow-md">
-                <div className="pt-3 px-5 pb-3 border-b border-border">
-                  <h3 className="text-xl leading-normal text-brand-body capitalize font-medium">
+              <div className="bg-card border border-border rounded-card shadow-md">
+                <div className="pt-4 px-5 pb-3 border-b border-border">
+                  <h3 className="text-lg font-semibold text-brand-body">
                     Yearly Progress
                   </h3>
                 </div>
 
-                <div className="space-y-6 py-5 px-5">
+                <div className="space-y-4 py-5 px-5">
                   {loading ? (
                     Array(2)
                       .fill(null)
                       .map((_, idx) => (
                         <div
                           key={`yearly-progress-skeleton-${idx}`}
-                          className="bg-gray-200 animate-pulse h-10 rounded-full mb-3"
+                          className="h-10 bg-muted animate-pulse rounded-lg"
                         />
                       ))
                   ) : (
-                    <div className="bg-sidebar-background rounded-full px-5 py-[7px] flex items-center justify-between text-success-foreground mb-3 shadow-md">
-                      <p className="font-medium text-sm">Income</p>
-                      <p className="flex items-center font-medium text-sm">
+                    <div className="bg-muted border border-border rounded-lg px-4 py-3 flex items-center justify-between shadow-sm">
+                      <p className="font-medium text-sm text-brand-body">Income</p>
+                      <p className="flex items-center gap-1 font-semibold text-sm text-brand-body">
                         {netIncomeYTD.change}{" "}
                         <i
-                          className={`${getArrowIcon(netIncomeYTD.change)} leading-0 block`}
+                          className={`${getArrowIcon(netIncomeYTD.change)} leading-0 block text-xs`}
                         />
                       </p>
                     </div>
@@ -420,13 +420,13 @@ export default function DashboardPage() {
         </div>
 
         {/* Pending actions (tasks) */}
-        <div className="bg-card border-border border rounded-card shadow-md px-5 py-6 mt-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xl leading-normal text-brand-body capitalize font-medium">
+        <div className="bg-card border border-border rounded-card shadow-md px-6 py-6 mt-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-brand-body">
               Pending actions
             </h3>
             <Link href="/dashboard/compliance/list">
-              <Button variant="outline" size="sm" className="rounded-full text-xs">
+              <Button variant="outline" size="sm" className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow">
                 Compliance list
               </Button>
             </Link>
@@ -439,17 +439,17 @@ export default function DashboardPage() {
                 <Link
                   key={task.id}
                   href={`/dashboard/compliance/detail?taskId=${btoa(task.id.toString())}`}
-                  className="flex items-center justify-between rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-sm hover:bg-muted/50"
+                  className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-sm hover:shadow-md transition-all shadow-sm"
                 >
                   <div>
                     <p className="font-medium text-brand-body">{task.title}</p>
                     {task.dueDate && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         Due {new Date(task.dueDate).toLocaleDateString()}
                       </p>
                     )}
                   </div>
-                  <span className="text-[11px] rounded-full bg-primary/10 px-2 py-1 text-primary">
+                  <span className="text-xs rounded-lg bg-muted border border-border px-2.5 py-1 text-brand-body font-medium">
                     {task.status || "Open"}
                   </span>
                 </Link>
@@ -463,16 +463,22 @@ export default function DashboardPage() {
 }
 
 function Kpi({ label, value, tone }: { label: string; value: number; tone: "danger" | "warning" | "info" | "success" }) {
-  const toneClasses: Record<typeof tone, string> = {
-    danger: "border-red-200 bg-red-50 text-red-800",
-    warning: "border-amber-200 bg-amber-50 text-amber-800",
-    info: "border-sky-200 bg-sky-50 text-sky-800",
-    success: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  const toneBorders: Record<typeof tone, string> = {
+    danger: "border-destructive/30",
+    warning: "border-warning/30",
+    info: "border-info/30",
+    success: "border-success/30",
+  };
+  const toneText: Record<typeof tone, string> = {
+    danger: "text-destructive",
+    warning: "text-warning",
+    info: "text-info",
+    success: "text-success",
   };
   return (
-    <div className={`rounded-[12px] border px-3 py-2 text-xs shadow-sm ${toneClasses[tone]}`}>
-      <p className="font-medium">{label}</p>
-      <p className="mt-1 text-lg font-semibold">{value}</p>
+    <div className={`rounded-lg border ${toneBorders[tone]} bg-card px-3 py-2.5 shadow-sm`}>
+      <p className="text-xs font-medium text-muted-foreground mb-1">{label}</p>
+      <p className={`text-lg font-semibold ${toneText[tone]}`}>{value}</p>
     </div>
   );
 }

@@ -274,8 +274,8 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
                 <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-5 py-2 bg-sidebar-background text-sidebar-foreground rounded-md
-                               hover:bg-sidebar-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring/50
+                    className="px-5 py-2 bg-primary text-primary-foreground rounded-lg
+                               hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary/50
                                transition duration-150 ease-in-out disabled:opacity-50 text-sm font-medium shadow-md"
                 >
                     {isSubmitting ? 'Saving...' : 'Save'}

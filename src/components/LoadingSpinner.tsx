@@ -1,9 +1,20 @@
-// components/LoadingSpinner.js
+"use client";
 
-export default function LoadingSpinner() {
+import { Spinner } from "./ui/spinner";
+
+export default function LoadingSpinner({ 
+  size = 32, 
+  className = "",
+  text = "Loading..." 
+}: { 
+  size?: number; 
+  className?: string;
+  text?: string;
+}) {
   return (
-    <div className="flex justify-center items-center">
-      <div className="w-16 h-16 border-4 border-t-4 border-border border-solid rounded-full animate-spin border-t-indigo-600"></div>
+    <div className={`flex flex-col items-center justify-center gap-3 p-8 ${className}`}>
+      <Spinner size={size} className="text-primary" />
+      {text && <p className="text-sm text-muted-foreground">{text}</p>}
     </div>
   );
 }
