@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { MenuItem, MenuSection } from "@/lib/menuData";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -21,6 +21,7 @@ interface SidebarMenuProps {
 export default function SidebarMenu({ menu, isCollapsed = false }: SidebarMenuProps) {
     const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
     const pathname = usePathname();
+    const router = useRouter();
 
     const toggleItem = (slug: string) => {
         setOpenItems((prev) => ({
@@ -29,8 +30,20 @@ export default function SidebarMenu({ menu, isCollapsed = false }: SidebarMenuPr
         }));
     };
 
+    const handleMenuClick = (e: React.MouseEvent, item: MenuItem, hasChildren: boolean) => {
+        if (hasChildren && !isCollapsed) {
+            e.preventDefault();
+            toggleItem(item.slug);
+        } else if (item.href && item.href !== "#") {
+            // Use router.push for reliable navigation
+            e.preventDefault();
+            router.push(item.href);
+        }
+        // If no href or href is "#", let the default Link behavior handle it
+    };
+
     const renderMenuItem = (item: MenuItem) => {
-                const hasChildren = item.children && item.children.length > 0;
+                const hasChildren = !!(item.children && item.children.length > 0);
                 const isOpen = openItems[item.slug];
                 const isActive = pathname === item.href;
                 const hasActiveChild = item.children?.some((child) => pathname === child.href);
@@ -38,16 +51,8 @@ export default function SidebarMenu({ menu, isCollapsed = false }: SidebarMenuPr
         const linkContent = (
             <Link
                 key={item.href}
-                href={item.href}
-                onClick={(e) => {
-                    if (hasChildren && !isCollapsed) {
-                        e.preventDefault();
-                        toggleItem(item.slug);
-                    } else {
-                        // Ensure navigation works for items without children
-                        // Don't prevent default for regular links
-                    }
-                }}
+                href={item.href || "#"}
+                onClick={(e) => handleMenuClick(e, item, hasChildren)}
                 className={cn(
                     'group relative flex items-center transition-all duration-300 ease-out',
                     isCollapsed 
@@ -133,7 +138,13 @@ export default function SidebarMenu({ menu, isCollapsed = false }: SidebarMenuPr
                             return (
                                 <li key={child.label}>
                                     <Link
-                                        href={child.href}
+                                        href={child.href || "#"}
+                                        onClick={(e) => {
+                                            if (child.href && child.href !== "#") {
+                                                e.preventDefault();
+                                                router.push(child.href);
+                                            }
+                                        }}
                                         className={cn(
                                             "flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all",
                                             isChildActive ? "font-semibold" : "opacity-80"

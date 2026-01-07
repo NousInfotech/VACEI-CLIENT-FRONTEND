@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { fetchCashSpend, CashOutflowCategory, CashSpendApiResponse } from '@/api/financialReportsApi';
+import { Select } from "@/components/ui/select";
 
 export default function ChangeInCashPage() {
     const today = new Date();
@@ -80,24 +81,24 @@ export default function ChangeInCashPage() {
                                 {todayStr}
                             </p>
                         )}
-                        <select
-                            className="w-full md:w-auto border border-border rounded-lg bg-card focus:border-border focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-brand-body"
+                        <Select
+                            className="w-full md:w-auto"
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(Number(e.target.value))}
                         >
                             {months.map((m, idx) => (
                                 <option key={idx} value={idx + 1}>{m}</option>
                             ))}
-                        </select>
-                        <select
-                            className="w-full md:w-auto border border-border rounded-lg bg-card focus:border-border focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-brand-body"
+                        </Select>
+                        <Select
+                            className="w-full md:w-auto"
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(Number(e.target.value))}
                         >
                             {years.map((y) => (
                                 <option key={y} value={y}>{y}</option>
                             ))}
-                        </select>
+                        </Select>
                     </div>
                 </div>
                 {loading ? (

@@ -146,18 +146,18 @@ const PaymentModal = ({ invoice, onClose, onPaymentSuccess }: PaymentModalProps)
             <label htmlFor="paymentMode" className="block mb-1 font-medium">
               Payment Mode *
             </label>
-            <select
+            <Select
               id="paymentMode"
               value={mode}
               onChange={(e) => setMode(e.target.value)}
-              className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
+              className="w-full"
             >
               <option value="">Select</option>
               <option value="Cash">Cash</option>
               <option value="Bank Transfer">Bank Transfer</option>
               <option value="Credit Card">Credit Card</option>
               <option value="Check">Check</option>
-            </select>
+            </Select>
             {errors.mode && <p className="text-red-600 text-xs mt-1">{errors.mode}</p>}
           </div>
 

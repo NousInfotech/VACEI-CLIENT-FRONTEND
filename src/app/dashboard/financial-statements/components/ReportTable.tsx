@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table"
 
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
+import { Select } from "@/components/ui/select";
 
 function generateLast12Months() {
     const months: string[] = [];
@@ -246,8 +247,8 @@ export default function ReportTable({ reportType }: { reportType: string }) {
 
                 {filterType === '12month' && (
                     <div>
-                        <select
-                            className="border border-border p-2 text-sm rounded-md"
+                        <Select
+                            className="min-w-[150px]"
                             value={quickFilterRange || ''}
                             onChange={e => setQuickFilterRange(e.target.value || null)}
                         >
@@ -255,7 +256,7 @@ export default function ReportTable({ reportType }: { reportType: string }) {
                             {Object.keys(quarters).map(q => (
                                 <option key={q} value={q}>{q}</option>
                             ))}
-                        </select>
+                        </Select>
                     </div>
                 )}
 

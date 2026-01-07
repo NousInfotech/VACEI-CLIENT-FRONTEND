@@ -1,5 +1,6 @@
 // components/tasks/FilterControls.tsx
 import React from "react";
+import { Select } from "@/components/ui/select";
 
 
 interface Accountant {
@@ -44,23 +45,23 @@ export default function FilterControls({
       />
 
       
-      <select
+      <Select
         value={assignedToFilterId ?? ""}
         onChange={(e) => setAssignedToFilterId(e.target.value ? Number(e.target.value) : null)}
-        className="p-2 border rounded-lg"
+        className="min-w-[180px]"
       >
-        <option value="">All Accountants 1</option>
+        <option value="">All Accountants</option>
         {accountants.map((acc) => (
           <option key={acc.accountant.id} value={acc.accountant.id}>
             {acc.accountant.name} ({acc.accountant.email})
           </option>
         ))}
-      </select>
+      </Select>
 
-      <select
+      <Select
         value={statusFilterId ?? ""}
         onChange={(e) => setStatusFilterId(e.target.value ? Number(e.target.value) : null)}
-        className="p-2 border rounded-lg"
+        className="min-w-[140px]"
       >
         <option value="">All Statuses</option>
         {statuses.map((status) => (
@@ -68,7 +69,7 @@ export default function FilterControls({
             {status.name}
           </option>
         ))}
-      </select>
+      </Select>
 
       <button onClick={clearFilters} className="p-2 border rounded-lg bg-brand-muted">
         Clear

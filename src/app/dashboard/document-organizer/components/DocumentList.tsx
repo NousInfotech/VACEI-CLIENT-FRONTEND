@@ -308,10 +308,10 @@ export default function DocumentList() {
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
                             />
-                            <select
+                            <Select
                                 value={filterCategory}
                                 onChange={(e) => setFilterCategory(e.target.value)}
-                                className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
+                                className="w-full"
                             >
                                 <option value="">All Categories</option>
                                 {categories.map(({ id, name }) => (
@@ -319,11 +319,11 @@ export default function DocumentList() {
                                         {name}
                                     </option>
                                 ))}
-                            </select>
-                            <select
+                            </Select>
+                            <Select
                                 value={filterYear}
                                 onChange={(e) => setFilterYear(e.target.value)}
-                                className="w-full md:w-auto rounded-md border border-border bg-card focus:border-border focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-brand-body focus:outline-none"
+                                className="w-full md:w-auto"
                             >
                                 <option value="">All Years</option>
                                 {years.map((y) => (
@@ -331,7 +331,7 @@ export default function DocumentList() {
                                         {y}
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                             <select
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value)}
