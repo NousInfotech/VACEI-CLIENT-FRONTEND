@@ -29,6 +29,22 @@ export const menuData: MenuItem[] = [
         section: "primary",
     },
     {
+        slug: "company",
+        icon: DocumentValidationIcon,
+        label: "Company",
+        href: "/dashboard/company",
+        children: [],
+        section: "primary",
+    },
+    {
+        slug: "engagement",
+        icon: DocumentValidationIcon,
+        label: "Engagement",
+        href: "/dashboard/engagement",
+        children: [],
+        section: "primary",
+    },
+    {
         slug: "services",
         icon: GitPullRequestIcon,
         label: "Services",
