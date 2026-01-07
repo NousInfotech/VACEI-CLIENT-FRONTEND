@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/table"
 
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
+import { Select } from "@/components/ui/select";
 
 const statusStyles: Record<string, string> = {
     Approved: "bg-sidebar-background text-green-800 border border-green-300 rounded-0",

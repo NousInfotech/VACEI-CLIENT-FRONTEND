@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import AlertMessage from "../../../../components/AlertMessage";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Edit03Icon, Delete02Icon, } from "@hugeicons/core-free-icons";
+import { Select } from "@/components/ui/select";
 
 type CommentSectionProps = {
   fileId: string;

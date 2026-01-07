@@ -165,13 +165,20 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             }
             if (storedActiveCompany) {
                 setActiveCompany(storedActiveCompany);
-            } else {
-                const first = companies?.[0]?.id || "c1";
-                setActiveCompany(first);
-                localStorage.setItem("vacei-active-company", first);
+            } else if (storedCompanies) {
+                try {
+                    const parsed = JSON.parse(storedCompanies);
+                    if (parsed && parsed.length > 0) {
+                        const first = parsed[0].id;
+                        setActiveCompany(first);
+                        localStorage.setItem("vacei-active-company", first);
+                    }
+                } catch {
+                    // ignore
+                }
             }
         }
-    }, [companies]);
+    }, []); // Run only once on mount
 
     useEffect(() => {
         getUnreadCount();
@@ -184,7 +191,8 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
         return () => {
             clearInterval(intervalId);
         };
-    }, [pathname, getUnreadCount]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pathname]); // Only depend on pathname, getUnreadCount is stable
 
     // Click outside handler (notifications + quick actions)
     useEffect(() => {
