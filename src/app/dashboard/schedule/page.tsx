@@ -7,6 +7,7 @@ import { fetchChatUsers } from "@/api/taskService";
 import { useRouter } from "next/navigation";
 import MeetingInfoPopup from "./components/SchedulePopUp"; // Import the new component
 import { CalendarEvent } from "@/interfaces"; // Assuming CalendarEvent includes client and accountant objects directly
+import { Select } from "@/components/ui/select";
 
 export default function ParentComponent(): JSX.Element {
   const router = useRouter();
@@ -198,20 +199,12 @@ export default function ParentComponent(): JSX.Element {
             >
               Filter by:
             </label>
-            <select
+            <Select
               id="accountantId"
               name="accountantId"
               value={selectedAccountantId} // <<-- CRITICAL: Bind value to state
               onChange={handleAccountantFilterChange} // <<-- CRITICAL: Bind onChange to handler
-              className={`
-              appearance-none block w-full px-3 py-2 pr-8
-              border rounded-md shadow-md
-              text-brand-body leading-tight
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-brand-primary
-              bg-card
-              sm:text-sm
-              transition ease-in-out duration-150
-            `}
+              className="w-full"
               disabled={loadingAccountants}
             >
               {/* Changed value to "all" for consistency with state */}
@@ -225,7 +218,7 @@ export default function ParentComponent(): JSX.Element {
               ) : (
                 <option disabled>No accountants available.</option>
               )}
-            </select>
+            </Select>
           </div>
         </div>
         {(isLoading || loadingAccountants) && (

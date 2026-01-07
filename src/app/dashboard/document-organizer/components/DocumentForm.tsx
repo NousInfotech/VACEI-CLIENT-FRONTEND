@@ -617,10 +617,10 @@ function DocumentFormContent() {
                     </ul>
                 )}
                 <Button
-                    variant="outline"
+                    variant="default"
                     type="submit"
                     disabled={saving}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer border-sky-800 bg-sidebar-background text-card-foreground !font-normal"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer !font-normal shadow-sm hover:shadow-md transition-shadow text-primary-foreground"
                 >
                     {saving ? "Uploading..." : "Submit"}
                 </Button>

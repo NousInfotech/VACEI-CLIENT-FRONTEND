@@ -76,7 +76,7 @@ export const menuData: MenuItem[] = [
         children: [],
         section: "operations",
     },
-    {
+      {
         slug: "notifications",
         icon: NotificationIcon,
         label: "Alerts & Notifications",
@@ -208,7 +208,7 @@ export const menuData: MenuItem[] = [
         ],
     }, */
     {
-        slug: "document-organizer",
+       slug: "document-organizer",
         icon: DocumentValidationIcon,
         label: "Document Organizer",
         href: "#",

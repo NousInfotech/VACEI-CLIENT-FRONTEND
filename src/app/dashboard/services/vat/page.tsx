@@ -15,10 +15,10 @@ export default function VatWorkspacePage() {
         </div>
         <div className="flex gap-2">
           <Link href="/dashboard/document-organizer/document-upload">
-            <Button className="rounded-full text-xs px-4">Upload documents</Button>
+            <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">Upload documents</Button>
           </Link>
           <Link href="/dashboard/todo-list">
-            <Button variant="outline" className="rounded-full text-xs px-4">
+            <Button variant="outline" className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">
               View requests
             </Button>
           </Link>
@@ -27,24 +27,24 @@ export default function VatWorkspacePage() {
 
       <div className="grid gap-5 md:grid-cols-[1.3fr,1fr]">
         <div className="space-y-5">
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
             <h3 className="text-base font-semibold text-brand-body">VAT registrations</h3>
             <p className="text-sm text-muted-foreground">Registration #: — | Status: —</p>
           </div>
 
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-4">
             <h3 className="text-base font-semibold text-brand-body">VAT periods</h3>
-            <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="grid grid-cols-2 gap-3 text-sm">
               {["Q1 2025", "Q2 2025", "Q3 2025", "Q4 2025"].map((p) => (
                 <div
                   key={p}
-                  className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 flex items-center justify-between"
+                  className="rounded-lg border border-border bg-muted/30 px-4 py-3 flex items-center justify-between shadow-sm"
                 >
                   <div>
-                    <div className="font-medium text-brand-body">{p}</div>
-                    <div className="text-[11px] text-muted-foreground">Status: —</div>
+                    <div className="font-semibold text-brand-body">{p}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">Status: —</div>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-xs rounded-full">
+                  <Button variant="ghost" size="sm" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow">
                     View
                   </Button>
                 </div>
@@ -52,17 +52,17 @@ export default function VatWorkspacePage() {
             </div>
           </div>
 
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
             <h3 className="text-base font-semibold text-brand-body">Missing items</h3>
             <ul className="space-y-2 text-sm">
               {["Sales invoices for current period", "Purchase invoices", "Payment proofs"].map((item) => (
                 <li
                   key={item}
-                  className="flex items-center justify-between rounded-lg border border-border/70 bg-muted/40 px-3 py-2"
+                  className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3 shadow-sm"
                 >
-                  <span>{item}</span>
+                  <span className="text-brand-body font-medium">{item}</span>
                   <Link href="/dashboard/document-organizer/document-upload">
-                    <Button size="sm" variant="ghost" className="text-xs rounded-full">Upload</Button>
+                    <Button size="sm" variant="ghost" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow">Upload</Button>
                   </Link>
                 </li>
               ))}
@@ -71,13 +71,13 @@ export default function VatWorkspacePage() {
         </div>
 
         <div className="space-y-5">
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
             <h3 className="text-base font-semibold text-brand-body">Submission status</h3>
             <p className="text-sm text-muted-foreground">Status: — | Submission date: —</p>
             <p className="text-sm text-muted-foreground">Payment: — | Deadline: —</p>
           </div>
 
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
             <h3 className="text-base font-semibold text-brand-body">VAT history</h3>
             <p className="text-sm text-muted-foreground">Previous submissions and payments will appear here.</p>
           </div>

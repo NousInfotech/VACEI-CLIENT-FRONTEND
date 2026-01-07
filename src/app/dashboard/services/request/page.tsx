@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select } from "@/components/ui/select";
 
 type ServiceCode =
   | "bookkeeping"
@@ -114,21 +115,21 @@ export default function ServiceRequestPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="ghost" onClick={resetForm} className="rounded-full text-xs">
+          <Button variant="ghost" onClick={resetForm} className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow">
             Clear draft
           </Button>
-          <Button className="rounded-full text-xs" onClick={handleSubmit}>
+          <Button className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow text-primary-foreground" onClick={handleSubmit}>
             Submit request
           </Button>
         </div>
       </div>
 
       <div className="grid gap-5 md:grid-cols-[2fr,1fr]">
-        <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-4">
+        <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-5">
           <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-brand-body">Service</label>
-              <select
+              <label className="text-sm font-semibold text-brand-body">Service</label>
+              <Select
                 value={form.serviceCode}
                 onChange={(e) =>
                   setForm((f) => ({
@@ -137,7 +138,7 @@ export default function ServiceRequestPage() {
                     requiredDocs: {},
                   }))
                 }
-                className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"
+                className="w-full"
               >
                 <option value="">Select service</option>
                 {Object.entries(serviceLabels).map(([code, label]) => (
@@ -145,45 +146,48 @@ export default function ServiceRequestPage() {
                     {label}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-brand-body">Company</label>
+              <label className="text-sm font-semibold text-brand-body">Company</label>
               <Input
                 placeholder="e.g., Acme Ltd"
                 value={form.companyName}
                 onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
+                className="shadow-sm"
               />
             </div>
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-brand-body">Period / Range</label>
+              <label className="text-sm font-semibold text-brand-body">Period / Range</label>
               <Input
                 placeholder="e.g., Q2 2025 or Mar 2025"
                 value={form.period}
                 onChange={(e) => setForm((f) => ({ ...f, period: e.target.value }))}
+                className="shadow-sm"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-brand-body">Notes</label>
+            <label className="text-sm font-semibold text-brand-body">Notes</label>
             <Textarea
               rows={5}
               placeholder="Share context, deadlines, or special instructions"
               value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+              className="shadow-sm"
             />
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-4">
+        <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-semibold text-brand-body">Required documents</h3>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mt-1">
                 Mark items as ready; upload via Documents after submission.
               </p>
             </div>
@@ -194,12 +198,12 @@ export default function ServiceRequestPage() {
               {docList.map((doc) => (
                 <label
                   key={doc}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-border/70 bg-muted/40 px-3 py-2.5"
+                  className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-4 py-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                 >
-                  <span className="text-brand-body">{doc}</span>
+                  <span className="text-brand-body font-medium">{doc}</span>
                   <input
                     type="checkbox"
-                    className="h-4 w-4"
+                    className="h-4 w-4 rounded border-border"
                     checked={!!form.requiredDocs[doc]}
                     onChange={() => toggleDoc(doc)}
                   />

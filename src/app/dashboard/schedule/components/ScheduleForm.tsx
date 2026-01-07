@@ -2,6 +2,7 @@
 import React from 'react';
 import { TextInputProps } from '@/interfaces';
 import { MeetingFormProps } from "@/interfaces";
+import { Select } from "@/components/ui/select";
 
 // Helper function to generate time options for select dropdowns
 const generateTimeOptions = (): Date[] => {
@@ -80,35 +81,20 @@ const TimeSelect: React.FC<{
         <label htmlFor={id} className="block text-brand-body text-sm font-medium mb-2">
             {label}:
         </label>
-        <div className="relative"> {/* Added relative for custom arrow */}
-            <select
-                id={id}
-                name={id}
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                className={`
-                    appearance-none block w-full px-3 py-2 pr-8 // pr-8 for arrow space
-                    border rounded-md shadow-md
-                    text-brand-body leading-tight
-                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-brand-primary
-                    bg-card
-                    sm:text-sm
-                    ${error ? 'border-red-500' : 'border-border'}
-                    transition ease-in-out duration-150
-                `}
-            >
-                <option value="">{`Select a ${label.toLowerCase()} time`}</option>
-                {TIME_OPTIONS.map((time, index) => (
-                    <option key={index} value={formatTimeForSelect(time)}>
-                        {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
-                    </option>
-                ))}
-            </select>
-            {/* Custom arrow for select dropdown */}
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground"> {/* Adjusted text-brand-body to text-muted-foreground for a softer arrow */}
-
-            </div>
-        </div>
+        <Select
+            id={id}
+            name={id}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className={`w-full ${error ? 'border-red-500' : ''}`}
+        >
+            <option value="">{`Select a ${label.toLowerCase()} time`}</option>
+            {TIME_OPTIONS.map((time, index) => (
+                <option key={index} value={formatTimeForSelect(time)}>
+                    {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                </option>
+            ))}
+        </Select>
         {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
 );
@@ -154,38 +140,24 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
                 <label htmlFor="accountantId" className="block text-brand-body text-sm font-medium mb-2">
                     Assign Accountant:
                 </label>
-                <div className="relative"> {/* Added relative for custom arrow */}
-                    <select
-                        id="accountantId"
-                        name="accountantId"
-                        value={meetingDetails.accountantId || ''}
-                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onFormChange('accountantId', e.target.value)}
-                        className={`
-                            appearance-none block w-full px-3 py-2 pr-8
-                            border rounded-md shadow-md
-                            text-brand-body leading-tight
-                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-brand-primary
-                            bg-card
-                            sm:text-sm
-                            ${validationErrors.accountantId ? 'border-red-500' : 'border-border'}
-                            transition ease-in-out duration-150
-                        `}
-                    >
-                        <option value="">Select an Accountant</option>
-                        {accountants.length > 0 ? (
-                            accountants.map((item) => (
-                                <option key={item.accountant.id} value={item.accountant.id}>
-                                    {`${item.accountant.name} (${item.accountant.email})`}
-                                </option>
-                            ))
-                        ) : (
-                            <option disabled>No accountants available.</option>
-                        )}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
-
-                    </div>
-                </div>
+                <Select
+                    id="accountantId"
+                    name="accountantId"
+                    value={meetingDetails.accountantId || ''}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onFormChange('accountantId', e.target.value)}
+                    className={`w-full ${validationErrors.accountantId ? 'border-red-500' : ''}`}
+                >
+                    <option value="">Select an Accountant</option>
+                    {accountants.length > 0 ? (
+                        accountants.map((item) => (
+                            <option key={item.accountant.id} value={item.accountant.id}>
+                                {`${item.accountant.name} (${item.accountant.email})`}
+                            </option>
+                        ))
+                    ) : (
+                        <option disabled>No accountants available.</option>
+                    )}
+                </Select>
                 {validationErrors.accountantId && (
                     <p className="mt-1 text-xs text-red-600">{validationErrors.accountantId}</p>
                 )}
@@ -234,28 +206,16 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
                     <label htmlFor="status" className="block text-brand-body text-sm font-medium mb-2">
                         Status
                     </label>
-                    <div className="relative">
-                        <select
-                            id="status"
-                            name="status"
-                            value={meetingDetails.status}
-                            onChange={(e) => onFormChange('status', parseInt(e.target.value, 10))}
-                            className={`
-                                appearance-none block w-full px-3 py-2 pr-8
-                                border rounded-md shadow-md
-                                text-brand-body leading-tight
-                                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-brand-primary
-                                bg-card
-                                sm:text-sm
-                                ${validationErrors.status ? 'border-red-500' : 'border-border'}
-                                transition ease-in-out duration-150
-                            `}
-                        >
-                            <option value={1}>Active</option>
-                            <option value={0}>Inactive/Cancelled</option>
-                        </select>
-
-                    </div>
+                    <Select
+                        id="status"
+                        name="status"
+                        value={meetingDetails.status}
+                        onChange={(e) => onFormChange('status', parseInt(e.target.value, 10))}
+                        className={`w-full ${validationErrors.status ? 'border-red-500' : ''}`}
+                    >
+                        <option value={1}>Active</option>
+                        <option value={0}>Inactive/Cancelled</option>
+                    </Select>
                     {validationErrors.status && <p className="mt-1 text-xs text-red-600">{validationErrors.status}</p>}
                 </div>
             </div>
@@ -274,8 +234,8 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
                 <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-5 py-2 bg-sidebar-background text-sidebar-foreground rounded-md
-                               hover:bg-sidebar-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring/50
+                    className="px-5 py-2 bg-primary text-primary-foreground rounded-lg
+                               hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary/50
                                transition duration-150 ease-in-out disabled:opacity-50 text-sm font-medium shadow-md"
                 >
                     {isSubmitting ? 'Saving...' : 'Save'}
