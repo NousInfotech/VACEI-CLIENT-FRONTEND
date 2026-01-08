@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Select } from "@/components/ui/select";
 
 function SkeletonTransaction() {
   return (
@@ -110,15 +111,15 @@ export default function TopTransactions() {
     <div className="space-y-4">
       {/* Filter Controls */}
       <div className="flex justify-between items-center">
-        <select
+        <Select
           value={type}
           onChange={handleTypeChange}
-          className="border px-3 py-2 rounded"
+          className="min-w-[120px]"
         >
           <option value="all">All</option>
           <option value="income">Income</option>
           <option value="expense">Expense</option>
-        </select>
+        </Select>
 
         <div className="space-x-2">
           <button

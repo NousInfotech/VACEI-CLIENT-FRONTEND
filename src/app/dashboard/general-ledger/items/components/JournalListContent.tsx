@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchJournalItemAPI, JournalLine } from "../../../../../api/journalApi";
 import Link from "next/link"; // Import Link for client-side navigation
+import { Select } from "@/components/ui/select";
 
 const SkeletonRow = () => (
     <tr className="border-b border-border animate-pulse">
@@ -170,15 +171,15 @@ export default function JournalListContent() {
                             className="w-full border p-2 text-sm border-border rounded-0 focus:outline-none"
                         />
 
-                        <select
+                        <Select
                             value={postingTypeFilter}
                             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPostingTypeFilter(e.target.value as "" | "Credit" | "Debit")}
-                            className="w-full border p-2 text-sm border-border rounded-0 focus:outline-none"
+                            className="w-full"
                         >
                             <option value="">Filter by Posting Type</option>
                             <option value="Credit">Credit</option>
                             <option value="Debit">Debit</option>
-                        </select>
+                        </Select>
 
                         <input
                             type="text"

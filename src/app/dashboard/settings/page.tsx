@@ -7,6 +7,7 @@ import { changePassword } from '@/api/authService';
 import AlertMessage, { AlertVariant } from '@/components/AlertMessage'; // Import AlertMessage
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 // Simple textarea using Input styling
 const Textarea = (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
     <textarea
@@ -173,11 +174,11 @@ function SettingsContent() {
 
     return (
         <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-6">
-            <div className="bg-card border border-border rounded-[16px] p-5 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md space-y-6">
-                <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">Settings</h1>
+            <div className="bg-card border border-border rounded-card p-6 shadow-md w-full mx-auto space-y-6">
+                <h1 className="text-2xl font-semibold text-brand-body">Settings</h1>
 
                 {/* Tabs */}
-                <div className="flex flex-wrap gap-2 border-b border-border/60 pb-2 text-xs">
+                <div className="flex flex-wrap gap-2 border-b border-border pb-3">
                     {[
                         { id: "general", label: "Company profile" },
                         { id: "users", label: "Users & roles" },
@@ -190,10 +191,10 @@ function SettingsContent() {
                             key={tab.id}
                             type="button"
                             onClick={() => setActiveTab(tab.id as any)}
-                            className={`px-3 py-1.5 rounded-full border text-xs ${
+                            className={`px-4 py-2 rounded-lg border text-xs font-medium transition-all shadow-sm ${
                                 activeTab === tab.id
-                                    ? "bg-primary text-primary-foreground border-primary"
-                                    : "bg-muted text-muted-foreground border-border hover:bg-muted/80"
+                                    ? "bg-primary text-primary-foreground border-primary shadow-md"
+                                    : "bg-card text-brand-body border-border hover:shadow-md"
                             }`}
                         >
                             {tab.label}
@@ -221,19 +222,19 @@ function SettingsContent() {
                         <div className="flex flex-col gap-2 md:flex-row">
                             <Input placeholder="Name" value={newUser.name} onChange={(e)=>setNewUser(u=>({...u,name:e.target.value}))}/>
                             <Input placeholder="Email" value={newUser.email} onChange={(e)=>setNewUser(u=>({...u,email:e.target.value}))}/>
-                            <select className="rounded-lg border border-border bg-card px-3 py-2 text-sm" value={newUser.role} onChange={(e)=>setNewUser(u=>({...u,role:e.target.value}))}>
+                            <Select value={newUser.role} onChange={(e)=>setNewUser(u=>({...u,role:e.target.value}))}>
                                 <option>Owner</option><option>Admin</option><option>Viewer</option>
-                            </select>
-                            <Button className="text-xs rounded-full" onClick={()=>{ if(newUser.name && newUser.email){ setUsers(prev=>[...prev,{...newUser,id:Date.now().toString()}]); setNewUser({name:"",email:"",role:"Viewer"});} }}>Add</Button>
+                            </Select>
+                            <Button className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow" onClick={()=>{ if(newUser.name && newUser.email){ setUsers(prev=>[...prev,{...newUser,id:Date.now().toString()}]); setNewUser({name:"",email:"",role:"Viewer"});} }}>Add</Button>
                         </div>
                         <div className="space-y-2">
                             {users.map(u=>(
-                                <div key={u.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
+                                <div key={u.id} className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-sm shadow-sm">
                                     <div className="flex flex-col">
                                         <span className="font-semibold text-brand-body">{u.name}</span>
-                                        <span className="text-muted-foreground text-xs">{u.email}</span>
+                                        <span className="text-muted-foreground text-xs mt-0.5">{u.email}</span>
                                     </div>
-                                    <span className="text-xs rounded-full bg-muted px-2 py-1">{u.role}</span>
+                                    <span className="text-xs rounded-lg bg-muted border border-border px-2.5 py-1 font-medium">{u.role}</span>
                                 </div>
                             ))}
                         </div>
@@ -289,12 +290,12 @@ function SettingsContent() {
                             <h2 className="text-lg font-semibold text-brand-body">Session history</h2>
                             <div className="space-y-2 text-sm">
                                 {sessions.map((s)=>(
-                                    <div key={s.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                                    <div key={s.id} className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 shadow-sm">
                                         <div>
-                                            <div className="font-medium">{s.device}</div>
-                                            <div className="text-muted-foreground text-xs">{s.location} · {s.lastSeen}</div>
+                                            <div className="font-medium text-brand-body">{s.device}</div>
+                                            <div className="text-muted-foreground text-xs mt-0.5">{s.location} · {s.lastSeen}</div>
                                         </div>
-                                        <Button variant="outline" size="sm" className="text-xs rounded-full" onClick={()=>setSessions(prev=>prev.filter(x=>x.id!==s.id))}>
+                                        <Button variant="outline" size="sm" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow" onClick={()=>setSessions(prev=>prev.filter(x=>x.id!==s.id))}>
                                             Revoke
                                         </Button>
                                     </div>
@@ -320,7 +321,7 @@ function SettingsContent() {
                 {/* Change Password Section (kept functional) */}
                 {activeTab === "password" && (
                 <div className="mt-1">
-                    <h2 className="text-xl leading-normal text-brand-body capitalize font-medium mb-3">Change Password</h2>
+                    <h2 className="text-lg font-semibold text-brand-body mb-4">Change Password</h2>
                     {alert && (
                         <div className="mb-4">
                             <AlertMessage
@@ -344,7 +345,7 @@ function SettingsContent() {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 value={formData.currentPassword}
-                                className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-blue-500 focus:border-brand-primary sm:text-sm"
+                                className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm sm:text-sm"
                             />
                             {touched.currentPassword && errors.currentPassword ? (
                                 <div className="text-red-600 text-sm mt-1">{errors.currentPassword}</div>
@@ -362,7 +363,7 @@ function SettingsContent() {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 value={formData.newPassword}
-                                className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-blue-500 focus:border-brand-primary sm:text-sm"
+                                className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm sm:text-sm"
                             />
                             {touched.newPassword && errors.newPassword ? (
                                 <div className="text-red-600 text-sm mt-1">{errors.newPassword}</div>
@@ -380,7 +381,7 @@ function SettingsContent() {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 value={formData.confirmNewPassword}
-                                className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-blue-500 focus:border-brand-primary sm:text-sm"
+                                className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm sm:text-sm"
                             />
                             {touched.confirmNewPassword && errors.confirmNewPassword ? (
                                 <div className="text-red-600 text-sm mt-1">{errors.confirmNewPassword}</div>
@@ -391,7 +392,7 @@ function SettingsContent() {
                             <Button
                                 variant={"default"}
                                 type="submit"
-                                className="px-4 py-2 bg-sidebar-background text-sidebar-foreground rounded-md transition-colors mr-2 cursor-pointer font-normal shadow-md hover:bg-sidebar-hover"
+                                className="px-4 py-2 rounded-lg transition-all cursor-pointer font-normal shadow-sm hover:shadow-md text-primary-foreground"
                                 disabled={isSubmitting}
                             >
                                 {isSubmitting ? 'Updating...' : 'Change Password'}

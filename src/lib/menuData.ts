@@ -29,6 +29,22 @@ export const menuData: MenuItem[] = [
         section: "primary",
     },
     {
+        slug: "company",
+        icon: DocumentValidationIcon,
+        label: "Company",
+        href: "/dashboard/company",
+        children: [],
+        section: "primary",
+    },
+    {
+        slug: "engagement",
+        icon: DocumentValidationIcon,
+        label: "Engagement",
+        href: "/dashboard/engagement",
+        children: [],
+        section: "primary",
+    },
+    {
         slug: "services",
         icon: GitPullRequestIcon,
         label: "Services",
@@ -60,7 +76,7 @@ export const menuData: MenuItem[] = [
         children: [],
         section: "operations",
     },
-    {
+      {
         slug: "notifications",
         icon: NotificationIcon,
         label: "Alerts & Notifications",
@@ -192,7 +208,7 @@ export const menuData: MenuItem[] = [
         ],
     }, */
     {
-        slug: "document-organizer",
+       slug: "document-organizer",
         icon: DocumentValidationIcon,
         label: "Document Organizer",
         href: "#",

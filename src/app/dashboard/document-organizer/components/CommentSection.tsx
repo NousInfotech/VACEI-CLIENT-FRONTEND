@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import AlertMessage from "../../../../components/AlertMessage";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Edit03Icon, Delete02Icon, } from "@hugeicons/core-free-icons";
+import { Select } from "@/components/ui/select";
 
 type CommentSectionProps = {
   fileId: string;
@@ -236,13 +237,13 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
     <div className="mt-6 pt-4  bg-gradient-to-tr from-white to-gray-50 rounded-xl shadow-lg p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-semibold text-2xl text-brand-body tracking-wide">Comments</h3>
-        <select
+        <Select
           value={selectedTarget}
           onChange={(e) => {
             setSelectedTarget(e.target.value);
             setNewCommentTarget(e.target.value);
           }}
-          className="text-sm border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+          className="text-sm min-w-[180px]"
           aria-label="Select file to comment on"
         >
           {files.map((file) => (
@@ -251,7 +252,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
             </option>
           ))}
           <option value="0">Whole Document</option>
-        </select>
+        </Select>
       </div>
 
       {alert && (

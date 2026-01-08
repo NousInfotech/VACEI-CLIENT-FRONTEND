@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { fetchTasks, fetchTaskCategories, fetchTaskStatuses } from "@/api/taskService";
 import type { Category, Status, Task, Pagination } from "@/interfaces";
 
@@ -105,14 +106,14 @@ export default function ComplianceListPage() {
         </div>
         <Button
           variant="outline"
-          className="rounded-full px-4 text-sm"
+          className="rounded-lg px-4 text-sm shadow-sm hover:shadow-md transition-shadow"
           onClick={() => router.push("/dashboard/compliance")}
         >
           Back to calendar view
         </Button>
       </div>
 
-      <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-4">
+      <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-5">
         {/* Filters */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-1 flex-col gap-2 md:flex-row">
@@ -121,16 +122,16 @@ export default function ComplianceListPage() {
               placeholder="Search by item or description…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 min-w-[180px] rounded-lg border border-border bg-card px-3 py-2 text-sm"
+              className="flex-1 min-w-[180px] rounded-lg border border-border bg-card px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
-            <select
+            <Select
               value={serviceFilter}
               onChange={(e) =>
                 setServiceFilter(
                   e.target.value === "all" ? "all" : Number(e.target.value)
                 )
               }
-              className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm md:w-44"
+              className="w-full md:w-44"
             >
               <option value="all">All services</option>
               {categories.map((cat) => (
@@ -138,15 +139,15 @@ export default function ComplianceListPage() {
                   {cat.name}
                 </option>
               ))}
-            </select>
-            <select
+            </Select>
+            <Select
               value={statusFilter}
               onChange={(e) =>
                 setStatusFilter(
                   e.target.value === "all" ? "all" : Number(e.target.value)
                 )
               }
-              className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm md:w-40"
+              className="w-full md:w-40"
             >
               <option value="all">All status</option>
               {statuses.map((s) => (
@@ -154,13 +155,13 @@ export default function ComplianceListPage() {
                   {s.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="flex gap-2">
             <Button
               variant="ghost"
               size="sm"
-              className="rounded-full text-xs"
+              className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow"
               onClick={() => {
                 setSearch("");
                 setServiceFilter("all");
@@ -173,15 +174,15 @@ export default function ComplianceListPage() {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto rounded-[14px] border border-border">
+        <div className="overflow-x-auto rounded-lg border border-border shadow-sm">
           <table className="min-w-full text-left text-sm">
-            <thead className="bg-muted/70 text-xs uppercase text-muted-foreground">
+            <thead className="bg-muted border-b border-border">
               <tr>
-                <th className="px-4 py-2">Due date</th>
-                <th className="px-4 py-2">Item</th>
-                <th className="px-4 py-2">Service</th>
-                <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2 text-right">CTA</th>
+                <th className="px-4 py-3 text-xs font-semibold text-brand-body uppercase tracking-wide">Due date</th>
+                <th className="px-4 py-3 text-xs font-semibold text-brand-body uppercase tracking-wide">Item</th>
+                <th className="px-4 py-3 text-xs font-semibold text-brand-body uppercase tracking-wide">Service</th>
+                <th className="px-4 py-3 text-xs font-semibold text-brand-body uppercase tracking-wide">Status</th>
+                <th className="px-4 py-3 text-xs font-semibold text-brand-body uppercase tracking-wide text-right">CTA</th>
               </tr>
             </thead>
             <tbody>
@@ -189,7 +190,7 @@ export default function ComplianceListPage() {
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-4 py-6 text-center text-muted-foreground"
+                    className="px-4 py-8 text-center text-muted-foreground"
                   >
                     Loading compliance items…
                   </td>
@@ -198,7 +199,7 @@ export default function ComplianceListPage() {
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-4 py-6 text-center text-muted-foreground"
+                    className="px-4 py-8 text-center text-muted-foreground"
                   >
                     No compliance items found for the current filters.
                   </td>
@@ -207,36 +208,36 @@ export default function ComplianceListPage() {
                 tasks.map((task) => (
                   <tr
                     key={task.id}
-                    className="border-t border-border/60 hover:bg-muted/40"
+                    className="border-b border-border hover:bg-muted/30 transition-colors"
                   >
-                    <td className="px-4 py-2 align-top">
-                      {formatDate(task.dueDate as any)}
+                    <td className="px-4 py-3 align-top">
+                      <span className="text-brand-body font-medium">{formatDate(task.dueDate as any)}</span>
                     </td>
-                    <td className="px-4 py-2 align-top">
-                      <div className="font-medium text-brand-body">
+                    <td className="px-4 py-3 align-top">
+                      <div className="font-semibold text-brand-body">
                         {task.title}
                       </div>
                       {task.description && (
-                        <div className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
+                        <div className="mt-1 text-xs text-muted-foreground line-clamp-2">
                           {task.description}
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-2 align-top">
-                      <span className="inline-flex rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                    <td className="px-4 py-3 align-top">
+                      <span className="inline-flex rounded-lg bg-muted border border-border px-2.5 py-1 text-xs font-medium text-brand-body">
                         {task.category || "General"}
                       </span>
                     </td>
-                    <td className="px-4 py-2 align-top">
-                      <span className="inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                    <td className="px-4 py-3 align-top">
+                      <span className="inline-flex rounded-lg bg-primary/10 border border-primary/30 px-2.5 py-1 text-xs font-medium text-primary">
                         {computeStatusLabel(task)}
                       </span>
                     </td>
-                    <td className="px-4 py-2 align-top text-right">
+                    <td className="px-4 py-3 align-top text-right">
                       <div className="flex flex-col gap-2 items-end">
                         <Button
                           size="sm"
-                          className="rounded-full px-3 text-xs"
+                          className="rounded-lg px-3 text-xs shadow-sm hover:shadow-md transition-shadow"
                           onClick={() => handleOpenTask(task.id)}
                         >
                           {computeCTA(task)}
@@ -244,7 +245,7 @@ export default function ComplianceListPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="rounded-full px-3 text-[11px]"
+                          className="rounded-lg px-3 text-xs shadow-sm hover:shadow-md transition-shadow"
                           onClick={() => router.push(serviceLinkFor(task))}
                         >
                           Open service
@@ -259,23 +260,23 @@ export default function ComplianceListPage() {
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-center gap-4 pt-3 text-xs text-muted-foreground">
+        <div className="flex items-center justify-center gap-4 pt-2 text-xs text-muted-foreground">
           <Button
             variant="outline"
             size="sm"
-            className="rounded-full px-3"
+            className="rounded-lg px-3 shadow-sm hover:shadow-md transition-shadow"
             disabled={pagination.page === 1 || loading}
             onClick={() => gotoPage(pagination.page - 1)}
           >
             Prev
           </Button>
-          <span>
+          <span className="text-brand-body font-medium">
             Page {pagination.page} of {pagination.totalPages || 1}
           </span>
           <Button
             variant="outline"
             size="sm"
-            className="rounded-full px-3"
+            className="rounded-lg px-3 shadow-sm hover:shadow-md transition-shadow"
             disabled={
               pagination.page === pagination.totalPages || loading
             }

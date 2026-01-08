@@ -1,0 +1,278 @@
+"use client"
+
+import React, { useState } from 'react'
+import { MOCK_COMPANY_DATA } from './mockData'
+import { 
+  User, 
+  ShieldCheck, 
+  Briefcase, 
+  MapPin, 
+  Edit, 
+  Trash2,
+  Building2,
+  Globe
+} from 'lucide-react'
+import { Card, CardContent } from "@/components/ui/card2"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+
+const Involvements = () => {
+  const [activeSubTab, setActiveSubTab] = useState<'shareholders' | 'representatives'>('shareholders')
+  const data = MOCK_COMPANY_DATA.data
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex space-x-4 border-b border-gray-100">
+        <button
+          onClick={() => setActiveSubTab('shareholders')}
+          className={`pb-4 px-2 text-sm font-medium transition-colors relative ${
+            activeSubTab === 'shareholders' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Shareholders
+          {activeSubTab === 'shareholders' && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
+          )}
+        </button>
+        <button
+          onClick={() => setActiveSubTab('representatives')}
+          className={`pb-4 px-2 text-sm font-medium transition-colors relative ${
+            activeSubTab === 'representatives' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Representatives
+          {activeSubTab === 'representatives' && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
+          )}
+        </button>
+      </div>
+
+      <div className="mt-4">
+        {activeSubTab === 'shareholders' ? (
+          <div className="grid grid-cols-1 gap-4">
+            {data.shareHolders.map((sh, idx) => {
+               const totalShares = sh.sharesData.reduce((acc, sd) => acc + sd.totalShares, 0)
+               return (
+                <Card
+                  key={sh._id || `sh-${idx}`}
+                  className="bg-white/80 border border-indigo-100 rounded-xl shadow-sm hover:bg-white/70 transition-all"
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600">
+                            <User size={20} />
+                          </div>
+                          <h4 className="text-lg font-semibold text-gray-900 capitalize">
+                            {sh.personId.name}
+                          </h4>
+                        </div>
+                        
+                        <div className="mb-4 space-y-3">
+                          <div className="flex flex-wrap gap-2">
+                          {sh.sharesData.map((sd, sIdx) => (
+                            <Badge
+                              key={sIdx}
+                              variant="outline"
+                              className="bg-blue-50 text-blue-700 border-blue-200 rounded-lg px-3 py-1 text-sm font-medium"
+                            >
+                              {sd.class.length === 1 ? `Class ${sd.class}` : sd.class}: {sd.totalShares.toLocaleString()}
+                            </Badge>
+                          ))}
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            <Badge
+                              variant="outline"
+                              className="bg-green-50 text-green-700 border-green-200 rounded-lg px-3 py-1 text-sm font-semibold"
+                            >
+                              Total: {totalShares.toLocaleString()}
+                            </Badge>
+
+                            <Badge
+                              variant="outline"
+                              className="bg-green-50 text-green-700 border-green-200 rounded-lg px-3 py-1 text-sm font-semibold"
+                            >
+                              Share: {Math.round(sh.sharePercentage || 0).toFixed(2)}%
+                            </Badge>
+
+                            <Badge
+                              variant="outline"
+                              className="bg-purple-50 text-purple-700 border-purple-200 rounded-lg px-3 py-1 text-sm font-semibold"
+                            >
+                              Paid Up: {Math.round(sh.paidUpSharesPercentage || 0).toFixed(2)}%
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <MapPin className="h-3 w-3" />
+                            <span>{sh.personId.address}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <Globe className="h-3 w-3" />
+                            <span>{sh.personId.nationality}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+               )
+            })}
+
+            {/* Corporate Shareholders */}
+            {data.shareHoldingCompanies?.map((corp, idx) => {
+               const totalShares = corp.sharesData.reduce((acc, sd) => acc + sd.totalShares, 0)
+               return (
+                <Card
+                  key={corp._id || `corp-sh-${idx}`}
+                  className="bg-white/80 border border-indigo-100 rounded-xl shadow-sm hover:bg-white/70 transition-all"
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600">
+                            <Building2 size={20} />
+                          </div>
+                          <div>
+                            <h4 className="text-lg font-semibold text-gray-900">
+                              {corp.companyId.name}
+                            </h4>
+                            <p className="text-[10px] text-gray-400 font-mono">Reg: {corp.companyId.registrationNumber}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="mb-4 space-y-3">
+                          <div className="flex flex-wrap gap-2">
+                          {corp.sharesData.map((sd, sIdx) => (
+                            <Badge
+                              key={sIdx}
+                              variant="outline"
+                              className="bg-indigo-50 text-indigo-700 border-indigo-200 rounded-lg px-3 py-1 text-sm font-medium"
+                            >
+                              {sd.class.length === 1 ? `Class ${sd.class}` : sd.class}: {sd.totalShares.toLocaleString()}
+                            </Badge>
+                          ))}
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            <Badge
+                              variant="outline"
+                              className="bg-green-50 text-green-700 border-green-200 rounded-lg px-3 py-1 text-sm font-semibold"
+                            >
+                              Total: {totalShares.toLocaleString()}
+                            </Badge>
+
+                            <Badge
+                              variant="outline"
+                              className="bg-purple-50 text-purple-700 border-purple-200 rounded-lg px-3 py-1 text-sm font-semibold"
+                            >
+                              Paid Up: {corp.paidUpSharesPercentage}%
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+               )
+            })}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {data.representationalSchema.map((rep, idx) => (
+              <Card
+                key={rep._id || `rep-${idx}`}
+                className="bg-white/80 border border-indigo-100 rounded-xl shadow-sm hover:bg-white/70 transition-all"
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600">
+                          <ShieldCheck size={20} />
+                        </div>
+                        <h4 className="text-lg font-semibold text-gray-900 capitalize">
+                          {rep.personId.name}
+                        </h4>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {rep.role
+                          .filter(role => role.toLowerCase() !== 'shareholder')
+                          .map((role, rIdx) => (
+                          <Badge 
+                            key={rIdx} 
+                            variant="outline"
+                            className="bg-indigo-50 text-indigo-700 border-indigo-100 rounded-full px-3 py-1 text-sm font-medium flex items-center gap-1"
+                          >
+                            {role}
+                          </Badge>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <MapPin className="h-3 w-3" />
+                        <span>{rep.personId.address}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <Globe className="h-3 w-3" />
+                        <span>{rep.personId.nationality}</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+
+            {/* Corporate Representatives */}
+            {data.representationalCompany?.map((corpRep, idx) => (
+              <Card
+                key={corpRep._id || `corp-rep-${idx}`}
+                className="bg-white/80 border border-indigo-100 rounded-xl shadow-sm hover:bg-white/70 transition-all"
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600">
+                          <Building2 size={20} />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-gray-900 capitalize">
+                            {corpRep.companyId.name}
+                          </h4>
+                       <p className="text-[10px] text-gray-400 font-mono">Reg: {corpRep.companyId.registrationNumber}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {corpRep.role
+                          .filter(role => role.toLowerCase() !== 'shareholder')
+                          .map((role, rIdx) => (
+                          <Badge 
+                            key={rIdx} 
+                            variant="outline"
+                            className="bg-indigo-50 text-indigo-700 border-indigo-100 rounded-full px-3 py-1 text-sm font-medium flex items-center gap-1"
+                          >
+                            {role}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default Involvements

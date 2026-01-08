@@ -15,10 +15,10 @@ export default function AuditWorkspacePage() {
         </div>
         <div className="flex gap-2">
           <Link href="/dashboard/document-organizer/document-upload">
-            <Button className="rounded-full text-xs px-4">Upload PBC docs</Button>
+            <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">Upload PBC docs</Button>
           </Link>
           <Link href="/dashboard/todo-list">
-            <Button variant="outline" className="rounded-full text-xs px-4">
+            <Button variant="outline" className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">
               View audit tasks
             </Button>
           </Link>
@@ -27,32 +27,32 @@ export default function AuditWorkspacePage() {
 
       <div className="grid gap-5 md:grid-cols-[1.3fr,1fr]">
         <div className="space-y-5">
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
             <h3 className="text-base font-semibold text-brand-body">Engagement overview</h3>
             <p className="text-sm text-muted-foreground">Status: — | Year-end: — | Phase: —</p>
           </div>
 
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
             <h3 className="text-base font-semibold text-brand-body">Document requests</h3>
             <p className="text-sm text-muted-foreground">
               Track PBCs via To-Do list; replace with audit-specific requests when backend is ready.
             </p>
             <Link href="/dashboard/todo-list">
-              <Button variant="outline" size="sm" className="rounded-full text-xs">Open To-Do</Button>
+              <Button variant="outline" size="sm" className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow">Open To-Do</Button>
             </Link>
           </div>
         </div>
 
         <div className="space-y-5">
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
             <h3 className="text-base font-semibold text-brand-body">Audit queries</h3>
             <p className="text-sm text-muted-foreground">Use Messages to respond to audit questions.</p>
             <Link href="/dashboard/messages">
-              <Button variant="ghost" size="sm" className="rounded-full text-xs">Go to Messages</Button>
+              <Button variant="ghost" size="sm" className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow">Go to Messages</Button>
             </Link>
           </div>
 
-          <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-3">
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
             <h3 className="text-base font-semibold text-brand-body">Reports & archive</h3>
             <p className="text-sm text-muted-foreground">Draft/final reports and archive will surface here.</p>
           </div>

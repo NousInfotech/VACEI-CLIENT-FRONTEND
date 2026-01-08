@@ -1,5 +1,6 @@
 // TaskMeta.tsx
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import React from "react";
 
 interface Status { id: number; name: string; }
@@ -83,8 +84,8 @@ export default function TaskMeta({
       */}
             {(canUpdateStatus && (!isResolved || currentUserId === task.createdById)) && (
                 <div className="mt-3 flex items-center gap-2 sm:mt-0">
-                    <select
-                        className="border border-border rounded-lg px-3 py-2 bg-card text-sm text-brand-body focus:outline-none focus:ring-0 h-[36px]"
+                    <Select
+                        className="h-[36px] min-w-[140px]"
                         value={selectedStatusId ?? ""}
                         onChange={e => setSelectedStatusId(parseInt(e.target.value))}
                         // Disable if resolved and not creator
@@ -97,7 +98,7 @@ export default function TaskMeta({
                             .map(s => (
                                 <option key={s.id} value={s.id}>{s.name}</option>
                             ))}
-                    </select>
+                    </Select>
                     <Button
                         variant={"outline"}
                         className="cursor-pointer text-card-foreground py-3 ps-3 pe-4 bg-sidebar-background hover:bg-card hover:text-brand-body border-sky-800"

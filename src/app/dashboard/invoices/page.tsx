@@ -9,6 +9,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import InvoiceModal from "./components/InvoiceModal";
 import PaymentModal from "./components/PaymentModal";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import {
     Table,
     TableBody,
@@ -273,18 +274,18 @@ export default function InvoiceList() {
                         />
                     </div>
                     <div>
-                        <select
+                        <Select
                             value={statusFilter}
                             onChange={(e) => {
                                 setStatusFilter(e.target.value);
                                 setPage(1); // reset page on status filter change
                             }}
-                            className="w-full md:w-auto min-w-[150px] px-3 py-2 text-sm text-brand-body border-border bg-card border rounded-lg"
+                            className="w-full md:w-auto min-w-[150px]"
                         >
                             <option value="">All Statuses</option>
                             <option value="Paid">Paid</option>
                             <option value="Unpaid">Unpaid</option>
-                        </select>
+                        </Select>
                     </div>
                     <Button
                         variant={"outline"}

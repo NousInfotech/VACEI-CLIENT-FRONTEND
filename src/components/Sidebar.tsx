@@ -75,13 +75,13 @@ export default function Sidebar({ isOpen = true, onClose, isCollapsed = false }:
                         isCollapsed ? "md:opacity-0 md:w-0 md:overflow-hidden" : "md:opacity-100 md:w-auto"
                     )}>
                         <div className="space-y-1">
-                            <h1
+                            <h1 
                                 className="text-2xl font-bold tracking-tight"
                                 style={{ color: `hsl(var(--sidebar-foreground))` }}
                             >
                                 Vacei
                             </h1>
-                            <p
+                            <p 
                                 className="text-xs font-medium uppercase tracking-wider opacity-70"
                                 style={{ color: `hsl(var(--sidebar-foreground))` }}
                             >
@@ -97,7 +97,7 @@ export default function Sidebar({ isOpen = true, onClose, isCollapsed = false }:
                                 >
                                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                     One workspace for bookkeeping, VAT, audit & CSP
-                                </p>
+                            </p>
                             )}
                         </div>
                     </div>

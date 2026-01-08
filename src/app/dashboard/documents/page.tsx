@@ -102,27 +102,27 @@ export default function DocumentsMasterPage() {
 
         <div className="flex gap-2">
           <Link href="/dashboard/document-organizer/document-upload">
-            <Button variant="default" className="rounded-full px-4">
+            <Button variant="default" className="rounded-lg px-4 shadow-sm hover:shadow-md transition-shadow">
               Upload documents
             </Button>
           </Link>
           <Link href="/dashboard/document-organizer/document-listing">
-            <Button variant="outline" className="rounded-full px-4">
+            <Button variant="outline" className="rounded-lg px-4 shadow-sm hover:shadow-md transition-shadow">
               View all
             </Button>
           </Link>
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-[16px] shadow-md p-5 space-y-6">
+      <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-6">
         {/* Tabs (UI uses local state but links still go to listing filters) */}
         <div className="flex flex-wrap gap-2">
           <Link href="/dashboard/document-organizer/document-listing">
             <button
-              className={`px-3 py-1.5 rounded-full text-xs md:text-sm font-medium shadow-sm ${
+              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-medium shadow-sm transition-all ${
                 activeTab === "all"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "bg-card border border-border text-brand-body hover:shadow-md"
               }`}
               onClick={() => setActiveTab("all")}
               type="button"
@@ -132,10 +132,10 @@ export default function DocumentsMasterPage() {
           </Link>
           <Link href="/dashboard/document-organizer/document-listing?tab=requested">
             <button
-              className={`px-3 py-1.5 rounded-full text-xs md:text-sm font-medium shadow-sm ${
+              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-medium shadow-sm transition-all ${
                 activeTab === "requested"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "bg-card border border-border text-brand-body hover:shadow-md"
               }`}
               onClick={() => setActiveTab("requested")}
               type="button"
@@ -145,10 +145,10 @@ export default function DocumentsMasterPage() {
           </Link>
           <Link href="/dashboard/document-organizer/document-listing?tab=uploaded">
             <button
-              className={`px-3 py-1.5 rounded-full text-xs md:text-sm font-medium shadow-sm ${
+              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-medium shadow-sm transition-all ${
                 activeTab === "uploaded"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "bg-card border border-border text-brand-body hover:shadow-md"
               }`}
               onClick={() => setActiveTab("uploaded")}
               type="button"
@@ -170,20 +170,20 @@ export default function DocumentsMasterPage() {
               </span>
             </div>
 
-            <div className="rounded-[14px] border border-dashed border-border bg-muted/40 p-4 md:p-5">
+            <div className="rounded-lg border border-dashed border-border bg-muted/30 p-5">
               {/* The existing form already supports drag & drop and tagging – keep logic there */}
               <DocumentForm />
             </div>
           </div>
 
           {/* Smart checklist card – state is stored in localStorage */}
-          <aside className="rounded-[14px] border border-border bg-background/80 shadow-sm p-4 md:p-5 space-y-4">
+          <aside className="rounded-lg border border-border bg-card shadow-sm p-5 space-y-4">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <h2 className="text-lg font-medium text-brand-body">
+                <h2 className="text-lg font-semibold text-brand-body">
                   Smart checklist – missing documents
                 </h2>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground mt-1">
                   Shows outstanding document requests across all services.
                 </p>
               </div>
@@ -191,7 +191,7 @@ export default function DocumentsMasterPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="rounded-full text-[11px]"
+                  className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow"
                   onClick={resetChecklist}
                   type="button"
                 >
@@ -201,7 +201,7 @@ export default function DocumentsMasterPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="rounded-full text-[11px]"
+                    className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow"
                   >
                     View tasks
                   </Button>
@@ -213,32 +213,32 @@ export default function DocumentsMasterPage() {
               {checklist.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-start justify-between gap-3 rounded-lg border border-border/70 bg-muted/40 px-3 py-2.5"
+                  className="flex items-start justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-sm hover:shadow-md transition-all"
                 >
                   <div className="flex-1">
                     <p className="font-medium text-brand-body flex items-center gap-2">
                       <span>{item.title}</span>
                       {item.done && (
-                        <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+                        <span className="inline-flex items-center rounded-lg bg-success/10 border border-success/30 px-2 py-0.5 text-[10px] font-semibold text-success">
                           Done
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground mt-1">
                       {item.description}
                     </p>
                   </div>
                   <div className="flex flex-col gap-1 items-end">
                     <Link
                       href={item.href}
-                      className="text-xs font-medium text-primary hover:underline whitespace-nowrap"
+                      className="text-xs font-medium text-brand-primary hover:underline whitespace-nowrap"
                     >
                       Upload
                     </Link>
                     <button
                       type="button"
                       onClick={() => markChecklistDone(item.id)}
-                      className="text-[11px] text-muted-foreground hover:text-primary"
+                      className="text-xs text-muted-foreground hover:text-brand-primary transition-colors"
                     >
                       {item.done ? "Mark as pending" : "Mark done"}
                     </button>
@@ -246,7 +246,7 @@ export default function DocumentsMasterPage() {
                 </div>
               ))}
 
-              <p className="mt-2 text-[11px] text-muted-foreground">
+              <p className="mt-2 text-xs text-muted-foreground">
                 This checklist is a client view on top of your existing document
                 organizer. It does not change any underlying document logic.
               </p>
