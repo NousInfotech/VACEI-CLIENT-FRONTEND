@@ -1,3 +1,4 @@
+"use client"
 import Company from '@/components/company/Company'
 import React from 'react'
 

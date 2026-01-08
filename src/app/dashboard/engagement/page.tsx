@@ -1,3 +1,4 @@
+"use client"
 import Engagement from '@/components/engagement/Engagement'
 import React from 'react'
 

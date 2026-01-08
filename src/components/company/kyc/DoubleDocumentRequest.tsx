@@ -200,7 +200,7 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                   return (
                   <div
                     key={`${group._id}-${index}`}
-                    className="flex items-center justify-between gap-3 border-2 p-3 rounded-md"
+                    className="flex items-center justify-between gap-3 border border-gray-400 p-3 rounded-md"
                   >
                     <div className="flex-1">
                       <p className="text-md">

@@ -129,6 +129,7 @@ export interface EngagementData {
     current_year: BalanceSheetYearData;
   };
   lead_sheets: LeadSheetGrouping[];
+  documentRequests: any[];
 }
 
 export const MOCK_ENGAGEMENT_DATA: EngagementData = {
@@ -1715,21 +1716,21 @@ export const MOCK_ENGAGEMENT_DATA: EngagementData = {
           "etbRowId": "1000",
           "code": "1000",
           "accountName": "Cash",
-          "dr": 0,
-          "cr": 0,
+          "dr": 20,
+          "cr": 50,
           "details": ""
         },
         {
           "etbRowId": "1300",
           "code": "1300",
           "accountName": "Prepaid Expenses",
-          "dr": 0,
-          "cr": 0,
+          "dr": 40,
+          "cr": 70,
           "details": ""
         }
       ],
-      "totalDr": 0,
-      "totalCr": 0,
+      "totalDr": 60,
+      "totalCr": 120,
       "history": [
         {
           "action": "created",
@@ -1745,8 +1746,8 @@ export const MOCK_ENGAGEMENT_DATA: EngagementData = {
           },
           "metadata": {
             "createdBy": "kannan.employee@gmail.com",
-            "totalDr": 0,
-            "totalCr": 0,
+            "totalDr": 60,
+            "totalCr": 120,
             "entriesCount": 2
           },
           "description": "Reclassification RC2 created with 2 entries",
@@ -1767,11 +1768,11 @@ export const MOCK_ENGAGEMENT_DATA: EngagementData = {
             "etbRowsUpdated": 2,
             "totalRows": 16,
             "postedBy": "kannan.employee@gmail.com",
-            "totalDr": 0,
-            "totalCr": 0,
+            "totalDr": 60,
+            "totalCr": 120,
             "entriesCount": 2
           },
-          "description": "Reclassification RC2 posted to ETB (Dr: 0, Cr: 0)",
+          "description": "Reclassification RC2 posted to ETB (Dr: 60, Cr: 120)",
           "_id": "695de7c96c1143b70f81c4c4"
         }
       ],
@@ -1792,21 +1793,21 @@ export const MOCK_ENGAGEMENT_DATA: EngagementData = {
           "etbRowId": "1000",
           "code": "1000",
           "accountName": "Cash",
-          "dr": 0,
-          "cr": 0,
+          "dr": 10,
+          "cr": 20,
           "details": ""
         },
         {
           "etbRowId": "1200",
           "code": "1200",
           "accountName": "Inventory",
-          "dr": 0,
-          "cr": 0,
+          "dr": 30,
+          "cr": 40,
           "details": ""
         }
       ],
-      "totalDr": 0,
-      "totalCr": 0,
+      "totalDr": 40,
+      "totalCr": 60,
       "history": [
         {
           "action": "created",
@@ -1822,8 +1823,8 @@ export const MOCK_ENGAGEMENT_DATA: EngagementData = {
           },
           "metadata": {
             "createdBy": "kannan.employee@gmail.com",
-            "totalDr": 0,
-            "totalCr": 0,
+            "totalDr": 40,
+            "totalCr": 60,
             "entriesCount": 2
           },
           "description": "Reclassification RC1 created with 2 entries",
@@ -1844,11 +1845,11 @@ export const MOCK_ENGAGEMENT_DATA: EngagementData = {
             "etbRowsUpdated": 2,
             "totalRows": 16,
             "postedBy": "kannan.employee@gmail.com",
-            "totalDr": 0,
-            "totalCr": 0,
+            "totalDr": 40,
+            "totalCr": 60,
             "entriesCount": 2
           },
-          "description": "Reclassification RC1 posted to ETB (Dr: 0, Cr: 0)",
+          "description": "Reclassification RC1 posted to ETB (Dr: 40, Cr: 60)",
           "_id": "695d01a515597e608037f675"
         }
       ],
@@ -1866,5 +1867,125 @@ export const MOCK_ENGAGEMENT_DATA: EngagementData = {
     prior_year: { year: 2022, totals: { assets: { value: 1250000.0, accounts: [] }, liabilities: { value: 650000.0, accounts: [] }, equity: { value: 600000.0, accounts: [] } }, balanced: true },
     current_year: { year: 2023, totals: { assets: { value: 1380000.0, accounts: [] }, liabilities: { value: 710000.0, accounts: [] }, equity: { value: 670000.0, accounts: [] } }, balanced: true }
   },
-  lead_sheets: []
+  lead_sheets: [],
+  documentRequests: [
+    {
+        "_id": "695d05ef15597e608038070b",
+        "engagement": "68f62e70da7e334a6f9b79c6",
+        "clientId": "ff0978b5-ca1d-4f44-977c-f5e0b9c5952c",
+        "name": "Capital & Reserves Request - 6/1/2026",
+        "category": "Capital & Reserves",
+        "description": "Upload the required document",
+        "comment": "",
+        "notificationEmails": [],
+        "emailNotificationSent": false,
+        "status": "pending",
+        "documents": [
+            {
+                "template": {
+                    "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/global-documents/document-request-templates/kyc/template_1763141608284_3mncy.pdf",
+                    "instruction": "Provide a detailed overview of what the company does, including primary business sectors, services offered, and operational activities. Ensure the information is clear and accurate."
+                },
+                "name": "Company Activity Form",
+                "type": "template",
+                "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/engagement-documents/68f62e70da7e334a6f9b79c6/Capital%20&%20Reserves/1767704381824_44279.jpg",
+                "uploadedFileName": "bank-statement-template-22.jpg",
+                "uploadedAt": "2026-01-06T12:59:42.323Z",
+                "status": "uploaded",
+                "comment": "",
+                "_id": "695d073e15597e6080381791"
+            },
+            {
+                "template": {
+                    "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/global-documents/document-request-templates/kyc/template_1763141636327_pvnzr.pdf",
+                    "instruction": "Fill in all sections with accurate corporate details, including legal name, registration number, ownership structure, management information, and contact details. Ensure consistency with other corporate documents."
+                },
+                "name": "Company Profile Document",
+                "type": "template",
+                "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/engagement-documents/68f62e70da7e334a6f9b79c6/Capital%20&%20Reserves/1767705174150_pmhj4.jpg",
+                "uploadedFileName": "35349124-8922707-image-a-3_1604699265915.jpg",
+                "uploadedAt": "2026-01-06T13:12:54.584Z",
+                "status": "uploaded",
+                "comment": "",
+                "_id": "695d0a5615597e6080382271"
+            },
+            {
+                "template": {
+                    "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/global-documents/document-request-templates/kyc/template_1763141684042_wg32h.pdf",
+                    "instruction": "State clearly if any involved individuals are PEPs. Provide relevant details when applicable. If none are PEPs, declare “No PEP involvement” and sign where required."
+                },
+                "name": "Politically Exposed Person (PEP) Declaration",
+                "type": "template",
+                "status": "pending",
+                "comment": "",
+                "_id": "695d05ef15597e608038070e",
+                "uploadedAt": "2026-01-06T12:54:07.058Z"
+            },
+            {
+                "template": {
+                    "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/global-documents/document-request-templates/kyc/template_1763141750305_qp4xp.pdf",
+                    "instruction": "Describe the origin of funds used for the company or transactions. Provide supporting information such as income history, business profits, investment returns, or inheritance details. Ensure the explanation is clear and truthful."
+                },
+                "name": "Source of Wealth Declaration",
+                "type": "template",
+                "status": "pending",
+                "comment": "",
+                "_id": "695d05ef15597e608038070f",
+                "uploadedAt": "2026-01-06T12:54:07.058Z"
+            },
+            {
+                "name": "ID/Passport",
+                "type": "direct",
+                "status": "pending",
+                "comment": "",
+                "_id": "695d05ef15597e6080380710",
+                "uploadedAt": "2026-01-06T12:54:07.058Z"
+            },
+            {
+                "name": "Utility Bill",
+                "type": "direct",
+                "status": "pending",
+                "comment": "",
+                "_id": "695d05ef15597e6080380711",
+                "uploadedAt": "2026-01-06T12:54:07.058Z"
+            }
+        ],
+        "multipleDocuments": [
+            {
+                "name": "Bank Proof",
+                "type": "template",
+                "instruction": "Upload Required Document",
+                "multiple": [
+                    {
+                        "template": {
+                            "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/engagement-documents/templates/template_1767704212952_0lj37.pdf",
+                            "instruction": "Upload Required Document"
+                        },
+                        "label": "Front SIde",
+                        "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/engagement-documents/68f62e70da7e334a6f9b79c6/Capital%20&%20Reserves/1767705186191_bz41y_0.jpg",
+                        "uploadedFileName": "example-of-a-real-bank-statement-from-bank-of-america-1440x1238.jpg",
+                        "uploadedAt": "2026-01-06T13:13:06.984Z",
+                        "status": "uploaded",
+                        "comment": "",
+                        "_id": "695d0a6215597e608038228e"
+                    },
+                    {
+                        "template": {
+                            "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/engagement-documents/templates/template_1767704213011_4q17m.pdf",
+                            "instruction": "Upload Required Document"
+                        },
+                        "label": "Back Side",
+                        "status": "pending",
+                        "comment": "",
+                        "_id": "695d069615597e60803807e8",
+                        "uploadedAt": "2026-01-06T12:56:54.431Z"
+                    }
+                ],
+                "_id": "695d069615597e60803807e6"
+            }
+        ],
+        "requestedAt": "2026-01-06T12:54:07.059Z",
+        "__v": 1
+    }
+  ]
 };

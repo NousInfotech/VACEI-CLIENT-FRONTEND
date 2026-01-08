@@ -478,33 +478,33 @@ export const extractETBData = (etbRows: ETBRow[], year: number) => {
 
   // Inject Net Profit/Loss into visual tree for Balance Sheet consistency
   // Important: We do this AFTER summaries are derived so we don't double count in formulas
-  const equityG1 = leadSheets.find((n) => n.group === "Equity");
-  if (equityG1) {
-    const pnlG2 = getOrCreate(equityG1.children!, "Current Year Profits & Losses", () => ({
-      level: "grouping2",
-      group: "Current Year Profits & Losses",
-      children: [],
-    }));
+  // const equityG1 = leadSheets.find((n) => n.group === "Equity");
+  // if (equityG1) {
+  //   const pnlG2 = getOrCreate(equityG1.children!, "Current Year Profits & Losses", () => ({
+  //     level: "grouping2",
+  //     group: "Current Year Profits & Losses",
+  //     children: [],
+  //   }));
 
-    getOrCreate(pnlG2.children!, "Current Year Profit / (Loss)", () => ({
-      level: "grouping3",
-      group: "Current Year Profit / (Loss)",
-      totals: {
-        currentYear: incomeStatement.current_year.net_result,
-        priorYear: incomeStatement.prior_year.net_result,
-        adjustments: 0,
-        reclassification: 0,
-        finalBalance: incomeStatement.current_year.net_result,
-      },
-      rows: [],
-    }));
-  }
+  //   getOrCreate(pnlG2.children!, "Current Year Profit / (Loss)", () => ({
+  //     level: "grouping3",
+  //     group: "Current Year Profit / (Loss)",
+  //     totals: {
+  //       currentYear: incomeStatement.current_year.net_result,
+  //       priorYear: incomeStatement.prior_year.net_result,
+  //       adjustments: 0,
+  //       reclassification: 0,
+  //       finalBalance: incomeStatement.current_year.net_result,
+  //     },
+  //     rows: [],
+  //   }));
+  // }
 
   return {
     etb: normalized,
     lead_sheets: leadSheets,
     income_statement: incomeStatement,
     balance_sheet: balanceSheet,
-    retained_earnings: retainedEarnings,
+    // retained_earnings: retainedEarnings,
   };
 };

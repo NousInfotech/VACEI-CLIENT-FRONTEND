@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Calendar, FileText, CheckCircle2, History, Paperclip } from "lucide-react";
 import { MOCK_ENGAGEMENT_DATA, ReclassificationEntry } from './mockEngagementData';
 import { format } from 'date-fns';
+import { formatAmount } from '@/lib/utils';
 
 const Reclassification = () => {
   const { reclassifications } = MOCK_ENGAGEMENT_DATA;
@@ -35,7 +36,7 @@ const Reclassification = () => {
       <div className="grid gap-6">
         {sortedReclassifications.map((rc) => (
           <Card key={rc._id} className="overflow-hidden border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4">
+            <CardHeader className="bg-slate-50/50 border-b border-gray-300 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-100 text-orange-700 font-bold">
@@ -59,9 +60,9 @@ const Reclassification = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">Total Impact</div>
+                  <div className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">Total</div>
                   <div className="text-xl font-bold text-slate-900">
-                     € {rc.totalDr.toLocaleString()}
+                     {formatAmount(rc.totalDr)}
                   </div>
                 </div>
               </div>
@@ -69,30 +70,30 @@ const Reclassification = () => {
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-slate-50/30 hover:bg-slate-50/30 border-none">
-                    <TableHead className="w-[100px] py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider pl-6">Code</TableHead>
-                    <TableHead className="py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Account Description</TableHead>
-                    <TableHead className="py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Debit (€)</TableHead>
-                    <TableHead className="py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right pr-6">Credit (€)</TableHead>
+                  <TableRow className="border-b border-gray-300">
+                    <TableHead className="w-[100px] py-3 text-md font-bold uppercase tracking-wider pl-6 border-r border-gray-300">Code</TableHead>
+                    <TableHead className="py-3 text-md font-bold uppercase tracking-wider border-r border-gray-300">Account</TableHead>
+                    <TableHead className="py-3 text-md font-bold uppercase tracking-wider text-right border-r border-gray-300">Debit</TableHead>
+                    <TableHead className="py-3 text-md font-bold uppercase tracking-wider text-right pr-6">Credit</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rc.entries.map((entry: ReclassificationEntry, idx: number) => (
-                    <TableRow key={idx} className="border-slate-100 hover:bg-slate-50/50 transition-colors">
-                      <TableCell className="font-medium text-slate-700 pl-6 py-3">{entry.code}</TableCell>
-                      <TableCell className="text-slate-600 py-3">{entry.accountName}</TableCell>
-                      <TableCell className="text-right py-3 text-indigo-600 font-medium">
-                        {entry.dr > 0 ? entry.dr.toLocaleString() : '-'}
+                    <TableRow key={idx} className="border-gray-300 hover:bg-slate-50/50 transition-colors">
+                      <TableCell className="font-medium text-slate-700 pl-6 py-3 border-r border-gray-300">{entry.code}</TableCell>
+                      <TableCell className="text-slate-600 py-3 border-r border-gray-300">{entry.accountName}</TableCell>
+                      <TableCell className="text-right py-3 text-indigo-600 font-medium border-r border-gray-300">
+                        {entry.dr > 0 ? formatAmount(entry.dr) : '-'}
                       </TableCell>
                       <TableCell className="text-right py-3 text-rose-600 font-medium pr-6">
-                        {entry.cr > 0 ? entry.cr.toLocaleString() : '-'}
+                        {entry.cr > 0 ? formatAmount(entry.cr) : '-'}
                       </TableCell>
                     </TableRow>
                   ))}
                   <TableRow className="bg-slate-50/50 border-t-2 border-slate-100 font-bold hover:bg-slate-50/50">
-                    <TableCell colSpan={2} className="py-4 text-slate-800 pl-6">Cumulative Balance</TableCell>
-                    <TableCell className="text-right py-4 text-indigo-700">€ {rc.totalDr.toLocaleString()}</TableCell>
-                    <TableCell className="text-right py-4 text-rose-700 pr-6">€ {rc.totalCr.toLocaleString()}</TableCell>
+                    <TableCell colSpan={2} className="py-4 text-slate-800 pl-6 border-r border-gray-300">Cumulative Balance</TableCell>
+                    <TableCell className="text-right py-4 text-indigo-700 border-r border-gray-300">{formatAmount(rc.totalDr)}</TableCell>
+                    <TableCell className="text-right py-4 text-rose-700 pr-6">{formatAmount(rc.totalCr)}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>

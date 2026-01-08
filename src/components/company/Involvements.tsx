@@ -15,37 +15,24 @@ import {
 import { Card, CardContent } from "@/components/ui/card2"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import PillTabs from '../shared/PillTabs'
 
 const Involvements = () => {
   const [activeSubTab, setActiveSubTab] = useState<'shareholders' | 'representatives'>('shareholders')
   const data = MOCK_COMPANY_DATA.data
 
+  const tabs = [
+    { id: 'shareholders', label: 'Shareholders', icon: User },
+    { id: 'representatives', label: 'Representatives', icon: ShieldCheck },
+  ]
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex space-x-4 border-b border-gray-100">
-        <button
-          onClick={() => setActiveSubTab('shareholders')}
-          className={`pb-4 px-2 text-sm font-medium transition-colors relative ${
-            activeSubTab === 'shareholders' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Shareholders
-          {activeSubTab === 'shareholders' && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveSubTab('representatives')}
-          className={`pb-4 px-2 text-sm font-medium transition-colors relative ${
-            activeSubTab === 'representatives' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Representatives
-          {activeSubTab === 'representatives' && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
-          )}
-        </button>
-      </div>
+      <PillTabs 
+        tabs={tabs} 
+        activeTab={activeSubTab} 
+        onTabChange={(id: any) => setActiveSubTab(id)} 
+      />
 
       <div className="mt-4">
         {activeSubTab === 'shareholders' ? (

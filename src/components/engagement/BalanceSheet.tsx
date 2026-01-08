@@ -15,11 +15,12 @@ import {
   ChevronRight,
   ChevronsDown,
   ChevronsUp,
-  Download,
   FileText,
   Loader2,
-  Info
+  Info,
+  Download
 } from "lucide-react";
+import { formatAmount } from '@/lib/utils';
 
 interface BalanceSheetProps {
   data: any;
@@ -64,18 +65,14 @@ const BalanceSheet: React.FC<BalanceSheetProps> = ({ data }) => {
 
   const formatTotalValue = (val: number) => {
     if (val === 0) return "-";
-    return Math.abs(val).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    return formatAmount(Math.abs(val));
   };
 
   const formatTableRowValue = (val: number) => {
     if (val === 0) return "-";
-    return Math.abs(val).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    return formatAmount(Math.abs(val));
   };
 
-  const downloadPDF = (detailed: boolean) => {
-    console.log("Downloading PDF...", detailed);
-    alert("PDF Download feature integrated");
-  };
 
   const getAccount = (id: string) => data.etb?.find((r: any) => r._id === id);
 
@@ -105,7 +102,7 @@ const BalanceSheet: React.FC<BalanceSheetProps> = ({ data }) => {
       <React.Fragment key={sectionId}>
         {!isDirect && (
           <TableRow 
-            className={`cursor-pointer transition-colors ${isExpanded ? 'bg-slate-50' : 'hover:bg-slate-50'}`}
+            className={`cursor-pointer transition-colors border-t border-gray-200 ${isExpanded ? 'bg-slate-50' : 'hover:bg-slate-50'}`}
             onClick={() => toggleSection(sectionId)}
           >
             <TableCell className="py-4" style={{ paddingLeft: `${level * 1.5 + 2}rem` }}>
@@ -168,7 +165,7 @@ const BalanceSheet: React.FC<BalanceSheetProps> = ({ data }) => {
           const row = getAccount(rowId);
           if (!row) return null;
           return (
-            <TableRow key={rowId} className="hover:bg-amber-50/30 transition-colors border-slate-50">
+            <TableRow key={rowId} className="hover:bg-amber-50/30 transition-colors border-b border-gray-100">
               <TableCell 
                 className="py-3 text-xs text-slate-600"
                 style={{ paddingLeft: `${(isDirect ? level : level + 1) * 1.5 + 3}rem` }}
@@ -201,7 +198,7 @@ const BalanceSheet: React.FC<BalanceSheetProps> = ({ data }) => {
   const equityNode = data.lead_sheets?.find((n: any) => n.group === "Equity");
 
   return (
-    <div className="h-full flex flex-col animate-in fade-in duration-500">
+    <div className="h-full flex flex-col animate-in fade-in duration-500 rounded-xl shadow-sm border border-gray-200 bg-white">
       {/* Header - Aligned with Income Statement */}
       <div className="p-6 border-b bg-linear-to-r from-amber-50 to-yellow-50">
         <div className="flex items-center justify-between">
@@ -233,13 +230,11 @@ const BalanceSheet: React.FC<BalanceSheetProps> = ({ data }) => {
               <ChevronsUp className="h-3 w-3 mr-1" />
               Collapse All
             </Button>
-
-            <Button 
-                className="bg-amber-600 hover:bg-amber-700 text-white"
-                onClick={() => downloadPDF(false)}
+                   <Button 
+                className="bg-amber-600 hover:bg-amber-700 text-white min-w-[140px]"
             >
-              <Download className="h-4 w-4 mr-2" />
-              Download PDF
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF
             </Button>
           </div>
         </div>
@@ -265,13 +260,13 @@ const BalanceSheet: React.FC<BalanceSheetProps> = ({ data }) => {
                 <AlertCircle className="h-5 w-5 text-rose-600" />
               </div>
               <div>
-                <p className="font-bold text-rose-800 text-sm">⚠️ Balance Sheet discrepancy detected!</p>
-                <p className="text-xs text-rose-700 opacity-90">discrepancy: € {formatTotalValue(calculations.balanceCurrent)}</p>
+                <p className="font-bold text-rose-800 text-sm">⚠️ Balance Sheet does not balance!</p>
+                <p className="text-xs text-rose-700 opacity-90">The accounting equation (Assets = Liabilities + Equity) is not satisfied. Please review your classifications.</p>
               </div>
             </div>
           )}
 
-          <Card className="border-slate-200 shadow-lg overflow-hidden pb-4 bg-card">
+          <Card className="border-gray-200 shadow-lg overflow-hidden pb-4 bg-card">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-amber-100 sticky top-0 z-10">
@@ -289,30 +284,30 @@ const BalanceSheet: React.FC<BalanceSheetProps> = ({ data }) => {
                 <tbody>
                   {/* Assets */}
                   <tr className="bg-indigo-50/50">
-                    <td colSpan={2} className="p-4 font-black text-indigo-900 uppercase tracking-widest text-sm">Assets</td>
-                    <td className="p-4 text-right font-black text-indigo-700">€ {formatTotalValue(current_year.totals.assets.value)}</td>
-                    <td className="p-4 text-right font-bold text-indigo-400">€ {formatTotalValue(prior_year.totals.assets.value)}</td>
+                    <td colSpan={2} className="p-4 font-semibold text-indigo-900 uppercase tracking-widest text-sm">Assets</td>
+                    <td className="p-4 text-right font-semibold text-indigo-700">€ {formatTotalValue(current_year.totals.assets.value)}</td>
+                    <td className="p-4 text-right font-bold">€ {formatTotalValue(prior_year.totals.assets.value)}</td>
                   </tr>
                   {assetsNode && renderRecursive(assetsNode, "root", 0)}
 
                   {/* Liabilities & Equity */}
                   <tr className="bg-rose-50/50 border-t-4 border-slate-100">
-                    <td colSpan={2} className="p-4 font-black text-rose-900 uppercase tracking-widest text-sm">Liabilities & Equity</td>
-                    <td className="p-4 text-right font-black text-rose-700">€ {formatTotalValue(current_year.totals.liabilities.value + current_year.totals.equity.value)}</td>
-                    <td className="p-4 text-right font-bold text-rose-400">€ {formatTotalValue(prior_year.totals.liabilities.value + prior_year.totals.equity.value)}</td>
+                    <td colSpan={2} className="p-4 font-semibold text-rose-900 uppercase tracking-widest text-sm">Liabilities & Equity</td>
+                    <td className="p-4 text-right font-semibold text-rose-700">€ {formatTotalValue(current_year.totals.liabilities.value + current_year.totals.equity.value)}</td>
+                    <td className="p-4 text-right font-bold">€ {formatTotalValue(prior_year.totals.liabilities.value + prior_year.totals.equity.value)}</td>
                   </tr>
 
                   {liabilitiesNode && renderRecursive(liabilitiesNode, "root", 0)}
                   {equityNode && renderRecursive(equityNode, "root", 0)}
 
                   {/* Final Balance Verification */}
-                  <tr className="bg-slate-900 text-white border-t-4 border-amber-500">
-                    <td className="p-5 font-black text-sm uppercase tracking-widest">Final Status (Balance Check)</td>
+                  <tr className={`${Math.abs(calculations.balanceCurrent) < 1 ? 'bg-emerald-600' : 'bg-red-100'} text-white`}>
+                    <td className="p-5 font-bold text-black text-sm uppercase tracking-widest">Balance Check (Assets = Liabilities + Equity)</td>
                     <td className="p-5"></td>
-                    <td className={`p-5 text-right font-black text-2xl ${Math.abs(calculations.balanceCurrent) < 1 ? 'text-amber-400' : 'text-rose-400'}`}>
+                    <td className="p-5 text-right font-bold text-black text-2xl">
                       € {formatTotalValue(calculations.balanceCurrent)}
                     </td>
-                    <td className="p-5 text-right font-bold text-lg text-slate-400">
+                    <td className="p-5 text-right font-bold text-black text-lg">
                       € {formatTotalValue(calculations.balancePrior)}
                     </td>
                   </tr>
@@ -322,9 +317,6 @@ const BalanceSheet: React.FC<BalanceSheetProps> = ({ data }) => {
           </Card>
         </div>
       </div>
-      <p className="text-[10px] text-slate-400 text-center italic py-4 bg-slate-50/30">
-        * Financial position is automatically derived from the trial balance and may reflect rounding differences.
-      </p>
     </div>
   );
 };

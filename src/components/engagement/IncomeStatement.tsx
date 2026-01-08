@@ -9,13 +9,14 @@ import {
   Loader2, 
   ChevronsDown, 
   ChevronsUp, 
-  Download, 
   ChevronDown, 
   ChevronRight,
   TrendingUp,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Download
 } from "lucide-react";
+import { formatAmount } from '@/lib/utils';
 
 interface IncomeStatementProps {
   data: any;
@@ -143,20 +144,13 @@ const IncomeStatement: React.FC<IncomeStatementProps> = ({ data }) => {
 
   const formatTableRowValue = (val: number, grouping3: string) => {
     if (val === 0) return "-";
-    const absVal = Math.abs(val);
-    // Logic for negative values etc. usually Revenue is positive, Expenses shown as positive too in IS?
-    // In our extractETBData we use absolute values for IS breakdowns.
-    return absVal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    return formatAmount(Math.abs(val));
   };
 
   const formatTotalValue = (val: number) => {
-    return Math.abs(val).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    return formatAmount(Math.abs(val));
   };
 
-  const downloadPDF = (detailed: boolean) => {
-    console.log("Downloading PDF...", detailed);
-    alert("PDF Download feature integrated with jspdf & html2canvas");
-  };
 
   return (
     <div className="h-full flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -201,21 +195,20 @@ const IncomeStatement: React.FC<IncomeStatementProps> = ({ data }) => {
               <ChevronsUp className="h-3 w-3 mr-1" />
               Collapse All
             </Button>
-            
-            <Button 
-                className="bg-amber-600 hover:bg-amber-700 text-white"
-                onClick={() => downloadPDF(false)}
+             <Button 
+                className="bg-amber-600 hover:bg-amber-700 text-white min-w-[140px]"
             >
-              <Download className="h-4 w-4 mr-2" />
-              Download PDF
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF
             </Button>
+            
           </div>
         </div>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-6 bg-slate-50/30">
-        <Card className="border-slate-200 shadow-lg overflow-hidden">
+        <Card className="border-gray-200 shadow-lg overflow-hidden">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -349,10 +342,10 @@ const IncomeStatement: React.FC<IncomeStatementProps> = ({ data }) => {
                             <tr className="bg-amber-50/50 border-t border-b-2 border-amber-200 shadow-inner">
                               <td className="p-4 font-bold text-amber-900 uppercase tracking-wider text-xs">Gross Profit</td>
                               <td className="p-4"></td>
-                              <td className="p-4 text-right font-black text-amber-700 text-lg">
+                              <td className="p-4 text-right font-semibold text-amber-700 text-lg">
                                 {formatTotalValue(calculations.grossProfitCurrent)}
                               </td>
-                              <td className="p-4 text-right font-bold text-amber-400">
+                              <td className="p-4 text-right font-bold">
                                 {formatTotalValue(calculations.grossProfitPrior)}
                               </td>
                             </tr>
@@ -362,10 +355,10 @@ const IncomeStatement: React.FC<IncomeStatementProps> = ({ data }) => {
                             <tr className="bg-indigo-50/50 border-t border-b-2 border-indigo-200">
                               <td className="p-4 font-bold text-indigo-900 uppercase tracking-wider text-xs">Operating Profit</td>
                               <td className="p-4"></td>
-                              <td className="p-4 text-right font-black text-indigo-700 text-lg">
+                              <td className="p-4 text-right font-semibold text-indigo-700 text-lg">
                                 {formatTotalValue(calculations.operatingProfitCurrent)}
                               </td>
-                              <td className="p-4 text-right font-bold text-indigo-400">
+                              <td className="p-4 text-right font-bold">
                                 {formatTotalValue(calculations.operatingProfitPrior)}
                               </td>
                             </tr>
@@ -375,10 +368,10 @@ const IncomeStatement: React.FC<IncomeStatementProps> = ({ data }) => {
                             <tr className="bg-purple-50/50 border-t border-b-2 border-purple-200">
                               <td className="p-4 font-bold text-purple-900 uppercase tracking-wider text-xs">Net Profit Before Tax</td>
                               <td className="p-4"></td>
-                              <td className="p-4 text-right font-black text-purple-700 text-lg">
+                              <td className="p-4 text-right font-semibold text-purple-700 text-lg">
                                 {formatTotalValue(calculations.netProfitBeforeTaxCurrent)}
                               </td>
-                              <td className="p-4 text-right font-bold text-purple-400">
+                              <td className="p-4 text-right font-bold">
                                 {formatTotalValue(calculations.netProfitBeforeTaxPrior)}
                               </td>
                             </tr>
@@ -388,10 +381,10 @@ const IncomeStatement: React.FC<IncomeStatementProps> = ({ data }) => {
                             <tr className="bg-emerald-50 border-t-4 border-emerald-500 shadow-xl">
                               <td className="p-5 font-black text-emerald-900 uppercase tracking-widest text-sm">Net Profit for the Year</td>
                               <td className="p-5"></td>
-                              <td className="p-5 text-right font-black text-emerald-700 text-2xl">
+                              <td className="p-5 text-right font-semibold text-emerald-700 text-2xl">
                                 € {formatTotalValue(calculations.netProfitAfterTaxCurrent)}
                               </td>
-                              <td className="p-5 text-right font-bold text-emerald-400 text-lg underline decoration-double">
+                              <td className="p-5 text-right font-bold text-lg">
                                 € {formatTotalValue(calculations.netProfitAfterTaxPrior)}
                               </td>
                             </tr>

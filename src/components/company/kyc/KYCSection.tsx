@@ -11,13 +11,20 @@ import {
 import { Card, CardContent } from '../../ui/card2'
 import { Badge } from '@/components/ui/badge'
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MOCK_KYC_WORKFLOWS_DATA } from '../mockData'
 import DocumentRequestSingle from './SingleDocumentRequest'
 import DocumentRequestDouble from './DoubleDocumentRequest'
+import PillTabs from '../../shared/PillTabs'
+import EmptyState from '../../shared/EmptyState'
 
 const KYCSection = () => {
+  const [activeTab, setActiveTab] = useState('Shareholder')
   const [expandedRequests, setExpandedRequests] = useState<Set<string>>(new Set())
+
+  const tabs = [
+    { id: 'Shareholder', label: 'SHAREHOLDERS' },
+    { id: 'Representative', label: 'REPRESENTATIVES' },
+  ]
 
   const toggleExpand = (id: string) => {
     const newSet = new Set(expandedRequests)
@@ -74,11 +81,11 @@ const KYCSection = () => {
     
     if (workflows.length === 0) {
       return (
-        <div className="text-center py-12 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
-          <Shield className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 font-medium">No results found</p>
-          <p className="text-xs text-gray-400 mt-1">No {workflowType} KYC workflows are available in mock data.</p>
-        </div>
+        <EmptyState 
+          icon={Shield}
+          title="No KYC Workflows"
+          description={`No ${workflowType} KYC workflows are currently available in the system. Please check later or start a new verification process.`}
+        />
       )
     }
 
@@ -101,7 +108,7 @@ const KYCSection = () => {
               return (
                 <Card
                   key={request._id}
-                  className="bg-white/80 border border-white/50 rounded-xl shadow-sm hover:bg-white/70 transition-all mb-4 overflow-hidden"
+                  className="bg-white/80 border border-gray-300 rounded-xl shadow-sm hover:bg-white/70 transition-all mb-4 overflow-hidden"
                 >
                   <CardContent className="p-0">
                     <div className="p-6">
@@ -115,8 +122,7 @@ const KYCSection = () => {
                               <h4 className="text-lg font-semibold text-gray-900">
                                 {person.name}
                               </h4>
-                              <p className="text-[10px] text-gray-400 font-mono tracking-tighter">ID: {request._id}</p>
-                            </div>
+                          </div>
                           </div>
                           
                           <div className="mb-4 flex flex-wrap gap-2">
@@ -195,34 +201,26 @@ const KYCSection = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
-      <div className="flex items-center justify-between bg-white/40 p-6 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md">
+      <div className="flex items-center justify-between bg-white/40 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md">
         <div>
-          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">KYC Verification</h2>
-          <p className="text-sm text-gray-500 mt-1 font-medium">Compliance oversight and document management</p>
+          <h2 className="text-3xl font-semibold">KYC Workflow Details</h2>
+          <p className="text-sm text-gray-500 mt-1 font-medium">Manage document requests and workflow status</p>
         </div>
         <div className="p-4 bg-linear-to-br from-blue-500 to-indigo-600 rounded-2xl text-white shadow-lg shadow-blue-200">
           <Shield size={32} />
         </div>
       </div>
 
-      <Tabs defaultValue="Shareholder" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-gray-200/40 p-1.5 mb-8 backdrop-blur-sm">
-          <TabsTrigger value="Shareholder" className="rounded-xl py-3 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all font-bold tracking-wide">
-            SHAREHOLDERS
-          </TabsTrigger>
-          <TabsTrigger value="Representative" className="rounded-xl py-3 data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm transition-all font-bold tracking-wide">
-            REPRESENTATIVES
-          </TabsTrigger>
-        </TabsList>
+      <PillTabs 
+        tabs={tabs} 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+        className="mb-8"
+      />
 
-        <TabsContent value="Shareholder" className="space-y-6 outline-none">
-          {renderWorkflowList("Shareholder")}
-        </TabsContent>
-
-        <TabsContent value="Representative" className="space-y-6 outline-none">
-          {renderWorkflowList("Representative")}
-        </TabsContent>
-      </Tabs>
+      <div className="space-y-6 outline-none">
+        {renderWorkflowList(activeTab)}
+      </div>
     </div>
   )
 }

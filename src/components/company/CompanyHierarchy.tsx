@@ -24,7 +24,7 @@ import { Button } from "../ui/button";
 
 const LEVEL_GAP_Y = 400;
 const NODE_WIDTH = 350;
-const PARENT_NODE_WIDTH = 800;
+const PARENT_NODE_WIDTH = 1400;
 const HORIZONTAL_SPACING = NODE_WIDTH + 1;
 const NODE_GAP = 130; // Gap between nodes (horizontal spacing)
 const HEADER_WIDTH = 400; // Width for group headers

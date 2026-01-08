@@ -9,7 +9,15 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Button } from "@/components/ui/button";
+import { 
+  ShieldCheck, 
+  LayoutGrid, 
+  PieChart as PieChartIcon, 
+  Files,
+  AlertCircle 
+} from "lucide-react";
+import PillTabs from "../shared/PillTabs";
+import EmptyState from "../shared/EmptyState";
 
 type Person = {
   _id: string;
@@ -622,6 +630,26 @@ const SharePieChart: React.FC<SharePieChartProps> = ({
     return null;
   };
 
+  const tabs = useMemo(() => {
+    const t = [];
+    
+    if (authorizedShares > 0) {
+      t.push({ id: "authorized", label: "Authorized Share" });
+    }
+    
+    t.push({ id: "classes", label: "Classes" });
+    t.push({ id: "total", label: "Issued Share" });
+    
+    chartsData.forEach(({ shareClass }) => {
+      t.push({ 
+        id: shareClass, 
+        label: getClassButtonLabel(shareClass), 
+      });
+    });
+    
+    return t;
+  }, [authorizedShares, chartsData]);
+
   const currentChart = getCurrentChartData();
 
   return (
@@ -639,67 +667,23 @@ const SharePieChart: React.FC<SharePieChartProps> = ({
           )}
         </div>
 
-        {/* Toggle Buttons */}
-        <div className="flex flex-wrap gap-2">
-
-           {/* Authorized Share Button */}
-          {authorizedShares > 0 && (
-            <Button
-              variant={selectedView === "authorized" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedView("authorized")}
-              className="rounded-lg"
-            >
-              Authorized Share
-            </Button>
-          )}
-
-
-
-          {/* Classes Button - NEW */}
-          <Button
-            variant={selectedView === "classes" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setSelectedView("classes")}
-            className="rounded-lg"
-          >
-            Classes
-          </Button>
-
-          {/* Total Button */}
-          <Button
-            variant={selectedView === "total" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setSelectedView("total")}
-            className="rounded-lg"
-          >
-            Issued Share
-          </Button>
-        
-          {/* Individual Class Buttons */}
-          {chartsData.map(({ shareClass }) => (
-            <Button
-              key={shareClass}
-              variant={selectedView === shareClass ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedView(shareClass)}
-              className="rounded-lg"
-            >
-              {getClassButtonLabel(shareClass)}
-            </Button>
-          ))}
-        </div>
+        <PillTabs 
+          tabs={tabs} 
+          activeTab={selectedView} 
+          onTabChange={setSelectedView} 
+        />
       </div>
 
       {/* Single Chart View */}
       {currentChart ? (
         renderPieChart(currentChart.shareClass, currentChart.data, currentChart.label)
       ) : (
-        <div className="w-full bg-white border border-border rounded-2xl text-brand-text p-8 flex items-center justify-center">
-          <div className="text-xl md:text-3xl text-gray-600">
-            No share percentage data available
-          </div>
-        </div>
+        <EmptyState 
+          icon={PieChartIcon}
+          title="No Distribution Data"
+          description="We couldn't find any share distribution data for this category. Please verify the company's share classes and issued shares."
+          className="mt-8"
+        />
       )}
     </div>
   );
@@ -731,7 +715,7 @@ const Distribution = () => {
       <SharePieChart
         persons={persons}
         companies={companies}
-        title="GoldenWave Logistics Share Distribution"
+        title={data.name}
         companyTotalShares={data.issuedShares}
         companyTotalSharesArray={data.totalShares}
         authorizedShares={data.authorizedShares}
