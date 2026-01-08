@@ -31,6 +31,7 @@ export default function DashboardPage() {
   const [username, setUsername] = useState<string>(''); // State for username to avoid hydration error
   const [complianceCounts, setComplianceCounts] = useState({ overdue: 0, dueSoon: 0, waiting: 0, done: 0 });
   const [pendingTasks, setPendingTasks] = useState<Task[]>([]);
+  const [activeCompany, setActiveCompany] = useState<string>("ACME LTD");
 
   // Set username on client side to avoid hydration error
   useEffect(() => {
@@ -38,6 +39,15 @@ export default function DashboardPage() {
       const decoded = getDecodedUsername();
       if (decoded) {
         setUsername(decoded);
+      }
+      const storedCompany = localStorage.getItem("vacei-active-company");
+      const storedCompanies = localStorage.getItem("vacei-companies");
+      if (storedCompany && storedCompanies) {
+        try {
+          const companies = JSON.parse(storedCompanies);
+          const company = companies.find((c: { id: string; name: string }) => c.id === storedCompany);
+          if (company) setActiveCompany(company.name);
+        } catch {}
       }
     }
   }, []);
@@ -161,17 +171,51 @@ export default function DashboardPage() {
   const encodedProcessedStatus = btoa('2');
   const encodedNeedCorrectionStatus = btoa('3');
 
+  // Mock data for wireframe sections
+  const topPriorityActions = [
+    { id: 1, text: "Upload March bank statement", action: "Upload", href: "/dashboard/document-organizer/document-upload" },
+    { id: 2, text: "Reply to Audit Query Q#12", action: "Reply", href: "/dashboard/messages" },
+    { id: 3, text: "VAT Q2 missing 1 sales invoice", action: "Upload", href: "/dashboard/document-organizer/document-upload" },
+  ];
+  const activeServices = [
+    { name: "Bookkeeping", status: "In progress", next: "Review March", href: "/dashboard/services/bookkeeping" },
+    { name: "VAT & Tax", status: "Due soon (30 Jun)", next: "Missing docs", href: "/dashboard/services/vat" },
+    { name: "Payroll", status: "Done", next: "Next run 28th", href: "/dashboard/services/payroll" },
+    { name: "Audit", status: "Waiting on you", next: "Reply Q#12", href: "/dashboard/services/audit" },
+  ];
+  const recentlyCompleted = [
+    { text: "VAT Q1 submitted", action: "View receipt", href: "/dashboard/services/vat" },
+    { text: "Payroll May filed", action: "View confirmation", href: "/dashboard/services/payroll" },
+    { text: "MBR BO2 submitted", action: "View form", href: "/dashboard/services/csp-mbr/mbr-submissions/BO2" },
+  ];
+  const recentActivity = [
+    "9 docs uploaded today",
+    "VAT checks completed",
+  ];
+  const messagesUpdates = [
+    "\"Need 1 more invoice\"",
+    "\"Audit query sent\"",
+  ];
+  const healthStatus = complianceCounts.overdue > 0 ? "🟥 Needs attention" : complianceCounts.dueSoon > 0 ? "🟨 Needs attention" : "🟩 Healthy";
+
   return (
-    <section className="mx-auto max-w-[1400px] w-full pt-5"> 
+    <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-6"> 
+      {/* Welcome Header */}
       <div className="bg-card border border-border rounded-card shadow-md px-6 py-6">
-        <div className="md:flex justify-between items-center mb-6">
-          <h1 className="text-[32px] leading-normal text-brand-body capitalize font-light">
-            Welcome back, <span className="font-semibold text-brand-body">{username || 'User'}</span>
-          </h1>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-semibold text-brand-body mb-2">
+              Welcome back, <span className="font-bold">{username || 'User'}</span>
+            </h1>
+            <div className="flex items-center gap-4 text-sm">
+              <span className="text-muted-foreground">Company: <span className="font-semibold text-brand-body">{activeCompany}</span></span>
+              <span className="text-brand-body">{healthStatus}</span>
+            </div>
+          </div>
           <Button
             variant="default"
             onClick={handleContactAccountantClick}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer !font-normal shadow-sm hover:shadow-md transition-shadow"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm shadow-sm hover:shadow-md transition-shadow"
           >
             <HugeiconsIcon icon={AddressBookIcon} className="w-4.5 h-4.5 size-custom" />
             Contact Accountant
@@ -179,285 +223,327 @@ export default function DashboardPage() {
         </div>
 
         {!uploadLoading && uploadSummary?.filesUploadedThisMonth === 0 && (
-          <div className="mb-6 flex items-start gap-3 p-4 border-l-4 border-warning bg-card border-r border-t border-b border-border rounded-lg shadow-sm">
+          <div className="mt-4 flex items-start gap-3 p-4 border-l-4 border-warning bg-warning/10 border-r border-t border-b border-border rounded-lg shadow-sm">
             <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
             <p className="m-0 text-sm text-brand-body">
               <strong className="font-semibold">Warning:</strong> No documents uploaded this month.
             </p>
           </div>
         )}
-        <div className="flex flex-wrap items-center lg:gap-10 gap-5 mb-12" style={{ display: "none" }}>
-          <button
-            style={{ display: "none" }}
-            className="bg-cream flex gap-2.5 border border-main text-[#3D3D3D] py-3 px-5 rounded-lg font-medium cursor-pointer"
-          >
-            <i className="fi fi-rr-code-pull-request text-[22px] block leading-0"></i>{" "}
-            New Service Request
-          </button>
-          <button
-            style={{ display: "none" }}
-            className="bg-cream flex gap-2.5 border border-main text-[#3D3D3D] py-3 px-5 rounded-lg font-medium cursor-pointer"
-          >
-            <i className="fi fi-rr-settings text-[22px] block leading-0"></i>{" "}
-            Request Upgrade
-          </button>
-        </div>
-        <div className="mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 lg:grid-cols-2 gap-4">
-            {loading ? (
-              Array(3)
-                .fill(null)
-                .map((_, idx) => (
-                  <div
-                    key={idx}
-                    className="h-[100px] bg-gray-200 animate-pulse rounded-lg"
-                  />
-                ))
-            ) : stats.length > 0 ? (
-              stats.map((stat) => <StatCard key={stat.title} {...stat} />)
-            ) : (
-              <div className="col-span-full text-center py-10">
-                <p className="text-xl font-medium text-muted-foreground">No financial data found for cards.</p>
-              </div>
-            )}
+      </div>
+
+      {/* Compliance KPI Strip */}
+      <div className="bg-card border border-border rounded-card shadow-md px-6 py-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h3 className="text-base font-semibold text-brand-body">Compliance Overview</h3>
+          <div className="flex flex-wrap items-center gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Overdue:</span>
+              <span className="text-destructive font-bold text-lg">{complianceCounts.overdue}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Due soon (7d):</span>
+              <span className="text-warning font-bold text-lg">{complianceCounts.dueSoon}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Waiting on you:</span>
+              <span className="text-info font-bold text-lg">{complianceCounts.waiting}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Done (30d):</span>
+              <span className="text-success font-bold text-lg">{complianceCounts.done}</span>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="flex lg:flex-row flex-col gap-5">
-          <div className="lg:w-2/3 w-full">
+      {/* Main Content Grid */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Left Column - Priority Actions & Services */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Top Priority Actions */}
+          <div className="bg-card border border-border rounded-card shadow-md px-6 py-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-brand-body">Top Priority Actions</h3>
+              <Link href="/dashboard/compliance/list">
+                <Button variant="ghost" size="sm" className="text-xs">View all</Button>
+              </Link>
+            </div>
+            <div className="space-y-2.5">
+              {topPriorityActions.map((action) => (
+                <div key={action.id} className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-4 py-3 hover:bg-muted/30 transition-colors shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary font-semibold text-xs">
+                      {action.id}
+                    </span>
+                    <span className="text-sm text-brand-body font-medium">{action.text}</span>
+                  </div>
+                  <Link href={action.href}>
+                    <Button size="sm" variant="default" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                      {action.action}
+                    </Button>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Active Services */}
+          <div className="bg-card border border-border rounded-card shadow-md px-6 py-5">
+            <h3 className="text-lg font-semibold text-brand-body mb-4">Active Services</h3>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {activeServices.map((service, idx) => (
+                <div key={idx} className="rounded-lg border border-border bg-muted/20 px-4 py-3 hover:bg-muted/30 transition-colors shadow-sm">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-brand-body text-sm mb-1">{service.name}</h4>
+                      <p className="text-xs text-muted-foreground">{service.status}</p>
+                    </div>
+                    <Link href={service.href}>
+                      <Button size="sm" variant="outline" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow h-7">
+                        Open
+                      </Button>
+                    </Link>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Next: {service.next}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Financial Stats */}
+          <div className="bg-card border border-border rounded-card shadow-md px-6 py-5">
+            <h3 className="text-lg font-semibold text-brand-body mb-4">Financial Overview</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {loading ? (
+                Array(3).fill(null).map((_, idx) => (
+                  <div key={idx} className="h-[100px] bg-gray-200 animate-pulse rounded-lg" />
+                ))
+              ) : stats.length > 0 ? (
+                stats.map((stat) => <StatCard key={stat.title} {...stat} />)
+              ) : (
+                <div className="col-span-full text-center py-10">
+                  <p className="text-xl font-medium text-muted-foreground">No financial data found for cards.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Charts */}
+          <div className="space-y-5">
             <CashFlowChart />
             <PLSummaryChart />
           </div>
-          <div className="lg:w-4/12 w-full">
-            <div className="bg-card border border-border rounded-card shadow-md mb-5">
-              <div className="pt-4 px-5 pb-3 border-b border-border">
-                <h3 className="text-lg font-semibold text-brand-body">
-                  Compliance snapshot
-                </h3>
-              </div>
-              <div className="grid grid-cols-2 gap-3 py-5 px-5">
-                <Kpi label="Overdue" value={complianceCounts.overdue} tone="danger" />
-                <Kpi label="Due soon" value={complianceCounts.dueSoon} tone="warning" />
-                <Kpi label="Waiting" value={complianceCounts.waiting} tone="info" />
-                <Kpi label="Done" value={complianceCounts.done} tone="success" />
-              </div>
-              <div className="px-5 pb-4">
-                <Link href="/dashboard/compliance/list">
-                  <Button variant="outline" size="sm" className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow">
-                    View compliance list
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-card shadow-md mb-5">
-              <div className="pt-4 px-5 pb-3 border-b border-border">
-                <h3 className="text-lg font-semibold text-brand-body">
-                  Upload Status Summary
-                </h3>
-              </div>
-              <div className="space-y-5 py-5 px-5">
-                {uploadLoading ? (
-                  Array(3).fill(null).map((_, idx) => (
-                    <div key={`upload-skeleton-${idx}`}>
-                      <div className="h-6 w-3/4 bg-gray-200 animate-pulse mb-2.5 rounded"></div>
-                      <div className="h-1 w-full bg-gray-200 animate-pulse rounded-full"></div>
-                    </div>
-                  ))
-                ) : uploadSummary ? (
-                  <>
-                    <div>
-                      <div className="flex justify-between items-start">
-                        <div className="flex gap-2 items-center mb-2.5">
-                          <img src="/document-upload.svg" alt="Documents Uploaded" className="w-5 h-5" />
-                          <p className="text-sm text-brand-body font-normal leading-6">
-                            Documents Uploaded:{" "}
-                            <span className="text-brand-primary font-semibold">{uploadSummary.documentsUploaded}</span>
-                          </p>
-                        </div>
-
-                        <Link
-                          href={`/dashboard/document-organizer/document-listing`}
-                          passHref
-                        >
-                          <div
-                            className="bg-sidebar-background text-sidebar-foreground w-6 h-6 rounded-full relative flex items-center justify-center cursor-pointer shadow-md hover:shadow-lg transition-all"
-                            title="View Uploaded Documents"
-                          >
-                            <i className="fi fi-br-plus text-sidebar-foreground text-[10px] block leading-0"></i>
-                          </div>
-                        </Link>
-                      </div>
-                      <div className="h-[6px] w-full rounded-full bg-muted relative overflow-hidden">
-                        {uploadSummary.documentsUploaded > 0 && (
-                          <div className="h-full w-full rounded-full bg-primary"></div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between items-start">
-                        <div className="flex gap-2 items-center mb-2.5">
-                          <img src="/document-pending.svg" alt="Documents Processed" className="w-5 h-5" />
-                          <p className="text-sm text-brand-body font-normal leading-6">
-                            Documents Processed:{" "}
-                            <span className="text-brand-primary font-semibold">{uploadSummary.documentsProcessed}</span>
-                          </p>
-                        </div>
-                        <Link href={`/dashboard/document-organizer/document-listing?status=${encodedProcessedStatus}`} passHref>
-                          <div
-                            className="bg-sidebar-background text-sidebar-foreground w-6 h-6 rounded-full relative flex items-center justify-center cursor-pointer shadow-md hover:shadow-lg transition-all"
-                            title="Upload New Document"
-                          >
-                            <i className="fi fi-br-plus text-sidebar-foreground text-[10px] block leading-0"></i>
-                          </div>
-                        </Link>
-                      </div>
-
-                      <div className="h-[6px] w-full rounded-full bg-muted relative overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-warning"
-                          style={{ width: `${processedPercentage}%` }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between items-start">
-                        <div className="flex gap-2 items-center mb-2.5">
-                          <img src="/document-pending.svg" alt="Documents Processed" className="w-5 h-5" />
-                          <p className="text-sm text-brand-body font-normal leading-6">
-                            Documents Pending:{" "}
-                            <span className="text-brand-primary font-semibold">{uploadSummary.documentsPending}</span>
-                          </p>
-                        </div>
-                        <Link href={`/dashboard/document-organizer/document-listing?status=${encodedPendingStatus}`} passHref>
-                          <div
-                            className="bg-sidebar-background text-sidebar-foreground w-6 h-6 rounded-full relative flex items-center justify-center cursor-pointer shadow-md hover:shadow-lg transition-all"
-                            title="Upload New Document"
-                          >
-                            <i className="fi fi-br-plus text-sidebar-foreground text-[10px] block leading-0"></i>
-                          </div>
-                        </Link>
-                      </div>
-
-                      <div className="h-[6px] w-full rounded-full bg-muted relative overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-destructive"
-                          style={{ width: `${pendingPercentage}%` }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between items-start">
-                        <div className="flex gap-2 items-center mb-2.5">
-                          <img src="/document-pending.svg" alt="Documents Processed" className="w-5 h-5" />
-                          <p className="text-sm text-brand-body font-normal leading-6">
-                            Documents Needs Correction:{" "}
-                            <span className="text-brand-primary font-semibold">{uploadSummary.documentsNeedsCorrection}</span>
-                          </p>
-                        </div>
-                        <Link href={`/dashboard/document-organizer/document-listing?status=${encodedNeedCorrectionStatus}`} passHref>
-                          <div
-                            className="bg-sidebar-background text-sidebar-foreground w-6 h-6 rounded-full relative flex items-center justify-center cursor-pointer shadow-md hover:shadow-lg transition-all"
-                            title="Upload New Document"
-                          >
-                            <i className="fi fi-br-plus text-sidebar-foreground text-[10px] block leading-0"></i>
-                          </div>
-                        </Link>
-                      </div>
-
-                      <div className="h-[6px] w-full rounded-full bg-muted relative overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-destructive"
-                          style={{ width: `${needCorrectionPercentage}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="col-span-full text-center py-5">
-                    <p className="text-base font-medium text-muted-foreground">No upload data available.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-            {(netIncomeYTD) && (
-              <div className="bg-card border border-border rounded-card shadow-md">
-                <div className="pt-4 px-5 pb-3 border-b border-border">
-                  <h3 className="text-lg font-semibold text-brand-body">
-                    Yearly Progress
-                  </h3>
-                </div>
-
-                <div className="space-y-4 py-5 px-5">
-                  {loading ? (
-                    Array(2)
-                      .fill(null)
-                      .map((_, idx) => (
-                        <div
-                          key={`yearly-progress-skeleton-${idx}`}
-                          className="h-10 bg-muted animate-pulse rounded-lg"
-                        />
-                      ))
-                  ) : (
-                    <div className="bg-muted border border-border rounded-lg px-4 py-3 flex items-center justify-between shadow-sm">
-                      <p className="font-medium text-sm text-brand-body">Income</p>
-                      <p className="flex items-center gap-1 font-semibold text-sm text-brand-body">
-                        {netIncomeYTD.change}{" "}
-                        <i
-                          className={`${getArrowIcon(netIncomeYTD.change)} leading-0 block text-xs`}
-                        />
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-          </div>
         </div>
 
-        {/* Pending actions (tasks) */}
-        <div className="bg-card border border-border rounded-card shadow-md px-6 py-6 mt-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-brand-body">
-              Pending actions
-            </h3>
+        {/* Right Column - Sidebar */}
+        <div className="space-y-6">
+          {/* Recently Completed */}
+          <div className="bg-card border border-border rounded-card shadow-md px-6 py-5">
+            <h3 className="text-lg font-semibold text-brand-body mb-4">Recently Completed</h3>
+            <div className="space-y-2.5">
+              {recentlyCompleted.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-4 py-3 hover:bg-muted/30 transition-colors shadow-sm">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-success text-lg">✅</span>
+                    <span className="text-sm text-brand-body font-medium">{item.text}</span>
+                  </div>
+                  <Link href={item.href}>
+                    <Button size="sm" variant="ghost" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow h-7">
+                      {item.action}
+                    </Button>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent Activity & Messages */}
+          <div className="bg-card border border-border rounded-card shadow-md px-6 py-5">
+            <h3 className="text-lg font-semibold text-brand-body mb-4">Recent Activity</h3>
+            <div className="space-y-2.5 mb-5">
+              {recentActivity.map((activity, idx) => (
+                <div key={idx} className="text-sm text-brand-body flex items-start gap-2">
+                  <span className="text-muted-foreground mt-0.5">•</span>
+                  <span>{activity}</span>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-border pt-4">
+              <h4 className="text-sm font-semibold text-brand-body mb-3">Messages / Updates</h4>
+              <div className="space-y-2.5">
+                {messagesUpdates.map((msg, idx) => (
+                  <div key={idx} className="text-sm text-brand-body flex items-start gap-2">
+                    <span className="text-muted-foreground mt-0.5">•</span>
+                    <span>{msg}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Compliance Snapshot */}
+          <div className="bg-card border border-border rounded-card shadow-md px-6 py-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-brand-body">Compliance Snapshot</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <Kpi label="Overdue" value={complianceCounts.overdue} tone="danger" />
+              <Kpi label="Due soon" value={complianceCounts.dueSoon} tone="warning" />
+              <Kpi label="Waiting" value={complianceCounts.waiting} tone="info" />
+              <Kpi label="Done" value={complianceCounts.done} tone="success" />
+            </div>
             <Link href="/dashboard/compliance/list">
-              <Button variant="outline" size="sm" className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow">
-                Compliance list
+              <Button variant="outline" size="sm" className="w-full rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow">
+                View compliance list
               </Button>
             </Link>
           </div>
-          {pendingTasks.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No pending actions found.</p>
-          ) : (
-            <div className="space-y-2">
-              {pendingTasks.map((task) => (
-                <Link
-                  key={task.id}
-                  href={`/dashboard/compliance/detail?taskId=${btoa(task.id.toString())}`}
-                  className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-sm hover:shadow-md transition-all shadow-sm"
-                >
-                  <div>
-                    <p className="font-medium text-brand-body">{task.title}</p>
-                    {task.dueDate && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Due {new Date(task.dueDate).toLocaleDateString()}
-                      </p>
-                    )}
+
+          {/* Upload Status Summary */}
+          <div className="bg-card border border-border rounded-card shadow-md px-6 py-5">
+            <h3 className="text-lg font-semibold text-brand-body mb-4">Upload Status</h3>
+            <div className="space-y-4">
+              {uploadLoading ? (
+                Array(4).fill(null).map((_, idx) => (
+                  <div key={`upload-skeleton-${idx}`}>
+                    <div className="h-6 w-3/4 bg-gray-200 animate-pulse mb-2.5 rounded"></div>
+                    <div className="h-1 w-full bg-gray-200 animate-pulse rounded-full"></div>
                   </div>
-                  <span className="text-xs rounded-lg bg-muted border border-border px-2.5 py-1 text-brand-body font-medium">
-                    {task.status || "Open"}
-                  </span>
-                </Link>
-              ))}
+                ))
+              ) : uploadSummary ? (
+                <>
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex gap-2 items-center">
+                        <img src="/document-upload.svg" alt="Documents Uploaded" className="w-5 h-5" />
+                        <p className="text-sm text-brand-body font-medium">
+                          Documents Uploaded: <span className="text-primary font-semibold">{uploadSummary.documentsUploaded}</span>
+                        </p>
+                      </div>
+                      <Link href={`/dashboard/document-organizer/document-listing`} passHref>
+                        <div className="bg-sidebar-background text-sidebar-foreground w-6 h-6 rounded-full relative flex items-center justify-center cursor-pointer shadow-md hover:shadow-lg transition-all" title="View Uploaded Documents">
+                          <i className="fi fi-br-plus text-sidebar-foreground text-[10px] block leading-0"></i>
+                        </div>
+                      </Link>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-muted relative overflow-hidden">
+                      {uploadSummary.documentsUploaded > 0 && (
+                        <div className="h-full w-full rounded-full bg-primary"></div>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex gap-2 items-center">
+                        <img src="/document-pending.svg" alt="Documents Processed" className="w-5 h-5" />
+                        <p className="text-sm text-brand-body font-medium">
+                          Documents Processed: <span className="text-warning font-semibold">{uploadSummary.documentsProcessed}</span>
+                        </p>
+                      </div>
+                      <Link href={`/dashboard/document-organizer/document-listing?status=${encodedProcessedStatus}`} passHref>
+                        <div className="bg-sidebar-background text-sidebar-foreground w-6 h-6 rounded-full relative flex items-center justify-center cursor-pointer shadow-md hover:shadow-lg transition-all" title="View Processed Documents">
+                          <i className="fi fi-br-plus text-sidebar-foreground text-[10px] block leading-0"></i>
+                        </div>
+                      </Link>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-muted relative overflow-hidden">
+                      <div className="h-full rounded-full bg-warning" style={{ width: `${processedPercentage}%` }}></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex gap-2 items-center">
+                        <img src="/document-pending.svg" alt="Documents Pending" className="w-5 h-5" />
+                        <p className="text-sm text-brand-body font-medium">
+                          Documents Pending: <span className="text-destructive font-semibold">{uploadSummary.documentsPending}</span>
+                        </p>
+                      </div>
+                      <Link href={`/dashboard/document-organizer/document-listing?status=${encodedPendingStatus}`} passHref>
+                        <div className="bg-sidebar-background text-sidebar-foreground w-6 h-6 rounded-full relative flex items-center justify-center cursor-pointer shadow-md hover:shadow-lg transition-all" title="View Pending Documents">
+                          <i className="fi fi-br-plus text-sidebar-foreground text-[10px] block leading-0"></i>
+                        </div>
+                      </Link>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-muted relative overflow-hidden">
+                      <div className="h-full rounded-full bg-destructive" style={{ width: `${pendingPercentage}%` }}></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex gap-2 items-center">
+                        <img src="/document-pending.svg" alt="Documents Needs Correction" className="w-5 h-5" />
+                        <p className="text-sm text-brand-body font-medium">
+                          Documents Needs Correction: <span className="text-destructive font-semibold">{uploadSummary.documentsNeedsCorrection}</span>
+                        </p>
+                      </div>
+                      <Link href={`/dashboard/document-organizer/document-listing?status=${encodedNeedCorrectionStatus}`} passHref>
+                        <div className="bg-sidebar-background text-sidebar-foreground w-6 h-6 rounded-full relative flex items-center justify-center cursor-pointer shadow-md hover:shadow-lg transition-all" title="View Documents Needs Correction">
+                          <i className="fi fi-br-plus text-sidebar-foreground text-[10px] block leading-0"></i>
+                        </div>
+                      </Link>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-muted relative overflow-hidden">
+                      <div className="h-full rounded-full bg-destructive" style={{ width: `${needCorrectionPercentage}%` }}></div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">No upload data available.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Yearly Progress */}
+          {netIncomeYTD && (
+            <div className="bg-card border border-border rounded-card shadow-md px-6 py-5">
+              <h3 className="text-lg font-semibold text-brand-body mb-4">Yearly Progress</h3>
+              <div className="bg-muted border border-border rounded-lg px-4 py-3 shadow-sm">
+                <p className="font-medium text-sm text-brand-body mb-1">Income</p>
+                <p className="flex items-center gap-1 font-semibold text-base text-brand-body">
+                  {netIncomeYTD.change}{" "}
+                  <i className={`${getArrowIcon(netIncomeYTD.change)} leading-0 block text-xs`} />
+                </p>
+              </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Pending Actions */}
+      {pendingTasks.length > 0 && (
+        <div className="bg-card border border-border rounded-card shadow-md px-6 py-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-brand-body">Pending Actions</h3>
+            <Link href="/dashboard/compliance/list">
+              <Button variant="outline" size="sm" className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow">
+                View all
+              </Button>
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {pendingTasks.map((task) => (
+              <Link
+                key={task.id}
+                href={`/dashboard/compliance/detail?taskId=${btoa(task.id.toString())}`}
+                className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-4 py-3 text-sm hover:bg-muted/30 hover:shadow-md transition-all shadow-sm"
+              >
+                <div>
+                  <p className="font-medium text-brand-body">{task.title}</p>
+                  {task.dueDate && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Due {new Date(task.dueDate).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+                <span className="text-xs rounded-lg bg-muted border border-border px-2.5 py-1 text-brand-body font-medium">
+                  {task.status || "Open"}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

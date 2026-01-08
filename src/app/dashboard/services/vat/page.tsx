@@ -44,9 +44,11 @@ export default function VatWorkspacePage() {
                     <div className="font-semibold text-brand-body">{p}</div>
                     <div className="text-xs text-muted-foreground mt-0.5">Status: —</div>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                    View
-                  </Button>
+                  <Link href={`/dashboard/services/vat/period/${encodeURIComponent(p.replace(' ', '-').toLowerCase())}`}>
+                    <Button variant="ghost" size="sm" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                      View
+                    </Button>
+                  </Link>
                 </div>
               ))}
             </div>

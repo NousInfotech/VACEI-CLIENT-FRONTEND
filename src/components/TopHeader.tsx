@@ -6,6 +6,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { GlobalUploadDrawer } from "@/components/GlobalUploadDrawer";
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Notification01Icon, Upload04Icon, Video01Icon } from '@hugeicons/core-free-icons';
 import { PanelLeft, PanelLeftClose } from 'lucide-react';
@@ -102,6 +103,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
     const [activeCompany, setActiveCompany] = useState<string>("");
     const [showQuickActions, setShowQuickActions] = useState(false);
     const quickActionsRef = useRef<HTMLDivElement>(null);
+    const [showUploadDrawer, setShowUploadDrawer] = useState(false);
 
     const router = useRouter();
     const pathname = usePathname();
@@ -321,7 +323,14 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                     </Button>
                     {showQuickActions && (
                         <div className="absolute right-0 mt-2 w-60 bg-card border border-[hsl(var(--border))] rounded-2xl shadow-lg z-50 p-2 space-y-1">
-                            <Link href="/dashboard/document-organizer/document-upload" onClick={() => setShowQuickActions(false)}>
+                            <button
+                                type="button"
+                                className="w-full text-left"
+                                onClick={() => {
+                                    setShowQuickActions(false);
+                                    setShowUploadDrawer(true);
+                                }}
+                            >
                                 <Button
                                     variant="ghost"
                                     className="w-full justify-start gap-2 rounded-xl text-xs px-3 py-2 hover:bg-[hsl(var(--muted))]"
@@ -329,7 +338,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                                     <HugeiconsIcon icon={Upload04Icon} className="w-4 h-4" />
                                     Upload documents
                                 </Button>
-                            </Link>
+                            </button>
                             {role.toLowerCase() !== "viewer" && (
                                 <Link href="/dashboard/services/request" onClick={() => setShowQuickActions(false)}>
                                     <Button
@@ -469,6 +478,9 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                     </Button>
                 </div>
             </div>
+
+            {/* Global upload drawer */}
+            <GlobalUploadDrawer open={showUploadDrawer} onClose={() => setShowUploadDrawer(false)} />
         </header>
     );
 }

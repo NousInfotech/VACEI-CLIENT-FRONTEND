@@ -13,11 +13,13 @@
 * Password reset: ✅
   *(Forgot / reset pages wired to backend)*
 * MFA (optional): 🟡
-  *(UI toggle in Settings; full TOTP/SMS flow not wired yet)*
+  *(Security tab + dedicated `/mfa` verify screen (6-digit code UI) on frontend; full backend TOTP/SMS flow still pending)*
 * Client user roles (Owner / Admin / Viewer): 🟡
-  *(Role badge + Request‑service guard in header; still no true role-based routing)*
+  *(Role badge + Request‑service guard in header + UI-only users & roles tab; no true role-based routing yet)*
 * Multi-company selector: 🟡
-  *(Company dropdown in header using localStorage; backend wiring pending)*
+  *(Company dropdown in header + onboarding company selector using localStorage; backend wiring pending)*
+* First-time onboarding: ✅
+  *(`/onboarding/company-select`, `/onboarding/company-setup` (3-step wizard), `/onboarding/choose-services`; UI-only with localStorage)*
 * Session management: 🟡
   *(UI session list + revoke in Settings; real backend sessions not wired)*
 * Notifications (in-app + email): 🟡
@@ -29,6 +31,8 @@
 
 * Header bar (search, quick actions, notifications, profile): ✅
   *(`TopHeader` with compact Quick Actions dropdown + company selector)*
+* Global upload drawer: ✅
+  *(`GlobalUploadDrawer` triggered from Quick Actions; drag & drop, smart detection, service/period/tag selection, upload success screen)*
 * Sidebar navigation (Dashboard, Documents, Services, Compliance, Messages, Settings): ✅
   *(Grouped into Client portal / Workspaces & insights / Operations & tools / Settings)*
 * Breadcrumbs: ✅
@@ -40,15 +44,21 @@
 
 ## **3. Dashboard**
 
+* Company & health header: ✅
+  *(Company name + health status indicator (🟥/🟨/🟩) based on compliance counts)*
+* Compliance KPI strip: ✅
+  *(Horizontal strip: Overdue | Due soon (7d) | Waiting on you | Done (30d) with color-coded values)*
+* Top Priority Actions: ✅
+  *(Numbered priority items with action buttons: Upload documents, Reply to queries, etc.)*
+* Active Services: ✅
+  *(List of active services with status, next action hint, and Open buttons)*
+* Recently Completed: ✅
+  *(Checkmark items (VAT Q1, Payroll May, MBR BO2) with View links)*
+* Recent Activity & Messages/Updates: ✅
+  *(Two-column layout showing recent activity and message updates)*
 * Company overview card: 🟡
   *(Welcome + summary; provider/firm not shown)*
-* Compliance health indicator: ✅
-  *(KPI strip on Dashboard + full KPIs on Compliance page)*
 * Assigned provider / firm: ⏳
-* Active services tiles: ✅
-  *(`/dashboard/services`)*
-* Pending actions: ✅
-  *(Pending actions card on Dashboard fed from tasks API)*
 * Compliance snapshot: ✅
   *(Dashboard compliance snapshot card + dedicated Compliance pages)*
 * Quick actions (Upload / Request service / Send message): ✅
@@ -85,22 +95,23 @@
 * Services overview / status / open workspace: ✅
   *(`/dashboard/services` with tiles for each workspace)*
 * Request new service: 🟡
-  *(CTA to `/dashboard/services/request`; intake UI present, backend wiring pending)*
+  *(CTA to `/dashboard/services/request`; intake UI present, backend submission wiring pending)*
 
 ---
 
 ## **6. Service Request / Intake**
 
 * Dynamic intake, required docs, upload, tracking: 🟡
-  *(UI-only intake at `/dashboard/services/request`, drafts saved locally; no backend submission yet)*
+  *(Intake UI at `/dashboard/services/request`, drafts saved locally; no backend submission yet)*
 
 ---
 
 ## **7. Bookkeeping (Client)**
 
 * Overview (status, last completed, missing items, uploads, tasks, summaries, reports): 🟡
-  *(`/dashboard/services/bookkeeping` workspace UI; data wiring pending)*
-* Insight view (bank activity, summaries, linked docs, Q&A): ⏳
+  *(`/dashboard/services/bookkeeping` workspace UI with Overview/Insight tabs; data wiring pending)*
+* Insight view (bank activity, summaries, linked docs, Q&A): 🟡
+  *(Insight tab with read-only bank activity table (Date, Description, Amount, Category, Doc, Status) + summary KPIs placeholder)*
 
 ---
 
@@ -108,6 +119,8 @@
 
 * VAT overview, registrations, periods, checks, submissions, payments, history, linked docs: 🟡
   *(`/dashboard/services/vat` workspace UI for registrations/periods/missing items; data wiring pending)*
+* VAT period detail: ✅
+  *(`/dashboard/services/vat/period/[periodId]` with summary (Sales/Purchase/Net VAT), missing items, automated checks (✅/⚠/❌), submission status, linked documents)*
 
 ---
 
@@ -121,7 +134,7 @@
 ## **10. Audit**
 
 * Engagement overview, timeline, doc requests, uploads, queries, reports, archive: 🟡
-  *(`/dashboard/services/audit` workspace UI; detailed flows to be wired / reused from A4 backend)*
+  *(`/dashboard/services/audit` workspace UI with tabs [Requests] [Queries] [Reports] [Messages]; Requests table (Item, Due, Status, Action), Queries table with Open/Reply; detailed flows to be wired / reused from A4 backend)*
 
 ---
 
@@ -136,8 +149,12 @@
 
 * MBR overview (status, last filed, deadlines, penalties): 🟡
   *Overview + upcoming deadlines section in `/dashboard/services/csp-mbr`; real statuses pending*
+* MBR submissions list: ✅
+  *(`/dashboard/services/csp-mbr/mbr-submissions` with filters (Type/Status/Year), table of all forms (A1, BO1, BO2, FS, R, B2, K, etc.) showing Due, Status, Start/Open/View actions)*
+* MBR form detail: ✅
+  *(`/dashboard/services/csp-mbr/mbr-submissions/[code]` with status (Draft/Waiting/Submitted/Registered), required documents checklist with Upload buttons, form preview placeholder, Messages note, action buttons)*
 * Forms (M1–M5, K/K1/K2, R/R1/R2/R3, B2–B5, A1, FS/FSX, BO1–BO3): 🟡
-  *(UI grid of all form codes with “Open” actions; per-form wizard + status/receipt flows still to build)*
+  *(All form codes accessible via submissions list; per-form wizard + status/receipt flows still to build)*
 
 ---
 
@@ -151,7 +168,7 @@
 ## **14. Projects / Transactions**
 
 * Projects, milestones, tasks, data room, messages, history: 🟡
-  *(`/dashboard/services/projects` workspace UI; real project/task/data-room wiring pending)*
+  *(`/dashboard/services/projects` workspace UI with project type selector (Merger/Liquidation/M&A/Advisory), projects table (Name, Type, Status, Next milestone, Open), milestones flow (Intake → Docs → Review → Filing → Complete), data room & history cards; real project/task/data-room wiring pending)*
 
 ---
 
@@ -171,25 +188,25 @@
 
 ## **16. Messages**
 
-* Unified inbox, threads, attachments, read/unread, notifications: 🟡
-  *(Floating chat bubble + full-page `/dashboard/messages` that auto-opens inbox; still using existing chat module layout, but functionally usable)*
+* Unified inbox, threads, attachments, read/unread, notifications: ✅
+  *(Floating chat bubble + full-page `/dashboard/messages` auto-opening the inbox; existing chat module reused end‑to‑end)*
 
 ---
 
 ## **17. Settings (Client)**
 
 * Company profile: 🟡
-  *(Tab in Settings with UI-only profile fields saved locally)*
+  *(Tab in Settings with UI-only profile fields saved locally; backend sync pending)*
 * Client users & roles: 🟡
-  *(Settings tab for users & roles; UI-only list + add user)*
+  *(Settings tab for users & roles; UI-only list + add user; backend user management pending)*
 * Notification preferences: 🟡
   *(Settings tab for notification toggles; backend wiring pending)*
 * Security (MFA): 🟡
-  *(Settings tab with MFA toggle; full flow pending)*
+  *(Settings tab with MFA toggle + `/mfa` verify screen; full backend MFA flow pending)*
 * Session history: 🟡
-  *(Settings tab with UI-only session list & revoke)*
+  *(Settings tab with UI-only session list & revoke; backend sessions pending)*
 * Billing (if enabled): 🟡
-  *(Settings tab placeholder for plans/billing details)*
+  *(Settings tab placeholder for plans/billing details; billing backend not implemented)*
 
 ---
 
@@ -202,22 +219,24 @@
 
 ## **Proposed Next Steps (to move 🟡 / ⏳ → ✅)**
 
-1. **Messages:**
-   Add a full-page inbox using existing ChatModule threads
-   → Route: `/dashboard/messages`
-
-3. **MFA Toggle:**
-   Add Security UI in Settings (pending backend endpoints)
-4. **Multi-company Selector:**
-   Header dropdown once company list API is available
-5. **Compliance → Service Links:**
-   Deep-link tasks to their service workspaces
-6. **Service Workspaces (BK / VAT / Payroll):**
-   Create client-side overview pages (status, missing items, uploads)
-7. **Service Intake Flow:**
-   `/dashboard/services/request` with dynamic forms + required documents
-8. **CSP / MBR:**
-   Scaffold overview + per-form wizard pages with status mapping
-9. **Settings Expansion:**
-   Company profile, users/roles, notifications, sessions, billing stubs
+1. **Backend wiring for MFA & sessions:**
+   Implement TOTP/SMS endpoints, verification, and real session revocation to back the existing UI.
+2. **True role-based access control:**
+   Enforce Owner/Admin/Viewer permissions across routes and actions using backend roles.
+3. **Multi-company backend support:**
+   Expose company list + active company switcher API so the selector and onboarding feed real data.
+4. **Onboarding backend integration:**
+   Connect company setup wizard and service selection to backend company/user creation APIs.
+5. **Global upload drawer backend:**
+   Wire smart detection, service/period/tag auto-assignment, and upload success feedback to document APIs.
+6. **Documents advanced features:**
+   Surface version history, replace‑version, audit trail, and cross‑service linking from the backend.
+7. **VAT period detail backend:**
+   Connect period summary, missing items, automated checks, and submission status to VAT APIs.
+8. **MBR form workflows:**
+   Implement per‑form wizards, validation, document upload, and filing status mapping for all MBR forms.
+9. **Service intake & workspaces:**
+   Connect intake requests and workspace overviews (BK/VAT/Payroll/Audit/Projects/Legal) to backend service/job records.
+10. **Dashboard data integration:**
+    Wire Top Priority Actions, Active Services, Recently Completed, and Recent Activity to real backend data.
 
