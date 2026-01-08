@@ -77,7 +77,18 @@ export default function CspMbrWorkspacePage() {
 
         <div className="space-y-5">
           <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-3">
-            <h3 className="text-base font-semibold text-brand-body">MBR forms (UI-only)</h3>
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-base font-semibold text-brand-body">MBR forms (UI-only)</h3>
+              <Link href="/dashboard/services/csp-mbr/mbr-submissions">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 rounded-lg text-[11px] px-3 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  Open submissions list
+                </Button>
+              </Link>
+            </div>
             <div className="grid grid-cols-2 gap-3 text-xs">
               {mbrForms.map((code) => (
                 <div
@@ -85,9 +96,11 @@ export default function CspMbrWorkspacePage() {
                   className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 flex items-center justify-between shadow-sm"
                 >
                   <span className="font-semibold text-brand-body">{code}</span>
-                  <Button variant="ghost" size="sm" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                    Open
-                  </Button>
+                  <Link href={`/dashboard/services/csp-mbr/mbr-submissions/${code.toLowerCase()}`}>
+                    <Button variant="ghost" size="sm" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                      Open
+                    </Button>
+                  </Link>
                 </div>
               ))}
             </div>
