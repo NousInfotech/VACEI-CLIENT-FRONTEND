@@ -155,32 +155,33 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             if (storedRole) {
                 try { setRole(atob(storedRole)); } catch { setRole(storedRole); }
             }
+
+            let finalCompanies = companies;
             if (storedCompanies) {
-                try { setCompanies(JSON.parse(storedCompanies)); } catch { /* ignore */ }
+                try {
+                    const parsed = JSON.parse(storedCompanies);
+                    setCompanies(parsed);
+                    finalCompanies = parsed;
+                } catch { /* ignore */ }
             } else {
                 const defaults = [
                     { id: "c1", name: "Acme Ltd" },
                     { id: "c2", name: "Beta Holdings" },
                 ];
                 setCompanies(defaults);
+                finalCompanies = defaults;
                 localStorage.setItem("vacei-companies", JSON.stringify(defaults));
             }
+
             if (storedActiveCompany) {
                 setActiveCompany(storedActiveCompany);
-            } else if (storedCompanies) {
-                try {
-                    const parsed = JSON.parse(storedCompanies);
-                    if (parsed && parsed.length > 0) {
-                        const first = parsed[0].id;
-                        setActiveCompany(first);
-                        localStorage.setItem("vacei-active-company", first);
-                    }
-                } catch {
-                    // ignore
-                }
+            } else {
+                const first = finalCompanies?.[0]?.id || "c1";
+                setActiveCompany(first);
+                localStorage.setItem("vacei-active-company", first);
             }
         }
-    }, []); // Run only once on mount
+    }, []);
 
     useEffect(() => {
         getUnreadCount();
