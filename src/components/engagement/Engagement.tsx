@@ -1,14 +1,18 @@
-import React, { useMemo, useState } from 'react';
-import { MOCK_ENGAGEMENT_DATA } from './mockEngagementData';
+"use client"
+
+import React, { useMemo } from 'react';
 import ETBTable from './ETBTable';
 import AdjustmentsTab from './AdjustmentsTab';
-import { TableProperties, FileStack, Calculator, BarChart3, PieChart, Scale, FolderOpen } from 'lucide-react';
+import { TableProperties, FileStack, Calculator, BarChart3, PieChart, Scale, FolderOpen, Loader2 } from 'lucide-react';
 import Reclassification from './Reclassification';
 import IncomeStatement from './IncomeStatement';
 import BalanceSheet from './BalanceSheet';
 import Classification from './Classification';
 import DocumentRequestsTab from './DocumentRequestsTab';
 import { extractETBData } from '@/lib/extractETBData';
+import { ETBRow } from './mockEngagementData';
+import { useEngagement } from './hooks/useEngagement';
+import { useEtb } from './hooks/useEtb';
 
 import PillTabs from '../shared/PillTabs';
 import { useTabQuery } from '@/hooks/useTabQuery';
@@ -18,18 +22,36 @@ import { AlertCircle } from 'lucide-react';
 
 const Engagement = () => {
   const [activeTab, setActiveTab] = useTabQuery('etb');
-  const data = MOCK_ENGAGEMENT_DATA;
+  const { engagement, loading: engagementLoading, error: engagementError } = useEngagement();
+  const { etb, loading: etbLoading, error: etbError } = useEtb(engagement?._id || null);
   
+  // Transform ETB rows to match ETBRow interface (reclassifications -> reclassification)
+  const transformedEtbRows = useMemo((): ETBRow[] => {
+    if (!etb?.rows) return [];
+    return etb.rows.map(row => ({
+      _id: row._id || row.rowId || '',
+      code: row.code || '',
+      accountName: row.accountName || '',
+      currentYear: row.currentYear ?? 0,
+      priorYear: row.priorYear ?? 0,
+      adjustments: row.adjustments ?? 0,
+      reclassification: row.reclassifications ?? 0,
+      finalBalance: row.finalBalance ?? 0,
+      classification: row.classification || '',
+    }));
+  }, [etb]);
+
   const extractedData = useMemo(() => {
+    if (!engagement || !etb) return null;
+    
     // Extract year from yearEndDate (e.g., "2024-12-31" -> 2024)
-    const year = new Date(data.engagement.yearEndDate).getFullYear() || 2024;
-    const base = extractETBData(data.etb, year);
+    const year = new Date(engagement.yearEndDate).getFullYear() || 2024;
+    const base = extractETBData(transformedEtbRows, year);
     return {
       ...base,
-      company: data.company,
-      engagement: data.engagement,
+      engagement: engagement,
     };
-  }, [data]);
+  }, [engagement, transformedEtbRows]);
 
   const tabs = [
     { id: 'etb', label: 'ETB', icon: TableProperties },
@@ -43,18 +65,42 @@ const Engagement = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'etb': return <ETBTable data={data.etb} />;
+      case 'etb': return <ETBTable data={transformedEtbRows} />;
       case 'adjustments': return <AdjustmentsTab />;
       case 'reclassification': return <Reclassification />;
-      case 'income_statement': return <IncomeStatement data={extractedData} />;
-      case 'balance_sheet': return <BalanceSheet data={extractedData} />;
-      case 'classification': return <Classification data={extractedData} />;
+      case 'income_statement': return extractedData ? <IncomeStatement data={extractedData} /> : null;
+      case 'balance_sheet': return extractedData ? <BalanceSheet data={extractedData} /> : null;
+      case 'classification': return extractedData ? <Classification data={extractedData} /> : null;
       case 'requests': return <DocumentRequestsTab />;
-      default: return <ETBTable data={data.etb} />;
+      default: return <ETBTable data={transformedEtbRows} />;
     }
   };
 
-  if (!data) {
+  if (engagementLoading || etbLoading) {
+    return (
+      <div className="p-8 max-w-[1600px] mx-auto min-h-screen bg-white space-y-8">
+        <BackButton />
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        </div>
+      </div>
+    );
+  }
+
+  if (engagementError || etbError) {
+    return (
+      <div className="p-8 max-w-[1600px] mx-auto min-h-screen bg-white space-y-8">
+        <BackButton />
+        <EmptyState 
+          icon={AlertCircle}
+          title="Error Loading Engagement"
+          description={engagementError || etbError || 'Failed to load engagement data'}
+        />
+      </div>
+    );
+  }
+
+  if (!engagement) {
     return (
       <div className="p-8 max-w-[1600px] mx-auto min-h-screen bg-white space-y-8">
         <BackButton />
@@ -71,7 +117,7 @@ const Engagement = () => {
     <div className="p-8 max-w-[1600px] mx-auto min-h-screen bg-white space-y-8">
       <BackButton />
       <div className="flex flex-col space-y-6">
-        <h1 className="text-4xl font-medium">{data.engagement.title}</h1>
+        <h1 className="text-4xl font-medium">{engagement.title}</h1>
         
         <PillTabs 
           tabs={tabs} 

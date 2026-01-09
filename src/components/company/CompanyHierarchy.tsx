@@ -21,6 +21,9 @@ import "reactflow/dist/style.css";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { Button } from "../ui/button";
+import { useCompanyHierarchy } from "./hooks/useCompanyHierarchy";
+import { useCompany } from "./hooks/useCompany";
+import { Loader2 } from "lucide-react";
 
 const LEVEL_GAP_Y = 400;
 const NODE_WIDTH = 350;
@@ -54,14 +57,23 @@ export interface HierarchyTreeNode {
 }
 
 interface CompanyHierarchyProps {
-  rootData?: HierarchyTreeNode | null;
+  rootData?: HierarchyTreeNode | null; // Keep for backward compatibility, but will be overridden by hook data
 }
 
 interface HierarchyNodeData {
   label: ReactNode;
 }
 
-export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData }) => {
+export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: propRootData }) => {
+  // Get companyId from context
+  const { company } = useCompany();
+  const companyId = company?._id || null;
+  
+  // Fetch hierarchy data using the hook
+  const { hierarchyData: fetchedRootData, loading: hierarchyLoading, error: hierarchyError } = useCompanyHierarchy(companyId);
+  
+  // Use fetched data if available, otherwise fall back to prop (for backward compatibility)
+  const rootData = fetchedRootData !== null ? fetchedRootData : propRootData;
 
   const [nodes, setNodes, onNodesChange] = useNodesState<HierarchyNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
@@ -70,7 +82,7 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData }) 
 
   const [scrollZoomEnabled, setScrollZoomEnabled] = useState(false);
 
-  const isStillLoading = rootData === undefined;
+  const isStillLoading = hierarchyLoading || rootData === undefined;
 
   const { initialNodes, initialEdges, bounds } = useMemo(() => {
     if (!rootData) return { initialNodes: [], initialEdges: [], bounds: { width: 0, height: 0 } };
@@ -846,7 +858,16 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData }) 
   if (isStillLoading) {
     return (
       <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-gray-300 text-gray-500">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (hierarchyError) {
+    return (
+      <div className="flex flex-col h-48 items-center justify-center rounded-xl border border-dashed border-gray-300 text-gray-500 p-4">
+        <p className="text-red-600 mb-2">Error loading hierarchy</p>
+        <p className="text-sm">{hierarchyError}</p>
       </div>
     );
   }
@@ -854,7 +875,7 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData }) 
   if (rootData === null) {
     return (
       <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-gray-300 text-gray-500">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <p>No hierarchy data available</p>
       </div>
     );
   }

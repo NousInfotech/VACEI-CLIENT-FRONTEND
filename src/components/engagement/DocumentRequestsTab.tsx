@@ -5,19 +5,23 @@ import {
   FileText, 
   ChevronDown, 
   ChevronUp, 
-  ClipboardList
+  ClipboardList,
+  Loader2
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card2'
 import { Badge } from '@/components/ui/badge'
 import { Button } from "@/components/ui/button"
-import { MOCK_ENGAGEMENT_DATA } from './mockEngagementData'
+import { useDocumentRequests } from './hooks/useDocumentRequests'
+import { useEngagement } from './hooks/useEngagement'
+import { uploadDocumentRequestDocument, clearDocumentRequestDocument } from '@/api/auditService'
 import DocumentRequestSingle from '../company/kyc/SingleDocumentRequest'
 import DocumentRequestDouble from '../company/kyc/DoubleDocumentRequest'
 import EmptyState from '../shared/EmptyState'
 
 const DocumentRequestsTab = () => {
   const [expandedRequests, setExpandedRequests] = useState<Set<string>>(new Set())
-  const { documentRequests } = MOCK_ENGAGEMENT_DATA
+  const { engagement } = useEngagement()
+  const { documentRequests, loading, error, refetch } = useDocumentRequests(engagement?._id || null)
 
   const toggleExpand = (id: string) => {
     const newSet = new Set(expandedRequests)
@@ -29,28 +33,59 @@ const DocumentRequestsTab = () => {
     setExpandedRequests(newSet)
   }
 
-  // Mock handlers
-  const handleUpload = (requestId: string, docIndex: number, file: File) => {
-    console.log(`Uploading ${file.name} for request ${requestId} at index ${docIndex}`)
+  // Real API handlers
+  const handleUpload = async (requestId: string, docIndex: number, file: File) => {
+    try {
+      // Find the document request and document to get the name
+      const request = documentRequests.find(r => r._id === requestId)
+      const document = request?.documents?.[docIndex]
+      const documentName = document?.name || file.name
+      
+      // Backend expects 'documentIndex' (not 'docIndex') and 'documentName'
+      await uploadDocumentRequestDocument(requestId, [file], { 
+        documentIndex: docIndex,
+        documentName: documentName
+      })
+      await refetch()
+    } catch (err: any) {
+      console.error('Failed to upload document:', err)
+      alert(err.message || 'Failed to upload document')
+    }
   }
 
-  const handleUploadMultiple = (requestId: string, multipleId: string, files: FileList, itemIndex?: number) => {
-    console.log(`Uploading ${files.length} files for request ${requestId}, group ${multipleId}, item ${itemIndex}`)
+  const handleUploadMultiple = async (requestId: string, multipleId: string, files: FileList, itemIndex?: number) => {
+    try {
+      const fileArray = Array.from(files)
+      await uploadDocumentRequestDocument(requestId, fileArray, { multipleId, itemIndex })
+      await refetch()
+    } catch (err: any) {
+      console.error('Failed to upload documents:', err)
+      alert(err.message || 'Failed to upload documents')
+    }
   }
 
-  const handleClear = (requestId: string, docIndex: number, name: string) => {
-    console.log(`Clearing ${name} for request ${requestId}`)
+  const handleClear = async (requestId: string, docIndex: number, name: string) => {
+    try {
+      await clearDocumentRequestDocument(requestId, docIndex)
+      await refetch()
+    } catch (err: any) {
+      console.error('Failed to clear document:', err)
+      alert(err.message || 'Failed to clear document')
+    }
   }
 
   const handleClearMultipleItem = (requestId: string, multipleId: string, itemIndex: number, label: string) => {
+    // This would need a specific API endpoint for clearing multiple items
     console.log(`Clearing item ${label} for request ${requestId}, group ${multipleId}`)
   }
 
   const handleClearMultipleGroup = (requestId: string, multipleId: string, groupName: string) => {
+    // This would need a specific API endpoint for clearing multiple groups
     console.log(`Clearing all items for group ${groupName} in request ${requestId}`)
   }
 
   const handleDownloadMultipleGroup = (requestId: string, multipleId: string, groupName: string, items: any[]) => {
+    // Download functionality - would need to implement file download
     console.log(`Downloading all items for group ${groupName} in request ${requestId}`)
   }
 
@@ -67,6 +102,24 @@ const DocumentRequestsTab = () => {
       default:
         return <Badge variant="outline">{status || 'Active'}</Badge>
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <EmptyState 
+        icon={FileText}
+        title="Error Loading Document Requests"
+        description={error}
+      />
+    )
   }
 
   if (!documentRequests || documentRequests.length === 0) {
@@ -113,19 +166,21 @@ const DocumentRequestsTab = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center text-orange-600 font-bold text-lg">
-                          {request.category.charAt(0)}
+                          {(request.category || request.title || 'D').charAt(0).toUpperCase()}
                         </div>
                         <div>
                           <h4 className="text-lg font-semibold text-gray-900">
-                            {request.name}
+                            {request.title || request.name || 'Document Request'}
                           </h4>
                         </div>
                       </div>
                       
                       <div className="mb-4 flex flex-wrap gap-2">
-                        <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-100 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
-                          {request.category.toUpperCase()}
-                        </Badge>
+                        {request.category && (
+                          <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-100 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
+                            {request.category.toUpperCase()}
+                          </Badge>
+                        )}
                         <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
                           {uploadedDocsCount}/{totalDocs} DOCUMENTS
                         </Badge>

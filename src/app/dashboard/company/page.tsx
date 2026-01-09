@@ -1,10 +1,10 @@
 "use client"
-import Company from '@/components/company/Company'
+import Companies from '@/components/company/Companies'
 import React from 'react'
 
 const page = () => {
   return (
-    <Company/>
+    <Companies/>
   )
 }
 

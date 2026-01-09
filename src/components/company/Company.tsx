@@ -1,28 +1,23 @@
 
 "use client"
-import React, { useState, useMemo } from 'react'
+import React from 'react'
 import CompanyDetail from './CompanyDetail'
 import Involvements from './Involvements'
 import Distribution from './Distribution'
-import CompanyHierarchy, { HierarchyTreeNode } from './CompanyHierarchy'
+import CompanyHierarchy from './CompanyHierarchy'
 import Kyc from './kyc/KYCSection'
 import { LayoutGrid, Users, PieChart, Network, ShieldCheck } from 'lucide-react'
-import { MOCK_COMPANY_DATA, MOCK_HIERARCHY_DATA } from './mockData'
+import { useCompany } from './hooks/useCompany'
 
 import PillTabs from '../shared/PillTabs'
 import { useTabQuery } from '@/hooks/useTabQuery'
 import BackButton from '../shared/BackButton'
 import EmptyState from '../shared/EmptyState'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 
 const Company = () => {
   const [activeTab, setActiveTab] = useTabQuery('detail')
-  const data = MOCK_COMPANY_DATA.data
-
-  const hierarchyData = useMemo(() => {
-    // Using the user-provided specific hierarchy data
-    return MOCK_HIERARCHY_DATA.data as HierarchyTreeNode
-  }, [])
+  const { company: data, loading, error } = useCompany()
 
   const tabs = [
     { id: 'detail', label: 'Company Detail', icon: LayoutGrid },
@@ -37,10 +32,34 @@ const Company = () => {
       case 'detail': return <CompanyDetail />
       case 'involvements': return <Involvements />
       case 'distribution': return <Distribution />
-      case 'hierarchy': return <CompanyHierarchy rootData={hierarchyData} />
+      case 'hierarchy': return <CompanyHierarchy />
       case 'kyc': return <Kyc />
       default: return <CompanyDetail />
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <BackButton />
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <BackButton />
+        <EmptyState 
+          icon={AlertCircle}
+          title="Error Loading Company"
+          description={error}
+        />
+      </div>
+    )
   }
 
   if (!data) {
