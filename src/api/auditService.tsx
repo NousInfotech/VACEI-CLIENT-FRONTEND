@@ -14,21 +14,92 @@ function getAuthHeaders(): Record<string, string> {
 
 
 
-// Company Types
-export interface Company {
+export interface PersonDetails {
   _id: string;
   name: string;
-  registrationNumber: string;
-  address?: string;
-  industry?: string;
-  description?: string;
-  clientId?: string;
-  organizationId?: string;
-  shareHolders?: Array<any>;
-  representationalSchema?: Array<any>;
-  shareHolderDetails?: Array<any>;
-  shareHoldingCompanyDetails?: Array<any>;
+  nationality: string;
+  address: string;
+  supportingDocuments: any[];
+  id: string;
 }
+
+export interface PerShareValue {
+  value: number;
+  currency: string;
+}
+
+export interface ShareClassData {
+  totalShares: number;
+  class: string;
+  type: string;
+}
+
+export interface Shareholder {
+  personId: PersonDetails;
+  sharePercentage: number;
+  paidUpSharesPercentage: number;
+  sharesData: ShareClassData[];
+  _id: string;
+  id: string;
+}
+
+export interface RepresentationalSchema {
+  personId: PersonDetails;
+  role: string[];
+  _id: string;
+  id: string;
+}
+
+export interface CorporateEntity {
+  _id: string;
+  clientId: string;
+  name: string;
+  registrationNumber: string;
+  id: string;
+}
+
+export interface ShareholdingCompany {
+  companyId: CorporateEntity;
+  sharesData: ShareClassData[];
+  sharePercentage?: number;
+  paidUpSharesPercentage: number;
+  _id: string;
+  id: string;
+}
+
+export interface RepresentationalCompany {
+  companyId: CorporateEntity;
+  role: string[];
+  _id: string;
+  id: string;
+}
+
+export interface Company {
+  _id: string;
+  clientId: string;
+  organizationId: string;
+  name: string;
+  registrationNumber: string;
+  address: string;
+  description?: string;
+  supportingDocuments: any[];
+  authorizedShares: number;
+  issuedShares: number;
+  perShareValue: PerShareValue;
+  totalShares: ShareClassData[];
+  shareHoldingCompanies: ShareholdingCompany[];
+  shareHolders: Shareholder[];
+  representationalSchema: RepresentationalSchema[];
+  representationalCompany: RepresentationalCompany[];
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+  companyStartedAt: string | null;
+  industry?: string; 
+  incorporationDate?: string;
+  id: string;
+}
+
 
 export interface HierarchyShareData {
   totalShares: number;
