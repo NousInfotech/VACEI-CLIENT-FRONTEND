@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { getCompanyHierarchy, HierarchyResponse, HierarchyData } from '@/api/auditService'
+import { getCompanyHierarchy, HierarchyData } from '@/api/auditService'
 import { HierarchyTreeNode } from '../CompanyHierarchy'
 
 interface UseCompanyHierarchyReturn {
@@ -53,9 +53,9 @@ export const useCompanyHierarchy = (companyId: string | null): UseCompanyHierarc
     setLoading(true)
     setError(null)
     try {
-      const response: HierarchyResponse = await getCompanyHierarchy(companyId)
-      if (response.success && response.data) {
-        const transformed = transformHierarchyData(response.data)
+      const response: HierarchyData = await getCompanyHierarchy(companyId)
+      if (response) {
+        const transformed = transformHierarchyData(response)
         setHierarchyData(transformed)
       } else {
         setError('Failed to fetch hierarchy data')

@@ -128,10 +128,6 @@ export interface HierarchyData {
   shareholders: HierarchyNode[];
 }
 
-export interface HierarchyResponse {
-  success: boolean;
-  data: HierarchyData;
-}
 
 // Engagement Types
 export interface Engagement {
@@ -272,7 +268,7 @@ export async function getCompanyById(id: string): Promise<Company> {
  * @param id - Company ID
  * @returns Promise<HierarchyResponse>
  */
-export async function getCompanyHierarchy(id: string): Promise<HierarchyResponse> {
+export async function getCompanyHierarchy(id: string): Promise<HierarchyData> {
   const response = await fetch(`${backendUrl}/companies/${id}/hierarchy`, {
     method: "GET",
     headers: {
