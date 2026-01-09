@@ -3,15 +3,48 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card2";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar, FileText, CheckCircle2, History, Paperclip } from "lucide-react";
-import { MOCK_ENGAGEMENT_DATA, ReclassificationEntry } from './mockEngagementData';
+import { Calendar, FileText, CheckCircle2, Loader2 } from "lucide-react";
+import { useReclassifications } from './hooks/useReclassifications';
+import { useEtb } from './hooks/useEtb';
+import { useEngagement } from './hooks/useEngagement';
 import { format } from 'date-fns';
 import { formatAmount } from '@/lib/utils';
 
 const Reclassification = () => {
-  const { reclassifications } = MOCK_ENGAGEMENT_DATA;
+  const { engagement } = useEngagement();
+  const { etb } = useEtb(engagement?._id || null);
+  const { reclassifications, loading, error } = useReclassifications(etb?._id || null);
 
-  const sortedReclassifications = [...(reclassifications || [])].sort((a, b) => {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-slate-500">
+        <FileText className="w-12 h-12 mb-4 opacity-20" />
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  // Transform API reclassifications to match the expected format
+  const transformedReclassifications = reclassifications.map((rc, index) => ({
+    _id: rc._id,
+    reclassificationNo: `RC${String(index + 1).padStart(3, '0')}`, // Generate reclassification number if not provided
+    description: rc.refs?.join(', ') || `Reclassification ${index + 1}`,
+    createdAt: new Date().toISOString(), // Use current date if not provided
+    status: rc.status || 'active',
+    totalDr: rc.dr || 0,
+    totalCr: rc.cr || 0,
+    entries: rc.entries || [], // API should provide entries
+  }));
+
+  const sortedReclassifications = [...(transformedReclassifications || [])].sort((a, b) => {
     return a.reclassificationNo.localeCompare(b.reclassificationNo, undefined, { numeric: true, sensitivity: 'base' });
   });
 
@@ -78,10 +111,10 @@ const Reclassification = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rc.entries.map((entry: ReclassificationEntry, idx: number) => (
+                  {(rc.entries || []).map((entry: any, idx: number) => (
                     <TableRow key={idx} className="border-gray-300 hover:bg-slate-50/50 transition-colors">
-                      <TableCell className="font-medium text-slate-700 pl-6 py-3 border-r border-gray-300">{entry.code}</TableCell>
-                      <TableCell className="text-slate-600 py-3 border-r border-gray-300">{entry.accountName}</TableCell>
+                      <TableCell className="font-medium text-slate-700 pl-6 py-3 border-r border-gray-300">{entry.code || entry.rowId || '-'}</TableCell>
+                      <TableCell className="text-slate-600 py-3 border-r border-gray-300">{entry.accountName || '-'}</TableCell>
                       <TableCell className="text-right py-3 text-indigo-600 font-medium border-r border-gray-300">
                         {entry.dr > 0 ? formatAmount(entry.dr) : '-'}
                       </TableCell>

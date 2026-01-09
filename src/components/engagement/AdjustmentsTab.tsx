@@ -1,16 +1,51 @@
+"use client"
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card2";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar, FileText, CheckCircle2, History, Paperclip } from "lucide-react";
-import { MOCK_ENGAGEMENT_DATA, AdjustmentEntry } from './mockEngagementData';
+import { Calendar, FileText, CheckCircle2, Loader2 } from "lucide-react";
+import { useAdjustments } from './hooks/useAdjustments';
+import { useEtb } from './hooks/useEtb';
+import { useEngagement } from './hooks/useEngagement';
 import { format } from 'date-fns';
 import { formatAmount } from '@/lib/utils';
 
 const AdjustmentsTab = () => {
-  const { adjustments } = MOCK_ENGAGEMENT_DATA;
+  const { engagement } = useEngagement();
+  const { etb } = useEtb(engagement?._id || null);
+  const { adjustments, loading, error } = useAdjustments(etb?._id || null);
 
-  const sortedAdjustments = [...(adjustments || [])].sort((a, b) => {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-slate-500">
+        <FileText className="w-12 h-12 mb-4 opacity-20" />
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  // Transform API adjustments to match the expected format
+  const transformedAdjustments = adjustments.map((adj, index) => ({
+    _id: adj._id,
+    adjustmentNo: `AJ${String(index + 1).padStart(3, '0')}`, // Generate adjustment number if not provided
+    description: adj.refs?.join(', ') || `Adjustment ${index + 1}`,
+    createdAt: new Date().toISOString(), // Use current date if not provided
+    status: adj.status || 'active',
+    totalDr: adj.dr || 0,
+    totalCr: adj.cr || 0,
+    entries: adj.entries || [], // API should provide entries
+  }));
+
+  const sortedAdjustments = [...(transformedAdjustments || [])].sort((a, b) => {
     return a.adjustmentNo.localeCompare(b.adjustmentNo, undefined, { numeric: true, sensitivity: 'base' });
   });
 
@@ -77,10 +112,10 @@ const AdjustmentsTab = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {adj.entries.map((entry: AdjustmentEntry, idx: number) => (
+                  {(adj.entries || []).map((entry: any, idx: number) => (
                     <TableRow key={idx} className="border-gray-300 hover:bg-slate-50/50 transition-colors">
-                      <TableCell className="font-medium text-slate-700 pl-6 py-3 border-r border-gray-300">{entry.code}</TableCell>
-                      <TableCell className="text-slate-600 py-3 border-r border-gray-300">{entry.accountName}</TableCell>
+                      <TableCell className="font-medium text-slate-700 pl-6 py-3 border-r border-gray-300">{entry.code || entry.rowId || '-'}</TableCell>
+                      <TableCell className="text-slate-600 py-3 border-r border-gray-300">{entry.accountName || '-'}</TableCell>
                       <TableCell className="text-right py-3 text-indigo-600 font-medium border-r border-gray-300">
                         {entry.dr > 0 ? formatAmount(entry.dr) : '-'}
                       </TableCell>

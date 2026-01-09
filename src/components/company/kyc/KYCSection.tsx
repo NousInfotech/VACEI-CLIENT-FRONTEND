@@ -7,11 +7,13 @@ import {
   Globe, 
   ChevronDown, 
   ChevronUp, 
+  Loader2,
 } from 'lucide-react'
 import { Card, CardContent } from '../../ui/card2'
 import { Badge } from '@/components/ui/badge'
 import { Button } from "@/components/ui/button"
-import { MOCK_KYC_WORKFLOWS_DATA } from '../mockData'
+import { useKyc } from '../hooks/useKyc'
+import { useCompany } from '../hooks/useCompany'
 import DocumentRequestSingle from './SingleDocumentRequest'
 import DocumentRequestDouble from './DoubleDocumentRequest'
 import PillTabs from '../../shared/PillTabs'
@@ -20,6 +22,8 @@ import EmptyState from '../../shared/EmptyState'
 const KYCSection = () => {
   const [activeTab, setActiveTab] = useState('Shareholder')
   const [expandedRequests, setExpandedRequests] = useState<Set<string>>(new Set())
+  const { company } = useCompany()
+  const { kyc, loading, error } = useKyc(company?._id || null)
 
   const tabs = [
     { id: 'Shareholder', label: 'SHAREHOLDERS' },
@@ -77,9 +81,29 @@ const KYCSection = () => {
   }
 
   const renderWorkflowList = (workflowType: string) => {
-    const workflows = MOCK_KYC_WORKFLOWS_DATA.filter(w => w.workflowType === workflowType)
+    // Handle KYC data structure - it may have workflows array or documentRequests array
+    const workflows = kyc?.workflows || (kyc?.documentRequests ? [{ documentRequests: kyc.documentRequests }] : [])
+    const filteredWorkflows = workflows.filter((w: any) => w.workflowType === workflowType || (!w.workflowType && workflowType === 'Shareholder'))
     
-    if (workflows.length === 0) {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        </div>
+      )
+    }
+
+    if (error) {
+      return (
+        <EmptyState 
+          icon={Shield}
+          title="Error Loading KYC"
+          description={error}
+        />
+      )
+    }
+    
+    if (filteredWorkflows.length === 0) {
       return (
         <EmptyState 
           icon={Shield}
@@ -91,9 +115,9 @@ const KYCSection = () => {
 
     return (
       <div className="space-y-4">
-        {workflows.map((workflow) => (
-          <div key={workflow._id} className="space-y-4">
-            {workflow.documentRequests?.map((item) => {
+        {filteredWorkflows.map((workflow: any, workflowIndex: number) => (
+          <div key={workflow._id || workflowIndex} className="space-y-4">
+            {(workflow.documentRequests || []).map((item: any) => {
               const person = item.person
               const request = item.documentRequest
               const isExpanded = expandedRequests.has(request._id)

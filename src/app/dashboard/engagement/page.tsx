@@ -1,10 +1,10 @@
 "use client"
-import Engagement from '@/components/engagement/Engagement'
+import Engagements from '@/components/engagement/Engagements'
 import React from 'react'
 
 const page = () => {
   return (
-    <Engagement/>
+    <Engagements/>
   )
 }
 
