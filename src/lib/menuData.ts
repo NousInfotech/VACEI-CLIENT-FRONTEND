@@ -9,6 +9,7 @@ export interface MenuItem {
     href: string;
     children?: MenuItem[];
     section?: MenuSection;
+    description?: string;
 }
 
 export const menuData: MenuItem[] = [
@@ -19,6 +20,7 @@ export const menuData: MenuItem[] = [
         href: "/dashboard",
         children: [],
         section: "primary",
+        description: "Overview of your company's financial health",
     },
     {
         slug: "documents",
@@ -27,30 +29,127 @@ export const menuData: MenuItem[] = [
         href: "/dashboard/documents",
         children: [],
         section: "primary",
+        description: "Manage your company's documents",
     },
     {
-        slug: "company",
-        icon: DocumentValidationIcon,
-        label: "Company",
-        href: "/dashboard/company",
-        children: [],
-        section: "primary",
-    },
-    {
-        slug: "engagement",
-        icon: DocumentValidationIcon,
-        label: "Engagement",
-        href: "/dashboard/engagement",
-        children: [],
-        section: "primary",
-    },
-    {
-        slug: "services",
+        slug: "services-root",
         icon: GitPullRequestIcon,
         label: "Services",
-        href: "/dashboard/services",
-        children: [],
+        href: "#",
         section: "primary",
+        description: "Access all audit and accounting services",
+        children: [
+            {
+                slug: "services-main",
+                icon: GitPullRequestIcon,
+                label: "Services",
+                href: "/dashboard/services",
+            },
+            {
+                slug: "audit",
+                icon: GitPullRequestIcon,
+                label: "Audit",
+                href: "#",
+                children: [
+                    {
+                        slug: "engagement",
+                        icon: DocumentValidationIcon,
+                        label: "Engagement",
+                        href: "/dashboard/engagement",
+                    },
+                    {
+                        slug: "company",
+                        icon: DocumentValidationIcon,
+                        label: "Company",
+                        href: "/dashboard/company",
+                    },
+                ]
+            },
+            {
+                slug: "accounting",
+                icon: Book02Icon,
+                label: "Accounting",
+                href: "#",
+                children: [
+                    {
+                        slug: "books",
+                        icon: Book02Icon,
+                        label: "Books",
+                        href: "#",
+                        children: [
+                            {
+                                slug: "profit-loss",
+                                icon: ArrowRightDoubleIcon,
+                                label: "Financial Statement",
+                                href: '/dashboard/financial-statements/profit-loss',
+                            },
+                            {
+                                slug: "insights",
+                                icon: ArrowRightDoubleIcon,
+                                label: "Insights",
+                                href: "/dashboard/insights",
+                            },
+                            {
+                                slug: "account-receivable-aging",
+                                icon: ArrowRightDoubleIcon,
+                                label: "AP/AR Aging",
+                                href: "/dashboard/ap-ar-aging/account-receivable-aging",
+                            },
+                        ]
+                    },
+                    {
+                        slug: "cash",
+                        icon: CashbackPoundIcon,
+                        label: "Cash",
+                        href: "#",
+                        children: [
+                            {
+                                slug: "cash/accounts",
+                                icon: ArrowRightDoubleIcon,
+                                label: "Accounts",
+                                href: "/dashboard/cash/accounts",
+                            },
+                            {
+                                slug: "change-in-cash",
+                                icon: ArrowRightDoubleIcon,
+                                label: "Change in Cash",
+                                href: "/dashboard/cash/change-in-cash",
+                            },
+                            {
+                                slug: "cash-spend",
+                                icon: ArrowRightDoubleIcon,
+                                label: "Cash Spend",
+                                href: "/dashboard/cash/cash-spend"
+                            }
+                        ]
+                    },
+                    {
+                        slug: "bank-transactions",
+                        icon: TransactionIcon,
+                        label: "Bank Transactions",
+                        href: "/dashboard/bank-transactions",
+                    },
+                    {
+                        slug: "invoices",
+                        icon: InvoiceIcon,
+                        label: "Invoice",
+                        href: "/dashboard/invoices",
+                    },
+                    {
+                        slug: "tax",
+                        icon: TaxesIcon,
+                        label: "Tax",
+                        href: "/dashboard/tax",
+                    },
+                    {
+                        slug: "general-ledger",
+                        icon: ProfileIcon,
+                        label: "General Ledger",
+                        href: "/dashboard/general-ledger",
+                    },
+                ]
+            },
+        ]
     },
     {
         slug: "compliance",
@@ -59,6 +158,7 @@ export const menuData: MenuItem[] = [
         href: "/dashboard/compliance",
         children: [],
         section: "primary",
+        description: "Manage your company's compliance calendar",
     },
     {
         slug: "messages",
@@ -67,6 +167,7 @@ export const menuData: MenuItem[] = [
         href: "/dashboard/messages",
         children: [],
         section: "primary",
+        description: "Manage your company's messages",
     },
     {
         slug: "todo-list",
@@ -75,6 +176,7 @@ export const menuData: MenuItem[] = [
         href: "/dashboard/todo-list",
         children: [],
         section: "operations",
+        description: "Manage your company's to-do list",
     },
       {
         slug: "notifications",
@@ -83,135 +185,14 @@ export const menuData: MenuItem[] = [
         href: "/dashboard/notifications",
         children: [],
         section: "operations",
+        description: "Manage your company's alerts and notifications",
     },
-    {
-        slug: "books",
-        icon: Book02Icon,
-        label: "Books",
-        href: "/dashboard/financial-statements/profit-loss",
-        children: [
-            {
-                slug: "profit-loss",
-                icon: ArrowRightDoubleIcon,
-                label: "Financial Statement",
-                href: '/dashboard/financial-statements/profit-loss',
-            },
-            {
-                slug: "insights",
-                icon: ArrowRightDoubleIcon,
-                label: "Insights",
-                href: "/dashboard/insights",
-            },
-           /*  {
-                slug: "change-in-bank-balances",
-                icon: ArrowRightDoubleIcon,
-                label: "Change in Bank Balances",
-                href: "/dashboard/change-in-bank-balances",
-            }, */
-            {
-                slug: "account-receivable-aging",
-                icon: ArrowRightDoubleIcon,
-                label: "AP/AR Aging",
-                href: "/dashboard/ap-ar-aging/account-receivable-aging",
-            },
-            /* more financial reports can be added here */
-        ],
-        section: "workspaces",
-    },
-    {
-        slug: "cash/accounts",
-        icon: CashbackPoundIcon,
-        label: "Cash",
-        href: "/dashboard/cash/accounts",
-        children: [
-            {
-                slug: "cash/accounts",
-                icon: ArrowRightDoubleIcon,
-                label: "Accounts",
-                href: "/dashboard/cash/accounts",
-            },
-            {
-                slug: "change-in-cash",
-                icon: ArrowRightDoubleIcon,
-                label: "Change in Cash",
-                href: "/dashboard/cash/change-in-cash",
-            },
-            {
-                slug: "cash-spend",
-                icon: ArrowRightDoubleIcon,
-                label: "Cash Spend",
-                href: "/dashboard/cash/cash-spend"
-            }
-        ],
-        section: "workspaces",
-    },
-    {
-        slug: "bank-transactions",
-        icon: TransactionIcon,
-        label: "Bank Transactions",
-        href: "/dashboard/bank-transactions",
-        children: [],
-        section: "workspaces",
-    },
-      {
-        slug: "invoices",
-        icon: InvoiceIcon,
-        label: "Invoice",
-        href: "/dashboard/invoices",
-        children: [],
-        section: "workspaces",
-    },
-    {
-        slug: "tax",
-        icon: TaxesIcon,
-        label: "Tax",
-        href: "/dashboard/tax",
-        children: [],
-        section: "workspaces",
-    },
-    /* {
-        slug: "#",
-        icon: GitPullRequestIcon,
-        label: "Requests",
-        href: "#",
-        children: [
-            {
-                slug: "#",
-                icon: ArrowRightDoubleIcon,
-                label: "Request VAT Return",
-                href: "#",
-            },
-            {
-                slug: "#",
-                icon: ArrowRightDoubleIcon,
-                label: "Request Payroll",
-                href: "#",
-            },
-            {
-                slug: "#",
-                icon: ArrowRightDoubleIcon,
-                label: "Request MBR Annual Return",
-                href: "#"
-            },
-            {
-                slug: "#",
-                icon: ArrowRightDoubleIcon,
-                label: "Request Financial Audit",
-                href: "#"
-            },
-            {
-                slug: "#",
-                icon: ArrowRightDoubleIcon,
-                label: "Request Tax Return",
-                href: "#"
-            },
-        ],
-    }, */
     {
        slug: "document-organizer",
         icon: DocumentValidationIcon,
         label: "Document Organizer",
         href: "#",
+        description: "Manage your company's documents",
         children: [
             {
                 slug: "upload",
@@ -229,18 +210,11 @@ export const menuData: MenuItem[] = [
         section: "operations",
     },
     {
-        slug: "general-ledger",
-        icon: ProfileIcon,
-        label: "General Ledger",
-        href: "/dashboard/general-ledger",
-        children: [],
-        section: "workspaces",
-    },
-    {
         slug: "quickbooks-sync",
         icon: FileSyncIcon,
         label: "Quickbooks Sync",
         href: "/dashboard/quickbooks-sync",
+        description: "Manage your company's quickbooks sync",
         children: [],
         section: "operations",
     },
@@ -248,6 +222,7 @@ export const menuData: MenuItem[] = [
         slug: "settings",
         icon: InstallingUpdates02Icon,
         label: "Settings",
+        description: "Manage your company's settings",
         href: "/dashboard/settings",
         children: [],
         section: "settings",

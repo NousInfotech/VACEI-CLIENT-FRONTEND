@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import DocumentForm from "@/app/dashboard/document-organizer/components/DocumentForm";
 import { Button } from "@/components/ui/button";
+import Dropdown from "@/components/Dropdown";
+import { MoreVertical, CheckCircle2, Circle, Upload, List, LayoutGrid, ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type DocumentsTab = "all" | "requested" | "uploaded";
 
@@ -75,10 +78,10 @@ export default function DocumentsMasterPage() {
     window.localStorage.setItem(DOCS_UI_KEY, payload);
   }, [activeTab, checklist]);
 
-  const markChecklistDone = (id: string) => {
+  const markChecklistDone = (id: string, doneState?: boolean) => {
     setChecklist((items) =>
       items.map((item) =>
-        item.id === id ? { ...item, done: !item.done } : item
+        item.id === id ? { ...item, done: doneState !== undefined ? doneState : !item.done } : item
       )
     );
   };
@@ -87,169 +90,206 @@ export default function DocumentsMasterPage() {
     setChecklist((items) => items.map((item) => ({ ...item, done: false })));
   };
 
+  const tabs: { id: DocumentsTab; label: string; href: string }[] = [
+    { id: "all", label: "All Documents", href: "/dashboard/document-organizer/document-listing" },
+    { id: "requested", label: "Requested", href: "/dashboard/document-organizer/document-listing?tab=requested" },
+    { id: "uploaded", label: "Uploaded by you", href: "/dashboard/document-organizer/document-listing?tab=uploaded" },
+  ];
+
+  const activeTabLabel = tabs.find(t => t.id === activeTab)?.label || "All Documents";
+
   return (
     <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-6">
       {/* Page header */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-2 md:px-0">
         <div>
-          <h1 className="text-2xl md:text-3xl font-semibold text-brand-body">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 tracking-tight">
             Documents
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-500 mt-1 font-medium">
             Master vault for all documents, requests and smart checklists.
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Link href="/dashboard/document-organizer/document-upload">
-            <Button variant="default" className="rounded-lg px-4 shadow-sm hover:shadow-md transition-shadow">
+            <Button className="rounded-xl px-5 h-11 bg-gray-900 hover:bg-black text-white font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-gray-200 transition-all active:scale-95 flex gap-2">
+              <Upload className="w-4 h-4" />
               Upload documents
             </Button>
           </Link>
           <Link href="/dashboard/document-organizer/document-listing">
-            <Button variant="outline" className="rounded-lg px-4 shadow-sm hover:shadow-md transition-shadow">
+            <Button variant="outline" className="rounded-xl px-5 h-11 border-gray-200 hover:bg-gray-50 font-bold uppercase tracking-widest text-[10px] transition-all active:scale-95 flex gap-2">
+              <List className="w-4 h-4" />
               View all
             </Button>
           </Link>
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-6">
-        {/* Tabs (UI uses local state but links still go to listing filters) */}
-        <div className="flex flex-wrap gap-2">
-          <Link href="/dashboard/document-organizer/document-listing">
-            <button
-              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-medium shadow-sm transition-all ${
-                activeTab === "all"
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "bg-card border border-border text-brand-body hover:shadow-md"
-              }`}
-              onClick={() => setActiveTab("all")}
-              type="button"
-            >
-              All
-            </button>
-          </Link>
-          <Link href="/dashboard/document-organizer/document-listing?tab=requested">
-            <button
-              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-medium shadow-sm transition-all ${
-                activeTab === "requested"
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "bg-card border border-border text-brand-body hover:shadow-md"
-              }`}
-              onClick={() => setActiveTab("requested")}
-              type="button"
-            >
-              Requested
-            </button>
-          </Link>
-          <Link href="/dashboard/document-organizer/document-listing?tab=uploaded">
-            <button
-              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-medium shadow-sm transition-all ${
-                activeTab === "uploaded"
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "bg-card border border-border text-brand-body hover:shadow-md"
-              }`}
-              onClick={() => setActiveTab("uploaded")}
-              type="button"
-            >
-              Uploaded by you
-            </button>
-          </Link>
+      <div className="bg-white/80 backdrop-blur-xl border border-gray-100 rounded-[2.5rem] shadow-2xl shadow-gray-200/50 p-6 md:p-8 space-y-8">
+        {/* Tabs - Responsive */}
+        <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+           {/* Desktop Tabs */}
+           <div className="hidden md:flex gap-1">
+            {tabs.map((tab) => (
+               <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "px-6 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all relative",
+                    activeTab === tab.id
+                      ? "text-gray-900 bg-gray-50"
+                      : "text-gray-400 hover:text-gray-600 hover:bg-gray-50/50"
+                  )}
+                >
+                  {tab.label}
+                  {activeTab === tab.id && (
+                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-gray-900 rounded-full mb-1" />
+                  )}
+                </button>
+            ))}
+          </div>
+
+          {/* Mobile Tab Dropdown */}
+          <div className="md:hidden w-full">
+             <Dropdown
+                align="left"
+                className="w-full"
+                contentClassName="w-full"
+                trigger={
+                   <div className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-gray-900">{activeTabLabel}</span>
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                   </div>
+                }
+                items={tabs.map(tab => ({
+                   id: tab.id,
+                   label: tab.label,
+                   onClick: () => setActiveTab(tab.id)
+                }))}
+             />
+          </div>
+          
+          <div className="hidden md:flex items-center gap-2">
+             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">View Mode:</span>
+             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-gray-50 text-gray-900">
+                <LayoutGrid className="w-4 h-4" />
+             </Button>
+          </div>
         </div>
 
-        {/* Upload zone – reuses existing DocumentForm for full functionality */}
-        <div className="grid gap-6 lg:grid-cols-[2fr,1.3fr]">
-          <div className="space-y-4">
+        {/* Content grid */}
+        <div className="grid gap-8 lg:grid-cols-[1.8fr,1.2fr]">
+          <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium text-brand-body">
-                Upload zone
-              </h2>
-              <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                Drag & drop or use the form
+               <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center">
+                     <Upload className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Upload zone
+                  </h2>
+               </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50 px-3 py-1 rounded-full">
+                Drag & drop ready
               </span>
             </div>
 
-            <div className="rounded-lg border border-dashed border-border bg-muted/30 p-5">
-              {/* The existing form already supports drag & drop and tagging – keep logic there */}
+            <div className="rounded-[2rem] border-2 border-dashed border-gray-100 bg-gray-50/30 p-8 transition-all hover:bg-gray-50/50">
               <DocumentForm />
             </div>
           </div>
 
-          {/* Smart checklist card – state is stored in localStorage */}
-          <aside className="rounded-lg border border-border bg-card shadow-sm p-5 space-y-4">
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <h2 className="text-lg font-semibold text-brand-body">
-                  Smart checklist – missing documents
+          {/* Smart checklist */}
+          <aside className="rounded-[2rem] border border-gray-100 bg-white/50 p-8 space-y-6 shadow-sm flex flex-col">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-4">
+                <h2 className="text-xl font-bold text-gray-900 leading-tight">
+                  Smart checklist
                 </h2>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Shows outstanding document requests across all services.
-                </p>
+                <div className="flex gap-2">
+                  <Dropdown
+                    align="right"
+                    trigger={
+                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-gray-100">
+                        <MoreVertical className="w-5 h-5" />
+                      </Button>
+                    }
+                    items={[
+                      { id: 'reset', label: 'Reset Checklist', onClick: resetChecklist },
+                      { id: 'tasks', label: 'View All Tasks', onClick: () => window.location.href = "/dashboard/todo-list" }
+                    ]}
+                  />
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow"
-                  onClick={resetChecklist}
-                  type="button"
-                >
-                  Reset
-                </Button>
-                <Link href="/dashboard/todo-list">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    View tasks
-                  </Button>
-                </Link>
-              </div>
+              <p className="text-sm text-gray-500 font-medium">
+                Outstanding document requests and pending actions.
+              </p>
             </div>
 
-            <div className="space-y-3 text-sm">
+            <div className="space-y-4 flex-1">
               {checklist.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-start justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-sm hover:shadow-md transition-all"
+                  className={cn(
+                    "group flex items-start gap-4 rounded-3xl border p-5 transition-all duration-300",
+                    item.done 
+                    ? "bg-gray-50/50 border-transparent opacity-60" 
+                    : "bg-white border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5"
+                  )}
                 >
-                  <div className="flex-1">
-                    <p className="font-medium text-brand-body flex items-center gap-2">
-                      <span>{item.title}</span>
-                      {item.done && (
-                        <span className="inline-flex items-center rounded-lg bg-success/10 border border-success/30 px-2 py-0.5 text-[10px] font-semibold text-success">
-                          Done
-                        </span>
-                      )}
+                  <div className={cn(
+                    "mt-1 w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors",
+                    item.done ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"
+                  )}>
+                    {item.done ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <p className={cn(
+                      "font-bold text-sm text-gray-900 transition-all",
+                      item.done && "line-through text-gray-400"
+                    )}>
+                      {item.title}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-gray-400 mt-1 line-clamp-2 leading-relaxed">
                       {item.description}
                     </p>
                   </div>
-                  <div className="flex flex-col gap-1 items-end">
-                    <Link
-                      href={item.href}
-                      className="text-xs font-medium text-brand-primary hover:underline whitespace-nowrap"
-                    >
-                      Upload
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => markChecklistDone(item.id)}
-                      className="text-xs text-muted-foreground hover:text-brand-primary transition-colors"
-                    >
-                      {item.done ? "Mark as pending" : "Mark done"}
-                    </button>
-                  </div>
+
+                  <Dropdown
+                    align="right"
+                    trigger={
+                      <button className="p-2 -mr-2 text-gray-400 hover:text-gray-900 opacity-0 group-hover:opacity-100 transition-all">
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                    }
+                    items={[
+                      { 
+                        id: 'upload', 
+                        label: 'Upload Now', 
+                        icon: <Upload className="w-3.5 h-3.5" />,
+                        onClick: () => window.location.href = item.href 
+                      },
+                      { 
+                        id: 'toggle', 
+                        label: item.done ? 'Mark as Pending' : 'Mark as Done', 
+                        icon: item.done ? <Circle className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />,
+                        onClick: () => markChecklistDone(item.id) 
+                      }
+                    ]}
+                  />
                 </div>
               ))}
+            </div>
 
-              <p className="mt-2 text-xs text-muted-foreground">
-                This checklist is a client view on top of your existing document
-                organizer. It does not change any underlying document logic.
-              </p>
+            <div className="pt-4 mt-auto">
+               <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                  <p className="text-[10px] font-bold text-blue-800 uppercase tracking-widest leading-relaxed">
+                    Note: This checklist is a real-time view of your outstanding requirements.
+                  </p>
+               </div>
             </div>
           </aside>
         </div>

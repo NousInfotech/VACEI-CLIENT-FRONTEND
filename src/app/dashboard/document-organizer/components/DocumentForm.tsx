@@ -401,21 +401,13 @@ function DocumentFormContent() {
                         <div className="py-2 italic text-muted-foreground"></div>
                     ) : (
                         subCategories.length > 0 && (
-                            <div>
-                                <label className="block text-sm mb-1">Subcategory</label>
-                                <select
-                                    value={form.subCategory}
-                                    onChange={(e) => setField("subCategory", e.target.value)}
-                                    className="w-full border p-2 text-sm focus:outline-none border-border"
-                                >
-                                    <option value="">Select Subcategory (optional)</option>
-                                    {subCategories.map((sub) => (
-                                        <option key={sub.id} value={sub.id.toString()}>
-                                            {sub.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                            <Select 
+                                label="Subcategory" 
+                                value={form.subCategory} 
+                                onChange={(val) => setField("subCategory", val)} 
+                                options={subCategories.map(sub => ({ value: sub.id.toString(), label: sub.name }))}
+                                placeholder="Select Subcategory (optional)"
+                            />
                         )
                     )}
                 </div>

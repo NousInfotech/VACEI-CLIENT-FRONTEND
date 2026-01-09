@@ -30,60 +30,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 isCollapsed={isSidebarCollapsed}
             />
 
-            {/* Overlay for mobile */}
+            {/* Mobile Backdrop Overlay */}
             {isSidebarOpen && (
                 <div
-                    className="fixed inset-0 backdrop-blur-sm z-40 lg:hidden"
-                    style={{ backgroundColor: `hsl(var(--sidebar-background) / 0.2)` }}
+                    className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
                     onClick={() => setIsSidebarOpen(false)}
                 ></div>
             )}
 
             {/* Mobile Sidebar */}
-            <div
-                className={cn(
-                    "fixed inset-y-0 left-0 z-50 w-4/6 transform transition-transform duration-300 ease-in-out overflow-auto lg:hidden",
-                    isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-                )}
-                style={{
-                    backgroundColor: `hsl(var(--sidebar-background))`,
-                    color: `hsl(var(--sidebar-foreground))`,
-                }}
-            >
-                <div className="flex justify-between items-center p-4 border-b" style={{ borderColor: `hsl(var(--sidebar-border))` }}>
-                    <Link href="/dashboard">
-                        <Image
-                            src="/logo.svg"
-                            alt="Logo"
-                            width={120}
-                            height={40}
-                            className="object-contain"
-                        />
-                    </Link>
-                    <button
-                        className="text-[hsl(var(--sidebar-foreground))] text-xl cursor-pointer p-2 rounded-lg hover:bg-[hsl(var(--sidebar-hover))]"
-                        aria-label="Close sidebar"
-                        onClick={() => setIsSidebarOpen(false)}
-                    >
-                        <i className="fi fi-br-cross"></i>
-                    </button>
-                </div>
-
-                <div className="flex flex-col shrink-0 overflow-scroll min-h-[95vh]">
-                    <div className="scrollarea grow overflow-scroll p-4">
-                        <SidebarMenu menu={menuData} isCollapsed={false} />
-                    </div>
-                    <div className="p-4 border-t" style={{ borderColor: `hsl(var(--sidebar-border))` }}>
-                        <UserMenu isCollapsed={false} />
-                    </div>
-                </div>
+            <div className={cn("lg:hidden fixed inset-0 z-50 pointer-events-none", isSidebarOpen && "pointer-events-auto")}>
+                <SidebarMenu 
+                    menu={menuData} 
+                    isCollapsed={false} 
+                    isOpen={isSidebarOpen}
+                    onClose={() => setIsSidebarOpen(false)}
+                />
             </div>
 
             {/* Main Content Area */}
             <div
                 className={cn(
                     "flex-1 flex flex-col overflow-hidden transition-all duration-300",
-                    isSidebarCollapsed ? "lg:ml-24" : "lg:ml-[21rem]"
+                    isSidebarCollapsed ? "lg:ml-24" : "lg:ml-84"
                 )}
             >
                 {/* Mobile Header */}

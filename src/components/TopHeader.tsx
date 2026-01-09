@@ -5,12 +5,12 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
 import { GlobalUploadDrawer } from "@/components/GlobalUploadDrawer";
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Notification01Icon, Upload04Icon, Video01Icon } from '@hugeicons/core-free-icons';
-import { PanelLeft, PanelLeftClose } from 'lucide-react';
+import { PanelLeft, PanelLeftClose, ChevronDown } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import Dropdown from "./Dropdown";
 
 import {
     Notification,
@@ -19,7 +19,7 @@ import {
     markNotificationAsReadAPI,
 } from '@/api/notificationService';
 
-// NotificationItem component (copied from your notifications page, slightly adapted for header)
+// NotificationItem component
 interface HeaderNotificationItemProps {
     notification: Notification;
     onMarkAsRead: (id: number) => void;
@@ -50,33 +50,30 @@ const HeaderNotificationItem: React.FC<HeaderNotificationItemProps> = ({ notific
             textColorClass = notification.read ? 'text-muted-foreground' : 'text-brand-body';
     }
 
-    // Truncate message for display in dropdown
     const displayMessage = notification.message.length > 50
         ? notification.message.substring(0, 47) + '...'
         : notification.message;
 
     return (
-        <div className={`p-3 rounded-lg mb-2 flex items-center ${bgColorClass}`}>
-            {/* Added min-w-0 to allow the flex item to shrink below its content size.
-                Added overflow-hidden, text-ellipsis, and for visual truncation of text. */}
+        <div className={`p-3 rounded-xl mb-2 flex items-center ${bgColorClass} border border-transparent hover:border-gray-200 transition-all`}>
             <div className="flex-1 min-w-0">
                 <p className={`font-semibold text-sm ${textColorClass} overflow-hidden text-ellipsis `}>
                     {displayMessage}
                 </p>
-                <small className="text-brand-body text-xs">
-                    {new Date(notification.createdAt).toLocaleString()}
-                    {notification.read ? ' (Read)' : ' (Unread)'}
+                <small className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-1 block">
+                    {new Date(notification.createdAt).toLocaleDateString()}
+                    {notification.read ? ' • Read' : ' • New'}
                 </small>
             </div>
             {!notification.read && (
                 <Button
                     variant="default"
+                    size="sm"
                     onClick={(e) => {
-                        e.stopPropagation(); // Prevent dropdown from closing if it's open
+                        e.stopPropagation();
                         onMarkAsRead(notification.id);
                     }}
-                    // Added flex-shrink-0 to prevent the button from shrinking when space is tight.
-                    className="ml-2 !px-3 py-1 bg-sidebar-background text-sidebar-foreground rounded-md hover:bg-sidebar-hover transition-colors text-xs flex-shrink-0 cursor-pointer shadow-md"
+                    className="ml-2 h-7 px-3 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors text-[10px] font-bold uppercase tracking-widest flex-shrink-0 cursor-pointer shadow-sm"
                 >
                     Mark
                 </Button>
@@ -85,7 +82,6 @@ const HeaderNotificationItem: React.FC<HeaderNotificationItemProps> = ({ notific
     );
 };
 
-
 interface TopHeaderProps {
     onSidebarToggle?: () => void;
     isSidebarCollapsed?: boolean;
@@ -93,35 +89,27 @@ interface TopHeaderProps {
 
 export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false }: TopHeaderProps) {
     const [unreadCount, setUnreadCount] = useState(0);
-    const [showNotifications, setShowNotifications] = useState(false);
     const [latestNotifications, setLatestNotifications] = useState<Notification[]>([]);
-    const notificationRef = useRef<HTMLDivElement>(null);
-    const [searchTerm, setSearchTerm] = useState(''); // State for search input
-    const [username, setUsername] = useState<string>('User'); // State for username to avoid hydration error
+    const [searchTerm, setSearchTerm] = useState(''); 
+    const [username, setUsername] = useState<string>('User'); 
     const [role, setRole] = useState<string>('Client');
     const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
     const [activeCompany, setActiveCompany] = useState<string>("");
-    const [showQuickActions, setShowQuickActions] = useState(false);
-    const quickActionsRef = useRef<HTMLDivElement>(null);
     const [showUploadDrawer, setShowUploadDrawer] = useState(false);
 
     const router = useRouter();
     const pathname = usePathname();
-    const searchParams = useSearchParams(); // Get search parameters
+    const searchParams = useSearchParams();
 
-    // Effect to update search term from URL
-    // This useEffect correctly reads from searchParams, which is available client-side.
     useEffect(() => {
         const qParam = searchParams.get('q');
         if (pathname === '/dashboard/search' && qParam !== null) {
             setSearchTerm(decodeURIComponent(qParam));
         } else if (pathname !== '/dashboard/search') {
-            // Clear search term if not on the search page
             setSearchTerm('');
         }
-    }, [pathname, searchParams]); // Rerun when pathname or searchParams change
+    }, [pathname, searchParams]);
 
-    // Fetch unread count
     const getUnreadCount = useCallback(async () => {
         try {
             const response = await fetchUnreadCountAPI();
@@ -131,7 +119,6 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
         }
     }, []);
 
-    // Fetch latest notifications (for dropdown)
     const getLatestNotifications = useCallback(async () => {
         try {
             const response = await fetchNotificationsAPI({ page: 1, limit: 4, read: undefined });
@@ -141,7 +128,6 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
         }
     }, []);
 
-    // Set username/role on client side to avoid hydration error
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const storedUsername = localStorage.getItem("username");
@@ -185,65 +171,60 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
 
     useEffect(() => {
         getUnreadCount();
-
-        const REFRESH_INTERVAL = 30 * 1000; // 30 seconds
+        const REFRESH_INTERVAL = 30 * 1000;
         const intervalId = setInterval(() => {
             getUnreadCount();
         }, REFRESH_INTERVAL);
+        return () => clearInterval(intervalId);
+    }, [pathname]);
 
-        return () => {
-            clearInterval(intervalId);
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pathname]); // Only depend on pathname, getUnreadCount is stable
-
-    // Click outside handler (notifications + quick actions)
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            const target = event.target as Node;
-            if (notificationRef.current && !notificationRef.current.contains(target)) {
-                setShowNotifications(false);
-            }
-            if (quickActionsRef.current && !quickActionsRef.current.contains(target)) {
-                setShowQuickActions(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
-
-    // Toggle notification dropdown visibility
-    const toggleNotifications = async () => {
-        const newState = !showNotifications;
-        setShowNotifications(newState);
-        if (newState) {
-            await getLatestNotifications(); // Fetch latest when opening dropdown
-            await getUnreadCount(); // Refresh count when opening dropdown
-        }
-    };
-
-    // Handler for marking a single notification as read from the dropdown
     const handleMarkAsReadFromDropdown = async (id: number) => {
         try {
             await markNotificationAsReadAPI(id);
             setLatestNotifications(prev =>
                 prev.map(notif => (notif.id === id ? { ...notif, read: true } : notif))
             );
-            await getUnreadCount(); // Re-fetch the unread count to update the badge
+            await getUnreadCount();
         } catch (err: any) {
             console.error('Error marking as read from dropdown:', err);
         }
     };
 
-    // Handler for search button click or Enter key
     const handleSearchClick = () => {
-        // Ensure that navigating to /dashboard/search always reflects the current searchTerm
         router.push(`/dashboard/search${searchTerm ? `?q=${encodeURIComponent(searchTerm)}` : ''}`);
     };
+
+    const activeCompanyName = companies.find(c => c.id === activeCompany)?.name || "Select Company";
+
+    const companyMenuItems = companies.map(c => ({
+        id: c.id,
+        label: c.name,
+        onClick: () => {
+            setActiveCompany(c.id);
+            if (typeof window !== "undefined") localStorage.setItem("vacei-active-company", c.id);
+        }
+    }));
+
+    const quickActionItems = [
+        {
+            id: 'upload',
+            label: 'Upload documents',
+            icon: <HugeiconsIcon icon={Upload04Icon} className="w-4 h-4" />,
+            onClick: () => setShowUploadDrawer(true)
+        },
+        ...(role.toLowerCase() !== "viewer" ? [{
+            id: 'request',
+            label: 'Request service',
+            icon: <HugeiconsIcon icon={Video01Icon} className="w-4 h-4" />,
+            onClick: () => router.push('/dashboard/services/request')
+        }] : []),
+        {
+            id: 'schedule',
+            label: 'Schedule a call',
+            icon: <HugeiconsIcon icon={Video01Icon} className="w-4 h-4" />,
+            onClick: () => router.push('/dashboard/schedule')
+        }
+    ];
 
     return (
         <header 
@@ -254,7 +235,6 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             }}
         >
             <div className="flex items-center gap-4">
-                {/* Sidebar toggle - visible on desktop only */}
                 {onSidebarToggle && (
                     <button
                         className="hidden md:flex p-2 rounded-2xl hover:bg-[hsl(var(--muted))] transition-colors group"
@@ -270,7 +250,6 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                     </button>
                 )}
 
-                {/* Search */}
                 <div className="flex items-center gap-2 max-w-[350px] flex-1">
                         <div className="relative flex w-full">
                             <Input
@@ -296,191 +275,165 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             </div>
 
             <div className="flex items-center gap-3">
-                {/* Company selector */}
                 <div className="hidden md:flex items-center gap-2">
-                    <Select
-                        value={activeCompany}
-                        onChange={(e) => {
-                            const val = e.target.value;
-                            setActiveCompany(val);
-                            if (typeof window !== "undefined") localStorage.setItem("vacei-active-company", val);
-                        }}
-                        className="rounded-lg border border-border bg-card px-3 py-2 text-xs text-brand-body cursor-pointer shadow-sm hover:shadow-md transition-shadow min-w-[140px]"
-                    >
-                        {companies.map((c) => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                    </Select>
-                </div>
-                {/* Quick Actions dropdown (cleaner top header) */}
-                <div className="relative" ref={quickActionsRef}>
-                    <Button
-                        variant="outline"
-                        className="flex items-center gap-2 px-3 py-2 rounded-2xl text-xs cursor-pointer border-[hsl(var(--border))] hover:bg-[hsl(var(--muted))]"
-                        onClick={() => setShowQuickActions((prev) => !prev)}
-                    >
-                        <i className="fi fi-rr-menu-burger text-sm" />
-                        <span className="hidden md:inline">Quick actions</span>
-                    </Button>
-                    {showQuickActions && (
-                        <div className="absolute right-0 mt-2 w-60 bg-card border border-[hsl(var(--border))] rounded-2xl shadow-lg z-50 p-2 space-y-1">
-                            <button
-                                type="button"
-                                className="w-full text-left"
-                                onClick={() => {
-                                    setShowQuickActions(false);
-                                    setShowUploadDrawer(true);
-                                }}
-                            >
-                                <Button
-                                    variant="ghost"
-                                    className="w-full justify-start gap-2 rounded-xl text-xs px-3 py-2 hover:bg-[hsl(var(--muted))]"
-                                >
-                                    <HugeiconsIcon icon={Upload04Icon} className="w-4 h-4" />
-                                    Upload documents
-                                </Button>
-                            </button>
-                            {role.toLowerCase() !== "viewer" && (
-                                <Link href="/dashboard/services/request" onClick={() => setShowQuickActions(false)}>
-                                    <Button
-                                        variant="ghost"
-                                        className="w-full justify-start gap-2 rounded-xl text-xs px-3 py-2 hover:bg-[hsl(var(--muted))]"
-                                    >
-                                        <HugeiconsIcon icon={Video01Icon} className="w-4 h-4" />
-                                        Request service
-                                    </Button>
-                                </Link>
-                            )}
-                            <Link href="/dashboard/schedule" onClick={() => setShowQuickActions(false)}>
-                                <Button
-                                    variant="ghost"
-                                    className="w-full justify-start gap-2 rounded-xl text-xs px-3 py-2 hover:bg-[hsl(var(--muted))]"
-                                >
-                                    <HugeiconsIcon icon={Video01Icon} className="w-4 h-4" />
-                                    Schedule a call
-                                </Button>
-                            </Link>
-                        </div>
-                    )}
+                    <Dropdown
+                        align="left"
+                        label={activeCompanyName}
+                        items={companyMenuItems}
+                        searchable={true}
+                        searchPlaceholder="Search companies..."
+                        trigger={
+                            <div className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-bold text-gray-900 cursor-pointer shadow-sm hover:shadow-md hover:bg-white transition-all min-w-[160px] flex justify-between items-center group">
+                                <span className="flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                                    {activeCompanyName}
+                                </span>
+                                <ChevronDown className="w-3.5 h-3.5 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                        }
+                    />
                 </div>
 
-                {/* Notifications */}
-                        <div className="relative" ref={notificationRef}>
-                            <Button
-                        variant="ghost"
-                                onClick={toggleNotifications}
-                        className="h-9 w-9 rounded-2xl hover:bg-[hsl(var(--muted))] cursor-pointer relative"
-                            >
-                        <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5 text-[hsl(var(--foreground))]" />
-                                {unreadCount > 0 && (
-                            <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] font-semibold rounded-full h-5 w-5 flex items-center justify-center shadow-md border-2 border-background">
-                                        {unreadCount > 99 ? '99+' : unreadCount}
-                                    </span>
-                                )}
-                            </Button>
-                            {showNotifications && (
-                        <div className="absolute right-0 mt-2 w-80 bg-card border border-[hsl(var(--border))] rounded-2xl shadow-lg z-50 p-4 max-h-96 overflow-y-auto">
-                            <h3 className="text-lg font-semibold mb-3 text-[hsl(var(--foreground))]">Latest Notifications</h3>
-                                    {latestNotifications.length > 0 ? (
-                                        latestNotifications.map((notification) => (
-                                            <Link href={notification.link || '#'} key={notification.id} passHref>
-                                                <div
-                                                    onClick={async () => {
-                                                        if (!notification.read) {
-                                                            await markNotificationAsReadAPI(notification.id);
-                                                            setLatestNotifications(prev =>
-                                                                prev.map(notif => (notif.id === notification.id ? { ...notif, read: true } : notif))
-                                                            );
-                                                        }
-                                                        await getUnreadCount();
-                                                        setShowNotifications(false);
-                                                    }}
-                                                >
-                                                    <HeaderNotificationItem
-                                                        notification={notification}
-                                                        onMarkAsRead={handleMarkAsReadFromDropdown}
-                                                    />
-                                                </div>
-                                            </Link>
-                                        ))
-                                    ) : (
-                                        <p className="text-muted-foreground text-sm">No new notifications.</p>
-                                    )}
-                                    <div className="text-center mt-3">
-                                <Link href="/dashboard/notifications" passHref>
-                                            <Button
-                                                variant="link"
-                                        className="text-[hsl(var(--primary))] hover:text-[hsl(var(--primary-hover))] hover:underline text-sm cursor-pointer font-medium !py-0 h-fit"
-                                                onClick={() => setShowNotifications(false)}
-                                            >
-                                                Read More
-                                            </Button>
-                                        </Link>
+                <Dropdown
+                    align="right"
+                    items={quickActionItems}
+                    trigger={
+                        <Button
+                            variant="outline"
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold cursor-pointer border-gray-200 hover:bg-white hover:shadow-md transition-all h-10"
+                        >
+                            <i className="fi fi-rr-menu-burger text-sm" />
+                            <span className="hidden md:inline">QUICK ACTIONS</span>
+                        </Button>
+                    }
+                />
+
+                <Dropdown
+                    align="right"
+                    contentClassName="w-84 overflow-hidden"
+                    trigger={
+                        <Button
+                            variant="ghost"
+                            onClick={getLatestNotifications}
+                            className="h-10 w-10 rounded-xl hover:bg-white hover:shadow-md cursor-pointer relative transition-all"
+                        >
+                            <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5 text-gray-900" />
+                            {unreadCount > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-destructive text-white text-[10px] font-bold rounded-lg h-5 min-w-[20px] px-1 flex items-center justify-center shadow-md border-2 border-white">
+                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                </span>
+                            )}
+                        </Button>
+                    }
+                    closeOnClick={false}
+                >
+                    <div className="flex flex-col max-h-[480px]">
+                        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest">Latest Notifications</h3>
+                            {unreadCount > 0 && (
+                                <span className="text-[10px] font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded-full uppercase tracking-widest">
+                                    {unreadCount} New
+                                </span>
+                            )}
+                        </div>
+                        <div className="p-3 overflow-y-auto">
+                            {latestNotifications.length > 0 ? (
+                                latestNotifications.map((notification) => (
+                                    <Link href={notification.link || '#'} key={notification.id} passHref>
+                                        <div
+                                            onClick={async () => {
+                                                if (!notification.read) {
+                                                    await markNotificationAsReadAPI(notification.id);
+                                                    setLatestNotifications(prev =>
+                                                        prev.map(notif => (notif.id === notification.id ? { ...notif, read: true } : notif))
+                                                    );
+                                                }
+                                                await getUnreadCount();
+                                            }}
+                                        >
+                                            <HeaderNotificationItem
+                                                notification={notification}
+                                                onMarkAsRead={handleMarkAsReadFromDropdown}
+                                            />
+                                        </div>
+                                    </Link>
+                                ))
+                            ) : (
+                                <div className="py-12 flex flex-col items-center justify-center text-center px-6">
+                                    <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-3">
+                                        <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-gray-300" />
                                     </div>
+                                    <p className="text-sm font-bold text-gray-900 mb-1">All caught up!</p>
+                                    <p className="text-xs text-gray-500">No new notifications at the moment.</p>
                                 </div>
                             )}
                         </div>
+                        <div className="p-3 border-t border-gray-100 bg-gray-50/50">
+                            <Link href="/dashboard/notifications" passHref className="block">
+                                <Button
+                                    variant="ghost"
+                                    className="w-full text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-gray-900 hover:bg-white rounded-xl h-10 transition-all"
+                                >
+                                    View all notifications
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                </Dropdown>
 
-                {/* Settings */}
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 rounded-2xl hover:bg-[hsl(var(--muted))]"
+                    className="h-10 w-10 rounded-xl hover:bg-white hover:shadow-md transition-all"
                     aria-label="Open settings"
                     title="Settings"
                 >
-                    <i className="fi fi-rr-settings text-[hsl(var(--foreground))]"></i>
+                    <i className="fi fi-rr-settings text-gray-900"></i>
                 </Button>
 
-                {/* User profile */}
                 <div 
-                    className="flex items-center gap-3 pl-3 border-l"
-                    style={{ borderColor: `hsl(var(--border))` }}
+                    className="flex items-center gap-4 pl-4 border-l border-gray-200"
                 >
                     <div className="hidden sm:block text-right">
-                        <p className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                        <p className="text-sm font-bold text-gray-900 leading-tight">
                             {username}
                         </p>
-                        <p className="text-xs text-[hsl(var(--muted-foreground))] capitalize">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
                             {role || "Client"}
                         </p>
                     </div>
 
-                    {/* User avatar */}
-                    <div className="relative">
+                    <div className="relative group cursor-pointer">
                         <div 
-                            className="w-8 h-8 rounded-2xl flex items-center justify-center bg-[hsl(var(--muted))]"
+                            className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-900 text-white shadow-lg group-hover:scale-105 transition-transform"
                         >
-                            <span className="text-[hsl(var(--foreground))] text-xs font-semibold">
+                            <span className="text-sm font-bold">
                                 {username.charAt(0).toUpperCase()}
                             </span>
                         </div>
                         <div 
-                            className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background"
+                            className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success rounded-full border-2 border-white shadow-sm"
                         ></div>
                     </div>
 
-                    {/* Logout button */}
                     <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => {
                             if (typeof window !== 'undefined') {
                                 localStorage.clear();
-                                // Clear the cookie used by middleware
                                 document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax';
                                 document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=None; Secure';
                                 router.push('/login');
                             }
                         }}
-                        className="h-9 w-9 rounded-2xl text-red-400 hover:text-red-300 hover:bg-red-900/20 transition-colors"
+                        className="h-10 w-10 rounded-xl text-red-500 hover:text-white hover:bg-red-500 transition-all shadow-sm hover:shadow-red-200"
                     >
                         <i className="fi fi-rr-sign-out-alt"></i>
                     </Button>
                 </div>
             </div>
 
-            {/* Global upload drawer */}
             <GlobalUploadDrawer open={showUploadDrawer} onClose={() => setShowUploadDrawer(false)} />
         </header>
     );
