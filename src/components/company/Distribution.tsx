@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import PillTabs from "../shared/PillTabs";
 import EmptyState from "../shared/EmptyState";
+import { Company } from "@/api/auditService";
 
 type Person = {
   _id: string;
@@ -689,8 +690,8 @@ const SharePieChart: React.FC<SharePieChartProps> = ({
   );
 };
 
-const Distribution = () => {
-  const data = MOCK_COMPANY_DATA.data;
+const Distribution = ({data}: {data: Company}) => {
+
 
   const persons = useMemo(() => {
     return data.shareHolders.map((sh, idx) => ({

@@ -14,6 +14,7 @@ import { useTabQuery } from '@/hooks/useTabQuery'
 import BackButton from '../shared/BackButton'
 import EmptyState from '../shared/EmptyState'
 import { AlertCircle, Loader2 } from 'lucide-react'
+import { Company as CompanyType } from '@/api/auditService'
 
 const Company = () => {
   const [activeTab, setActiveTab] = useTabQuery('detail')
@@ -30,8 +31,8 @@ const Company = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'detail': return <CompanyDetail />
-      case 'involvements': return <Involvements />
-      case 'distribution': return <Distribution />
+      case 'involvements': return <Involvements data={data as CompanyType} />
+      case 'distribution': return <Distribution data={data as CompanyType}/>
       case 'hierarchy': return <CompanyHierarchy />
       case 'kyc': return <Kyc />
       default: return <CompanyDetail />
