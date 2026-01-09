@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState } from 'react'
-import { MOCK_COMPANY_DATA } from './mockData'
 import { 
   User, 
   ShieldCheck, 
@@ -16,10 +15,10 @@ import { Card, CardContent } from "@/components/ui/card2"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import PillTabs from '../shared/PillTabs'
+import { Company } from '@/api/auditService'
 
-const Involvements = () => {
+const Involvements = ({data}: {data: Company}) => {
   const [activeSubTab, setActiveSubTab] = useState<'shareholders' | 'representatives'>('shareholders')
-  const data = MOCK_COMPANY_DATA.data
 
   const tabs = [
     { id: 'shareholders', label: 'Shareholders', icon: User },
