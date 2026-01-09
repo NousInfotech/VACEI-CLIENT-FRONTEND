@@ -1,5 +1,5 @@
 // const apiUrl = (process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:8000/api/");
-const apiUrl = "http://localhost:8000/api/";
+const apiUrl = process.env.NEXT_PUBLIC_AUDIT_BACKEND_URL?.replace(/\/?$/, "/") || "";
 const backendUrl = apiUrl + "accounting-portal";
 
 // Get auth token from localStorage
