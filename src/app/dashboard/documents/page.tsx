@@ -23,7 +23,7 @@ interface ChecklistItem {
 
 const DOCS_UI_KEY = "vacei-documents-ui-state";
 
-export function DocumentsMasterPage() {
+function DocumentsMasterPage() {
   const [activeTab, setActiveTab] = useTabQuery("all") as [DocumentsTab, (t: DocumentsTab) => void];
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
 
