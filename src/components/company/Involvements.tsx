@@ -80,15 +80,17 @@ const Involvements = ({data}: {data: Company}) => {
                               variant="outline"
                               className="bg-green-50 text-green-700 border-green-200 rounded-lg px-3 py-1 text-sm font-semibold"
                             >
-                              Share: {Math.round(sh.sharePercentage || 0).toFixed(2)}%
+                              Share: {(data.issuedShares > 0 ? (totalShares / data.issuedShares) * 100 : 0).toFixed(2)}%
                             </Badge>
 
-                            <Badge
-                              variant="outline"
-                              className="bg-purple-50 text-purple-700 border-purple-200 rounded-lg px-3 py-1 text-sm font-semibold"
-                            >
-                              Paid Up: {Math.round(sh.paidUpSharesPercentage || 0).toFixed(2)}%
-                            </Badge>
+                            {sh.paidUpSharesPercentage > 0 && (
+                              <Badge
+                                variant="outline"
+                                className="bg-purple-50 text-purple-700 border-purple-200 rounded-lg px-3 py-1 text-sm font-semibold"
+                              >
+                                Paid Up: {(sh.paidUpSharesPercentage || 0).toFixed(2)}%
+                              </Badge>
+                            )}
                           </div>
                         </div>
                         
@@ -155,10 +157,19 @@ const Involvements = ({data}: {data: Company}) => {
 
                             <Badge
                               variant="outline"
-                              className="bg-purple-50 text-purple-700 border-purple-200 rounded-lg px-3 py-1 text-sm font-semibold"
+                              className="bg-green-50 text-green-700 border-green-200 rounded-lg px-3 py-1 text-sm font-semibold"
                             >
-                              Paid Up: {corp.paidUpSharesPercentage}%
+                              Share: {(data.issuedShares > 0 ? (totalShares / data.issuedShares) * 100 : 0).toFixed(2)}%
                             </Badge>
+
+                            {(corp.paidUpSharesPercentage || 0) > 0 && (
+                              <Badge
+                                variant="outline"
+                                className="bg-purple-50 text-purple-700 border-purple-200 rounded-lg px-3 py-1 text-sm font-semibold"
+                              >
+                                Paid Up: {(corp.paidUpSharesPercentage || 0).toFixed(2)}%
+                              </Badge>
+                            )}
                           </div>
                         </div>
                       </div>

@@ -457,7 +457,7 @@ const SharePieChart: React.FC<SharePieChartProps> = ({
                     cy="50%"
                     outerRadius="80%"
                     label={(entry) => {
-                      const percentage = Number(entry.value).toFixed(0);
+                      const percentage = Number(entry.value).toFixed(2);
                       const shares = entry.totalShares ? ` (${Number(entry.totalShares).toLocaleString()} shares)` : '';
                       return `${entry.name}: ${percentage}%${shares}`;
                     }}
@@ -477,7 +477,7 @@ const SharePieChart: React.FC<SharePieChartProps> = ({
                   </Pie>
                   <Tooltip
                     formatter={(val: any, name: any, props: any) => [
-                      `${Number(val).toFixed(1)}%`,
+                      `${Number(val).toFixed(2)}%`,
                       `${props.payload?.type || ""} ${name}`.trim(),
                     ]}
                   />
@@ -509,7 +509,7 @@ const SharePieChart: React.FC<SharePieChartProps> = ({
           <div className="text-center sm:text-left space-y-1">
             <p className="text-base sm:text-lg">
               Total declared {shareClass === "classes" ? "SHARES" : classLabel.toUpperCase()}:{" "}
-              <span className="font-bold">{shareClass === "classes" ? "100%" : `${totalRaw.toFixed(0)}%`}</span>
+              <span className="font-bold">{shareClass === "classes" ? "100.00%" : `${totalRaw.toFixed(2)}%`}</span>
               {totalSharesSum > 0 && (
                 <span className="text-gray-600 ml-2">
                   ({totalSharesSum.toLocaleString()} out of {currentClassTotal.toLocaleString()} shares
@@ -517,7 +517,7 @@ const SharePieChart: React.FC<SharePieChartProps> = ({
                     ` - ${(
                       (totalSharesSum / currentClassTotal) *
                       100
-                    ).toFixed(0)}% Issued`}
+                    ).toFixed(2)}% Issued`}
                   )
                 </span>
               )}
@@ -526,7 +526,7 @@ const SharePieChart: React.FC<SharePieChartProps> = ({
               <div className="flex flex-wrap gap-4 justify-center sm:justify-start text-sm text-gray-600">
                 {companyTotal > 0 && (
                   <span>
-                    Company shares: <span className="font-semibold text-gray-900">{companyTotal.toFixed(0)}%</span>
+                    Company shares: <span className="font-semibold text-gray-900">{companyTotal.toFixed(2)}%</span>
                     {companySharesTotal > 0 && (
                       <span className="ml-1">({companySharesTotal.toLocaleString()} shares)</span>
                     )}
@@ -534,7 +534,7 @@ const SharePieChart: React.FC<SharePieChartProps> = ({
                 )}
                 {personTotal > 0 && (
                   <span>
-                    Person shares: <span className="font-semibold text-gray-900">{personTotal.toFixed(0)}%</span>
+                    Person shares: <span className="font-semibold text-gray-900">{personTotal.toFixed(2)}%</span>
                     {personTotalShares > 0 && (
                       <span className="ml-1">({personTotalShares.toLocaleString()} shares)</span>
                     )}
@@ -658,7 +658,7 @@ const SharePieChart: React.FC<SharePieChartProps> = ({
       {/* Main Title and Toggle Buttons */}
       <div className="w-full space-y-4">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 w-full">
-          <h5 className="text-lg sm:text-xl font-semibold break-words">
+          <h5 className="text-lg sm:text-xl font-semibold wrap-break-word">
             {title}
           </h5>
           {dateRangeLabel && (
