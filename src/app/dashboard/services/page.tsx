@@ -28,6 +28,7 @@ import {
   Sparkles,
   TrendingUp
 } from "lucide-react";
+import DashboardCard from "@/components/DashboardCard";
 
 // Service categories
 const serviceCategories = [
@@ -219,7 +220,7 @@ function ServiceCard({ service }: { service: ServiceType }) {
 
   return (
     <Link href={service.href}>
-      <article className="group relative flex h-full cursor-pointer flex-col rounded-lg border border-border bg-card p-5 shadow-sm transition-all hover:shadow-lg hover:-translate-y-1 hover:border-primary/30">
+      <DashboardCard className="group relative flex h-full cursor-pointer flex-col p-5 transition-all hover:-translate-y-1 hover:border-primary/30">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-3 flex-1">
             <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${colors.iconBg} border border-border/50 shadow-sm group-hover:scale-110 transition-transform`}>
@@ -244,7 +245,7 @@ function ServiceCard({ service }: { service: ServiceType }) {
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
           </div>
         </div>
-      </article>
+      </DashboardCard>
     </Link>
   );
 }
@@ -253,55 +254,52 @@ export default function ServicesHubPage() {
   return (
     <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-8">
       {/* Enhanced Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-primary/10">
-              <Sparkles className="w-6 h-6 text-primary" />
+      <DashboardCard className="p-8">
+        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-3">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shadow-inner">
+                <Sparkles className="w-6 h-6 text-primary" />
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold text-brand-body tracking-tight">
+                Services Hub
+              </h1>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-brand-body">
-              Services Hub
-            </h1>
+            <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
+              Access all your active workspaces – bookkeeping, VAT, payroll, audit, compliance, and more. 
+              Manage your services in one centralized location with real-time status tracking.
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground max-w-2xl">
-            Access all your active workspaces – bookkeeping, VAT, payroll, audit, compliance, and more. 
-            Manage your services in one centralized location.
-          </p>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/dashboard/compliance/list">
+              <Button variant="outline" className="h-11 rounded-xl px-5 py-2.5 text-sm shadow-sm hover:shadow-md transition-all flex items-center gap-2 border-gray-200">
+                <AlertCircle className="w-4 h-4" />
+                Pending Actions
+              </Button>
+            </Link>
+            <Link href="/dashboard/services/request">
+              <Button className="h-11 rounded-xl px-5 py-2.5 text-sm shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                Request Service
+              </Button>
+            </Link>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <Link href="/dashboard/compliance/list">
-            <Button variant="outline" className="rounded-lg px-5 py-2.5 text-sm shadow-sm hover:shadow-md transition-all flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" />
-              Pending Actions
-            </Button>
-          </Link>
-          <Link href="/dashboard/services/request">
-            <Button className="rounded-lg px-5 py-2.5 text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Request Service
-            </Button>
-          </Link>
-        </div>
-      </div>
+      </DashboardCard>
 
       {/* Quick Stats Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card border border-border rounded-lg shadow-sm px-4 py-3 hover:shadow-md transition-shadow">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Active Services</p>
-          <p className="text-2xl font-bold text-brand-body">8</p>
-        </div>
-        <div className="bg-card border border-border rounded-lg shadow-sm px-4 py-3 hover:shadow-md transition-shadow">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Pending Actions</p>
-          <p className="text-2xl font-bold text-warning">3</p>
-        </div>
-        <div className="bg-card border border-border rounded-lg shadow-sm px-4 py-3 hover:shadow-md transition-shadow">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Due Soon</p>
-          <p className="text-2xl font-bold text-info">2</p>
-        </div>
-        <div className="bg-card border border-border rounded-lg shadow-sm px-4 py-3 hover:shadow-md transition-shadow">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Completed</p>
-          <p className="text-2xl font-bold text-success">5</p>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: "Active Services", value: "8", color: "text-brand-body" },
+          { label: "Pending Actions", value: "3", color: "text-warning" },
+          { label: "Due Soon", value: "2", color: "text-info" },
+          { label: "Completed", value: "5", color: "text-success" },
+        ].map((stat, i) => (
+          <DashboardCard key={i} className="px-6 py-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-2">{stat.label}</p>
+            <p className={`text-3xl font-bold ${stat.color} tracking-tight`}>{stat.value}</p>
+          </DashboardCard>
+        ))}
       </div>
 
       {/* Service Categories */}
@@ -327,82 +325,84 @@ export default function ServicesHubPage() {
       </div>
 
       {/* Enhanced CTA Section */}
-      <div className="bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 border border-primary/20 rounded-lg shadow-md p-6 md:p-8">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-2 flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-semibold text-brand-body">
+      <DashboardCard className="p-8 md:p-10 relative overflow-hidden group">
+        <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent opacity-50 transition-opacity group-hover:opacity-100" />
+        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="space-y-3 flex-1 text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
+              <div className="p-2 rounded-xl bg-primary shadow-lg shadow-primary/20">
+                <TrendingUp className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-brand-body tracking-tight">
                 Need something that's not listed?
               </h3>
             </div>
-            <p className="text-sm text-muted-foreground max-w-2xl">
+            <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed font-medium">
               Use your existing To‑Do / tasks and chat to coordinate custom projects with your accountant. 
               We can help you set up specialized workflows for your unique business needs.
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap justify-center gap-4 shrink-0">
             <Link href="/dashboard/services/request">
-              <Button className="rounded-lg px-6 py-2.5 text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Request New Service
+              <Button className="h-12 rounded-xl px-8 py-2.5 text-sm font-bold uppercase tracking-widest shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all active:scale-95">
+                <Plus className="w-4 h-4 mr-2" />
+                Request Service
               </Button>
             </Link>
             <Link href="/dashboard/quickbooks-sync">
-              <Button variant="outline" className="rounded-lg px-6 py-2.5 text-sm shadow-sm hover:shadow-md transition-all flex items-center gap-2">
-                <Settings className="w-4 h-4" />
+              <Button variant="outline" className="h-12 rounded-xl px-8 py-2.5 text-sm font-bold uppercase tracking-widest border-gray-200 hover:bg-gray-50 transition-all active:scale-95">
+                <Settings className="w-4 h-4 mr-2" />
                 Integrations
               </Button>
             </Link>
           </div>
         </div>
-      </div>
+      </DashboardCard>
 
       {/* Additional Resources */}
-      <div className="grid md:grid-cols-2 gap-4">
-        <Link href="/dashboard/compliance">
-          <div className="bg-card border border-border rounded-lg shadow-sm p-5 hover:shadow-md hover:border-primary/30 transition-all group">
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-lg bg-warning/10 border border-warning/20">
-                <AlertCircle className="w-5 h-5 text-warning" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-base font-semibold text-brand-body mb-1 group-hover:text-primary transition-colors">
-                  Compliance Calendar
-                </h3>
-                <p className="text-xs text-muted-foreground mb-3">
-                  View all upcoming deadlines and compliance requirements in one place.
-                </p>
-                <div className="flex items-center gap-1.5 text-primary text-xs font-medium">
-                  <span>View Calendar</span>
-                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+      <div className="grid md:grid-cols-2 gap-6 pb-8">
+        {[
+          {
+            href: "/dashboard/compliance",
+            icon: AlertCircle,
+            iconBg: "bg-warning/10 border-warning/20",
+            iconColor: "text-warning",
+            title: "Compliance Calendar",
+            description: "View all upcoming deadlines and compliance requirements in one place.",
+            linkText: "View Calendar",
+          },
+          {
+            href: "/dashboard/messages",
+            icon: FileText,
+            iconBg: "bg-info/10 border-info/20",
+            iconColor: "text-info",
+            title: "Messages & Support",
+            description: "Get help from your accountant or coordinate on service requests.",
+            linkText: "Open Messages",
+          },
+        ].map((resource, i) => (
+          <Link key={i} href={resource.href}>
+            <DashboardCard className="p-6 hover:shadow-xl hover:border-primary/30 transition-all group h-full">
+              <div className="flex items-start gap-5">
+                <div className={`p-4 rounded-2xl ${resource.iconBg} border shrink-0 transition-transform group-hover:scale-110`}>
+                  <resource.icon className={`w-6 h-6 ${resource.iconColor}`} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-brand-body mb-1 group-hover:text-primary transition-colors tracking-tight">
+                    {resource.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4 leading-relaxed font-medium">
+                    {resource.description}
+                  </p>
+                  <div className="flex items-center gap-1.5 text-primary text-xs font-bold uppercase tracking-widest">
+                    <span>{resource.linkText}</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </Link>
-
-        <Link href="/dashboard/messages">
-          <div className="bg-card border border-border rounded-lg shadow-sm p-5 hover:shadow-md hover:border-primary/30 transition-all group">
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-lg bg-info/10 border border-info/20">
-                <FileText className="w-5 h-5 text-info" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-base font-semibold text-brand-body mb-1 group-hover:text-primary transition-colors">
-                  Messages & Support
-                </h3>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Get help from your accountant or coordinate on service requests.
-                </p>
-                <div className="flex items-center gap-1.5 text-primary text-xs font-medium">
-                  <span>Open Messages</span>
-                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </Link>
+            </DashboardCard>
+          </Link>
+        ))}
       </div>
     </section>
   );
