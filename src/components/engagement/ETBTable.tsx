@@ -38,11 +38,11 @@ const ETBTable: React.FC<ETBTableProps> = ({ data }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       {/* Aggregate Summary Ribbon matching Classification.tsx */}
-      <div className="bg-gray-50/50 border border-gray-200 rounded-2xl p-8">
+      <div className="bg-gray-50/50 border border-gray-200 rounded-0 p-8">
         <div className="flex items-center gap-3 mb-8">
-          <div className="h-10 w-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center shadow-sm">
+          <div className="h-10 w-10 bg-white border border-gray-200 rounded-0 flex items-center justify-center shadow-sm">
             <PieChart className="h-5 w-5 text-gray-600" />
           </div>
           <div>
@@ -61,7 +61,7 @@ const ETBTable: React.FC<ETBTableProps> = ({ data }) => {
           ].map((item) => (
             <div 
               key={item.label} 
-              className="bg-white p-4 border border-gray-200 rounded-xl shadow-sm transition-all duration-300"
+              className="bg-white p-4 border border-gray-200 rounded-0 shadow-sm transition-all duration-300"
             >
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                 {item.label}
@@ -74,7 +74,7 @@ const ETBTable: React.FC<ETBTableProps> = ({ data }) => {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+      <div className="bg-white rounded-0 border border-gray-100 overflow-hidden shadow-sm">
         <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
           <div>
           <h3 className="text-xl font-bold text-gray-900">Extended Trial Balance</h3>

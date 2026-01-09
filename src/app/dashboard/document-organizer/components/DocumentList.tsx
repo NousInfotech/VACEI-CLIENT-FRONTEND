@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FolderPlus, FileText, CheckCircle } from 'lucide-react';
+import { Skeleton } from "@/components/ui/skeleton";
 import DocumentPreview from "../components/DocumentPreview";
 import { fetchUploadStatusSummary } from "@/api/documentApi"; // Updated import
 import {
@@ -44,18 +45,18 @@ const SkeletonRow = () => (
     <tr className="border-b border-border animate-pulse">
         {[40, 24, 32, 16, 20, 24].map((w, i) => (
             <td key={i} className="p-3 px-8">
-                <div className={`h-4 bg-gray-300 rounded-0 w-${w}`}></div>
+                <Skeleton className={`h-4 w-${w}`} />
             </td>
         ))}
     </tr>
 );
 
 const SkeletonFilter = () => (
-    <div className="animate-pulse grid md:grid-cols-4 gap-4 mb-4">
+    <div className="grid md:grid-cols-4 gap-4 mb-4">
         {Array(4)
             .fill(0)
             .map((_, i) => (
-                <div key={i} className="h-10 bg-gray-300 rounded-0 w-full"></div>
+                <Skeleton key={i} className="h-10 w-full" />
             ))}
     </div>
 );

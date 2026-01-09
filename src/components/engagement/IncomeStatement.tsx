@@ -153,7 +153,7 @@ const IncomeStatement: React.FC<IncomeStatementProps> = ({ data }) => {
 
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div className="h-full flex flex-col bg-white rounded-0 shadow-sm border border-slate-200 overflow-hidden">
       {/* Header */}
       <div className="p-6 border-b bg-linear-to-r from-amber-50 to-yellow-50">
         <div className="flex items-center justify-between">
@@ -163,8 +163,9 @@ const IncomeStatement: React.FC<IncomeStatementProps> = ({ data }) => {
               Income Statement
             </h2>
             <p className="text-sm text-gray-600 mt-1">
+              For the year ending {data.engagement.yearEndDate} — Audit ID: {data.engagement._id?.slice(0, 8)} | Client:
               {clientLoading ? (
-                <Skeleton className="h-4 w-32 inline-block" />
+                <Skeleton className="h-4 w-32 inline-block rounded-0" />
               ) : (
                 <>
                   {client?.name || engagement?.title || "Client Name"} • For the year ended{" "}

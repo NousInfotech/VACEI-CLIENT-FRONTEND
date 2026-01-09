@@ -6,14 +6,14 @@ import Select from "../../../../components/Select";
 import TextArea from "../../../../components/TextArea";
 import TextInput from "../../../../components/TextInput";
 import { PremiumInput } from "@/components/shared/PremiumInput";
-import { FileText } from "lucide-react";
-import { useAlert } from "../../../../app/context/AlertContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { generateYears, toOptions } from '../../../utils/common';
 import { fetchDocumentById, fetchCategories, fetchTags, deleteFile, createOrUpdateDocument, fetchSubCategories } from "@/api/documenService";
 import { Button } from "@/components/ui/button";
 import DashboardCard from "@/components/DashboardCard";
-import { Upload, Info, CheckCircle2, X, File, Calendar, Tag, HardDrive } from "lucide-react";
+import { Trash2, AlertCircle, CheckCircle2, FileText, Plus, X, UploadCloud, ChevronRight, Save, Info, File, Upload } from 'lucide-react';
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAlert } from "../../../../app/context/AlertContext";
 
 const readFileHeader = async (file: File): Promise<string> => {
     const buffer = await file.slice(0, 4).arrayBuffer();
@@ -328,25 +328,23 @@ function DocumentFormContent() {
         }
     };
 
-    const skeletonClass = "animate-pulse bg-gray-300 rounded-0";
-
     if (initialLoading || saving) {
         return (
             <div className="relative space-y-5 p-4 mx-auto bg-card">
                 <div className="grid md:grid-cols-3 gap-6">
-                    <div className={`${skeletonClass} h-10 w-full`} />
-                    <div className={`${skeletonClass} h-10 w-full`} />
-                    <div className={`${skeletonClass} h-10 w-full`} />
-                    <div className={`${skeletonClass} h-10 w-full`} />
-                    <div className={`${skeletonClass} h-10 w-full`} />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
                 </div>
-                <div className={`${skeletonClass} h-24 w-full`} />
-                <div className={`${skeletonClass} h-32 w-full`} />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-32 w-full" />
                 <div className="space-y-2">
-                    <div className={`${skeletonClass} h-8 w-full`} />
-                    <div className={`${skeletonClass} h-8 w-full`} />
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
                 </div>
-                <div className={`${skeletonClass} h-10 w-32`} />
+                <Skeleton className="h-10 w-32" />
             </div>
         );
     }

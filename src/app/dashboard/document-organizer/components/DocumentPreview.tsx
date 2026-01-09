@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Skeleton } from "@/components/ui/skeleton";
 
 type DocumentPreviewProps = {
   fileUrl: string;
@@ -35,8 +36,8 @@ export default function DocumentPreview({ fileUrl, fileType, fileName }: Documen
     return <p>File type not supported for preview.</p>;
   }
 
-  const Skeleton = () => (
-    <div className="animate-pulse w-full h-[600px] bg-gray-200 border border-border rounded-md mb-2"></div>
+  const PreviewSkeleton = () => (
+    <Skeleton className="w-full h-[600px] mb-2" />
   );
 
   const DownloadLink = () => (

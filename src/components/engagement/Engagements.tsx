@@ -74,11 +74,11 @@ const Engagements = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {engagements.map((engagement) => (
-          <Card key={engagement._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <Card key={engagement._id} className="bg-white rounded-0 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center space-x-4 flex-1">
-                  <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600">
+                  <div className="p-3 bg-indigo-50 rounded-0 text-indigo-600">
                     <FileText size={24} />
                   </div>
                   <div className="flex-1">

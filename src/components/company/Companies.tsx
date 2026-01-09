@@ -76,11 +76,11 @@ const Companies = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {companies.map((company) => (
-          <Card key={company._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <Card key={company._id} className="bg-white rounded-0 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
+                  <div className="p-3 bg-blue-50 rounded-0 text-blue-600">
                     <Building2 size={24} />
                   </div>
                   <div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Suspense, useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter, useSearchParams } from "next/navigation";
 import DocumentPreview from "../components/DocumentPreview";
 import CommentSection from "../components/CommentSection";
@@ -46,25 +47,25 @@ function DocumentViewPageInner() {
 
   if (loading) {
     return (
-      <div className="w-full p-6 animate-pulse space-y-4">
+      <div className="w-full p-6 space-y-4">
         {/* Title skeleton */}
-        <div className="h-8 bg-gray-300 rounded w-1/3"></div>
+        <Skeleton className="h-8 w-1/3" />
 
         {/* File buttons skeleton */}
         <div className="flex gap-2 flex-wrap">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-8 w-24 bg-gray-300 rounded"></div>
+            <Skeleton key={i} className="h-8 w-24" />
           ))}
         </div>
 
         {/* Document preview skeleton */}
-        <div className="h-[24rem] bg-gray-300 rounded"></div>
+        <Skeleton className="h-[24rem] w-full" />
 
         {/* Comment section skeleton */}
-        <div className="h-[12rem] bg-gray-300 rounded"></div>
+        <Skeleton className="h-[12rem] w-full" />
 
         {/* Status History skeleton */}
-        <div className="h-[10rem] bg-gray-300 rounded"></div> {/* Added skeleton for status history */}
+        <Skeleton className="h-[10rem] w-full" />
       </div>
     );
   }
@@ -121,7 +122,16 @@ function DocumentViewPageInner() {
 
 export default function DocumentViewPage() {
   return (
-    <Suspense fallback={<p>Loading page...</p>}>
+    <Suspense fallback={
+      <div className="w-full p-6 space-y-4">
+        <Skeleton className="h-8 w-1/3" />
+        <div className="flex gap-2">
+            <Skeleton className="h-8 w-24" />
+            <Skeleton className="h-8 w-24" />
+        </div>
+        <Skeleton className="h-[24rem] w-full" />
+      </div>
+    }>
       <DocumentViewPageInner />
     </Suspense>
   );

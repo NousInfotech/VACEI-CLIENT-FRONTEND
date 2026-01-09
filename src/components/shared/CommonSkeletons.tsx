@@ -2,17 +2,17 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { DashboardCard } from "../DashboardCard"
 
 export const CardSkeleton = () => (
-  <DashboardCard className="p-6 h-48 flex flex-col justify-between">
+  <DashboardCard className="p-6 h-48 flex flex-col justify-between rounded-0">
     <div className="flex items-start justify-between">
       <div className="flex items-center space-x-4">
-        <Skeleton className="h-12 w-12 rounded-xl" />
+        <Skeleton className="h-12 w-12" />
         <div className="space-y-2">
           <Skeleton className="h-6 w-48" />
           <Skeleton className="h-4 w-32" />
         </div>
       </div>
     </div>
-    <Skeleton className="h-10 w-full rounded-lg" />
+    <Skeleton className="h-10 w-full" />
   </DashboardCard>
 )
 
@@ -48,16 +48,16 @@ export const DetailsSkeleton = () => (
         <Skeleton className="h-10 w-64" />
         <Skeleton className="h-5 w-48" />
       </div>
-      <Skeleton className="h-12 w-40 rounded-xl" />
+      <Skeleton className="h-12 w-40" />
     </div>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <Skeleton className="h-32 rounded-2xl" />
-      <Skeleton className="h-32 rounded-2xl" />
-      <Skeleton className="h-32 rounded-2xl" />
+      <Skeleton className="h-32" />
+      <Skeleton className="h-32" />
+      <Skeleton className="h-32" />
     </div>
     <div className="space-y-6">
-      <Skeleton className="h-12 w-full rounded-xl" />
-      <Skeleton className="h-[400px] w-full rounded-2xl" />
+      <Skeleton className="h-12 w-full" />
+      <Skeleton className="h-[400px] w-full" />
     </div>
   </div>
 )
@@ -69,19 +69,19 @@ export const DashboardSkeleton = () => (
                 <Skeleton className="h-12 w-64" />
                 <Skeleton className="h-6 w-96" />
             </div>
-            <Skeleton className="h-12 w-12 rounded-full" />
+            <Skeleton className="h-12 w-12" />
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Skeleton className="h-32 rounded-2xl" />
-            <Skeleton className="h-32 rounded-2xl" />
-            <Skeleton className="h-32 rounded-2xl" />
-            <Skeleton className="h-32 rounded-2xl" />
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <Skeleton className="h-[500px] lg:col-span-2 rounded-3xl" />
-            <Skeleton className="h-[500px] rounded-3xl" />
+            <Skeleton className="h-[500px] lg:col-span-2" />
+            <Skeleton className="h-[500px]" />
         </div>
     </div>
 )

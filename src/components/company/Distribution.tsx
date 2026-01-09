@@ -430,7 +430,7 @@ const SharePieChart: React.FC<SharePieChartProps> = ({
     const classLabel = customLabel || getClassLabel(shareClass);
 
     return (
-      <div key={shareClass} className="w-full bg-white border border-border rounded-2xl text-brand-text p-4 sm:p-5 md:p-6 overflow-hidden">
+      <div key={shareClass} className="w-full bg-white border border-border rounded-0 text-brand-text p-4 sm:p-5 md:p-6 overflow-hidden">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 w-full mb-4">
           <h5 className="text-lg sm:text-xl font-semibold break-words">

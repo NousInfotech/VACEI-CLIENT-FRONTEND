@@ -41,13 +41,13 @@ const Involvements = ({data}: {data: Company}) => {
                return (
                 <Card
                   key={sh._id || `sh-${idx}`}
-                  className="bg-white/80 border border-indigo-100 rounded-xl shadow-sm hover:bg-white/70 transition-all"
+                  className="bg-white/80 border border-indigo-100 rounded-0 shadow-sm hover:bg-white/70 transition-all"
                 >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-3">
-                          <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600">
+                          <div className="w-10 h-10 bg-blue-50 rounded-0 flex items-center justify-center text-blue-600">
                             <User size={20} />
                           </div>
                           <h4 className="text-lg font-semibold text-gray-900 capitalize">
@@ -61,7 +61,7 @@ const Involvements = ({data}: {data: Company}) => {
                             <Badge
                               key={sIdx}
                               variant="outline"
-                              className="bg-blue-50 text-blue-700 border-blue-200 rounded-lg px-3 py-1 text-sm font-medium"
+                              className="bg-blue-50 text-blue-700 border-blue-200 rounded-0 px-3 py-1 text-sm font-medium"
                             >
                               {sd.class.length === 1 ? `Class ${sd.class}` : sd.class}: {sd.totalShares.toLocaleString()}
                             </Badge>
@@ -86,7 +86,7 @@ const Involvements = ({data}: {data: Company}) => {
                             {sh.paidUpSharesPercentage > 0 && (
                               <Badge
                                 variant="outline"
-                                className="bg-purple-50 text-purple-700 border-purple-200 rounded-lg px-3 py-1 text-sm font-semibold"
+                                className="bg-purple-50 text-purple-700 border-purple-200 rounded-0 px-3 py-1 text-sm font-semibold"
                               >
                                 Paid Up: {(sh.paidUpSharesPercentage || 0).toFixed(2)}%
                               </Badge>
@@ -117,13 +117,13 @@ const Involvements = ({data}: {data: Company}) => {
                return (
                 <Card
                   key={corp._id || `corp-sh-${idx}`}
-                  className="bg-white/80 border border-indigo-100 rounded-xl shadow-sm hover:bg-white/70 transition-all"
+                  className="bg-white/80 border border-indigo-100 rounded-0 shadow-sm hover:bg-white/70 transition-all"
                 >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-3">
-                          <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600">
+                          <div className="w-10 h-10 bg-indigo-50 rounded-0 flex items-center justify-center text-indigo-600">
                             <Building2 size={20} />
                           </div>
                           <div>
@@ -140,7 +140,7 @@ const Involvements = ({data}: {data: Company}) => {
                             <Badge
                               key={sIdx}
                               variant="outline"
-                              className="bg-indigo-50 text-indigo-700 border-indigo-200 rounded-lg px-3 py-1 text-sm font-medium"
+                              className="bg-indigo-50 text-indigo-700 border-indigo-200 rounded-0 px-3 py-1 text-sm font-medium"
                             >
                               {sd.class.length === 1 ? `Class ${sd.class}` : sd.class}: {sd.totalShares.toLocaleString()}
                             </Badge>
@@ -165,7 +165,7 @@ const Involvements = ({data}: {data: Company}) => {
                             {(corp.paidUpSharesPercentage || 0) > 0 && (
                               <Badge
                                 variant="outline"
-                                className="bg-purple-50 text-purple-700 border-purple-200 rounded-lg px-3 py-1 text-sm font-semibold"
+                                className="bg-purple-50 text-purple-700 border-purple-200 rounded-0 px-3 py-1 text-sm font-semibold"
                               >
                                 Paid Up: {(corp.paidUpSharesPercentage || 0).toFixed(2)}%
                               </Badge>
@@ -205,7 +205,7 @@ const Involvements = ({data}: {data: Company}) => {
                           <Badge 
                             key={rIdx} 
                             variant="outline"
-                            className="bg-indigo-50 text-indigo-700 border-indigo-100 rounded-full px-3 py-1 text-sm font-medium flex items-center gap-1"
+                            className="bg-indigo-50 text-indigo-700 border-indigo-100 rounded-0 px-3 py-1 text-sm font-medium flex items-center gap-1"
                           >
                             {role}
                           </Badge>
@@ -254,7 +254,7 @@ const Involvements = ({data}: {data: Company}) => {
                           <Badge 
                             key={rIdx} 
                             variant="outline"
-                            className="bg-indigo-50 text-indigo-700 border-indigo-100 rounded-full px-3 py-1 text-sm font-medium flex items-center gap-1"
+                            className="bg-indigo-50 text-indigo-700 border-indigo-100 rounded-0 px-3 py-1 text-sm font-medium flex items-center gap-1"
                           >
                             {role}
                           </Badge>

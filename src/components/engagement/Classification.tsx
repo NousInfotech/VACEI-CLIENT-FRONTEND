@@ -71,7 +71,7 @@ const Classification: React.FC<ClassificationProps> = ({ data }) => {
 
   if (!data || !data.lead_sheets) {
     return (
-      <div className="flex items-center justify-center p-12 text-slate-400 italic bg-white border border-dashed border-slate-200 rounded-xl">
+      <div className="flex items-center justify-center p-12 text-slate-400 italic bg-white border border-dashed border-slate-200 rounded-0">
         No classification data available
       </div>
     );
@@ -140,12 +140,12 @@ const Classification: React.FC<ClassificationProps> = ({ data }) => {
     return (
       <div key={node.id || node.group} className="mb-12 animate-in fade-in slide-in-from-bottom-2 duration-500">
         {showHeading && (
-          <div className="bg-black text-white px-3 py-1 rounded-2xl inline-block mb-4">
+          <div className="bg-black text-white px-3 py-1 rounded-0 inline-block mb-4">
             <h3 className="text-sm font-medium">{node.group}</h3>
           </div>
         )}
 
-        <div className="border border-gray-400 overflow-hidden bg-white rounded-[10px]">
+        <div className="border border-gray-400 overflow-hidden bg-white rounded-0">
           <Table className="border-collapse">
             <TableHeader>
               <TableRow className="hover:bg-transparent border-b border-gray-400">
@@ -240,7 +240,7 @@ const Classification: React.FC<ClassificationProps> = ({ data }) => {
                         ${selectedNodeId === g3.group 
                           ? 'bg-black border-black shadow-lg scale-[1.02]' 
                           : 'bg-white border-slate-200 hover:border-gray-300 hover:shadow-md'}
-                        ${isSidebarCollapsed ? 'h-12 w-12 rounded-xl p-0 flex items-center justify-center mx-auto' : 'px-5 py-3.5 rounded-2xl'}
+                        ${isSidebarCollapsed ? 'h-12 w-12 rounded-0 p-0 flex items-center justify-center mx-auto' : 'px-5 py-3.5 rounded-0'}
                       `}
                     >
                       {isSidebarCollapsed ? (
@@ -285,10 +285,10 @@ const Classification: React.FC<ClassificationProps> = ({ data }) => {
         ) : (
           <div className="w-full">
             {/* Aggregate Summary Ribbon */}
-            <div className="mb-5 bg-gray-50/50 border border-gray-200 rounded-2xl p-8">
+            <div className="mb-5 bg-gray-50/50 border border-gray-200 rounded-0 p-8">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center shadow-sm">
+                  <div className="h-10 w-10 bg-white border border-gray-200 rounded-0 flex items-center justify-center shadow-sm">
                     <PieChart className="h-5 w-5 text-gray-600" />
                   </div>
                   <div>
@@ -299,7 +299,7 @@ const Classification: React.FC<ClassificationProps> = ({ data }) => {
                 </div>
                 <button 
                   onClick={() => setIsFullViewOpen(true)}
-                  className="p-2.5 hover:bg-white rounded-xl border border-gray-200 transition-all text-gray-400 hover:text-black shadow-sm bg-white/50 group"
+                  className="p-2.5 hover:bg-white rounded-0 border border-gray-200 transition-all text-gray-400 hover:text-black shadow-sm bg-white/50 group"
                   title="Full View"
                 >
                   <Maximize2 size={18} className="group-hover:scale-110 transition-transform" />
@@ -315,7 +315,7 @@ const Classification: React.FC<ClassificationProps> = ({ data }) => {
                 ].map((item) => (
                   <div 
                     key={item.label} 
-                    className={`bg-white p-4 border border-gray-200 rounded-xl shadow-sm transition-all duration-300
+                    className={`bg-white p-4 border border-gray-200 rounded-0 shadow-sm transition-all duration-300
                       
                     `}
                   >
@@ -342,7 +342,7 @@ const Classification: React.FC<ClassificationProps> = ({ data }) => {
         <div className="fixed inset-0 z-100 bg-white animate-in fade-in zoom-in-95 duration-200 flex flex-col">
           <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100 bg-white sticky top-0 z-20">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-center shadow-sm">
+              <div className="h-12 w-12 bg-gray-50 border border-gray-200 rounded-0 flex items-center justify-center shadow-sm">
                 <PieChart className="h-6 w-6 text-gray-900" />
               </div>
               <div>
@@ -354,7 +354,7 @@ const Classification: React.FC<ClassificationProps> = ({ data }) => {
             </div>
             <button
               onClick={() => setIsFullViewOpen(false)}
-              className="p-3 hover:bg-gray-100 rounded-2xl transition-all text-gray-400 hover:text-black hover:rotate-90 duration-300"
+              className="p-3 hover:bg-gray-100 rounded-0 transition-all text-gray-400 hover:text-black hover:rotate-90 duration-300"
             >
               <X size={28} />
             </button>

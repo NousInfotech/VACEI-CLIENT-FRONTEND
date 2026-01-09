@@ -856,7 +856,7 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
 
   // ---- Render ----
   if (isStillLoading) {
-    return <Skeleton className="w-full h-[500px] rounded-xl" />;
+    return <Skeleton className="w-full h-[500px] rounded-0" />;
   }
 
   if (hierarchyError) {
