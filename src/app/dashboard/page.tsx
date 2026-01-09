@@ -192,12 +192,12 @@ export default function DashboardPage() {
     { text: "MBR BO2 submitted", action: "View form", href: "/dashboard/services/csp-mbr/mbr-submissions/BO2" },
   ];
   const recentActivity = [
-    "9 docs uploaded today",
-    "VAT checks completed",
+    { text: "9 docs uploaded today", time: "2 hours ago" },
+    { text: "VAT checks completed", time: "5 hours ago" },
   ];
   const messagesUpdates = [
-    "\"Need 1 more invoice\"",
-    "\"Audit query sent\"",
+    { text: "Need 1 more invoice", sender: "John (Accountant)", time: "1 hour ago" },
+    { text: "Audit query sent", sender: "System", time: "3 hours ago" },
   ];
   const healthStatus = complianceCounts.overdue > 0 ? "Needs attention" : complianceCounts.dueSoon > 0 ? "Needs attention" : "Healthy";
 
@@ -212,26 +212,24 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-brand-body p-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Premium Dashboard Header */}
-        <DashboardCard animate className="p-8">
+        <DashboardCard animate className="p-8 bg-[#0f1729] border-white/10">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
             <div className="space-y-4">
               <div className="space-y-1">
-                <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">
+                <h1 className="text-3xl font-semibold text-white tracking-tight">
                   {getGreeting()}
                 </h1>
-                <p className="text-gray-500 font-medium">Welcome back! Here's what's happening with your business today.</p>
+                <p className="text-white/60 font-medium">Welcome back! Here's what's happening with your business today.</p>
               </div>
               
               <div className="flex flex-wrap items-center gap-4">
-                <div className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 flex items-center gap-3 shadow-sm">
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-widest">Company</span>
-                  <div className="h-4 w-px bg-gray-200" />
-                  <span className="text-sm font-bold text-gray-900">{activeCompany}</span>
+                <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 flex items-center gap-3 shadow-sm">
+                  <span className="text-xs font-medium text-white/80 uppercase tracking-widest">Company</span>
+                  <div className="h-4 w-px bg-white/10" />
+                  <span className="text-sm font-bold text-white">{activeCompany}</span>
                 </div>
                 
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-300 font-bold text-xs uppercase tracking-widest shadow-sm ${
-                  healthStatus === "Healthy" ? "bg-success/5 border-success/20 text-success" : "bg-warning/5 border-warning/20 text-warning"
-                }`}>
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-700 font-bold text-xs uppercase tracking-widest shadow-sm text-white`}>
                   <span className={`w-2 h-2 rounded-full animate-pulse ${
                     healthStatus === "Healthy" ? "bg-success" : "bg-warning"
                   }`}></span>
@@ -246,6 +244,7 @@ export default function DashboardPage() {
                 title="Contact Accountant"
                 subtitle="Get expert assistance"
                 onClick={handleContactAccountantClick}
+                className="bg-white/5 border border-white/10 hover:bg-white/10 text-white"
               />
             </div>
           </div>
@@ -253,12 +252,12 @@ export default function DashboardPage() {
 
         {/* Warning Banner */}
         {!uploadLoading && uploadSummary?.filesUploadedThisMonth === 0 && (
-          <DashboardCard animate hover={false} className="border-warning/30 bg-warning/5 overflow-hidden">
+          <DashboardCard>
             <div className="px-8 py-5 flex items-center gap-6">
               <div className="shrink-0">
-                <div className="w-12 h-12 bg-warning/20 rounded-xl flex items-center justify-center shadow-inner">
-                  <AlertCircle className="w-6 h-6 text-warning" />
-                </div>
+                <DashboardCard className="p-3 bg-[#0f1729]">
+                  <AlertCircle className="w-6 h-6" color="white"/>
+                </DashboardCard>
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-1">
@@ -266,7 +265,7 @@ export default function DashboardPage() {
                     Warning
                   </span>
                 </div>
-                <p className="text-sm text-gray-700 font-medium leading-relaxed">
+                <p className="text-lg text-gray-700 font-medium leading-relaxed">
                 No documents uploaded this month.
                 </p>
               </div>
@@ -279,25 +278,25 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <DashboardCard animate className="p-6">
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-bold text-gray-700 tracking-widest">Overdue</span>
+            <span className="text-xs font-medium text-gray-700 tracking-widest">Overdue</span>
             <span className="text-3xl font-semibold text-destructive tabular-nums">{complianceCounts.overdue}</span>
           </div>
         </DashboardCard>
         <DashboardCard animate className="p-6">
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-bold text-gray-700 tracking-widest">Due soon (7d)</span>
+            <span className="text-xs font-medium text-gray-700 tracking-widest">Due soon (7d)</span>
             <span className="text-3xl font-semibold text-warning tabular-nums">{complianceCounts.dueSoon}</span>
           </div>
         </DashboardCard>
         <DashboardCard animate className="p-6">
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-bold text-gray-700 tracking-widest">Waiting</span>
+            <span className="text-xs font-medium text-gray-700 tracking-widest">Waiting</span>
             <span className="text-3xl font-semibold text-info tabular-nums">{complianceCounts.waiting}</span>
           </div>
         </DashboardCard>
         <DashboardCard animate className="p-6">
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-bold text-gray-700 tracking-widest">Completed (30d)</span>
+            <span className="text-xs font-medium text-gray-700 tracking-widest">Completed (30d)</span>
             <span className="text-3xl font-semibold text-success tabular-nums">{complianceCounts.done}</span>
           </div>
         </DashboardCard>
@@ -309,99 +308,119 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Top Priority Actions */}
           <DashboardCard animate className="overflow-hidden group">
-            <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900">Top Priority Actions</h3>
-                <p className="text-sm text-gray-600">Immediate steps required for your account</p>
+            <div className="flex items-center justify-between px-8 py-6 border-b border-gray-300">
+              <div className="flex items-center gap-4">
+                <div className="w-1 h-7 bg-gray-900 rounded-full" />
+                <div className="flex flex-col">
+                  <h3 className="text-xl font-semibold text-gray-900">Top Priority Actions</h3>
+                  <p className="text-sm text-gray-600">Immediate steps required for your account</p>
+                </div>
               </div>
               <Link href="/dashboard/compliance/list">
-                <Button variant="ghost" size="sm" className="text-xs font-bold hover:bg-gray-100 rounded-xl">View all</Button>
+                <Button variant="default">View all</Button>
               </Link>
             </div>
             <div className="p-4 space-y-3">
               {topPriorityActions.map((action) => (
-                <div key={action.id} className="group/item flex items-center justify-between rounded-xl border border-gray-50 bg-gray-50/50 px-6 py-4 hover:bg-white hover:shadow-md transition-all duration-300">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gray-900 text-white font-bold text-sm">
-                      {action.id}
+                <DashboardCard key={action.id} className="flex items-center justify-between rounded-xl px-6 py-4 gap-4">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="flex items-center justify-center rounded-xl font-medium text-lg shrink-0">
+                      {action.id}.
                     </div>
-                    <div>
-                      <span className="text-base text-gray-900 font-semibold block">{action.text}</span>
+                    <div className="min-w-0">
+                      <span className="text-base font-semibold block truncate">{action.text}</span>
                       <span className="text-xs text-gray-500">Verification required</span>
                     </div>
                   </div>
-                  <Link href={action.href}>
-                    <Button size="sm" variant="outline" className="px-5 rounded-xl border-gray-300 hover:bg-gray-100 text-gray-700 font-bold">
+                  <Link href={action.href} className="shrink-0">
+                    <Button size="sm" className="whitespace-nowrap">
                       {action.action}
                     </Button>
                   </Link>
-                </div>
+                </DashboardCard>
               ))}
             </div>
           </DashboardCard>
 
           {/* Modern Active Services */}
           <DashboardCard className="overflow-hidden">
-            <div className="px-8 py-6 border-b border-gray-100">
+            <div className="px-8 py-6 border-b border-gray-100 flex items-center gap-4">
+              <div className="w-1 h-7 bg-gray-900 rounded-full" />
+              <div className="flex flex-col">
               <h3 className="text-xl font-semibold text-gray-900">Active Services</h3>
               <p className="text-sm text-gray-600">Manage your ongoing accounting and tax services</p>
+              </div>
             </div>
             <div className="p-6">
               <div className="grid sm:grid-cols-2 gap-4">
                 {activeServices.map((service, idx) => (
-                  <div key={idx} className="group/service relative rounded-xl border border-gray-100 bg-white/50 p-5 hover:border-gray-300 hover:shadow-lg transition-all duration-300">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="space-y-1">
-                        <h4 className="font-bold text-gray-900 text-base">{service.name}</h4>
-                        <div className="flex items-center gap-1.5">
-                          <span className={`w-1.5 h-1.5 rounded-full ${
+                  <DashboardCard key={idx} className="group/service relative rounded-xl border bg-white/50 p-5 transition-all duration-300">
+                    <div className="flex items-start justify-between mb-4 gap-3">
+                      <div className="space-y-1 min-w-0">
+                        <h4 className="font-semibold text-xl truncate">{service.name}</h4>
+                        <div className="flex items-center gap-1.5 overflow-hidden">
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                             service.status.includes('Done') ? 'bg-success' : 
                             service.status.includes('soon') ? 'bg-warning' : 
                             service.status.includes('Waiting') ? 'bg-destructive' : 'bg-gray-400'
                           }`} />
-                          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{service.status}</p>
+                          <p className="text-xs font-medium uppercase truncate">{service.status}</p>
                         </div>
                       </div>
-                      <Link href={service.href}>
-                        <Button size="sm" variant="outline" className="rounded-xl border-gray-300 hover:bg-gray-100 text-gray-700 font-bold px-4 h-8 text-xs">
+                      <Link href={service.href} className="shrink-0">
+                        <Button size="sm" className="whitespace-nowrap">
                           Details
                         </Button>
                       </Link>
                     </div>
-                    <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-[10px] font-bold text-gray-400">
-                      <span>NEXT STEP</span>
-                      <span className="text-gray-900 uppercase tracking-widest">{service.next}</span>
+                    <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-[10px] font-medium gap-2">
+                      <span className="shrink-0">NEXT STEP</span>
+                      <span className="uppercase tracking-widest truncate">{service.next}</span>
                     </div>
-                  </div>
+                  </DashboardCard>
                 ))}
               </div>
             </div>
           </DashboardCard>
 
           {/* Financial Statistics */}
+          <DashboardCard className="px-5 py-6">
           <div className="space-y-6">
             <div className="flex items-center justify-between px-2">
-              <h3 className="text-xl font-semibold text-gray-900">Financial Statistics</h3>
-              <p className="text-sm text-gray-500 font-bold uppercase tracking-widest">Monthly Updates</p>
+              <div className="flex items-center gap-3">
+                <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                <h3 className="text-xl font-medium tracking-tight">Financial Statistics</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                <p className="text-[10px] font-medium uppercase tracking-[0.2em]">Real-time Updates</p>
+              </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {loading ? (
                 Array(3).fill(null).map((_, idx) => (
-                  <DashboardCard key={idx} hover={false} className="h-32 bg-white/50 animate-pulse border-white/30" />
+                  <DashboardCard key={idx} hover={false} className="h-48 bg-white/50 animate-pulse border-white/30" />
                 ))
               ) : stats.length > 0 ? (
                 stats.map((stat) => <StatCard key={stat.title} {...stat} />)
               ) : (
-                <DashboardCard hover={false} className="col-span-full bg-white/50 border border-dashed border-gray-300 py-12 flex flex-col items-center justify-center text-center">
-                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                    <HugeiconsIcon icon={Alert02Icon} className="w-6 h-6 text-gray-400" />
+                <DashboardCard hover={false} className="col-span-full bg-white/40 border border-dashed border-gray-200 py-16 flex flex-col items-center justify-center text-center relative overflow-hidden backdrop-blur-sm">
+                  <div className="absolute inset-0 to-gray-50/50 pointer-events-none" />
+                  <div className="relative z-10">
+                    <div className="w-20 h-20 rounded-3xl bg-white shadow-xl flex items-center justify-center mb-6 mx-auto transform -rotate-6 group-hover:rotate-0 transition-transform duration-500">
+                      <HugeiconsIcon icon={Alert02Icon} className="w-10 h-10 text-gray-300" />
+                    </div>
+                    <h4 className="text-xl font-bold text-gray-900 mb-2">Awaiting Analytic Data</h4>
+                    <p className="text-sm text-gray-500 max-w-sm mx-auto font-medium leading-relaxed">
+                      Your financial insights are currently being synchronized. Detailed statistics will appear here once your reports are processed.
+                    </p>
                   </div>
-                  <p className="text-lg font-semibold text-gray-900">No analytic data available</p>
-                  <p className="text-sm text-gray-500 max-w-xs">Financial stats will appear here once your reports are processed</p>
                 </DashboardCard>
               )}
             </div>
           </div>
+          </DashboardCard>
 
           {/* Charts */}
           <div className="space-y-5">
@@ -415,56 +434,69 @@ export default function DashboardPage() {
           {/* Recently Completed */}
           <DashboardCard className="overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Recently Completed</h3>
-              <span className="text-[10px] font-bold text-success bg-success/10 px-2 py-0.5 rounded-full uppercase tracking-widest">3 New</span>
+              <div className="flex items-center gap-4">
+                <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                <h3 className="text-lg font-semibold text-gray-900">Recently Completed</h3>
+              </div>
+              <span className="text-[10px] uppercase bg-black text-white px-2 py-1 rounded-full font-medium">3 New</span>
             </div>
             <div className="p-4 space-y-3">
               {recentlyCompleted.map((item, idx) => (
-                <div key={idx} className="group/completed flex items-center justify-between rounded-xl border border-gray-50 bg-gray-50/50 px-4 py-3 hover:bg-white hover:shadow-sm transition-all duration-300">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                
+                <DashboardCard key={idx} className="group/completed flex items-center justify-between rounded-xl border border-gray-50 bg-gray-50/50 px-4 py-3 transition-all duration-300 gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 shrink-0 flex items-center justify-center">
                       <CheckCircle className="h-4 w-4 text-gray-600" />
                     </div>
-                    <span className="text-sm text-gray-900 font-semibold">{item.text}</span>
+                    <span className="text-sm font-medium truncate">{item.text}</span>
                   </div>
-                  <Link href={item.href}>
-                    <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] font-bold text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+                  <Link href={item.href} className="shrink-0">
+                    <Button size="sm" className="whitespace-nowrap">
                       {item.action}
                     </Button>
                   </Link>
-                </div>
+                </DashboardCard>
               ))}
             </div>
           </DashboardCard>
 
           {/* Activity Feed */}
           <DashboardCard className="overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-4">
+              <div className="w-1 h-6 bg-gray-900 rounded-full" />
               <h3 className="text-lg font-semibold text-gray-900">Activity Feed</h3>
             </div>
             <div className="p-5 space-y-6">
               <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Live Updates</p>
-                <div className="space-y-4">
+                <p className="text-[15px] font-semibold uppercase tracking-widest mb-3">Live Updates</p>
+                <div className="space-y-3">
                   {recentActivity.map((activity, idx) => (
-                    <div key={idx} className="flex gap-3">
-                      <div className="relative">
-                        <div className="w-1.5 h-1.5 rounded-full bg-gray-900 mt-1.5" />
-                        {idx !== recentActivity.length - 1 && <div className="absolute top-4 left-[3px] w-px h-full bg-gray-100" />}
+                    <DashboardCard key={idx} className="p-4 border-none shadow-sm bg-gray-50/50 hover:bg-white transition-all transform hover:-translate-x-1">
+                      <div className="flex gap-4 items-start">
+                        <div className="mt-1.5 shrink-0">
+                          <div className="w-2 h-2 rounded-full bg-gray-900" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium leading-tight text-gray-700">{activity.text}</p>
+                          <p className="text-[10px] font-medium text-gray-700 uppercase tracking-widest">{activity.time}</p>
+                        </div>
                       </div>
-                      <span className="text-sm font-medium text-gray-900 leading-tight">{activity}</span>
-                    </div>
+                    </DashboardCard>
                   ))}
                 </div>
               </div>
               
               <div className="pt-5 border-t border-gray-100">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Client Alerts</p>
+                <p className="text-[15px] font-semibold uppercase tracking-widest mb-3">Client Alerts</p>
                 <div className="space-y-3">
                   {messagesUpdates.map((msg, idx) => (
-                    <div key={idx} className="bg-gray-50/50 rounded-xl p-3 border border-gray-100">
-                      <p className="text-sm font-medium text-gray-700 italic leading-relaxed">{msg}</p>
-                    </div>
+                    <DashboardCard key={idx} className="p-4 border-none shadow-sm bg-gray-50/50 hover:bg-white transition-all transform hover:-translate-x-1">
+                      <p className="text-sm font-medium text-gray-700 italic leading-relaxed">"{msg.text}"</p>
+                      <div className="mt-2 flex justify-between items-center text-[10px] font-medium tracking-widest text-gray-700">
+                        <span>{msg.sender}</span>
+                        <span>{msg.time}</span>
+                      </div>
+                    </DashboardCard>
                   ))}
                 </div>
               </div>
@@ -473,18 +505,20 @@ export default function DashboardPage() {
 
           {/* Compliance Snapshot */}
           <DashboardCard className="overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900">Compliance Snapshot</h3>
+            <div className="px-6 py-4 border-b border-gray-300 flex items-center gap-4">
+              <div className="w-1 h-6 bg-gray-900 rounded-full" />
+              <h3 className="text-lg font-medium text-gray-900">Compliance Snapshot</h3>
             </div>
             <div className="p-4">
               <div className="grid grid-cols-2 gap-3 mb-4">
+                
                 <Kpi label="Overdue" value={complianceCounts.overdue} tone="danger" />
                 <Kpi label="Due soon" value={complianceCounts.dueSoon} tone="warning" />
                 <Kpi label="Waiting" value={complianceCounts.waiting} tone="info" />
                 <Kpi label="Done" value={complianceCounts.done} tone="success" />
               </div>
               <Link href="/dashboard/compliance/list">
-                <Button variant="outline" size="sm" className="w-full rounded-xl text-xs font-bold border-gray-300 hover:bg-gray-100 transition-all py-5">
+                <Button variant="default" className="w-full">
                   View full list
                 </Button>
               </Link>
@@ -493,17 +527,20 @@ export default function DashboardPage() {
 
           {/* Upload Status */}
           <DashboardCard className="overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Upload Status</h3>
+            <div className="px-6 py-4 border-b border-gray-300 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                <h3 className="text-lg font-medium text-gray-900">Upload Status</h3>
+              </div>
               <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
             </div>
-            <div className="p-6 space-y-5">
+            <div className="p-4 space-y-3">
               {uploadLoading ? (
                 Array(4).fill(null).map((_, idx) => (
-                  <div key={`upload-skeleton-${idx}`} className="space-y-2">
+                  <DashboardCard key={`upload-skeleton-${idx}`} className="p-4 space-y-2 border-none shadow-sm bg-gray-50/50">
                     <div className="h-4 w-1/2 bg-gray-100 animate-pulse rounded" />
                     <div className="h-1.5 w-full bg-gray-50 animate-pulse rounded-full" />
-                  </div>
+                  </DashboardCard>
                 ))
               ) : uploadSummary ? (
                 <>
@@ -542,7 +579,7 @@ export default function DashboardPage() {
                 </>
               ) : (
                 <div className="py-4 text-center">
-                  <p className="text-sm text-gray-500 font-bold uppercase tracking-widest">No data</p>
+                  <p className="text-sm text-gray-500 font-medium uppercase tracking-widest">No data</p>
                 </div>
               )}
             </div>
@@ -551,14 +588,15 @@ export default function DashboardPage() {
           {/* Yearly Progress */}
           {netIncomeYTD && (
             <DashboardCard className="overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900">Yearly Progress</h3>
+              <div className="px-6 py-4 border-b border-gray-300 flex items-center gap-4">
+                <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                <h3 className="text-lg font-medium text-gray-900">Yearly Progress</h3>
               </div>
               <div className="p-4">
-                <div className="bg-gray-50/50 border border-gray-100 rounded-xl px-5 py-4">
+                <DashboardCard className="p-5">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="font-bold text-[10px] text-gray-400 uppercase tracking-widest">Net Income</p>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    <p className="font-medium text-[10px] uppercase tracking-widest">Net Income</p>
+                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
                       netIncomeYTD.change.includes('+') ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'
                     }`}>
                       YTD Performance
@@ -566,14 +604,14 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex items-end justify-between">
                     <p className="font-semibold text-2xl text-gray-900 tracking-tight">{netIncomeYTD.amount}</p>
-                    <div className={`flex items-center gap-1 font-bold text-sm ${
+                    <div className={`flex items-center gap-1 font-medium text-sm ${
                       netIncomeYTD.change.includes('+') ? 'text-success' : 'text-destructive'
                     }`}>
                       <span>{netIncomeYTD.change}</span>
                       <i className={`${getArrowIcon(netIncomeYTD.change)} text-xs`} />
                     </div>
                   </div>
-                </div>
+                </DashboardCard>
               </div>
             </DashboardCard>
           )}
@@ -583,36 +621,39 @@ export default function DashboardPage() {
       {/* Pending Actions */}
       {pendingTasks.length > 0 && (
         <DashboardCard className="overflow-hidden group">
-          <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900">Pending Actions</h3>
-              <p className="text-sm text-gray-600">Tasks awaiting your attention</p>
+          <div className="flex items-center justify-between px-8 py-6 border-b border-gray-300">
+            <div className="flex items-center gap-4">
+              <div className="w-1 h-7 bg-gray-900 rounded-full" />
+              <div className="flex flex-col">
+                <h3 className="text-xl font-medium text-gray-900">Pending Actions</h3>
+                <p className="text-sm text-gray-600">Tasks awaiting your attention</p>
+              </div>
             </div>
             <Link href="/dashboard/compliance/list">
-              <Button variant="ghost" size="sm" className="text-xs font-bold hover:bg-gray-100 rounded-xl">View all</Button>
+              <Button variant="default">View all</Button>
             </Link>
           </div>
-          <div className="p-4 space-y-3">
+          <div className="p-4 space-y-4">
             {pendingTasks.map((task) => (
               <Link
                 key={task.id}
                 href={`/dashboard/compliance/detail?taskId=${btoa(task.id.toString())}`}
-                className="group/task flex items-center justify-between rounded-xl border border-gray-50 bg-gray-50/50 px-6 py-5 text-sm hover:bg-white hover:shadow-md transition-all duration-300"
+                className="group/task flex items-center justify-between rounded-xl border border-gray-50 bg-gray-50/50 px-6 py-5 text-sm hover:bg-white hover:shadow-md transition-all duration-300 gap-4"
               >
-                <div className="space-y-1">
-                  <p className="font-bold text-gray-900 text-base">{task.title}</p>
+                <div className="space-y-1 min-w-0">
+                  <p className="font-semibold text-gray-900 text-base truncate">{task.title}</p>
                   {task.dueDate && (
                     <div className="flex items-center gap-2">
-                       <span className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Deadline:</span>
-                       <span className="text-xs font-bold text-destructive">{new Date(task.dueDate).toLocaleDateString()}</span>
+                       <span className="text-[10px] uppercase font-medium text-gray-400 tracking-widest shrink-0">Deadline:</span>
+                       <span className="text-xs font-medium text-destructive whitespace-nowrap">{new Date(task.dueDate).toLocaleDateString()}</span>
                     </div>
                   )}
                 </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-[10px] font-bold uppercase tracking-widest rounded-lg bg-white border border-gray-200 px-3 py-1.5 text-gray-900 shadow-sm">
+                <div className="flex items-center gap-4 shrink-0">
+                  <span className="text-[10px] font-medium uppercase tracking-widest rounded-lg bg-white border border-gray-200 px-3 py-1.5 text-gray-900 shadow-sm whitespace-nowrap">
                     {task.status || "Open"}
                   </span>
-                  <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center shrink-0">
                     <ArrowRight className="h-4 w-4" />
                   </div>
                 </div>
@@ -647,13 +688,13 @@ function Kpi({ label, value, tone }: { label: string; value: number; tone: "dang
   };
 
   return (
-    <div className={`rounded-2xl border ${toneBorders[tone]} ${toneBg[tone]} px-4 py-4 shadow-sm group hover:shadow-md transition-all`}>
-      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">{label}</p>
+    <DashboardCard className={`border ${toneBorders[tone]} ${toneBg[tone]} px-4 py-4 group`}>
+      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1">{label}</p>
       <div className="flex items-end gap-1">
-        <p className={`text-2xl font-black ${toneText[tone]} tabular-nums`}>{value}</p>
-        <span className="text-[10px] font-bold text-muted-foreground/60 mb-1">items</span>
+        <p className={`text-2xl font-semibold ${toneText[tone]} tabular-nums`}>{value}</p>
+        <span className="text-[10px] font-medium text-muted-foreground/60 mb-1">items</span>
       </div>
-    </div>
+    </DashboardCard>
   );
 }
 
@@ -668,13 +709,13 @@ function UploadProgress({ label, value, total, color, icon, link }: {
   const percentage = total > 0 ? (value / total) * 100 : 0;
   
   return (
-    <div className="group/progress font-medium">
-      <div className="flex justify-between items-center mb-2.5">
+    <DashboardCard className="p-2">
+      <div className="flex justify-between items-center">
         <div className="flex gap-3 items-center">
-          <div className="w-8 h-8 rounded-xl bg-muted/30 flex items-center justify-center group-hover/progress:bg-white group-hover/progress:shadow-sm transition-all">
-            <img src={icon} alt={label} className="w-4 h-4" />
+          <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center group-hover/progress:bg-gray-900 group-hover/progress:text-white transition-all duration-300">
+            <img src={icon} alt={label} className="w-4 h-4 group-hover/progress:invert transition-all duration-300" />
           </div>
-          <p className="text-sm text-brand-body font-bold">
+          <p className="text-md text-brand-body font-medium">
             {label}: <span className="text-muted-foreground ml-1 tabular-nums">{value}</span>
           </p>
         </div>
@@ -684,12 +725,12 @@ function UploadProgress({ label, value, total, color, icon, link }: {
           </div>
         </Link>
       </div>
-      <div className="h-1.5 w-full rounded-full bg-muted/40 relative overflow-hidden">
+      <div className="h-1.5 w-full rounded-full bg-muted/20 relative overflow-hidden">
         <div 
-          className={`h-full rounded-full ${color} transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(0,0,0,0.1)]`} 
+          className={`h-full rounded-full ${color} transition-all duration-1000 ease-out`} 
           style={{ width: `${percentage}%` }} 
         />
       </div>
-    </div>
+    </DashboardCard>
   );
 }

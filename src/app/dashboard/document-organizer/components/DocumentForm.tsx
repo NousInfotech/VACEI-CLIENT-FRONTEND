@@ -1,14 +1,19 @@
 'use client';
 import { useState, useEffect, useRef, ReactNode, Suspense } from "react";
+import { cn } from "@/lib/utils";
 import * as yup from "yup";
 import Select from "../../../../components/Select";
 import TextArea from "../../../../components/TextArea";
 import TextInput from "../../../../components/TextInput";
+import { PremiumInput } from "@/components/shared/PremiumInput";
+import { FileText } from "lucide-react";
 import { useAlert } from "../../../../app/context/AlertContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { generateYears, toOptions } from '../../../utils/common';
 import { fetchDocumentById, fetchCategories, fetchTags, deleteFile, createOrUpdateDocument, fetchSubCategories } from "@/api/documenService";
 import { Button } from "@/components/ui/button";
+import DashboardCard from "@/components/DashboardCard";
+import { Upload, Info, CheckCircle2, X, File, Calendar, Tag, HardDrive } from "lucide-react";
 
 const readFileHeader = async (file: File): Promise<string> => {
     const buffer = await file.slice(0, 4).arrayBuffer();
@@ -384,29 +389,52 @@ function DocumentFormContent() {
             )}
 
             <form onSubmit={handleSubmit} encType="multipart/form-data" className="space-y-5 mx-auto">
-                <div className="grid md:grid-cols-3 gap-6">
-                    <TextInput className="" label="Upload Title / Batch Description" value={form.document_title || ""} onChange={(val) => setField("document_title", val)}
-                        placeholder="e.g., March Invoices – Client" error={typeof errors.document_title === "string" ? errors.document_title : undefined}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <PremiumInput 
+                        containerClassName="md:col-span-2 lg:col-span-1" 
+                        label="Document Title" 
+                        value={form.document_title || ""} 
+                        onChange={(e) => setField("document_title", e.target.value)}
+                        placeholder="e.g., March Invoices – Client" 
+                        error={typeof errors.document_title === "string" ? errors.document_title : undefined}
+                        leftIcon={FileText}
                     />
-                    <Select label="Year" value={form.year} onChange={(val) => setField("year", val)} options={yearOptions} error={typeof errors.year === "string" ? errors.year : undefined}
+                    <Select 
+                        label="Period - Year" 
+                        value={form.year} 
+                        onChange={(val) => setField("year", val)} 
+                        options={yearOptions} 
+                        error={typeof errors.year === "string" ? errors.year : undefined}
                         placeholder="Select Year"
                     />
-                    <Select label="Month" value={form.month} onChange={(val) => setField("month", val)} placeholder="Select Month" options={monthOptions}
+                    <Select 
+                        label="Period - Month" 
+                        value={form.month} 
+                        onChange={(val) => setField("month", val)} 
+                        placeholder="Select Month" 
+                        options={monthOptions}
                         error={typeof errors.month === "string" ? errors.month : undefined}
                     />
-                    <Select label="Category" value={form.category} onChange={val => setField("category", val)} options={categoryOptions}
-                        error={typeof errors.category === "string" ? errors.category : undefined} placeholder="Select Category"
+                    <Select 
+                        label="Document Category" 
+                        value={form.category} 
+                        onChange={val => setField("category", val)} 
+                        options={categoryOptions}
+                        error={typeof errors.category === "string" ? errors.category : undefined} 
+                        placeholder="Select Category"
                     />
                     {loadingSubCategories ? (
-                        <div className="py-2 italic text-muted-foreground"></div>
+                        <div className="h-[74px] flex items-center justify-center">
+                            <div className="w-5 h-5 border-2 border-gray-900/20 border-t-gray-900 rounded-full animate-spin" />
+                        </div>
                     ) : (
                         subCategories.length > 0 && (
                             <Select 
-                                label="Subcategory" 
+                                label="Sub-Category" 
                                 value={form.subCategory} 
                                 onChange={(val) => setField("subCategory", val)} 
                                 options={subCategories.map(sub => ({ value: sub.id.toString(), label: sub.name }))}
-                                placeholder="Select Subcategory (optional)"
+                                placeholder="Select Subcategory"
                             />
                         )
                     )}
@@ -458,90 +486,104 @@ function DocumentFormContent() {
                         })}
                     </div>
                 </div>
-                <TextArea label="Notes" value={form.notes} onChange={(val) => setField("notes", val)}
-                    placeholder="Optional notes"
+                <TextArea label="Additional Notes" value={form.notes} onChange={(val) => setField("notes", val)}
+                    placeholder="Provide any additional context or details about these documents..."
                     error={typeof errors.notes === "string" ? errors.notes : undefined}
+                    className="md:col-span-2 lg:col-span-3"
                 />
-                <div
-                    ref={dropRef}
-                    onDrop={handleDrop}
-                    onDragOver={(e) => e.preventDefault()}
-                    className={`w-full border-1 bg-card backdrop-blur[10px] border-dashed border-border rounded-lg block py-15 px-8 text-center text-sm text-muted-foreground ${errors.files ? "border-red-500" : "border-border"}`}
-                    onClick={() => {
-                        const input = dropRef.current?.querySelector('input[type="file"]') as HTMLInputElement | null;
-                        if (input) input.click();
-                    }}
-                >
-                    <input
-                        type="file"
-                        multiple
-                        onChange={handleFileChange}
-                        className="hidden"
-                        accept=".pdf,image/jpeg,image/png,.xlsx,.xls"
-                    />
-                    <>
-                        <div className="bg-card rounded-lg w-12 h-12 border-1 items-center justify-center mx-auto flex shadow-sm mb-4">
-                            <img src="/upload_doc.svg" alt="Upload Doc" className="w-7 h-7 opacity-25" />
+
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between px-1">
+                        <label className="text-[15px] font-medium uppercase tracking-[0.2em] text-black">
+                            File Upload
+                        </label>
+                        <span className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">
+                            PDF, JPEG, PNG, EXCEL
+                        </span>
+                    </div>
+                    
+                    <div
+                        ref={dropRef}
+                        onDrop={handleDrop}
+                        onDragOver={(e) => e.preventDefault()}
+                        className={cn(
+                            "group/drop relative w-full border-2 border-dashed rounded-3xl p-12 text-center transition-all duration-500 cursor-pointer overflow-hidden",
+                            errors.files 
+                                ? "border-destructive bg-destructive/5" 
+                                : "border-gray-200 bg-gray-50/30 hover:bg-white hover:border-gray-900 hover:shadow-2xl hover:shadow-gray-200/50"
+                        )}
+                        onClick={() => {
+                            const input = dropRef.current?.querySelector('input[type="file"]') as HTMLInputElement | null;
+                            if (input) input.click();
+                        }}
+                    >
+                        <input
+                            type="file"
+                            multiple
+                            onChange={handleFileChange}
+                            className="hidden"
+                            accept=".pdf,image/jpeg,image/png,.xlsx,.xls"
+                        />
+                        
+                        <div className="relative z-10 flex flex-col items-center">
+                            <div className="w-16 h-16 rounded-2xl bg-white shadow-xl shadow-gray-200/50 flex items-center justify-center mb-6 group-hover/drop:scale-110 group-hover/drop:rotate-6 transition-all duration-500">
+                                <Upload className="w-8 h-8 text-gray-900" />
+                            </div>
+                            <div className="space-y-2">
+                                <p className="text-lg font-bold text-gray-900">
+                                    Drop files here or click to browse
+                                </p>
+                                <p className="text-sm text-gray-500 max-w-xs mx-auto leading-relaxed">
+                                    Support for multiple files. High-resolution documents recommended for faster processing.
+                                </p>
+                            </div>
                         </div>
-                        <p className="font-[300]"><span className="text-brand-primary900 font-medium pe-1.25">Choose a file</span> Or <span className="ps-1.25 text-brand-body/70 font-medium">Drag and Drop</span></p>
-                        <span className="cursor-pointer text-brand-body/40 block mt-2.5">PDF, JPEG, PNG, and Excel (XLSX, XLS) formats</span>
-                    </>
-                    {errors.files && <p className="text-red-500 text-xs mt-1">{errors.files}</p>}
+
+                        {/* Decorative background element */}
+                        <div className="absolute inset-0 opacity-0 group-hover/drop:opacity-100 transition-opacity duration-700 pointer-events-none">
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.02)_0,transparent_70%)]" />
+                        </div>
+                    </div>
+                    {errors.files && (
+                        <p className="text-[10px] font-bold text-destructive uppercase tracking-widest ml-1">
+                            {errors.files}
+                        </p>
+                    )}
                 </div>
 
                 {files.length > 0 && (
-                    <ul className="text-left text-brand-body mt-2 max-h-48 overflow-auto list-none">
-                        {files.map((file, i) => {
-                            if (!file || !file.name) {
-                                console.warn(`Invalid file at index ${i}`, file);
-                                return null;
-                            }
-
-                            const ext = file.name.split('.').pop()?.toLowerCase() || '';
-                            let icon = "/doc.svg";
-                            switch (ext) {
-                                case "xls":
-                                case "xlsx":
-                                    icon = "/xlsx.svg";
-                                    break;
-                                case "pdf":
-                                    icon = "/pdf.svg";
-                                    break;
-                                case "png":
-                                    icon = "/png.svg";
-                                    break;
-                                case "jpeg":
-                                case "jpg":
-                                    icon = "/jpeg.svg";
-                                    break;
-                                case "doc":
-                                case "docx":
-                                    icon = "/doc.svg";
-                                    break;
-                            }
-
-                            // Determine progress and label based on uploadSuccess
-                            const progress = uploadSuccess ? 100 : ('progress' in file ? file.progress : 0);
-                            const statusLabel = uploadSuccess || progress === 100 ? "Completed" : "Uploading...";
-
-                            return (
-                                <li
-                                    key={i}
-                                    className="text-sm p-3 bg-card backdrop-blur[10px] border mb-3 rounded-lg border-blue-200"
-                                >
-                                    <div className="flex justify-between items-start mb-1">
-                                        <div className="flex gap-1.5 items-center">
-                                            <div>
-                                                <img src={icon} alt={ext || "file"} className="w-12 h-10" />
-                                            </div>
-                                            <div>
-                                                <span className="font-normal block">{file.name}</span>
-                                                <p className="block mt-0.5 text-brand-body/40 font-medium">
-                                                    {formatFileSize(file.size)}{" "}
-                                                    <span className={statusLabel === "Completed" ? "text-green-600" : "text-brand-primary"} font-normal text-xs>
-                                                        {statusLabel}
-                                                    </span>
-                                                </p>
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2 px-1">
+                            <label className="text-[10px] font-medium uppercase tracking-[0.2em] text-black">
+                                Selected Files
+                            </label>
+                            <div className="flex-1 h-px bg-gray-100" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {files.map((file, i) => {
+                                if (!file || !file.name) return null;
+                                const progress = uploadSuccess ? 100 : ('progress' in file ? file.progress : 0);
+                                
+                                return (
+                                    <div
+                                        key={i}
+                                        className="relative group/item flex items-center gap-4 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300"
+                                    >
+                                        <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center shrink-0 group-hover/item:bg-gray-900 group-hover/item:text-white transition-colors">
+                                            <File className="w-6 h-6" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-gray-900 truncate pr-6">
+                                                {file.name}
+                                            </p>
+                                            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mt-0.5">
+                                                {formatFileSize(file.size)} • {progress}%
+                                            </p>
+                                            <div className="mt-2 h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                <div 
+                                                    className="h-full bg-gray-900 transition-all duration-500"
+                                                    style={{ width: `${progress}%` }}
+                                                />
                                             </div>
                                         </div>
                                         <button
@@ -550,72 +592,80 @@ function DocumentFormContent() {
                                                 e.stopPropagation();
                                                 removeFile(i);
                                             }}
-                                            className="text-red-600 hover:text-red-800 ml-2 text-lg leading-0 cursor-pointer"
-                                            aria-label={`Remove file ${file.name}`}
+                                            className="absolute top-4 right-4 text-gray-400 hover:text-destructive transition-colors"
                                         >
-                                            <i className="fi fi-rr-trash"></i>
+                                            <X className="w-4 h-4" />
                                         </button>
                                     </div>
-                                    <div className="flex items-center">
-                                        <div className="w-13 block"></div>
-                                        <div className="bg-gray-200 rounded-full h-2.5 w-full flex-1 mr-2">
-                                            <div
-                                                className="bg-sidebar-background h-2.5 rounded-full transition-all duration-300 ease-in-out flex items-center justify-end pr-2 text-xs text-card-foreground"
-                                                style={{ width: `${progress}%` }}
-                                            ></div>
-                                        </div>
-                                        <p className="font-semibold text-xs">{progress}%</p>
-                                    </div>
-                                </li>
-                            );
-                        }).filter(item => item !== null)}
-                    </ul>
+                                );
+                            })}
+                        </div>
+                    </div>
                 )}
 
-                {(existingFiles.length > 0 || files.length > 0) && (
-                    <ul className="text-left text-brand-body mt-4">
-                        {existingFiles.length > 0 && (
-                            <li className="text-sm mb-2">
-                                Previously Uploaded Files
-                            </li>
-                        )}
-                        {existingFiles.map((existingFile) => (
-                            <li
-                                key={`existing-${existingFile.id}`}
-                                className="flex items-center justify-between text-sm px-4 py-2 border border-border cursor-pointer mb-2"
-                            >
-                                <a
-                                    href={`${backendUploadPath}/${existingFile.fileUrl}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex-1 truncate text-brand-body"
-                                    title={existingFile.fileName}
+                {existingFiles.length > 0 && (
+                    <div className="space-y-3 pt-4 border-t border-gray-100">
+                        <div className="flex items-center gap-2 px-1">
+                            <label className="text-[10px] font-medium uppercase tracking-[0.2em] text-black">
+                                Previously Uploaded
+                            </label>
+                            <div className="flex-1 h-px bg-gray-100" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {existingFiles.map((existingFile) => (
+                                <div
+                                    key={existingFile.id}
+                                    className="relative group/item flex items-center gap-4 p-4 rounded-2xl bg-gray-50/50 border border-gray-100 transition-all hover:bg-white"
                                 >
-                                    <i className="fi fi-sr-document leading-0 mr-1 text-primary text-base"></i> {existingFile.fileName}
-                                </a>
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleRemoveFile(existingFile);
-                                    }}
-                                    className="ml-2 text-red-700 text-2xl leading-0 cursor-pointer"
-                                    aria-label={`Remove file ${existingFile.fileName}`}
-                                >
-                                    ×
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
+                                    <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shrink-0">
+                                        <CheckCircle2 className="w-5 h-5 text-green-600" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <a
+                                            href={`${backendUploadPath}/${existingFile.fileUrl}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-sm font-bold text-gray-900 truncate block hover:underline pr-6"
+                                        >
+                                            {existingFile.fileName}
+                                        </a>
+                                        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mt-0.5">
+                                            Stored in Vault
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRemoveFile(existingFile);
+                                        }}
+                                        className="absolute top-4 right-4 text-gray-400 hover:text-destructive transition-colors"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 )}
-                <Button
-                    variant="default"
-                    type="submit"
-                    disabled={saving}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer !font-normal shadow-sm hover:shadow-md transition-shadow text-primary-foreground"
-                >
-                    {saving ? "Uploading..." : "Submit"}
-                </Button>
+
+                <div className="pt-8 flex justify-end">
+                    <Button
+                        variant="default"
+                        type="submit"
+                        disabled={saving}
+                        className="h-14 px-12 rounded-2xl bg-gray-900 text-white hover:bg-gray-800 font-bold uppercase tracking-widest text-xs shadow-xl shadow-gray-200/50 transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                    >
+                        {saving ? (
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                                Processing...
+                            </div>
+                        ) : (
+                            isUpdate ? "Update Document" : "Start Upload"
+                        )}
+                    </Button>
+                </div>
             </form>
         </>
     );

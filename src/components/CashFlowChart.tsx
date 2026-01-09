@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation'; // Using the correct useRouter hook for Next.js 13+
+import DashboardCard from './DashboardCard';
 
 // Formats a month string (YYYY-MM) to a short month name and two-digit year (e.g., "Jan '23").
 const formatMonth = (dateStr: string) => {
@@ -113,7 +114,7 @@ export default function CashFlowChart() {
   }, [view, backendUrl, router]);
 
   return (
-    <div className="bg-card border-border border rounded-card py-6 shadow-md w-full mx-auto mt-5 transition-all duration-300 hover:shadow-lg card-hover">
+    <DashboardCard className="py-6">
       <div className="flex justify-between items-center mb-3 flex-wrap gap-3 px-5">
         <div>
           <h2 className="text-xl leading-normal text-brand-body capitalize font-medium">Cash Flow Summary</h2>
@@ -204,6 +205,6 @@ export default function CashFlowChart() {
           </LineChart>
         </ResponsiveContainer>
       )}
-    </div>
+    </DashboardCard>
   );
 }

@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import DocumentForm from "@/app/dashboard/document-organizer/components/DocumentForm";
 import { Button } from "@/components/ui/button";
 import Dropdown from "@/components/Dropdown";
-import { MoreVertical, CheckCircle2, Circle, Upload, List, LayoutGrid, ChevronDown } from "lucide-react";
+import { MoreVertical, CheckCircle2, Circle, Upload, List, LayoutGrid, ChevronDown, Files, FileQuestion, FileCheck, ListTodo } from "lucide-react";
 import { cn } from "@/lib/utils";
+import PillTabs from "@/components/shared/PillTabs";
+import { useTabQuery } from "@/hooks/useTabQuery";
+import DashboardCard from "@/components/DashboardCard";
 
 type DocumentsTab = "all" | "requested" | "uploaded";
 
@@ -20,8 +23,8 @@ interface ChecklistItem {
 
 const DOCS_UI_KEY = "vacei-documents-ui-state";
 
-export default function DocumentsMasterPage() {
-  const [activeTab, setActiveTab] = useState<DocumentsTab>("all");
+export function DocumentsMasterPage() {
+  const [activeTab, setActiveTab] = useTabQuery("all") as [DocumentsTab, (t: DocumentsTab) => void];
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
 
   // Hydrate UI state from localStorage once on mount
@@ -79,21 +82,21 @@ export default function DocumentsMasterPage() {
   }, [activeTab, checklist]);
 
   const markChecklistDone = (id: string, doneState?: boolean) => {
-    setChecklist((items) =>
-      items.map((item) =>
+    setChecklist((items: ChecklistItem[]) =>
+      items.map((item: ChecklistItem) =>
         item.id === id ? { ...item, done: doneState !== undefined ? doneState : !item.done } : item
       )
     );
   };
 
   const resetChecklist = () => {
-    setChecklist((items) => items.map((item) => ({ ...item, done: false })));
+    setChecklist((items: ChecklistItem[]) => items.map((item: ChecklistItem) => ({ ...item, done: false })));
   };
 
-  const tabs: { id: DocumentsTab; label: string; href: string }[] = [
-    { id: "all", label: "All Documents", href: "/dashboard/document-organizer/document-listing" },
-    { id: "requested", label: "Requested", href: "/dashboard/document-organizer/document-listing?tab=requested" },
-    { id: "uploaded", label: "Uploaded by you", href: "/dashboard/document-organizer/document-listing?tab=uploaded" },
+  const tabs = [
+    { id: "all" as const, label: "All Documents", icon: Files },
+    { id: "requested" as const, label: "Requested", icon: FileQuestion },
+    { id: "uploaded" as const, label: "Uploaded by you", icon: FileCheck },
   ];
 
   const activeTabLabel = tabs.find(t => t.id === activeTab)?.label || "All Documents";
@@ -103,24 +106,24 @@ export default function DocumentsMasterPage() {
       {/* Page header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-2 md:px-0">
         <div>
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-2xl md:text-4xl font-bold">
             Documents
           </h1>
-          <p className="text-sm text-gray-500 mt-1 font-medium">
+          <p className="text-sm text-gray-500 mt-1">
             Master vault for all documents, requests and smart checklists.
           </p>
         </div>
 
         <div className="flex gap-3">
           <Link href="/dashboard/document-organizer/document-upload">
-            <Button className="rounded-xl px-5 h-11 bg-gray-900 hover:bg-black text-white font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-gray-200 transition-all active:scale-95 flex gap-2">
-              <Upload className="w-4 h-4" />
+            <Button>
+              <Upload />
               Upload documents
             </Button>
           </Link>
           <Link href="/dashboard/document-organizer/document-listing">
-            <Button variant="outline" className="rounded-xl px-5 h-11 border-gray-200 hover:bg-gray-50 font-bold uppercase tracking-widest text-[10px] transition-all active:scale-95 flex gap-2">
-              <List className="w-4 h-4" />
+            <Button>
+              <List />
               View all
             </Button>
           </Link>
@@ -131,24 +134,12 @@ export default function DocumentsMasterPage() {
         {/* Tabs - Responsive */}
         <div className="flex items-center justify-between border-b border-gray-100 pb-2">
            {/* Desktop Tabs */}
-           <div className="hidden md:flex gap-1">
-            {tabs.map((tab) => (
-               <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    "px-6 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all relative",
-                    activeTab === tab.id
-                      ? "text-gray-900 bg-gray-50"
-                      : "text-gray-400 hover:text-gray-600 hover:bg-gray-50/50"
-                  )}
-                >
-                  {tab.label}
-                  {activeTab === tab.id && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-gray-900 rounded-full mb-1" />
-                  )}
-                </button>
-            ))}
+           <div className="hidden md:flex">
+            <PillTabs 
+              tabs={tabs} 
+              activeTab={activeTab} 
+              onTabChange={(id) => setActiveTab(id as DocumentsTab)} 
+            />
           </div>
 
           {/* Mobile Tab Dropdown */}
@@ -170,44 +161,42 @@ export default function DocumentsMasterPage() {
                 }))}
              />
           </div>
-          
-          <div className="hidden md:flex items-center gap-2">
-             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">View Mode:</span>
-             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-gray-50 text-gray-900">
-                <LayoutGrid className="w-4 h-4" />
-             </Button>
-          </div>
         </div>
 
         {/* Content grid */}
         <div className="grid gap-8 lg:grid-cols-[1.8fr,1.2fr]">
-          <div className="space-y-6">
+          <div className={cn("space-y-6 relative z-1 hover:z-50 focus-within:z-50")}>
             <div className="flex items-center justify-between">
                <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center">
                      <Upload className="w-5 h-5 text-blue-600" />
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900">
+                  <h2 className="text-2xl font-bold text-gray-900">
                     Upload zone
                   </h2>
                </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50 px-3 py-1 rounded-full">
+              <span className="text-[10px] font-medium uppercase tracking-widest text-gray-700 rounded-full">
                 Drag & drop ready
               </span>
             </div>
 
-            <div className="rounded-[2rem] border-2 border-dashed border-gray-100 bg-gray-50/30 p-8 transition-all hover:bg-gray-50/50">
+            <DashboardCard className="p-8 relative z-20">
               <DocumentForm />
-            </div>
+            </DashboardCard>
           </div>
 
           {/* Smart checklist */}
-          <aside className="rounded-[2rem] border border-gray-100 bg-white/50 p-8 space-y-6 shadow-sm flex flex-col">
+          <DashboardCard className={cn("p-8 relative z-10 hover:z-50 focus-within:z-50")}>
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-4">
-                <h2 className="text-xl font-bold text-gray-900 leading-tight">
-                  Smart checklist
-                </h2>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center">
+                    <ListTodo className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold leading-tight">
+                    Smart checklist
+                  </h2>
+                </div>
                 <div className="flex gap-2">
                   <Dropdown
                     align="right"
@@ -229,11 +218,11 @@ export default function DocumentsMasterPage() {
             </div>
 
             <div className="space-y-4 flex-1">
-              {checklist.map((item) => (
-                <div
+              {checklist.map((item: ChecklistItem) => (
+                <DashboardCard
                   key={item.id}
                   className={cn(
-                    "group flex items-start gap-4 rounded-3xl border p-5 transition-all duration-300",
+                    "group flex items-start gap-4 rounded-3xl border p-5 transition-all duration-300 relative hover:z-30 focus-within:z-30",
                     item.done 
                     ? "bg-gray-50/50 border-transparent opacity-60" 
                     : "bg-white border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5"
@@ -248,7 +237,7 @@ export default function DocumentsMasterPage() {
                   
                   <div className="flex-1 min-w-0">
                     <p className={cn(
-                      "font-bold text-sm text-gray-900 transition-all",
+                      "font-medium text-sm text-gray-900 transition-all",
                       item.done && "line-through text-gray-400"
                     )}>
                       {item.title}
@@ -280,7 +269,7 @@ export default function DocumentsMasterPage() {
                       }
                     ]}
                   />
-                </div>
+                </DashboardCard>
               ))}
             </div>
 
@@ -291,10 +280,22 @@ export default function DocumentsMasterPage() {
                   </p>
                </div>
             </div>
-          </aside>
+          </DashboardCard>
         </div>
       </div>
     </section>
+  );
+}
+
+export default function DocumentsPage() {
+  return (
+    <Suspense fallback={
+       <div className="mx-auto max-w-[1400px] w-full pt-10 flex justify-center">
+          <div className="h-8 w-8 border-4 border-gray-900 border-t-transparent rounded-full animate-spin" />
+       </div>
+    }>
+      <DocumentsMasterPage />
+    </Suspense>
   );
 }
 

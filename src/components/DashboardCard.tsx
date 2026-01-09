@@ -12,14 +12,14 @@ export const DashboardCard = ({
   children, 
   className = "", 
   animate = false, 
-  hover = true 
 }: DashboardCardProps) => {
-  const baseStyles = "bg-white/80 border border-white/50 rounded-2xl backdrop-blur-md shadow-lg shadow-gray-300/30 transition-all duration-300";
-  const animationStyles = animate ? "animate-slide-in-right" : "";
-  const hoverStyles = hover ? "hover:bg-white/90" : "";
+  const hasBg = className.includes("bg-");
 
+  const baseStyles = `${!hasBg ? "bg-white/80" : ""} border border-white/50 rounded-2xl backdrop-blur-md shadow-lg shadow-gray-300/30 transition-all duration-300`;
+  const animationStyles = animate ? "animate-slide-in-right" : "";
+ 
   return (
-    <div className={`${baseStyles} ${animationStyles} ${hoverStyles} ${className}`}>
+    <div className={`${baseStyles} ${animationStyles} ${className}`}>
       {children}
     </div>
   );

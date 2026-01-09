@@ -79,9 +79,9 @@ const Select: React.FC<SelectProps> = ({
   };
 
   return (
-    <div className={cn("relative", className)} ref={containerRef}>
+    <div className={cn("relative z-1 hover:z-50 focus-within:z-50", className)} ref={containerRef}>
       {label && (
-        <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 px-1">
+        <label className="block text-[15px] font-medium uppercase tracking-widest text-black mb-2 px-1">
           {label}
         </label>
       )}
@@ -89,8 +89,8 @@ const Select: React.FC<SelectProps> = ({
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className={cn(
-          "w-full flex items-center justify-between rounded-xl px-4 py-3 bg-white border transition-all cursor-pointer group",
-          isOpen ? "border-gray-900 ring-4 ring-gray-900/5 shadow-md" : "border-gray-100 hover:border-gray-200 shadow-sm",
+          "w-full flex items-center justify-between rounded-xl px-4 py-3 bg-white border border-gray-300 transition-all cursor-pointer group",
+          isOpen ? "border-gray-900 ring-4 ring-gray-900/5 shadow-md" : "hover:border-gray-600 shadow-sm",
           error && "border-red-500",
           disabled && "opacity-50 cursor-not-allowed bg-gray-50"
         )}

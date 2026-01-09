@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import DashboardCard from './DashboardCard';
 
 type ChartDatum = {
   month: string;
@@ -101,7 +102,7 @@ export default function PnLChart() {
   const data = chartData[view] || [];
 
   return (
-    <div className="bg-card border-border border rounded-card py-6 shadow-md w-full mx-auto mt-5 transition-all duration-300 hover:shadow-lg card-hover">
+    <DashboardCard className="py-6">
       <div className="flex justify-between items-center mb-3 flex-wrap gap-3 px-5">
         <div>
           <h2 className="text-xl leading-normal text-brand-body capitalize font-medium">Profit & Loss Summary</h2>
@@ -234,6 +235,6 @@ export default function PnLChart() {
           </ComposedChart>
         </ResponsiveContainer>
       )}
-    </div>
+    </DashboardCard>
   );
 }

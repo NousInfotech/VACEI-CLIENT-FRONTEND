@@ -5,8 +5,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Building2, Users, FileText, CheckCircle2, AlertCircle, Clock, FileCheck, Upload, Plus, Eye, Download, ArrowRight, Briefcase, UserCheck, Share2, Calendar, Filter } from "lucide-react";
+import PillTabs from "@/components/shared/PillTabs";
+import BackButton from "@/components/shared/BackButton";
+import { useTabQuery } from "@/hooks/useTabQuery";
+import { Suspense } from "react";
 
-type TabKey = "overview" | "company" | "people" | "mbr" | "documents" | "requests";
+type TabKey = "overview" | "active-services" | "mbr" | "documents" | "requests";
+type SubTabKey = "company" | "people";
 
 // MBR Forms data
 const mbrFormsData = [
@@ -21,13 +26,13 @@ const mbrFormsData = [
 
 // Mock data
 const directors = [
-  { name: "John Smith", role: "Director", status: "Active" },
-  { name: "Maria Borg", role: "Secretary", status: "Active" },
+  { name: "John Smith", role: "Director", status: "Active", expiryDate: "15/12/2026" },
+  { name: "Maria Borg", role: "Secretary", status: "Active", expiryDate: "30/06/2027" },
 ];
 
 const shareholders = [
-  { name: "JS Holdings Ltd", shares: "500", percentage: "50%", status: "Active" },
-  { name: "Maria Borg", shares: "500", percentage: "50%", status: "Active" },
+  { name: "JS Holdings Ltd", shares: "500", percentage: "50%", status: "Active", expiryDate: "15/12/2026" },
+  { name: "Maria Borg", shares: "500", percentage: "50%", status: "Active", expiryDate: "30/06/2027" },
 ];
 
 const corporateDocuments = [
@@ -43,7 +48,16 @@ const cspRequests = [
 ];
 
 export default function CspMbrWorkspacePage() {
-  const [activeTab, setActiveTab] = useState<TabKey>("overview");
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CspMbrContent />
+    </Suspense>
+  );
+}
+
+function CspMbrContent() {
+  const [activeTab, setActiveTab] = useTabQuery("overview", "type");
+  const [activeSubTab, setActiveSubTab] = useTabQuery("company", "sub");
   const [activeCompany, setActiveCompany] = useState<string>("ACME LTD");
   const [mbrFilterType, setMbrFilterType] = useState<string>("all");
   const [mbrFilterStatus, setMbrFilterStatus] = useState<string>("all");
@@ -71,6 +85,7 @@ export default function CspMbrWorkspacePage() {
 
   return (
     <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-6">
+      <BackButton />
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
@@ -99,33 +114,17 @@ export default function CspMbrWorkspacePage() {
       </div>
 
       {/* Enhanced Tabs */}
-      <div className="bg-card border border-border rounded-lg shadow-md p-1.5 flex gap-1.5 overflow-x-auto">
-        {[
+      <PillTabs
+        tabs={[
           { id: "overview", label: "Overview", icon: Briefcase },
-          { id: "company", label: "Company", icon: Building2 },
-          { id: "people", label: "People", icon: Users },
+          { id: "active-services", label: "CSP active services", icon: Building2 },
           { id: "mbr", label: "MBR Submissions", icon: FileCheck },
           { id: "documents", label: "Documents", icon: FileText },
           { id: "requests", label: "Requests", icon: Clock },
-        ].map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id as TabKey)}
-              className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 whitespace-nowrap ${
-                activeTab === tab.id
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "bg-transparent text-brand-body hover:bg-muted/50"
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
+        ]}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id as TabKey)}
+      />
 
       {/* Tab Content */}
       {activeTab === "overview" && (
@@ -277,147 +276,170 @@ export default function CspMbrWorkspacePage() {
         </div>
       )}
 
-      {activeTab === "company" && (
-        <div className="bg-card border border-border rounded-lg shadow-md px-6 py-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2.5 rounded-lg bg-primary/10">
-              <Building2 className="w-5 h-5 text-primary" />
-            </div>
-            <h3 className="text-lg font-semibold text-brand-body">Company Profile</h3>
-          </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            {[
-              { label: "Company Name", value: activeCompany },
-              { label: "Jurisdiction", value: "Malta" },
-              { label: "Registration Number", value: "C 12345" },
-              { label: "CSP Provider", value: "Firm Name" },
-            ].map((item, idx) => (
-              <div key={idx} className="space-y-2 p-4 rounded-lg border border-border bg-muted/20 hover:bg-muted/30 transition-colors">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{item.label}</p>
-                <p className="text-base font-semibold text-brand-body">{item.value}</p>
-              </div>
-            ))}
-            <div className="md:col-span-2 space-y-2 p-4 rounded-lg border border-border bg-muted/20 hover:bg-muted/30 transition-colors">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Registered Office</p>
-              <p className="text-base font-semibold text-brand-body">123 Main Street, Valletta, Malta</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === "people" && (
+      {activeTab === "active-services" && (
         <div className="space-y-6">
-          {/* Directors / Secretary - Enhanced */}
-          <div className="bg-card border border-border rounded-lg shadow-md px-6 py-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-lg bg-primary/10">
-                  <UserCheck className="w-5 h-5 text-primary" />
-                </div>
-                <h3 className="text-lg font-semibold text-brand-body">Directors / Secretary</h3>
-              </div>
-              <Link href="/dashboard/services/request">
-                <Button variant="outline" size="sm" className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-all flex items-center gap-2">
-                  <Plus className="w-3 h-3" />
-                  Request Change
-                </Button>
-              </Link>
-            </div>
-            <div className="overflow-x-auto rounded-lg border border-border">
-              <table className="w-full text-left">
-                <thead className="bg-muted/60 border-b border-border">
-                  <tr>
-                    <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Name</th>
-                    <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Role</th>
-                    <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
-                    <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {directors.map((director, idx) => (
-                    <tr key={idx} className="border-b border-border hover:bg-muted/30 transition-colors">
-                      <td className="px-5 py-4">
-                        <p className="font-semibold text-brand-body">{director.name}</p>
-                      </td>
-                      <td className="px-5 py-4">
-                        <p className="text-sm text-brand-body">{director.role}</p>
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className="inline-flex items-center gap-1.5 text-xs rounded-full bg-success/20 text-success px-3 py-1.5 font-medium">
-                          <CheckCircle2 className="w-3 h-3" />
-                          {director.status}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                        <Button variant="ghost" size="sm" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-1.5">
-                          <Eye className="w-3 h-3" />
-                          View
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          {/* Sub-tabs for Company and People */}
+          <PillTabs
+            tabs={[
+              { id: "company", label: "Company" },
+              { id: "people", label: "People" },
+            ]}
+            activeTab={activeSubTab}
+            onTabChange={(id) => setActiveSubTab(id as SubTabKey)}
+            className="bg-muted/30 border border-border"
+          />
 
-          {/* Shareholders - Enhanced */}
-          <div className="bg-card border border-border rounded-lg shadow-md px-6 py-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
+          {activeSubTab === "company" && (
+            <div className="bg-card border border-border rounded-lg shadow-md px-6 py-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="flex items-center gap-3 mb-6">
                 <div className="p-2.5 rounded-lg bg-primary/10">
-                  <Share2 className="w-5 h-5 text-primary" />
+                  <Building2 className="w-5 h-5 text-primary" />
                 </div>
-                <h3 className="text-lg font-semibold text-brand-body">Shareholders</h3>
+                <h3 className="text-lg font-semibold text-brand-body">Company Profile</h3>
               </div>
-              <Link href="/dashboard/services/request">
-                <Button variant="outline" size="sm" className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-all flex items-center gap-2">
-                  <Plus className="w-3 h-3" />
-                  Request Transfer
-                </Button>
-              </Link>
+              <div className="grid md:grid-cols-2 gap-6">
+                {[
+                  { label: "Company Name", value: activeCompany },
+                  { label: "Jurisdiction", value: "Malta" },
+                  { label: "Registration Number", value: "C 12345" },
+                  { label: "CSP Provider", value: "Firm Name" },
+                ].map((item, idx) => (
+                  <div key={idx} className="space-y-2 p-4 rounded-lg border border-border bg-muted/20 hover:bg-muted/30 transition-colors">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{item.label}</p>
+                    <p className="text-base font-semibold text-brand-body">{item.value}</p>
+                  </div>
+                ))}
+                <div className="md:col-span-2 space-y-2 p-4 rounded-lg border border-border bg-muted/20 hover:bg-muted/30 transition-colors">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Registered Office</p>
+                  <p className="text-base font-semibold text-brand-body">123 Main Street, Valletta, Malta</p>
+                </div>
+              </div>
             </div>
-            <div className="overflow-x-auto rounded-lg border border-border">
-              <table className="w-full text-left">
-                <thead className="bg-muted/60 border-b border-border">
-                  <tr>
-                    <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Name</th>
-                    <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Shares</th>
-                    <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">%</th>
-                    <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
-                    <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {shareholders.map((shareholder, idx) => (
-                    <tr key={idx} className="border-b border-border hover:bg-muted/30 transition-colors">
-                      <td className="px-5 py-4">
-                        <p className="font-semibold text-brand-body">{shareholder.name}</p>
-                      </td>
-                      <td className="px-5 py-4">
-                        <p className="text-sm text-brand-body font-medium">{shareholder.shares}</p>
-                      </td>
-                      <td className="px-5 py-4">
-                        <p className="text-sm text-brand-body font-medium">{shareholder.percentage}</p>
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className="inline-flex items-center gap-1.5 text-xs rounded-full bg-success/20 text-success px-3 py-1.5 font-medium">
-                          <CheckCircle2 className="w-3 h-3" />
-                          {shareholder.status}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                        <Button variant="ghost" size="sm" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-1.5">
-                          <Eye className="w-3 h-3" />
-                          View
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          )}
+
+          {activeSubTab === "people" && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {/* Directors / Secretary - Enhanced */}
+              <div className="bg-card border border-border rounded-lg shadow-md px-6 py-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-lg bg-primary/10">
+                      <UserCheck className="w-5 h-5 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-brand-body">Directors / Secretary</h3>
+                  </div>
+                  <Link href="/dashboard/services/request">
+                    <Button variant="outline" size="sm" className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-all flex items-center gap-2">
+                      <Plus className="w-3 h-3" />
+                      Request Change
+                    </Button>
+                  </Link>
+                </div>
+                <div className="overflow-x-auto rounded-lg border border-border">
+                  <table className="w-full text-left">
+                    <thead className="bg-muted/60 border-b border-border">
+                      <tr>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Name</th>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Role</th>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center">Status</th>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center">Expiry Date</th>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {directors.map((director, idx) => (
+                        <tr key={idx} className="border-b border-border hover:bg-muted/30 transition-colors">
+                          <td className="px-5 py-4">
+                            <p className="font-semibold text-brand-body">{director.name}</p>
+                          </td>
+                          <td className="px-5 py-4">
+                            <p className="text-sm text-brand-body">{director.role}</p>
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <span className="inline-flex items-center gap-1.5 text-xs rounded-full bg-success/20 text-success px-3 py-1.5 font-medium">
+                              <CheckCircle2 className="w-3 h-3" />
+                              {director.status}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <p className="text-sm text-brand-body font-medium">{director.expiryDate}</p>
+                          </td>
+                          <td className="px-5 py-4 text-right">
+                            <Button variant="ghost" size="sm" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 ml-auto">
+                              <Eye className="w-3 h-3" />
+                              View
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Shareholders - Enhanced */}
+              <div className="bg-card border border-border rounded-lg shadow-md px-6 py-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-lg bg-primary/10">
+                      <Share2 className="w-5 h-5 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-brand-body">Shareholders</h3>
+                  </div>
+                  <Link href="/dashboard/services/request">
+                    <Button variant="outline" size="sm" className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-all flex items-center gap-2">
+                      <Plus className="w-3 h-3" />
+                      Request Transfer
+                    </Button>
+                  </Link>
+                </div>
+                <div className="overflow-x-auto rounded-lg border border-border">
+                  <table className="w-full text-left">
+                    <thead className="bg-muted/60 border-b border-border">
+                      <tr>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Name</th>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center">Shares</th>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center">%</th>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center">Status</th>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center">Expiry Date</th>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {shareholders.map((shareholder, idx) => (
+                        <tr key={idx} className="border-b border-border hover:bg-muted/30 transition-colors">
+                          <td className="px-5 py-4">
+                            <p className="font-semibold text-brand-body">{shareholder.name}</p>
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <p className="text-sm text-brand-body font-medium">{shareholder.shares}</p>
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <p className="text-sm text-brand-body font-medium">{shareholder.percentage}</p>
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <span className="inline-flex items-center gap-1.5 text-xs rounded-full bg-success/20 text-success px-3 py-1.5 font-medium">
+                              <CheckCircle2 className="w-3 h-3" />
+                              {shareholder.status}
+                            </span>
+                          </td>
+                            <td className="px-5 py-4 text-center">
+                            <p className="text-sm text-brand-body font-medium">{shareholder.expiryDate}</p>
+                          </td>
+                          <td className="px-5 py-4 text-right">
+                            <Button variant="ghost" size="sm" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 ml-auto">
+                              <Eye className="w-3 h-3" />
+                              View
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 

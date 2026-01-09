@@ -101,7 +101,7 @@ export const Dropdown = ({
   };
 
   return (
-    <div className={cn("relative inline-block text-left", className)} ref={dropdownRef}>
+    <div className={cn("relative inline-block text-left z-1 hover:z-50 focus-within:z-50", className)} ref={dropdownRef}>
       {/* Trigger */}
       <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
         {trigger ? (
