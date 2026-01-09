@@ -1,13 +1,13 @@
 "use client"
 
 import React, { useState } from 'react'
-import { 
-  FileText, 
-  ChevronDown, 
-  ChevronUp, 
-  ClipboardList,
-  Loader2
+import {
+  FileText,
+  ChevronDown,
+  ChevronUp,
+  ClipboardList
 } from 'lucide-react'
+import { TableSkeleton } from "../shared/CommonSkeletons";
 import { Card, CardContent } from '@/components/ui/card2'
 import { Badge } from '@/components/ui/badge'
 import { Button } from "@/components/ui/button"
@@ -105,16 +105,12 @@ const DocumentRequestsTab = () => {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-      </div>
-    )
+    return <TableSkeleton rows={10} />;
   }
 
   if (error) {
     return (
-      <EmptyState 
+      <EmptyState
         icon={FileText}
         title="Error Loading Document Requests"
         description={error}

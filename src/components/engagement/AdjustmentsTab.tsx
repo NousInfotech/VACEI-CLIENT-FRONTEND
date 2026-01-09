@@ -4,7 +4,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card2";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar, FileText, CheckCircle2, Loader2 } from "lucide-react";
+import { Calendar, FileText, CheckCircle2 } from "lucide-react";
+import { TableSkeleton } from "../shared/CommonSkeletons";
 import { useAdjustments } from './hooks/useAdjustments';
 import { useEtb } from './hooks/useEtb';
 import { useEngagement } from './hooks/useEngagement';
@@ -17,11 +18,7 @@ const AdjustmentsTab = () => {
   const { adjustments, loading, error } = useAdjustments(etb?._id || null);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-      </div>
-    );
+    return <TableSkeleton rows={8} />;
   }
 
   if (error) {

@@ -218,9 +218,15 @@ function SearchContent() {
   );
 }
 
+import { ListSkeleton } from '@/components/shared/CommonSkeletons';
+
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="p-6">Loading Search Results...</div>}>
+    <Suspense fallback={
+      <div className="p-6 max-w-7xl mx-auto">
+        <ListSkeleton count={4} />
+      </div>
+    }>
       <SearchContent />
     </Suspense>
   );

@@ -111,7 +111,7 @@ export default function LoginForm() {
                                 }}
                             >
                                 <Image
-                                    src="/logo.svg"
+                                    src="/logo/logo2.png"
                                     alt="Logo"
                                     width={56}
                                     height={56}
@@ -202,7 +202,7 @@ export default function LoginForm() {
                                 style={{ backgroundColor: `hsl(var(--primary))` }}
                             >
                             <Image
-                                src="/logo.svg"
+                                src="/logo/logo2.png"
                                     alt="Logo"
                                     width={40}
                                     height={40}

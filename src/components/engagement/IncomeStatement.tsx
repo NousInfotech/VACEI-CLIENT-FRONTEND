@@ -6,7 +6,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { 
   FileText, 
-  Loader2, 
   ChevronsDown, 
   ChevronsUp, 
   ChevronDown, 
@@ -16,6 +15,7 @@ import {
   ArrowDownRight,
   Download
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatAmount } from '@/lib/utils';
 
 interface IncomeStatementProps {
@@ -164,10 +164,7 @@ const IncomeStatement: React.FC<IncomeStatementProps> = ({ data }) => {
             </h2>
             <p className="text-sm text-gray-600 mt-1">
               {clientLoading ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  Loading client...
-                </span>
+                <Skeleton className="h-4 w-32 inline-block" />
               ) : (
                 <>
                   {client?.name || engagement?.title || "Client Name"} • For the year ended{" "}

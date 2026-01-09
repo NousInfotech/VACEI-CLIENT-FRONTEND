@@ -10,7 +10,6 @@ import UserMenu from "@/components/UserMenu";
 import TopHeader from "@/components/TopHeader";
 import Breadcrumbs from "@/components/layout/Breadcrumbs";
 import ChatWrapper from "@/components/ChatWrapper";
-import NavigationLoading from "@/components/NavigationLoading";
 import { cn } from "@/lib/utils";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -100,9 +99,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             {/* Chat Widget - Bottom Right */}
             <ChatWrapper />
-            
-            {/* Navigation Loading Overlay */}
-            <NavigationLoading />
         </div>
     );
 }

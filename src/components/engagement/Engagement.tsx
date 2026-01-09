@@ -3,7 +3,8 @@
 import React, { useMemo } from 'react';
 import ETBTable from './ETBTable';
 import AdjustmentsTab from './AdjustmentsTab';
-import { TableProperties, FileStack, Calculator, BarChart3, PieChart, Scale, FolderOpen, Loader2 } from 'lucide-react';
+import { TableProperties, FileStack, Calculator, BarChart3, PieChart, Scale, FolderOpen } from 'lucide-react';
+import { DetailsSkeleton } from '../shared/CommonSkeletons';
 import Reclassification from './Reclassification';
 import IncomeStatement from './IncomeStatement';
 import BalanceSheet from './BalanceSheet';
@@ -80,9 +81,7 @@ const Engagement = () => {
     return (
       <div className="p-8 max-w-[1600px] mx-auto min-h-screen bg-white space-y-8">
         <BackButton />
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        </div>
+        <DetailsSkeleton />
       </div>
     );
   }

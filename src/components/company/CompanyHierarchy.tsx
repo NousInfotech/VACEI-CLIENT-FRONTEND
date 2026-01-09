@@ -23,7 +23,7 @@ import jsPDF from "jspdf";
 import { Button } from "../ui/button";
 import { useCompanyHierarchy } from "./hooks/useCompanyHierarchy";
 import { useCompany } from "./hooks/useCompany";
-import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const LEVEL_GAP_Y = 400;
 const NODE_WIDTH = 350;
@@ -856,11 +856,7 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
 
   // ---- Render ----
   if (isStillLoading) {
-    return (
-      <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-gray-300 text-gray-500">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    );
+    return <Skeleton className="w-full h-[500px] rounded-xl" />;
   }
 
   if (hierarchyError) {

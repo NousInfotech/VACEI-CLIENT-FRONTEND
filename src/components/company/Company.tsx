@@ -13,8 +13,9 @@ import PillTabs from '../shared/PillTabs'
 import { useTabQuery } from '@/hooks/useTabQuery'
 import BackButton from '../shared/BackButton'
 import EmptyState from '../shared/EmptyState'
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { Company as CompanyType } from '@/api/auditService'
+import { DetailsSkeleton } from '../shared/CommonSkeletons'
 
 const Company = () => {
   const [activeTab, setActiveTab] = useTabQuery('detail')
@@ -43,9 +44,7 @@ const Company = () => {
     return (
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         <BackButton />
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        </div>
+        <DetailsSkeleton />
       </div>
     )
   }

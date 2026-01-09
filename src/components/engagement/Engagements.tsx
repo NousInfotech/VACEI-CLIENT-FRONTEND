@@ -3,11 +3,13 @@
 import React from 'react'
 import { useEngagements } from './hooks/useEngagements'
 import { useRouter } from 'next/navigation'
-import { Loader2, AlertCircle, FileText, Calendar, Building2 } from 'lucide-react'
+import { AlertCircle, FileText, Calendar, Building2 } from 'lucide-react'
 import EmptyState from '../shared/EmptyState'
 import BackButton from '../shared/BackButton'
 import { Card, CardContent } from '@/components/ui/card2'
 import { Button } from '@/components/ui/button'
+
+import { ListSkeleton } from '../shared/CommonSkeletons'
 
 const Engagements = () => {
   const { engagements, loading, error } = useEngagements()
@@ -31,9 +33,7 @@ const Engagements = () => {
     return (
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         <BackButton />
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        </div>
+        <ListSkeleton count={4} />
       </div>
     )
   }

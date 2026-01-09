@@ -2,13 +2,19 @@
 
 import React, { useState } from 'react'
 import {
-  Shield,
+  Building2,
+  User,
   MapPin,
+  FileText,
+  History,
+  AlertCircle,
   Globe,
+  Phone,
+  Shield,
   ChevronDown,
-  ChevronUp,
-  Loader2,
-} from 'lucide-react'
+  ChevronUp
+} from "lucide-react";
+import { ListSkeleton } from "../../shared/CommonSkeletons";
 import { Card, CardContent } from '../../ui/card2'
 import { Badge } from '@/components/ui/badge'
 import { Button } from "@/components/ui/button"
@@ -117,11 +123,7 @@ const KYCSection = () => {
     const filteredWorkflows = (kyc || []).filter((w: any) => w.workflowType === workflowType)
 
     if (loading) {
-      return (
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        </div>
-      )
+      return <ListSkeleton count={3} />;
     }
 
     if (error) {

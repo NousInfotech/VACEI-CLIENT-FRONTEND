@@ -3,24 +3,21 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card2";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar, FileText, CheckCircle2, Loader2 } from "lucide-react";
+import { Calendar, FileText, CheckCircle2 } from "lucide-react";
 import { useReclassifications } from './hooks/useReclassifications';
 import { useEtb } from './hooks/useEtb';
 import { useEngagement } from './hooks/useEngagement';
 import { format } from 'date-fns';
 import { formatAmount } from '@/lib/utils';
+import { TableSkeleton } from "../shared/CommonSkeletons";
 
 const Reclassification = () => {
   const { engagement } = useEngagement();
+  const { reclassifications, loading, error } = useReclassifications(engagement?._id || null);
   const { etb } = useEtb(engagement?._id || null);
-  const { reclassifications, loading, error } = useReclassifications(etb?._id || null);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-      </div>
-    );
+    return <TableSkeleton rows={8} />;
   }
 
   if (error) {

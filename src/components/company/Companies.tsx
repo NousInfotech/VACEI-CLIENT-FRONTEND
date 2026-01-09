@@ -3,11 +3,13 @@
 import React, { useEffect } from 'react'
 import { useCompanies } from './hooks/useCompanies'
 import { useRouter } from 'next/navigation'
-import { Building2, Hash, Loader2, AlertCircle } from 'lucide-react'
+import { Building2, Hash, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card2'
 import EmptyState from '../shared/EmptyState'
 import BackButton from '../shared/BackButton'
+
+import { ListSkeleton } from '../shared/CommonSkeletons'
 
 const Companies = () => {
   const { companies, loading, error } = useCompanies()
@@ -24,9 +26,7 @@ const Companies = () => {
     return (
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         <BackButton />
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        </div>
+        <ListSkeleton count={6} />
       </div>
     )
   }
@@ -49,9 +49,7 @@ const Companies = () => {
     return (
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         <BackButton />
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        </div>
+        <ListSkeleton count={1} />
       </div>
     )
   }

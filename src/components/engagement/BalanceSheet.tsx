@@ -16,11 +16,11 @@ import {
   ChevronsDown,
   ChevronsUp,
   FileText,
-  Loader2,
   Info,
   Download
 } from "lucide-react";
 import { formatAmount } from '@/lib/utils';
+import { TableSkeleton } from '../shared/CommonSkeletons';
 
 interface BalanceSheetProps {
   data: any;
@@ -30,11 +30,7 @@ const BalanceSheet: React.FC<BalanceSheetProps> = ({ data }) => {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [retainedEarningsInfoOpen, setRetainedEarningsInfoOpen] = useState(false);
 
-  if (!data || !data.balance_sheet) return (
-    <div className="flex items-center justify-center p-12 text-muted-foreground italic">
-      <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading data...
-    </div>
-  );
+  if (!data || !data.balance_sheet) return <TableSkeleton rows={15} />;
 
   const clientLoading = false; 
   const client = data.company;
