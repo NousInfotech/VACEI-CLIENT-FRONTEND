@@ -327,7 +327,7 @@ function SchedulePageContent() {
 
   return (
      <section className="mx-auto max-w-[1400px] w-full pt-5">
-     <DashboardCard className="px-5 py-6 overflow-hidden">
+     <DashboardCard className="px-5 py-6">
           <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">
           {meetingDetails.id ? "Edit Meeting" : "Schedule New Meeting"}
         </h1>

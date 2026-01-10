@@ -50,7 +50,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Main Content Area */}
             <div
                 className={cn(
-                    "flex-1 flex flex-col overflow-hidden transition-all duration-300",
+                    "flex-1 flex flex-col transition-all duration-300",
                     isSidebarCollapsed ? "lg:ml-24" : "lg:ml-84"
                 )}
             >

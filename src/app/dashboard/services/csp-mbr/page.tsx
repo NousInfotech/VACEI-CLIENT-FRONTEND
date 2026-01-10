@@ -463,6 +463,7 @@ function CspMbrContent() {
             <Filter className="w-4 h-4 text-muted-foreground" />
             <Dropdown
               className="w-auto min-w-[140px]"
+              align="left"
               trigger={
                 <Button variant="outline" size="sm" className="w-auto min-w-[140px] h-9 justify-between">
                   {mbrFilterType === "all" ? "All Types" : mbrFilterType}
@@ -480,6 +481,7 @@ function CspMbrContent() {
             />
             <Dropdown
               className="w-auto min-w-[140px]"
+              align="left"
               trigger={
                 <Button variant="outline" size="sm" className="w-auto min-w-[140px] h-9 justify-between">
                   {mbrFilterStatus === "all" ? "All Statuses" : mbrFilterStatus.charAt(0).toUpperCase() + mbrFilterStatus.slice(1)}
@@ -497,6 +499,7 @@ function CspMbrContent() {
             />
             <Dropdown
               className="w-auto min-w-[140px]"
+              align="left"
               trigger={
                 <Button variant="outline" size="sm" className="w-auto min-w-[140px] h-9 justify-between">
                   {mbrFilterYear === "all" ? "All Years" : mbrFilterYear}

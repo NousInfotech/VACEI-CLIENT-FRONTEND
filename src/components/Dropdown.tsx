@@ -45,6 +45,8 @@ export const Dropdown = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [calculatedSide, setCalculatedSide] = useState<"top" | "bottom">(side);
+  const [calculatedAlign, setCalculatedAlign] = useState<"left" | "right" | "center">(align);
+  const [maxHeight, setMaxHeight] = useState<number>(320);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -64,25 +66,52 @@ export const Dropdown = ({
       // Handle auto-positioning
       if (dropdownRef.current) {
         const rect = dropdownRef.current.getBoundingClientRect();
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const spaceAbove = rect.top;
-        const menuHeight = searchable ? 380 : 320; // Estimated max height
+        
+        // Find visible horizontal boundary (main layout defines the clipping area)
+        const mainElement = document.querySelector('main');
+        const boundaryLeft = mainElement ? mainElement.getBoundingClientRect().left : 0;
+        
+        // Vertical positioning
+        const spaceBelow = window.innerHeight - rect.bottom - 20; 
+        const spaceAbove = rect.top - 20; 
+        const bestSide = (spaceBelow < 320 && spaceAbove > spaceBelow) ? "top" : "bottom";
+        setCalculatedSide(bestSide);
+        
+        // Horizontal positioning
+        const buffer = 20;
+        const dropdownWidth = fullWidth ? rect.width : 256; 
+        const spaceRight = window.innerWidth - rect.left - buffer;
+        const spaceLeftRelativeToBoundary = rect.right - boundaryLeft - buffer;
 
-        if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
-          setCalculatedSide("top");
-        } else {
-          setCalculatedSide("bottom");
+        if (!fullWidth) {
+          // If we're aligned right, we grow LEFT. Ensure we don't hit the boundary on the left.
+          if (align === "right" && spaceLeftRelativeToBoundary < dropdownWidth && spaceRight > spaceLeftRelativeToBoundary) {
+            setCalculatedAlign("left");
+          } 
+          // If we're aligned left, we grow RIGHT. Ensure we don't hit the screen edge.
+          else if (align === "left" && spaceRight < dropdownWidth && spaceLeftRelativeToBoundary > spaceRight) {
+            setCalculatedAlign("right");
+          } 
+          else {
+            setCalculatedAlign(align);
+          }
         }
+        
+        // Set max height based on side
+        const availableHeight = bestSide === "top" ? spaceAbove : spaceBelow;
+        const contentMaxHeight = searchable ? availableHeight - 50 : availableHeight;
+        setMaxHeight(Math.max(160, Math.min(contentMaxHeight, children ? availableHeight : 320)));
       }
     } else {
-      setSearchQuery(""); // Reset search when closed
-      setCalculatedSide(side); // Reset side to default
+      setSearchQuery(""); 
+      setCalculatedSide(side); 
+      setCalculatedAlign(align);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen, searchable]);
+  }, [isOpen, searchable, align, side, fullWidth]);
 
   const filteredItems = useMemo(() => {
     if (!searchable || !searchQuery) return items;
@@ -119,7 +148,7 @@ export const Dropdown = ({
   };
 
   return (
-    <div className={cn("relative inline-block text-left z-1 hover:z-100 focus-within:z-100", className)} ref={dropdownRef}>
+    <div className={cn("relative inline-block text-left z-20 hover:z-100 focus-within:z-100", className)} ref={dropdownRef}>
       {/* Trigger */}
       <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
         {trigger ? (
@@ -146,7 +175,7 @@ export const Dropdown = ({
         className={cn(
           "absolute z-999 origin-top rounded-2xl bg-white/95 backdrop-blur-md p-1.5 shadow-2xl ring-1 ring-black/5 focus:outline-none transition-all duration-300 ease-in-out",
           fullWidth ? "w-full" : "w-64",
-          alignmentClasses[align],
+          alignmentClasses[calculatedAlign],
           sideClasses[calculatedSide],
           isOpen
             ? "scale-100 opacity-100 translate-y-0 pointer-events-auto"
@@ -171,11 +200,18 @@ export const Dropdown = ({
         )}
 
         {children ? (
-            <div onClick={() => closeOnClick && setIsOpen(false)}>
+            <div 
+                onClick={() => closeOnClick && setIsOpen(false)}
+                style={{ maxHeight: `${maxHeight}px`, overflowY: 'auto' }}
+                className="custom-scrollbar z-999"
+            >
                 {children}
             </div>
         ) : (
-            <div className="py-1 max-h-72 overflow-y-auto custom-scrollbar">
+            <div 
+                className="py-1 overflow-y-auto custom-scrollbar"
+                style={{ maxHeight: `${maxHeight}px` }}
+            >
             {filteredItems.length > 0 ? (
               filteredItems.map((item) => (
                   <button

@@ -540,7 +540,7 @@ export default function TodoList() {
                 </div>
 
                 {/* Create or Edit Task Section */}
-                <div className="bg-card border border-border rounded-[16px] shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md overflow-hidden mt-8"> {/* Added mt-8 for spacing */}
+                <div className="bg-card border border-border rounded-[16px] shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md mt-8"> {/* Added mt-8 for spacing */}
                     <h2 className="text-xl font-medium px-5 py-3 border-b border-border">{editTaskId ? "Edit Task" : "Create New Task"}</h2>
                     <div className="p-1" ref={taskFormRef}>
                         <TaskForm
