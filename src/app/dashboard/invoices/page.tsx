@@ -9,7 +9,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import InvoiceModal from "./components/InvoiceModal";
 import PaymentModal from "./components/PaymentModal";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import { Dropdown } from "@/components/Dropdown";
+import { ChevronDown } from "lucide-react";
 import {
     Table,
     TableBody,
@@ -213,8 +214,8 @@ export default function InvoiceList() {
                         title="Total Invoices"
                         count={stats.paidCount + stats.unpaidCount}
                         total={stats.paidTotal + stats.unpaidTotal}
-                        bgcolorClass="bg-brand-primary"
-                        colorClass="text-brand-primary100"
+                        bgcolorClass="bg-blue-600"
+                        colorClass="text-blue-100"
                     />
                     <StatsCard
                         title="Outstanding Balance"
@@ -274,24 +275,28 @@ export default function InvoiceList() {
                         />
                     </div>
                     <div>
-                        <Select
-                            value={statusFilter}
-                            onChange={(e) => {
-                                setStatusFilter(e.target.value);
-                                setPage(1); // reset page on status filter change
-                            }}
-                            className="w-full md:w-auto min-w-[150px]"
-                        >
-                            <option value="">All Statuses</option>
-                            <option value="Paid">Paid</option>
-                            <option value="Unpaid">Unpaid</option>
-                        </Select>
+                        <Dropdown
+                            align="left"
+                            label={statusFilter || "All Statuses"}
+                            searchable={true}
+                            items={[
+                                { id: "all", label: "All Statuses", onClick: () => { setStatusFilter(""); setPage(1); } },
+                                { id: "Paid", label: "Paid", onClick: () => { setStatusFilter("Paid"); setPage(1); } },
+                                { id: "Unpaid", label: "Unpaid", onClick: () => { setStatusFilter("Unpaid"); setPage(1); } },
+                            ]}
+                            trigger={
+                                <div className="border border-border rounded-lg px-3 py-2 bg-card flex justify-between items-center cursor-pointer hover:border-gray-400 transition-colors h-10 min-w-[150px] shadow-sm">
+                                    <span className="text-sm text-gray-700 truncate">
+                                        {statusFilter || "All Statuses"}
+                                    </span>
+                                    <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+                                </div>
+                            }
+                        />
                     </div>
                     <Button
-                        variant={"outline"}
-                        onClick={clearFilters}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer bg-sidebar-background border-sky-800 text-card-foreground !font-normal"
-                    >
+                        variant={"default"}
+                        onClick={clearFilters}                    >
                         Clear Filters
                     </Button>
                 </div>
@@ -343,7 +348,7 @@ export default function InvoiceList() {
                                             <TableCell className="p-3 px-6">
                                                 <span
                                                     className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${inv.status?.toLowerCase() === "paid"
-                                                        ? "bg-sidebar-background text-green-700"
+                                                        ? "bg-green-100 text-green-700"
                                                         : "bg-red-100 text-red-700"
                                                         }`}
                                                 >

@@ -1,28 +1,10 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
+// This file has been replaced with Dropdown component
+// Re-exporting Dropdown for backward compatibility
+import Dropdown from "@/components/Dropdown";
 
-export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {}
+// Note: Dropdown has a different API than the original Select component
+// All usages have been migrated to use Dropdown directly
+// This export is kept for any remaining references, but it's recommended to import Dropdown directly
 
-const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, children, ...props }, ref) => {
-    return (
-      <select
-        className={cn(
-          "flex h-9 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm shadow-sm",
-          "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
-          "disabled:cursor-not-allowed disabled:opacity-50",
-          "transition-all",
-          className
-        )}
-        ref={ref}
-        {...props}
-      >
-        {children}
-      </select>
-    )
-  }
-)
-Select.displayName = "Select"
-
-export { Select }
+export { Dropdown as Select };
 

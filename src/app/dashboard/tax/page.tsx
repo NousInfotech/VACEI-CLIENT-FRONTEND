@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import DashboardCard from "@/components/DashboardCard";
 
 export default function TaxPage() {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -49,31 +50,30 @@ export default function TaxPage() {
 
     // Styled render for Tax Agencies
     const renderTaxAgencies = (items: any[]) => (
-        <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md mb-5">
-            <h3 className="text-xl leading-normal text-brand-body capitalize font-medium">Tax Agencies</h3>
+        <DashboardCard className="p-4 mb-5">
+            <h3 className="text-xl leading-normal text-brand-body capitalize font-medium mb-4">Tax Agencies</h3>
             <ul className="list-disc ml-5 space-y-2">
                 {items.map((agency) => (
-                    <li key={agency.Id} className="rounded bg-brand-body">
-                        <p><span className="font-semibold"> {agency.DisplayName}</span></p>
-
+                    <li key={agency.Id} className="text-gray-800">
+                        <span className="font-semibold">{agency.DisplayName}</span>
                     </li>
                 ))}
             </ul>
-        </div>
+        </DashboardCard>
     );
 
     // Styled render for Tax Rates
     const renderTaxRates = (items: any[]) => (
-        <div className="bg-card shadow p-5 rounded mb-5">
-            <h3 className="text-xl leading-normal text-brand-body capitalize font-medium">Tax Rates</h3>
-            <ul className="list-disc ml-5 space-y-1">
+        <DashboardCard className="p-4 mb-5">
+            <h3 className="text-xl leading-normal text-brand-body capitalize font-medium mb-4">Tax Rates</h3>
+            <ul className="list-disc ml-5 space-y-2">
                 {items.map((rate) => (
                     <li key={rate.Id} className="text-gray-800 font-semibold">
                         {rate.Name} : {rate.RateValue}%
                     </li>
                 ))}
             </ul>
-        </div>
+        </DashboardCard>
     );
 
     // Extract data from taxData
@@ -84,32 +84,28 @@ export default function TaxPage() {
 
     return (
         <section className="mx-auto max-w-[1400px] w-full pt-5">
-            <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
-                <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">Tax</h1>
+            <DashboardCard className="p-4">
+                <h1 className="text-xl leading-normal text-brand-body capitalize font-medium mb-4">Tax</h1>
 
-                <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto mt-2 transition-all duration-300 hover:shadow-md mb-3">
+                <DashboardCard className="p-4 mb-3">
                     <div className="flex gap-4 items-center">
                         <div className="image">
                             <Image src="/tax.svg" alt="Recurring Expenses" width={120} height={120} />
                         </div>
                         <div className="content">
                             <h2 className="text-xl leading-normal text-brand-body capitalize font-semibold mb-2">Let's keep working on your taxes</h2>
-                            <p>Please review and complete the sections listed below.</p>
+                            <p className="text-muted-foreground text-sm">Please review and complete the sections listed below.</p>
                         </div>
                     </div>
-                </div>
+                </DashboardCard>
 
                 <div className="flex lg:flex-row flex-col gap-5">
                     {/* Tax Profile */}
-                    <div className="flex-4/5 bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto mt-2 transition-all duration-300 hover:shadow-md mb-5 h-max">
+                    <DashboardCard className="flex-4/5 p-4 mb-5 h-max">
                         <div className="flex gap-4 justify-between items-center">
                             <div>
                                 <h2 className="text-xl leading-normal text-brand-body capitalize font-medium">Tax Related Data</h2>
-
                             </div>
-                            {/*  <button className="bg-primary h-max text-card-foreground px-3 py-1.5 hover:bg-dark-primary hover:text-card-foreground transition-all duration-200">
-                Continue Working
-              </button> */}
                         </div>
 
                         <div className="mt-5">
@@ -121,14 +117,13 @@ export default function TaxPage() {
                                     {renderTaxRates(taxRateItems)}
                                 </>
                             ) : (
-                                // Changed text-red-500 to text-muted-foreground for "No tax data found."
                                 <p className="text-muted-foreground text-sm">No tax data found.</p>
                             )}
                         </div>
-                    </div>
+                    </DashboardCard>
 
                     {/* Contact Info */}
-                    <div className="flex-1/5 bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto mt-2 transition-all duration-300 hover:shadow-md mb-5 h-max">
+                    <DashboardCard className="flex-1/5 p-4 mb-5 h-max">
                         <div className="flex justify-between items-center">
                             <h2 className="text-xl leading-normal text-brand-body capitalize font-medium">Contact Info</h2>
                             <p className="text-xs text-rose-800 font-medium">Current</p>
@@ -142,29 +137,28 @@ export default function TaxPage() {
                                 </div>
                             </div>
                         ) : company ? (
-                            <div className="flex flex-col gap-2 leading-4">
-                                <p className="text-brand-body mb-0">Company Name</p>
+                            <div className="flex flex-col gap-2 leading-4 text-sm">
+                                <p className="text-brand-body mb-0 semibold">Company Name</p>
                                 <p className="font-bold mb-2">{company.simplifiedProfile?.companyName || '—'}</p>
 
-                                <p className="text-brand-body mb-0">Legal Name</p>
+                                <p className="text-brand-body mb-0 semibold">Legal Name</p>
                                 <p className="font-bold mb-2">{company.simplifiedProfile?.legalName || '—'}</p>
 
-                                <p className="text-brand-body mb-0">Email</p>
+                                <p className="text-brand-body mb-0 semibold">Email</p>
                                 <p className="font-bold mb-2">{company.simplifiedProfile?.email || '—'}</p>
 
-                                <p className="text-brand-body mb-0">Address</p>
+                                <p className="text-brand-body mb-0 semibold">Address</p>
                                 <p className="font-bold mb-2">{company.simplifiedProfile?.address || '—'}</p>
 
-                                <p className="text-brand-body mb-0">Start Date</p>
+                                <p className="text-brand-body mb-0 semibold">Start Date</p>
                                 <p className="font-bold">{company.simplifiedProfile?.startDate || '—'}</p>
                             </div>
                         ) : (
-                            // Changed text-red-500 to text-muted-foreground for "No company data found."
                             <p className="text-muted-foreground text-sm">No company data found.</p>
                         )}
-                    </div>
+                    </DashboardCard>
                 </div>
-            </div>
+            </DashboardCard>
         </section>
     );
 }

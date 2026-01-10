@@ -7,7 +7,9 @@ import { fetchChatUsers } from "@/api/taskService";
 import { useRouter } from "next/navigation";
 import MeetingInfoPopup from "./components/SchedulePopUp"; // Import the new component
 import { CalendarEvent } from "@/interfaces"; // Assuming CalendarEvent includes client and accountant objects directly
-import { Select } from "@/components/ui/select";
+import { Dropdown } from "@/components/Dropdown";
+import { ChevronDown } from "lucide-react";
+import DashboardCard from "@/components/DashboardCard";
 
 export default function ParentComponent(): JSX.Element {
   const router = useRouter();
@@ -174,9 +176,8 @@ export default function ParentComponent(): JSX.Element {
 
   // Handler for when the accountant filter changes
   const handleAccountantFilterChange = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement>): void => {
-      const value = event.target.value;
-      console.log("Dropdown change event. New value:", value);
+    (value: string | number): void => {
+      console.log("Dropdown change. New value:", value);
       // Convert to number if not "all", otherwise set to "all"
       setSelectedAccountantId(value === "all" ? "all" : Number(value));
     },
@@ -185,7 +186,7 @@ export default function ParentComponent(): JSX.Element {
 
   return (
      <section className="mx-auto max-w-[1400px] w-full pt-5">
-     <div className="bg-card border border-border rounded-[10px] px-5 py-6 overflow-hidden">
+     <DashboardCard className="px-5 py-6 overflow-hidden">
 
         <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">Schedule Meeting</h1>
 
@@ -194,31 +195,34 @@ export default function ParentComponent(): JSX.Element {
           <div> </div>
           <div className="flex items-center space-x-2">
             <label
-              htmlFor="accountant-filter"
+              htmlFor="accountantId"
               className="text-brand-body flex-shrink-0 w-15"
             >
               Filter by:
             </label>
-            <Select
-              id="accountantId"
-              name="accountantId"
-              value={selectedAccountantId} // <<-- CRITICAL: Bind value to state
-              onChange={handleAccountantFilterChange} // <<-- CRITICAL: Bind onChange to handler
-              className="w-full"
-              disabled={loadingAccountants}
-            >
-              {/* Changed value to "all" for consistency with state */}
-              <option value="all">All Accountants</option>
-              {accountants.length > 0 ? (
-                accountants.map((item) => (
-                  <option key={item.accountant.id} value={item.accountant.id}>
-                    {` ${item.accountant.email}`} {/* Use .username and .email */}
-                  </option>
-                ))
-              ) : (
-                <option disabled>No accountants available.</option>
-              )}
-            </Select>
+            <Dropdown
+              align="right"
+              searchable={true}
+              items={[
+                { id: "all", label: "All Accountants", onClick: () => handleAccountantFilterChange("all") },
+                ...accountants.map((item) => ({
+                   id: item.accountant.id,
+                   label: item.accountant.email,
+                   onClick: () => handleAccountantFilterChange(item.accountant.id)
+                }))
+              ]}
+              trigger={
+                <div className={`border border-border rounded-lg px-3 py-2 bg-card flex justify-between items-center cursor-pointer hover:border-gray-400 transition-colors h-10 min-w-[200px] shadow-sm ${loadingAccountants ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <span className="text-sm text-gray-700 truncate">
+                    {selectedAccountantId === "all" 
+                      ? "All Accountants" 
+                      : accountants.find(a => a.accountant.id === selectedAccountantId)?.accountant.email || "Select Accountant"
+                    }
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+                </div>
+              }
+            />
           </div>
         </div>
         {(isLoading || loadingAccountants) && (
@@ -256,7 +260,7 @@ export default function ParentComponent(): JSX.Element {
             )}
           </>
         )}
-      </div>
+      </DashboardCard>
     </section>
   );
 }

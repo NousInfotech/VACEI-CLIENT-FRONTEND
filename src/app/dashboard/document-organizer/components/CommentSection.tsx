@@ -3,8 +3,10 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import AlertMessage from "../../../../components/AlertMessage";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Edit03Icon, Delete02Icon, } from "@hugeicons/core-free-icons";
-import { Select } from "@/components/ui/select";
+import { Edit03Icon, Delete02Icon } from "@hugeicons/core-free-icons";
+import { Dropdown } from "@/components/Dropdown";
+import DashboardCard from "@/components/DashboardCard";
+import { ChevronDown } from "lucide-react";
 
 type CommentSectionProps = {
   fileId: string;
@@ -92,7 +94,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
       }
     } catch (err) {
       console.error("Error fetching comments", err);
-      //setAlert({ message: "Failed to load comments.", variant: "danger" });
     } finally {
       if (!silent) setLoading(false);
       setInitialLoading(false);
@@ -234,25 +235,39 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
   };
 
   return (
-    <div className="mt-6 pt-4  bg-gradient-to-tr from-white to-gray-50 rounded-xl shadow-lg p-6">
+    <DashboardCard className="mt-6 p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-semibold text-2xl text-brand-body tracking-wide">Comments</h3>
-        <Select
-          value={selectedTarget}
-          onChange={(e) => {
-            setSelectedTarget(e.target.value);
-            setNewCommentTarget(e.target.value);
-          }}
-          className="text-sm min-w-[180px]"
-          aria-label="Select file to comment on"
-        >
-          {files.map((file) => (
-            <option key={file.id} value={file.id}>
-              {file.fileName}
-            </option>
-          ))}
-          <option value="0">Whole Document</option>
-        </Select>
+        <Dropdown
+          label={selectedTarget === "0" ? "Whole Document" : (files.find(f => f.id === selectedTarget)?.name || "Select File")}
+          searchable={true}
+          items={[
+            ...files.map((file) => ({
+              id: file.id,
+              label: file.name,
+              onClick: () => {
+                setSelectedTarget(file.id);
+                setNewCommentTarget(file.id);
+              }
+            })),
+            {
+              id: "0",
+              label: "Whole Document",
+              onClick: () => {
+                setSelectedTarget("0");
+                setNewCommentTarget("0");
+              }
+            }
+          ]}
+          trigger={
+            <div className="border border-border rounded-lg px-3 py-2 bg-card flex justify-between items-center cursor-pointer hover:border-gray-400 transition-colors h-10 min-w-[220px] shadow-sm">
+              <span className="text-sm text-gray-700 truncate">
+                {selectedTarget === "0" ? "Whole Document" : (files.find(f => f.id === selectedTarget)?.name || "Select File")}
+              </span>
+              <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+            </div>
+          }
+        />
       </div>
 
       {alert && (
@@ -271,9 +286,9 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
             <p className="text-center text-muted-foreground italic select-none">No comments yet.</p>
           ) : (
             comments.map((comment) => (
-              <div
+              <DashboardCard
                 key={comment.id}
-                className="flex items-start space-x-4 bg-card rounded-xl p-4 shadow-md hover:shadow-md transition duration-300"
+                className="flex items-start bg-card p-4 gap-4"
               >
                 <div
                   className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-400 text-card-foreground rounded-full font-semibold text-lg select-none"
@@ -305,20 +320,18 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
                         disabled={submitting}
                         aria-label="Edit comment"
                       />
-                      <div className="mt-3 flex space-x-2 justify-end"> {/* Reduced space-x, added justify-end */}
+                      <div className="mt-3 flex space-x-2 justify-end">
                         <button
                           onClick={cancelEditing}
                           disabled={submitting}
-                          className="px-3 py-1.5 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400
-               disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition"
+                          className="px-3 py-1.5 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition"
                         >
                           Cancel
                         </button>
                         <button
                           onClick={() => saveEdit(comment.id)}
                           disabled={submitting || !editingText.trim()}
-                          className="px-3 py-1.5 bg-brand-primary text-card-foreground rounded-md hover:bg-brand-primary700
-               disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition"
+                          className="px-3 py-1.5 bg-brand-primary text-card-foreground rounded-md hover:bg-brand-primary700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition"
                         >
                           Save
                         </button>
@@ -348,13 +361,13 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
                     </>
                   )}
                 </div>
-              </div>
+              </DashboardCard>
             ))
           )}
         </div>
       )}
 
-      <div className="mt-8 bg-card p-5 rounded-xl shadow-md border border-border">
+      <DashboardCard className="mt-8 bg-card p-5 border">
         <textarea
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
@@ -369,16 +382,17 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
           <button
             onClick={handleAddComment}
             disabled={!newComment.trim() || submitting}
-            className={`px-6 py-3 rounded-lg text-card-foreground font-semibold text-sm transition ${!newComment.trim() || submitting
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-brand-primary hover:bg-brand-primary700"
-              }`}
+            className={`px-6 py-3 rounded-lg text-card-foreground font-semibold text-sm transition ${
+              !newComment.trim() || submitting
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-brand-primary hover:bg-brand-primary700"
+            }`}
           >
             Comment
           </button>
         </div>
-      </div>
-    </div>
+      </DashboardCard>
+    </DashboardCard>
   );
 };
 

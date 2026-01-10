@@ -196,14 +196,19 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
 
     const activeCompanyName = companies.find(c => c.id === activeCompany)?.name || "Select Company";
 
-    const companyMenuItems = companies.map(c => ({
-        id: c.id,
-        label: c.name,
-        onClick: () => {
-            setActiveCompany(c.id);
-            if (typeof window !== "undefined") localStorage.setItem("vacei-active-company", c.id);
-        }
-    }));
+    const companyMenuItems = companies.map(c => {
+        const isActive = c.id === activeCompany;
+        return {
+            id: c.id,
+            label: c.name,
+            className: isActive ? "bg-success/10 text-success font-bold" : "",
+            icon: <div className={cn("w-2 h-2 rounded-full", isActive ? "bg-success" : "bg-gray-200")} />,
+            onClick: () => {
+                setActiveCompany(c.id);
+                if (typeof window !== "undefined") localStorage.setItem("vacei-active-company", c.id);
+            }
+        };
+    });
 
     const quickActionItems = [
         {
@@ -283,9 +288,9 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                         searchable={true}
                         searchPlaceholder="Search companies..."
                         trigger={
-                            <div className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-bold text-gray-900 cursor-pointer shadow-sm hover:shadow-md hover:bg-white transition-all min-w-[160px] flex justify-between items-center group">
+                            <div className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-medium text-gray-900 cursor-pointer shadow-sm hover:shadow-md hover:bg-white transition-all min-w-[160px] flex justify-between items-center group">
                                 <span className="flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                                    <div className="w-1.5 h-1.5 rounded-full bg-success" />
                                     {activeCompanyName}
                                 </span>
                                 <ChevronDown className="w-3.5 h-3.5 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />
@@ -300,7 +305,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                     trigger={
                         <Button
                             variant="outline"
-                            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold cursor-pointer border-gray-200 hover:bg-white hover:shadow-md transition-all h-10"
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium cursor-pointer border-gray-200 hover:shadow-md transition-all h-10"
                         >
                             <i className="fi fi-rr-menu-burger text-sm" />
                             <span className="hidden md:inline">QUICK ACTIONS</span>
@@ -398,7 +403,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                         <p className="text-sm font-bold text-gray-900 leading-tight">
                             {username}
                         </p>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                        <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mt-0.5">
                             {role || "Client"}
                         </p>
                     </div>
@@ -407,7 +412,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                         <div 
                             className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-900 text-white shadow-lg group-hover:scale-105 transition-transform"
                         >
-                            <span className="text-sm font-bold">
+                            <span className="text-sm font-medium">
                                 {username.charAt(0).toUpperCase()}
                             </span>
                         </div>

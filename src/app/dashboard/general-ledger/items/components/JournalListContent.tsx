@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { fetchJournalItemAPI, JournalLine } from "../../../../../api/journalApi";
 import Link from "next/link"; // Import Link for client-side navigation
-import { Select } from "@/components/ui/select";
+import Dropdown from "@/components/Dropdown";
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 
 const SkeletonRow = () => (
     <tr className="border-b border-border animate-pulse">
@@ -171,15 +173,20 @@ export default function JournalListContent() {
                             className="w-full border p-2 text-sm border-border rounded-0 focus:outline-none"
                         />
 
-                        <Select
-                            value={postingTypeFilter}
-                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPostingTypeFilter(e.target.value as "" | "Credit" | "Debit")}
+                        <Dropdown
                             className="w-full"
-                        >
-                            <option value="">Filter by Posting Type</option>
-                            <option value="Credit">Credit</option>
-                            <option value="Debit">Debit</option>
-                        </Select>
+                            trigger={
+                                <Button variant="outline" className="w-full h-9 justify-between">
+                                    {postingTypeFilter || "Filter by Posting Type"}
+                                    <ChevronDown className="h-4 w-4 opacity-50" />
+                                </Button>
+                            }
+                            items={[
+                                { id: "", label: "Filter by Posting Type", onClick: () => setPostingTypeFilter("") },
+                                { id: "Credit", label: "Credit", onClick: () => setPostingTypeFilter("Credit") },
+                                { id: "Debit", label: "Debit", onClick: () => setPostingTypeFilter("Debit") }
+                            ]}
+                        />
 
                         <input
                             type="text"

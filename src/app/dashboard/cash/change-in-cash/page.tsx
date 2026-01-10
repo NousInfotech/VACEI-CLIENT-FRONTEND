@@ -154,8 +154,8 @@ export default function ChangeInCashPage() {
                                         <tr>
                                             <th className="bg-brand-muted z-10 p-2 px-8 w-60 text-left font-semibold border-border"></th>
                                             {Array.from({ length: 6 }).map((_, index) => (
-                                                <th key={index} className="bg-brand-muted z-10 p-2 px-8 w-60 text-left font-semibold border-border">
-                                                    <div className="h-4 bg-gray-200 rounded w-24"></div>
+                                                <th key={index} className="bg-brand-muted z-10 p-2 px-8 w-60 text-right font-semibold border-border">
+                                                    <div className="h-4 bg-gray-200 rounded w-24 ml-auto"></div>
                                                 </th>
                                             ))}
                                         </tr>
@@ -184,7 +184,7 @@ export default function ChangeInCashPage() {
                                                 Category
                                             </th>
                                             {monthlyCashFlowData.months.map((month, index) => (
-                                                <th key={index} className="bg-brand-muted z-10 p-2 px-8 w-60 text-left font-semibold border-border">
+                                                <th key={index} className="bg-brand-muted z-10 p-2 px-8 w-60 text-right font-semibold border-border">
                                                     {month}
                                                 </th>
                                             ))}

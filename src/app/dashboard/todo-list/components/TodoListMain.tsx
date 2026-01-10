@@ -13,7 +13,8 @@ import TaskInfo, { Priority } from "./TaskInfo";
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Button } from "@/components/ui/button";
-import { Clock } from "lucide-react";
+import Dropdown from "@/components/Dropdown";
+import { ChevronDown, Clock } from "lucide-react";
 // Custom hook for debouncing a value
 function useDebounce<T>(value: T, delay: number): T {
     const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -349,17 +350,21 @@ export default function TodoList() {
                         className="flex-1 min-w-[200px] border border-border rounded-lg px-3 py-2 bg-card"
                     />
 
-                    <select
-                        id="priority"
-                        value={priorityFilter ?? ""}
-                        onChange={(e) => setPriorityFilter(e.target.value)}
-                        className="w-full md:w-auto rounded-md border border-border bg-card focus:border-border focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-brand-body"
-                    >
-                        <option value="">Select Priority</option>
-                        <option value="LOW">Low</option>
-                        <option value="MEDIUM">Medium</option>
-                        <option value="HIGH">High</option>
-                    </select>
+                    <Dropdown
+                        className="w-full md:w-auto"
+                        trigger={
+                            <Button variant="outline" className="w-full md:w-auto h-9 justify-between">
+                                {priorityFilter ? priorityFilter.charAt(0) + priorityFilter.slice(1).toLowerCase() : "Select Priority"}
+                                <ChevronDown className="h-4 w-4 opacity-50" />
+                            </Button>
+                        }
+                        items={[
+                            { id: "", label: "Select Priority", onClick: () => setPriorityFilter("") },
+                            { id: "LOW", label: "Low", onClick: () => setPriorityFilter("LOW") },
+                            { id: "MEDIUM", label: "Medium", onClick: () => setPriorityFilter("MEDIUM") },
+                            { id: "HIGH", label: "High", onClick: () => setPriorityFilter("HIGH") }
+                        ]}
+                    />
 
                     <DatePicker
                         selected={dueDateFilter ? new Date(dueDateFilter) : null}
@@ -381,38 +386,46 @@ export default function TodoList() {
                     />
 
 
-                    <select
-                        value={assignedToFilterId ?? ""}
-                        onChange={(e) =>
-                            setAssignedToFilterId(e.target.value ? Number(e.target.value) : null)
+                    <Dropdown
+                        className="w-full md:w-auto"
+                        trigger={
+                            <Button variant="outline" className="w-full md:w-auto h-9 justify-between">
+                                {assignedToFilterId ? accountants.find(acc => acc.accountant.id === assignedToFilterId)?.accountant.name + " (" + accountants.find(acc => acc.accountant.id === assignedToFilterId)?.accountant.email + ")" || "All Accountants" : "All Accountants"}
+                                <ChevronDown className="h-4 w-4 opacity-50" />
+                            </Button>
                         }
-                        className="w-full md:w-auto rounded-md border  border-border bg-card focus:border-border focus:ring focus:ring-blue-200 focus:ring-opacity-50 px-3 py-2 text-sm text-brand-body"
-                    >
-                        <option value="">All Accountants</option>
-                        {accountants.map((acc) => (
-                            <option key={acc.accountant.id} value={acc.accountant.id}>
-                                {acc.accountant.name} ({acc.accountant.email})
-                            </option>
-                        ))}
-                    </select>
+                        items={[
+                            { id: "", label: "All Accountants", onClick: () => setAssignedToFilterId(null) },
+                            ...accountants.map((acc) => ({
+                                id: acc.accountant.id,
+                                label: `${acc.accountant.name} (${acc.accountant.email})`,
+                                onClick: () => setAssignedToFilterId(acc.accountant.id)
+                            }))
+                        ]}
+                    />
 
-                    <select
-                        value={statusFilterId ?? ""}
-                        onChange={(e) => setStatusFilterId(e.target.value ? Number(e.target.value) : null)}
-                        className="w-full md:w-auto rounded-md border  border-border bg-card px-3 py-2 text-sm text-brand-body"
-                    >
-                        <option value="">All Statuses</option>
-                        {statuses.map((status) => (
-                            <option key={status.id} value={status.id}>
-                                {status.name}
-                            </option>
-                        ))}
-                    </select>
+                    <Dropdown
+                        className="w-full md:w-auto"
+                        trigger={
+                            <Button variant="outline" className="w-full md:w-auto h-9 justify-between">
+                                {statusFilterId ? statuses.find(s => s.id === statusFilterId)?.name || "All Statuses" : "All Statuses"}
+                                <ChevronDown className="h-4 w-4 opacity-50" />
+                            </Button>
+                        }
+                        items={[
+                            { id: "", label: "All Statuses", onClick: () => setStatusFilterId(null) },
+                            ...statuses.map((status) => ({
+                                id: status.id,
+                                label: status.name,
+                                onClick: () => setStatusFilterId(status.id)
+                            }))
+                        ]}
+                    />
 
                     <Button
                         variant="outline"
                         onClick={clearFilters}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer bg-sidebar-background text-card-foreground !font-normal"
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer text-card-foreground !font-normal"
                     >
                         Clear
                     </Button>

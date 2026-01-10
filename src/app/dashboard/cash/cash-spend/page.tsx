@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { fetchCashSpend, CashOutflowCategory, CashSpendApiResponse } from '@/api/financialReportsApi';
-import { Select } from "@/components/ui/select";
+import { Dropdown } from "@/components/Dropdown";
+import { ChevronDown } from "lucide-react";
 
 export default function ChangeInCashPage() {
     const today = new Date();
@@ -81,24 +82,41 @@ export default function ChangeInCashPage() {
                                 {todayStr}
                             </p>
                         )}
-                        <Select
-                            className="w-full md:w-auto"
-                            value={selectedMonth}
-                            onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                        >
-                            {months.map((m, idx) => (
-                                <option key={idx} value={idx + 1}>{m}</option>
-                            ))}
-                        </Select>
-                        <Select
-                            className="w-full md:w-auto"
-                            value={selectedYear}
-                            onChange={(e) => setSelectedYear(Number(e.target.value))}
-                        >
-                            {years.map((y) => (
-                                <option key={y} value={y}>{y}</option>
-                            ))}
-                        </Select>
+                        <Dropdown
+                            label={months[selectedMonth - 1]}
+                            searchable={true}
+                            items={months.map((m, idx) => ({
+                                id: idx + 1,
+                                label: m,
+                                onClick: () => setSelectedMonth(idx + 1)
+                            }))}
+                            trigger={
+                                <div className="border border-border rounded-lg px-3 py-2 bg-card flex justify-between items-center cursor-pointer hover:border-gray-400 transition-colors h-10 min-w-[140px] shadow-sm">
+                                    <span className="text-sm text-gray-700 truncate">
+                                        {months[selectedMonth - 1]}
+                                    </span>
+                                    <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+                                </div>
+                            }
+                        />
+
+                        <Dropdown
+                            label={String(selectedYear)}
+                            searchable={true}
+                            items={years.map((y) => ({
+                                id: y,
+                                label: String(y),
+                                onClick: () => setSelectedYear(y)
+                            }))}
+                            trigger={
+                                <div className="border border-border rounded-lg px-3 py-2 bg-card flex justify-between items-center cursor-pointer hover:border-gray-400 transition-colors h-10 min-w-[100px] shadow-sm">
+                                    <span className="text-sm text-gray-700 truncate">
+                                        {selectedYear}
+                                    </span>
+                                    <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+                                </div>
+                            }
+                        />
                     </div>
                 </div>
                 {loading ? (

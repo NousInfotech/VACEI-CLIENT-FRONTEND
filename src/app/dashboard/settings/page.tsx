@@ -7,7 +7,11 @@ import { changePassword } from '@/api/authService';
 import AlertMessage, { AlertVariant } from '@/components/AlertMessage'; // Import AlertMessage
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import Dropdown from "@/components/Dropdown";
+import { ChevronDown, Settings as SettingsIcon, Users, Bell, Shield, Wallet, Lock } from "lucide-react";
+import PillTabs from "@/components/shared/PillTabs";
+import { useTabQuery } from "@/hooks/useTabQuery";
+
 // Simple textarea using Input styling
 const Textarea = (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
     <textarea
@@ -170,7 +174,7 @@ function SettingsContent() {
         }
     }, [profile, notifications]);
 
-    const [activeTab, setActiveTab] = useState<"general" | "users" | "notifications" | "security" | "billing" | "password">("general");
+    const [activeTab, setActiveTab] = useTabQuery("general");
 
     return (
         <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-6">
@@ -178,29 +182,18 @@ function SettingsContent() {
                 <h1 className="text-2xl font-semibold text-brand-body">Settings</h1>
 
                 {/* Tabs */}
-                <div className="flex flex-wrap gap-2 border-b border-border pb-3">
-                    {[
-                        { id: "general", label: "Company profile" },
-                        { id: "users", label: "Users & roles" },
-                        { id: "notifications", label: "Notifications" },
-                        { id: "security", label: "Security & sessions" },
-                        { id: "billing", label: "Billing" },
-                        { id: "password", label: "Password" },
-                    ].map((tab) => (
-                        <button
-                            key={tab.id}
-                            type="button"
-                            onClick={() => setActiveTab(tab.id as any)}
-                            className={`px-4 py-2 rounded-lg border text-xs font-medium transition-all shadow-sm ${
-                                activeTab === tab.id
-                                    ? "bg-primary text-primary-foreground border-primary shadow-md"
-                                    : "bg-card text-brand-body border-border hover:shadow-md"
-                            }`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
+                <PillTabs
+                    tabs={[
+                        { id: "general", label: "Company profile", icon: SettingsIcon },
+                        { id: "users", label: "Users & roles", icon: Users },
+                        { id: "notifications", label: "Notifications", icon: Bell },
+                        { id: "security", label: "Security & sessions", icon: Shield },
+                        { id: "billing", label: "Billing", icon: Wallet },
+                        { id: "password", label: "Password", icon: Lock },
+                    ]}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                />
 
                 {/* Profile */}
                 {activeTab === "general" && (
@@ -222,9 +215,19 @@ function SettingsContent() {
                         <div className="flex flex-col gap-2 md:flex-row">
                             <Input placeholder="Name" value={newUser.name} onChange={(e)=>setNewUser(u=>({...u,name:e.target.value}))}/>
                             <Input placeholder="Email" value={newUser.email} onChange={(e)=>setNewUser(u=>({...u,email:e.target.value}))}/>
-                            <Select value={newUser.role} onChange={(e)=>setNewUser(u=>({...u,role:e.target.value}))}>
-                                <option>Owner</option><option>Admin</option><option>Viewer</option>
-                            </Select>
+                            <Dropdown
+                                trigger={
+                                    <Button variant="outline" className="w-full h-9 justify-between">
+                                        {newUser.role || "Select role"}
+                                        <ChevronDown className="h-4 w-4 opacity-50" />
+                                    </Button>
+                                }
+                                items={[
+                                    { id: "Owner", label: "Owner", onClick: () => setNewUser(u => ({ ...u, role: "Owner" })) },
+                                    { id: "Admin", label: "Admin", onClick: () => setNewUser(u => ({ ...u, role: "Admin" })) },
+                                    { id: "Viewer", label: "Viewer", onClick: () => setNewUser(u => ({ ...u, role: "Viewer" })) }
+                                ]}
+                            />
                             <Button className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow" onClick={()=>{ if(newUser.name && newUser.email){ setUsers(prev=>[...prev,{...newUser,id:Date.now().toString()}]); setNewUser({name:"",email:"",role:"Viewer"});} }}>Add</Button>
                         </div>
                         <div className="space-y-2">

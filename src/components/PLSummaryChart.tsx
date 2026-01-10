@@ -116,7 +116,7 @@ export default function PnLChart() {
               className={`px-4 py-2 rounded-full text-xs font-semibold transition-all
                 ${view === v 
                   ? "bg-sidebar-background text-sidebar-foreground shadow-md" 
-                  : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-hover"
+                  : "text-muted-foreground"
                 }`}
             >
               {v}

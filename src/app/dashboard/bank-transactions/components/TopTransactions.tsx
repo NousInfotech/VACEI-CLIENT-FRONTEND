@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Select } from "@/components/ui/select";
+import { Dropdown } from "@/components/Dropdown";
+import { ChevronDown } from "lucide-react";
 
 function SkeletonTransaction() {
   return (
@@ -102,8 +103,8 @@ export default function TopTransactions() {
 
   const handlePrev = () => setPage((prev) => Math.max(1, prev - 1));
   const handleNext = () => setPage((prev) => Math.min(totalPages, prev + 1));
-  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setType(e.target.value);
+  const handleTypeChange = (value: string) => {
+    setType(value);
     setPage(1); // reset page when filter changes
   };
 
@@ -111,15 +112,24 @@ export default function TopTransactions() {
     <div className="space-y-4">
       {/* Filter Controls */}
       <div className="flex justify-between items-center">
-        <Select
-          value={type}
-          onChange={handleTypeChange}
-          className="min-w-[120px]"
-        >
-          <option value="all">All</option>
-          <option value="income">Income</option>
-          <option value="expense">Expense</option>
-        </Select>
+        <Dropdown
+          align="left"
+          label={type === 'all' ? 'All' : type === 'income' ? 'Income' : 'Expense'}
+          searchable={true}
+          items={[
+            { id: 'all', label: 'All', onClick: () => handleTypeChange('all') },
+            { id: 'income', label: 'Income', onClick: () => handleTypeChange('income') },
+            { id: 'expense', label: 'Expense', onClick: () => handleTypeChange('expense') },
+          ]}
+          trigger={
+            <div className="border border-border rounded-lg px-3 py-2 bg-card flex justify-between items-center cursor-pointer hover:border-gray-400 transition-colors h-10 min-w-[120px] shadow-sm">
+              <span className="text-sm text-gray-700 truncate capitalize">
+                {type}
+              </span>
+              <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+            </div>
+          }
+        />
 
         <div className="space-x-2">
           <button

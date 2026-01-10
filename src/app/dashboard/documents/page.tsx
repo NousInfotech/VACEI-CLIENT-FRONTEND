@@ -149,10 +149,10 @@ function DocumentsMasterPage() {
                 className="w-full"
                 contentClassName="w-full"
                 trigger={
-                   <div className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
+                   <Button variant="outline" className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-gray-900">{activeTabLabel}</span>
                       <ChevronDown className="w-4 h-4 text-gray-400" />
-                   </div>
+                   </Button>
                 }
                 items={tabs.map(tab => ({
                    id: tab.id,
@@ -250,9 +250,9 @@ function DocumentsMasterPage() {
                   <Dropdown
                     align="right"
                     trigger={
-                      <button className="p-2 -mr-2 text-gray-400 hover:text-gray-900 opacity-0 group-hover:opacity-100 transition-all">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 p-2 -mr-2 text-gray-400 hover:text-gray-900 opacity-0 group-hover:opacity-100 transition-all">
                         <MoreVertical className="w-4 h-4" />
-                      </button>
+                      </Button>
                     }
                     items={[
                       { 

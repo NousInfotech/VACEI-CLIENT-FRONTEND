@@ -1,7 +1,8 @@
 // TaskMeta.tsx
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import Dropdown from "@/components/Dropdown";
 import React from "react";
+import { ChevronDown } from "lucide-react";
 
 interface Status { id: number; name: string; }
 
@@ -84,21 +85,28 @@ export default function TaskMeta({
       */}
             {(canUpdateStatus && (!isResolved || currentUserId === task.createdById)) && (
                 <div className="mt-3 flex items-center gap-2 sm:mt-0">
-                    <Select
-                        className="h-[36px] min-w-[140px]"
-                        value={selectedStatusId ?? ""}
-                        onChange={e => setSelectedStatusId(parseInt(e.target.value))}
-                        // Disable if resolved and not creator
-                        disabled={isResolved && currentUserId !== task.createdById}
-                    >
-                        {statuses
+                    <Dropdown
+                        className="min-w-[140px]"
+                        trigger={
+                            <Button 
+                                variant="outline" 
+                                className="min-w-[140px] h-[36px] justify-between"
+                                disabled={isResolved && currentUserId !== task.createdById}
+                            >
+                                {statuses.find(s => s.id === selectedStatusId)?.name || "Select status"}
+                                <ChevronDown className="h-4 w-4 opacity-50" />
+                            </Button>
+                        }
+                        items={statuses
                             // Only allow "Resolved" status to be selected by the creator if the task is already resolved
                             // Or, if not resolved, allow all statuses.
                             .filter(s => s.name !== "Resolved" || currentUserId === task.createdById || !isResolved)
-                            .map(s => (
-                                <option key={s.id} value={s.id}>{s.name}</option>
-                            ))}
-                    </Select>
+                            .map(s => ({
+                                id: s.id,
+                                label: s.name,
+                                onClick: () => setSelectedStatusId(s.id)
+                            }))}
+                    />
                     <Button
                         variant={"outline"}
                         className="cursor-pointer text-card-foreground py-3 ps-3 pe-4 bg-sidebar-background hover:bg-card hover:text-brand-body border-sky-800"

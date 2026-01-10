@@ -1,6 +1,8 @@
 // components/tasks/FilterControls.tsx
 import React from "react";
-import { Select } from "@/components/ui/select";
+import Dropdown from "@/components/Dropdown";
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 
 
 interface Accountant {
@@ -45,31 +47,41 @@ export default function FilterControls({
       />
 
       
-      <Select
-        value={assignedToFilterId ?? ""}
-        onChange={(e) => setAssignedToFilterId(e.target.value ? Number(e.target.value) : null)}
+      <Dropdown
         className="min-w-[180px]"
-      >
-        <option value="">All Accountants</option>
-        {accountants.map((acc) => (
-          <option key={acc.accountant.id} value={acc.accountant.id}>
-            {acc.accountant.name} ({acc.accountant.email})
-          </option>
-        ))}
-      </Select>
+        trigger={
+          <Button variant="outline" className="min-w-[180px] h-9 justify-between">
+            {assignedToFilterId ? accountants.find(acc => acc.accountant.id === assignedToFilterId)?.accountant.name + " (" + accountants.find(acc => acc.accountant.id === assignedToFilterId)?.accountant.email + ")" || "All Accountants" : "All Accountants"}
+            <ChevronDown className="h-4 w-4 opacity-50" />
+          </Button>
+        }
+        items={[
+          { id: "", label: "All Accountants", onClick: () => setAssignedToFilterId(null) },
+          ...accountants.map((acc) => ({
+            id: acc.accountant.id,
+            label: `${acc.accountant.name} (${acc.accountant.email})`,
+            onClick: () => setAssignedToFilterId(acc.accountant.id)
+          }))
+        ]}
+      />
 
-      <Select
-        value={statusFilterId ?? ""}
-        onChange={(e) => setStatusFilterId(e.target.value ? Number(e.target.value) : null)}
+      <Dropdown
         className="min-w-[140px]"
-      >
-        <option value="">All Statuses</option>
-        {statuses.map((status) => (
-          <option key={status.id} value={status.id}>
-            {status.name}
-          </option>
-        ))}
-      </Select>
+        trigger={
+          <Button variant="outline" className="min-w-[140px] h-9 justify-between">
+            {statusFilterId ? statuses.find(s => s.id === statusFilterId)?.name || "All Statuses" : "All Statuses"}
+            <ChevronDown className="h-4 w-4 opacity-50" />
+          </Button>
+        }
+        items={[
+          { id: "", label: "All Statuses", onClick: () => setStatusFilterId(null) },
+          ...statuses.map((status) => ({
+            id: status.id,
+            label: status.name,
+            onClick: () => setStatusFilterId(status.id)
+          }))
+        ]}
+      />
 
       <button onClick={clearFilters} className="p-2 border rounded-lg bg-brand-muted">
         Clear

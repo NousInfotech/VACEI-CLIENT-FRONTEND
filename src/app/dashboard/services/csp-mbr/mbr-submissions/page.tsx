@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import Dropdown from "@/components/Dropdown";
+import { ChevronDown } from "lucide-react";
 
 const ROWS = [
   { code: "A1", name: "Annual Return", status: "Pending" },
@@ -36,29 +37,56 @@ export default function MbrSubmissionsListPage() {
           <div className="flex flex-wrap gap-3 text-xs">
             <div className="space-y-1">
               <p className="text-[11px] font-medium text-muted-foreground">Type</p>
-              <Select className="h-8 text-xs w-[150px]" defaultValue="all">
-                <option value="all">All</option>
-                <option value="annual">Annual return</option>
-                <option value="ubo">UBO forms</option>
-                <option value="change">Changes</option>
-              </Select>
+              <Dropdown
+                className="w-[150px]"
+                trigger={
+                  <Button variant="outline" size="sm" className="h-8 w-[150px] justify-between text-xs">
+                    All
+                    <ChevronDown className="h-3 w-3 opacity-50" />
+                  </Button>
+                }
+                items={[
+                  { id: "all", label: "All", onClick: () => {} },
+                  { id: "annual", label: "Annual return", onClick: () => {} },
+                  { id: "ubo", label: "UBO forms", onClick: () => {} },
+                  { id: "change", label: "Changes", onClick: () => {} }
+                ]}
+              />
             </div>
             <div className="space-y-1">
               <p className="text-[11px] font-medium text-muted-foreground">Status</p>
-              <Select className="h-8 text-xs w-[150px]" defaultValue="all">
-                <option value="all">All</option>
-                <option value="pending">Pending</option>
-                <option value="waiting">Waiting on you</option>
-                <option value="done">Done</option>
-              </Select>
+              <Dropdown
+                className="w-[150px]"
+                trigger={
+                  <Button variant="outline" size="sm" className="h-8 w-[150px] justify-between text-xs">
+                    All
+                    <ChevronDown className="h-3 w-3 opacity-50" />
+                  </Button>
+                }
+                items={[
+                  { id: "all", label: "All", onClick: () => {} },
+                  { id: "pending", label: "Pending", onClick: () => {} },
+                  { id: "waiting", label: "Waiting on you", onClick: () => {} },
+                  { id: "done", label: "Done", onClick: () => {} }
+                ]}
+              />
             </div>
             <div className="space-y-1">
               <p className="text-[11px] font-medium text-muted-foreground">Year</p>
-              <Select className="h-8 text-xs w-[110px]" defaultValue="2025">
-                <option value="2025">2025</option>
-                <option value="2024">2024</option>
-                <option value="2023">2023</option>
-              </Select>
+              <Dropdown
+                className="w-[110px]"
+                trigger={
+                  <Button variant="outline" size="sm" className="h-8 w-[110px] justify-between text-xs">
+                    2025
+                    <ChevronDown className="h-3 w-3 opacity-50" />
+                  </Button>
+                }
+                items={[
+                  { id: "2025", label: "2025", onClick: () => {} },
+                  { id: "2024", label: "2024", onClick: () => {} },
+                  { id: "2023", label: "2023", onClick: () => {} }
+                ]}
+              />
             </div>
           </div>
         </div>

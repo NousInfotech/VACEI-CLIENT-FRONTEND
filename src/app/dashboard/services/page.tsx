@@ -331,7 +331,7 @@ export default function ServicesHubPage() {
           <div className="space-y-3 flex-1 text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
               <div className="p-2 rounded-xl bg-primary shadow-lg shadow-primary/20">
-                <TrendingUp className="w-5 h-5 text-white" />
+                <TrendingUp className="w-5 h-5" />
               </div>
               <h3 className="text-xl font-bold text-brand-body tracking-tight">
                 Need something that's not listed?

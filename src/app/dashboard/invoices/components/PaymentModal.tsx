@@ -3,7 +3,9 @@
 import React, { useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { Select } from "@/components/ui/select";
+import Dropdown from "@/components/Dropdown";
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 
 // Types
 type Invoice = {
@@ -147,18 +149,22 @@ const PaymentModal = ({ invoice, onClose, onPaymentSuccess }: PaymentModalProps)
             <label htmlFor="paymentMode" className="block mb-1 font-medium">
               Payment Mode *
             </label>
-            <Select
-              id="paymentMode"
-              value={mode}
-              onChange={(e) => setMode(e.target.value)}
+            <Dropdown
               className="w-full"
-            >
-              <option value="">Select</option>
-              <option value="Cash">Cash</option>
-              <option value="Bank Transfer">Bank Transfer</option>
-              <option value="Credit Card">Credit Card</option>
-              <option value="Check">Check</option>
-            </Select>
+              trigger={
+                <Button variant="outline" id="paymentMode" className="w-full h-9 justify-between">
+                  {mode || "Select"}
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+              }
+              items={[
+                { id: "", label: "Select", onClick: () => setMode("") },
+                { id: "Cash", label: "Cash", onClick: () => setMode("Cash") },
+                { id: "Bank Transfer", label: "Bank Transfer", onClick: () => setMode("Bank Transfer") },
+                { id: "Credit Card", label: "Credit Card", onClick: () => setMode("Credit Card") },
+                { id: "Check", label: "Check", onClick: () => setMode("Check") }
+              ]}
+            />
             {errors.mode && <p className="text-red-600 text-xs mt-1">{errors.mode}</p>}
           </div>
 

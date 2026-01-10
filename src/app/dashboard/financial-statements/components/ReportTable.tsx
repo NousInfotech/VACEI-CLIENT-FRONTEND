@@ -19,7 +19,10 @@ import {
 } from "@/components/ui/table"
 
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import { Select } from "@/components/ui/select";
+import { Dropdown } from "@/components/Dropdown";
+import { Button } from "@/components/ui/button";
+
+import { ChevronDown } from "lucide-react";
 
 function generateLast12Months() {
     const months: string[] = [];
@@ -239,7 +242,7 @@ export default function ReportTable({ reportType }: { reportType: string }) {
                             setStartDate(monthDates[0]);
                             setEndDate(monthDates[11]);
                         }}
-                        className={`px-4 py-2 rounded-md transition-colors cursor-pointer text-sm ${filterType === '12month' ? 'bg-sidebar-background text-card-foreground hover:bg-sidebar-background' : 'bg-gray-200'}`}
+                        className={`px-4 py-2 rounded-md transition-colors cursor-pointer text-sm ${filterType === '12month' ? '-' : 'bg-gray-200'}`}
                     >
                         Last 12 Months
                     </button>
@@ -247,16 +250,26 @@ export default function ReportTable({ reportType }: { reportType: string }) {
 
                 {filterType === '12month' && (
                     <div>
-                        <Select
-                            className="min-w-[150px]"
-                            value={quickFilterRange || ''}
-                            onChange={e => setQuickFilterRange(e.target.value || null)}
-                        >
-                            <option value="">All Months</option>
-                            {Object.keys(quarters).map(q => (
-                                <option key={q} value={q}>{q}</option>
-                            ))}
-                        </Select>
+                        <Dropdown
+                            label={quickFilterRange || "All Months"}
+                            searchable={true}
+                            items={[
+                                { id: "all", label: "All Months", onClick: () => setQuickFilterRange(null) },
+                                ...Object.keys(quarters).map(q => ({
+                                    id: q,
+                                    label: q,
+                                    onClick: () => setQuickFilterRange(q)
+                                }))
+                            ]}
+                            trigger={
+                                <div className="border border-border rounded-lg px-3 py-2 bg-card flex justify-between items-center cursor-pointer hover:border-gray-400 transition-colors h-10 min-w-[150px] shadow-sm">
+                                    <span className="text-sm text-gray-700 truncate">
+                                        {quickFilterRange || "All Months"}
+                                    </span>
+                                    <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+                                </div>
+                            }
+                        />
                     </div>
                 )}
 

@@ -129,7 +129,7 @@ export default function CashFlowChart() {
               className={`px-4 py-2 rounded-full text-xs font-semibold cursor-pointer transition-all
                 ${view === option
                   ? "bg-sidebar-background text-sidebar-foreground shadow-md" 
-                  : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-hover"
+                  : "text-muted-foreground"
                 }`}
               onClick={() => setView(option)}
             >

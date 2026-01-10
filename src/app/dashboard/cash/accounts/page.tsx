@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import TotalBalanceChart from '@/components/TotalBalanceChart';
 import { useRouter } from 'next/navigation';
+import { Button } from "@/components/ui/button";
 
 export default function Accounts() {
     const router = useRouter();
@@ -164,12 +165,11 @@ export default function Accounts() {
                         <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md mb-5">
                             <div className="flex justify-between items-center">
                                 <h2 className="text-xl leading-normal text-brand-body capitalize font-medium">Accounts</h2>
-                                <button
+                                <Button
                                     onClick={handleViewAll}
-                                    className="px-4 py-2 rounded-md transition-colors cursor-pointer bg-sidebar-background text-card-foreground hover:bg-sidebar-background"
                                 >
                                     View All Accounts
-                                </button>
+                                </Button>
                             </div>
                         </div>
 

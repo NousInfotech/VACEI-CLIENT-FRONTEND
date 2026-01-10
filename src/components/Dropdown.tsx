@@ -25,6 +25,7 @@ interface DropdownProps {
   closeOnClick?: boolean;
   searchable?: boolean;
   searchPlaceholder?: string;
+  fullWidth?: boolean;
 }
 
 export const Dropdown = ({
@@ -39,9 +40,11 @@ export const Dropdown = ({
   closeOnClick = true,
   searchable = false,
   searchPlaceholder = "Search...",
+  fullWidth = false,
 }: DropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [calculatedSide, setCalculatedSide] = useState<"top" | "bottom">(side);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -57,8 +60,23 @@ export const Dropdown = ({
       if (searchable && searchInputRef.current) {
         setTimeout(() => searchInputRef.current?.focus(), 100);
       }
+
+      // Handle auto-positioning
+      if (dropdownRef.current) {
+        const rect = dropdownRef.current.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        const menuHeight = searchable ? 380 : 320; // Estimated max height
+
+        if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
+          setCalculatedSide("top");
+        } else {
+          setCalculatedSide("bottom");
+        }
+      }
     } else {
       setSearchQuery(""); // Reset search when closed
+      setCalculatedSide(side); // Reset side to default
     }
 
     return () => {
@@ -101,7 +119,7 @@ export const Dropdown = ({
   };
 
   return (
-    <div className={cn("relative inline-block text-left z-1 hover:z-50 focus-within:z-50", className)} ref={dropdownRef}>
+    <div className={cn("relative inline-block text-left z-1 hover:z-100 focus-within:z-100", className)} ref={dropdownRef}>
       {/* Trigger */}
       <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
         {trigger ? (
@@ -126,9 +144,10 @@ export const Dropdown = ({
       {/* Dropdown menu */}
       <div
         className={cn(
-          "absolute z-50 w-64 origin-top rounded-2xl bg-white/95 backdrop-blur-md p-1.5 shadow-2xl ring-1 ring-black/5 focus:outline-none transition-all duration-300 ease-in-out",
+          "absolute z-999 origin-top rounded-2xl bg-white/95 backdrop-blur-md p-1.5 shadow-2xl ring-1 ring-black/5 focus:outline-none transition-all duration-300 ease-in-out",
+          fullWidth ? "w-full" : "w-64",
           alignmentClasses[align],
-          sideClasses[side],
+          sideClasses[calculatedSide],
           isOpen
             ? "scale-100 opacity-100 translate-y-0 pointer-events-auto"
             : "scale-95 opacity-0 -translate-y-2 pointer-events-none",

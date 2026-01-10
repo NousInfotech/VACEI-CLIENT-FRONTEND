@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FolderPlus, FileText, CheckCircle } from 'lucide-react';
+import { FolderPlus, FileText, CheckCircle, ChevronDown } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
+import DashboardCard from "@/components/DashboardCard";
 import DocumentPreview from "../components/DocumentPreview";
 import { fetchUploadStatusSummary } from "@/api/documentApi"; // Updated import
 import {
@@ -32,7 +33,7 @@ import {
 } from "@/components/ui/table"
 
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import { Select } from "@/components/ui/select";
+import Dropdown from "@/components/Dropdown";
 
 const statusStyles: Record<string, string> = {
     Approved: "bg-sidebar-background text-green-800 border border-green-300 rounded-0",
@@ -219,16 +220,16 @@ export default function DocumentList() {
 
     return (
         <div className="space-y-6 relative min-h-screen">
-            <div className="w-full overflow-x-auto lg:max-w-[1400px]">
+            <div className="w-full overflow-x-auto lg:max-w-[1400px] p-2">
                 {initialLoading ? (
                     <SkeletonFilter />
                 ) : (
                     <>
                         <div className="grid md:grid-cols-3 gap-6 mb-6">
                             {/* Documents This Month */}
-                            <div className="rounded-xl p-3 w-full bg-card backdrop-blur-sm shadow-md hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100">
+                            <DashboardCard className="p-3 w-full border cursor-pointer flex flex-col gap-5">
                                 <div className="flex items-center gap-3">
-                                    <div className="bg-sidebar-background text-card-foreground rounded-full w-9 h-9 flex items-center justify-center shadow-md">
+                                    <div className="rounded-full w-9 h-9 flex items-center justify-center shadow-md">
                                         <FolderPlus className="w-5 h-5" />
                                     </div>
                                     <div>
@@ -245,12 +246,12 @@ export default function DocumentList() {
                                         <p className="text-sm text-gray-800 mt-3 text-center block">No data to show</p>
                                     )}
                                 </div>
-                            </div>
+                            </DashboardCard>
 
                             {/* Documents By Category */}
-                            <div className="rounded-xl p-3 w-full bg-card backdrop-blur-sm shadow-md hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100">
+                            <DashboardCard className="p-3 w-full border cursor-pointer flex flex-col gap-5">
                                 <div className="flex items-center gap-3">
-                                    <div className="bg-sidebar-background text-card-foreground rounded-full w-9 h-9 flex items-center justify-center shadow-md">
+                                    <div className="rounded-full w-9 h-9 flex items-center justify-center shadow-md">
                                         <FileText className="w-5 h-5" />
                                     </div>
                                     <div>
@@ -272,12 +273,12 @@ export default function DocumentList() {
                                         <p className="text-sm text-gray-800 mt-3 text-center block">No data to show</p>
                                     )}
                                 </div>
-                            </div>
+                            </DashboardCard>
 
                             {/* Documents By Status */}
-                            <div className="rounded-xl p-3 w-full bg-card backdrop-blur-sm shadow-md hover:shadow-md transition-all duration-300 cursor-pointer border border-gray-100">
+                            <DashboardCard className="p-3 w-full border cursor-pointer flex flex-col gap-5">
                                 <div className="flex items-center gap-3">
-                                    <div className="bg-sidebar-background text-card-foreground rounded-full w-9 h-9 flex items-center justify-center shadow-md">
+                                    <div className="rounded-full w-9 h-9 flex items-center justify-center shadow-md">
                                         <CheckCircle className="w-5 h-5" />
                                     </div>
                                     <div>
@@ -299,7 +300,7 @@ export default function DocumentList() {
                                         <p className="text-sm text-gray-800 mt-3 text-center block">No data to show</p>
                                     )}
                                 </div>
-                            </div>
+                            </DashboardCard>
                         </div>
 
                         <div className="grid md:grid-cols-4 gap-4 mb-4">
@@ -308,65 +309,91 @@ export default function DocumentList() {
                                 placeholder="Search by Title or notes"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
+                                className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none h-10 shadow-sm"
                             />
-                            <Select
-                                value={filterCategory}
-                                onChange={(e) => setFilterCategory(e.target.value)}
-                                className="w-full"
-                            >
-                                <option value="">All Categories</option>
-                                {categories.map(({ id, name }) => (
-                                    <option key={id} value={name}>
-                                        {name}
-                                    </option>
-                                ))}
-                            </Select>
-                            <Select
-                                value={filterYear}
-                                onChange={(e) => setFilterYear(e.target.value)}
-                                className="w-full md:w-auto"
-                            >
-                                <option value="">All Years</option>
-                                {years.map((y) => (
-                                    <option key={y} value={y.toString()}>
-                                        {y}
-                                    </option>
-                                ))}
-                            </Select>
-                            <select
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                                className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
-                            >
-                                <option value="">All Statuses</option>
-                                {statuses.map(({ id, name }) => (
-                                    <option key={id} value={id}>
-                                        {name}
-                                    </option>
-                                ))}
-                            </select>
-                            <select
-                                value={filterMonth}
-                                onChange={(e) => setFilterMonth(e.target.value)}
-                                className="w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none"
-                            >
-                                <option value="">All Months</option>
-                                {Array.from({ length: 12 }, (_, i) => (
-                                    <option key={i + 1} value={i + 1}>
-                                        {new Date(0, i).toLocaleString("default", {
-                                            month: "long",
-                                        })}
-                                    </option>
-                                ))}
-                            </select>
+                            
+                            <Dropdown
+                                label={filterCategory || "All Categories"}
+                                searchable={true}
+                                items={[
+                                    { id: "all", label: "All Categories", onClick: () => { setFilterCategory(""); setPage(1); } },
+                                    ...categories.map(({ id, name }) => ({
+                                        id: String(id),
+                                        label: name,
+                                        onClick: () => { setFilterCategory(name); setPage(1); }
+                                    }))
+                                ]}
+                                trigger={
+                                    <div className="w-full border border-border rounded-lg px-3 py-2 bg-card flex justify-between items-center cursor-pointer hover:border-gray-400 transition-colors h-10 shadow-sm">
+                                        <span className="text-sm text-gray-700 truncate">{filterCategory || "All Categories"}</span>
+                                        <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+                                    </div>
+                                }
+                            />
+
+                            <Dropdown
+                                label={filterYear || "All Years"}
+                                searchable={true}
+                                items={[
+                                    { id: "all", label: "All Years", onClick: () => { setFilterYear(""); setPage(1); } },
+                                    ...years.map((y) => ({
+                                        id: String(y),
+                                        label: String(y),
+                                        onClick: () => { setFilterYear(String(y)); setPage(1); }
+                                    }))
+                                ]}
+                                trigger={
+                                    <div className="w-full border border-border rounded-lg px-3 py-2 bg-card flex justify-between items-center cursor-pointer hover:border-gray-400 transition-colors h-10 shadow-sm">
+                                        <span className="text-sm text-gray-700 truncate">{filterYear || "All Years"}</span>
+                                        <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+                                    </div>
+                                }
+                            />
+
+                            <Dropdown
+                                label={statuses.find(s => String(s.id) === String(filterStatus))?.name || "All Statuses"}
+                                searchable={true}
+                                items={[
+                                    { id: "all", label: "All Statuses", onClick: () => { setFilterStatus(""); setPage(1); } },
+                                    ...statuses.map(({ id, name }) => ({
+                                        id: String(id),
+                                        label: name,
+                                        onClick: () => { setFilterStatus(id); setPage(1); }
+                                    }))
+                                ]}
+                                trigger={
+                                    <div className="w-full border border-border rounded-lg px-3 py-2 bg-card flex justify-between items-center cursor-pointer hover:border-gray-400 transition-colors h-10 shadow-sm">
+                                        <span className="text-sm text-gray-700 truncate">{statuses.find(s => String(s.id) === String(filterStatus))?.name || "All Statuses"}</span>
+                                        <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+                                    </div>
+                                }
+                            />
+
+                            <Dropdown
+                                label={filterMonth ? new Date(0, parseInt(filterMonth) - 1).toLocaleString("default", { month: "long" }) : "All Months"}
+                                searchable={true}
+                                items={[
+                                    { id: "all", label: "All Months", onClick: () => { setFilterMonth(""); setPage(1); } },
+                                    ...Array.from({ length: 12 }, (_, i) => ({
+                                        id: String(i + 1),
+                                        label: new Date(0, i).toLocaleString("default", { month: "long" }),
+                                        onClick: () => { setFilterMonth(String(i + 1)); setPage(1); }
+                                    }))
+                                ]}
+                                trigger={
+                                    <div className="w-full border border-border rounded-lg px-3 py-2 bg-card flex justify-between items-center cursor-pointer hover:border-gray-400 transition-colors h-10 shadow-sm">
+                                        <span className="text-sm text-gray-700 truncate">{filterMonth ? new Date(0, parseInt(filterMonth) - 1).toLocaleString("default", { month: "long" }) : "All Months"}</span>
+                                        <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+                                    </div>
+                                }
+                            />
                         </div>
                     </>
                 )}
 
                 {!initialLoading && tags.length > 0 && (
                     <div className="mb-5">
-                        <label className="block text-sm mb-1">Tags</label>
+                        <label className="block font-medium text-md mb-1">Tags</label>
                         <div className="border border-border rounded-lg px-3 py-2 bg-card max-h-48 overflow-x-auto flex flex-wrap gap-2">
                             {tags.map((tag) => {
                                 const isSelected = selectedTags.includes(String(tag.id));
@@ -483,11 +510,11 @@ export default function DocumentList() {
                                                         (file: { azureAnalysisResult: any; extractedKeyValuePairs: any[] }) =>
                                                             file.azureAnalysisResult || file.extractedKeyValuePairs.length > 0
                                                     ) ? (
-                                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-sidebar-background text-green-800">
+                                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-color-new text-white">
                                                             Done
                                                         </span>
                                                     ) : (
-                                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                                                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-color-new text-white">
                                                             Pending
                                                         </span>
                                                     )}
@@ -506,7 +533,7 @@ export default function DocumentList() {
                                                         : doc.createdAt?.slice(0, 10)}
                                                 </td>
 
-                                                <td className="p-3 px-8 border-border">
+                                                 <td className="p-3 px-8 border-border">
                                                     <div className="flex gap-3">
                                                         <button
                                                             className="text-muted-foreground hover:text-brand-primary transition-colors duration-200 cursor-pointer"

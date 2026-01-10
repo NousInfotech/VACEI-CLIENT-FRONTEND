@@ -252,7 +252,7 @@ export default function JournalList() {
                                                     <td className="p-3 px-8">{entry.privateNote}</td>
                                                     <td className="p-3 px-8">
                                                         <button
-                                                            className="w-6 h-6 text-card-foreground bg-sidebar-hover hover:bg-sidebar-background rounded-full text-sm text-center flex items-center cursor-pointer justify-center"
+                                                            className="w-6 h-6 text-card-foreground rounded-full text-sm text-center flex items-center cursor-pointer justify-center"
                                                             onClick={() => handleView(entry)}
                                                         >
                                                             <i

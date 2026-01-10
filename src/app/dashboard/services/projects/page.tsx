@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import Dropdown from "@/components/Dropdown";
+import { ChevronDown } from "lucide-react";
 
 type Project = {
   id: string;
@@ -36,16 +37,21 @@ export default function ProjectsWorkspacePage() {
         <div className="flex gap-2 items-center">
           <div className="flex items-center gap-2 text-xs">
             <span className="text-muted-foreground">Type</span>
-            <Select
-              value={projectType}
-              onChange={(e) => setProjectType(e.target.value)}
-              className="h-8 text-xs w-[170px]"
-            >
-              <option value="merger">Merger</option>
-              <option value="liquidation">Liquidation</option>
-              <option value="m&a">M&A</option>
-              <option value="advisory">Advisory</option>
-            </Select>
+            <Dropdown
+              className="w-[170px]"
+              trigger={
+                <Button variant="outline" size="sm" className="h-8 w-[170px] justify-between text-xs">
+                  {projectType === "m&a" ? "M&A" : projectType.charAt(0).toUpperCase() + projectType.slice(1)}
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </Button>
+              }
+              items={[
+                { id: "merger", label: "Merger", onClick: () => setProjectType("merger") },
+                { id: "liquidation", label: "Liquidation", onClick: () => setProjectType("liquidation") },
+                { id: "m&a", label: "M&A", onClick: () => setProjectType("m&a") },
+                { id: "advisory", label: "Advisory", onClick: () => setProjectType("advisory") }
+              ]}
+            />
           </div>
           <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">
             Create project

@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
+import PillTabs from "@/components/shared/PillTabs";
+import { useTabQuery } from "@/hooks/useTabQuery";
+import { LayoutDashboard, LineChart } from "lucide-react";
 
-export default function BookkeepingWorkspacePage() {
-  const [activeTab, setActiveTab] = useState<"overview" | "insight">("overview");
+function BookkeepingWorkspaceContent() {
+  const [activeTab, setActiveTab] = useTabQuery("overview");
 
   return (
     <section className="mx-auto max-w-[1200px] w-full pt-5 space-y-6">
@@ -29,22 +32,14 @@ export default function BookkeepingWorkspacePage() {
       </div>
 
       {/* Tabs: Overview / Insight */}
-      <div className="bg-card border border-border rounded-card shadow-md p-2 flex gap-2 text-xs w-fit">
-        {["overview", "insight"].map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => setActiveTab(tab as "overview" | "insight")}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-              activeTab === tab
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-card text-brand-body hover:bg-muted"
-            }`}
-          >
-            {tab === "overview" ? "Overview" : "Insight"}
-          </button>
-        ))}
-      </div>
+      <PillTabs
+        tabs={[
+          { id: "overview", label: "Overview", icon: LayoutDashboard },
+          { id: "insight", label: "Insight", icon: LineChart },
+        ]}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
       {activeTab === "overview" && (
         <div className="grid gap-5 md:grid-cols-[1.3fr,1fr]">
@@ -170,6 +165,14 @@ export default function BookkeepingWorkspacePage() {
         </div>
       )}
     </section>
+  );
+}
+
+export default function BookkeepingWorkspacePage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Loading workspace...</div>}>
+      <BookkeepingWorkspaceContent />
+    </Suspense>
   );
 }
 

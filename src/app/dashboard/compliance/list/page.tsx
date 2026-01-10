@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import Dropdown from "@/components/Dropdown";
+import { ChevronDown } from "lucide-react";
 import { fetchTasks, fetchTaskCategories, fetchTaskStatuses } from "@/api/taskService";
 import type { Category, Status, Task, Pagination } from "@/interfaces";
 
@@ -124,38 +125,40 @@ export default function ComplianceListPage() {
               onChange={(e) => setSearch(e.target.value)}
               className="flex-1 min-w-[180px] rounded-lg border border-border bg-card px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
-            <Select
-              value={serviceFilter}
-              onChange={(e) =>
-                setServiceFilter(
-                  e.target.value === "all" ? "all" : Number(e.target.value)
-                )
-              }
+            <Dropdown
               className="w-full md:w-44"
-            >
-              <option value="all">All services</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </Select>
-            <Select
-              value={statusFilter}
-              onChange={(e) =>
-                setStatusFilter(
-                  e.target.value === "all" ? "all" : Number(e.target.value)
-                )
+              trigger={
+                <Button variant="outline" className="w-full md:w-44 h-9 justify-between">
+                  {serviceFilter === "all" ? "All services" : categories.find(c => c.id === serviceFilter)?.name || "All services"}
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
               }
+              items={[
+                { id: "all", label: "All services", onClick: () => setServiceFilter("all") },
+                ...categories.map((cat) => ({
+                  id: cat.id,
+                  label: cat.name,
+                  onClick: () => setServiceFilter(cat.id)
+                }))
+              ]}
+            />
+            <Dropdown
               className="w-full md:w-40"
-            >
-              <option value="all">All status</option>
-              {statuses.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </Select>
+              trigger={
+                <Button variant="outline" className="w-full md:w-40 h-9 justify-between">
+                  {statusFilter === "all" ? "All status" : statuses.find(s => s.id === statusFilter)?.name || "All status"}
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+              }
+              items={[
+                { id: "all", label: "All status", onClick: () => setStatusFilter("all") },
+                ...statuses.map((s) => ({
+                  id: s.id,
+                  label: s.name,
+                  onClick: () => setStatusFilter(s.id)
+                }))
+              ]}
+            />
           </div>
           <div className="flex gap-2">
             <Button

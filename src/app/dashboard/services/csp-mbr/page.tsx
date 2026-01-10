@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
-import { Building2, Users, FileText, CheckCircle2, AlertCircle, Clock, FileCheck, Upload, Plus, Eye, Download, ArrowRight, Briefcase, UserCheck, Share2, Calendar, Filter } from "lucide-react";
+import Dropdown from "@/components/Dropdown";
+import { ChevronDown, Building2, Users, FileText, CheckCircle2, AlertCircle, Clock, FileCheck, Upload, Plus, Eye, Download, ArrowRight, Briefcase, UserCheck, Share2, Calendar, Filter } from "lucide-react";
 import PillTabs from "@/components/shared/PillTabs";
 import BackButton from "@/components/shared/BackButton";
 import { useTabQuery } from "@/hooks/useTabQuery";
@@ -279,15 +279,17 @@ function CspMbrContent() {
       {activeTab === "active-services" && (
         <div className="space-y-6">
           {/* Sub-tabs for Company and People */}
-          <PillTabs
-            tabs={[
-              { id: "company", label: "Company" },
-              { id: "people", label: "People" },
-            ]}
-            activeTab={activeSubTab}
-            onTabChange={(id) => setActiveSubTab(id as SubTabKey)}
-            className="bg-muted/30 border border-border"
-          />
+          <div className="flex justify-center">
+            <PillTabs
+              tabs={[
+                { id: "company", label: "Company" },
+                { id: "people", label: "People" },
+              ]}
+              activeTab={activeSubTab}
+              onTabChange={(id) => setActiveSubTab(id as SubTabKey)}
+              className="bg-muted/30 border border-border"
+            />
+          </div>
 
           {activeSubTab === "company" && (
             <div className="bg-card border border-border rounded-lg shadow-md px-6 py-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -313,6 +315,10 @@ function CspMbrContent() {
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Registered Office</p>
                   <p className="text-base font-semibold text-brand-body">123 Main Street, Valletta, Malta</p>
                 </div>
+                <div className="md:col-span-2 space-y-2 p-4 rounded-lg border border-border bg-muted/20 hover:bg-muted/30 transition-colors">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide text-center">Expiry Date</p>
+                  <p className="text-base font-semibold text-brand-body text-center">31/12/2026</p>
+                </div>
               </div>
             </div>
           )}
@@ -336,11 +342,11 @@ function CspMbrContent() {
                   </Link>
                 </div>
                 <div className="overflow-x-auto rounded-lg border border-border">
-                  <table className="w-full text-left">
+                  <table className="w-full">
                     <thead className="bg-muted/60 border-b border-border">
                       <tr>
-                        <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Name</th>
-                        <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Role</th>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-left">Name</th>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-left">Role</th>
                         <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center">Status</th>
                         <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center">Expiry Date</th>
                         <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-right">Action</th>
@@ -349,10 +355,10 @@ function CspMbrContent() {
                     <tbody>
                       {directors.map((director, idx) => (
                         <tr key={idx} className="border-b border-border hover:bg-muted/30 transition-colors">
-                          <td className="px-5 py-4">
+                          <td className="px-5 py-4 text-left">
                             <p className="font-semibold text-brand-body">{director.name}</p>
                           </td>
-                          <td className="px-5 py-4">
+                          <td className="px-5 py-4 text-left">
                             <p className="text-sm text-brand-body">{director.role}</p>
                           </td>
                           <td className="px-5 py-4 text-center">
@@ -394,10 +400,10 @@ function CspMbrContent() {
                   </Link>
                 </div>
                 <div className="overflow-x-auto rounded-lg border border-border">
-                  <table className="w-full text-left">
+                  <table className="w-full">
                     <thead className="bg-muted/60 border-b border-border">
                       <tr>
-                        <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Name</th>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-left">Name</th>
                         <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center">Shares</th>
                         <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center">%</th>
                         <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center">Status</th>
@@ -408,7 +414,7 @@ function CspMbrContent() {
                     <tbody>
                       {shareholders.map((shareholder, idx) => (
                         <tr key={idx} className="border-b border-border hover:bg-muted/30 transition-colors">
-                          <td className="px-5 py-4">
+                          <td className="px-5 py-4 text-left">
                             <p className="font-semibold text-brand-body">{shareholder.name}</p>
                           </td>
                           <td className="px-5 py-4 text-center">
@@ -423,7 +429,7 @@ function CspMbrContent() {
                               {shareholder.status}
                             </span>
                           </td>
-                            <td className="px-5 py-4 text-center">
+                          <td className="px-5 py-4 text-center">
                             <p className="text-sm text-brand-body font-medium">{shareholder.expiryDate}</p>
                           </td>
                           <td className="px-5 py-4 text-right">
@@ -455,65 +461,82 @@ function CspMbrContent() {
           {/* Enhanced Filters */}
           <div className="flex flex-wrap items-center gap-3 mb-6 p-4 rounded-lg border border-border bg-muted/20">
             <Filter className="w-4 h-4 text-muted-foreground" />
-            <Select
-              value={mbrFilterType}
-              onChange={(e) => setMbrFilterType(e.target.value)}
+            <Dropdown
               className="w-auto min-w-[140px]"
-            >
-              <option value="all">All Types</option>
-              {mbrFormsData.map(f => (
-                <option key={f.code} value={f.code}>{f.code}</option>
-              ))}
-            </Select>
-            <Select
-              value={mbrFilterStatus}
-              onChange={(e) => setMbrFilterStatus(e.target.value)}
+              trigger={
+                <Button variant="outline" size="sm" className="w-auto min-w-[140px] h-9 justify-between">
+                  {mbrFilterType === "all" ? "All Types" : mbrFilterType}
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+              }
+              items={[
+                { id: "all", label: "All Types", onClick: () => setMbrFilterType("all") },
+                ...mbrFormsData.map(f => ({
+                  id: f.code,
+                  label: f.code,
+                  onClick: () => setMbrFilterType(f.code)
+                }))
+              ]}
+            />
+            <Dropdown
               className="w-auto min-w-[140px]"
-            >
-              <option value="all">All Statuses</option>
-              <option value="due">Due</option>
-              <option value="done">Done</option>
-              <option value="waiting">Waiting</option>
-              <option value="draft">Draft</option>
-              <option value="none">None</option>
-            </Select>
-            <Select
-              value={mbrFilterYear}
-              onChange={(e) => setMbrFilterYear(e.target.value)}
+              trigger={
+                <Button variant="outline" size="sm" className="w-auto min-w-[140px] h-9 justify-between">
+                  {mbrFilterStatus === "all" ? "All Statuses" : mbrFilterStatus.charAt(0).toUpperCase() + mbrFilterStatus.slice(1)}
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+              }
+              items={[
+                { id: "all", label: "All Statuses", onClick: () => setMbrFilterStatus("all") },
+                { id: "due", label: "Due", onClick: () => setMbrFilterStatus("due") },
+                { id: "done", label: "Done", onClick: () => setMbrFilterStatus("done") },
+                { id: "waiting", label: "Waiting", onClick: () => setMbrFilterStatus("waiting") },
+                { id: "draft", label: "Draft", onClick: () => setMbrFilterStatus("draft") },
+                { id: "none", label: "None", onClick: () => setMbrFilterStatus("none") }
+              ]}
+            />
+            <Dropdown
               className="w-auto min-w-[140px]"
-            >
-              <option value="all">All Years</option>
-              <option value="2025">2025</option>
-              <option value="2024">2024</option>
-            </Select>
+              trigger={
+                <Button variant="outline" size="sm" className="w-auto min-w-[140px] h-9 justify-between">
+                  {mbrFilterYear === "all" ? "All Years" : mbrFilterYear}
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+              }
+              items={[
+                { id: "all", label: "All Years", onClick: () => setMbrFilterYear("all") },
+                { id: "2025", label: "2025", onClick: () => setMbrFilterYear("2025") },
+                { id: "2024", label: "2024", onClick: () => setMbrFilterYear("2024") }
+              ]}
+            />
           </div>
 
           {/* Enhanced Table */}
           <div className="overflow-x-auto rounded-lg border border-border">
-            <table className="w-full text-left">
+            <table className="w-full">
               <thead className="bg-muted/60 border-b border-border">
                 <tr>
-                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Form</th>
-                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Description</th>
-                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Due Date</th>
-                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
+                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-left">Form</th>
+                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-left">Description</th>
+                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center">Due Date</th>
+                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center">Status</th>
                   <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredMbrForms.map((form) => (
                   <tr key={form.code} className="border-b border-border hover:bg-muted/30 transition-colors">
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 text-left">
                       <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary font-bold text-sm">
                         {form.code}
                       </span>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 text-left">
                       <p className="font-semibold text-brand-body">{form.name}</p>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 text-center">
                       {form.dueDate !== "-" ? (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center justify-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-warning" />
                           <span className="text-sm font-medium text-warning">{form.dueDate}</span>
                         </div>
@@ -521,7 +544,7 @@ function CspMbrContent() {
                         <span className="text-sm text-muted-foreground">—</span>
                       )}
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 text-center">
                       <span className={`inline-flex items-center gap-1.5 text-xs rounded-full px-3 py-1.5 font-medium ${
                         form.status === "Done" ? "bg-success/20 text-success" :
                         form.status === "Due" ? "bg-warning/20 text-warning" :
@@ -540,7 +563,7 @@ function CspMbrContent() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-xs rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-1.5"
+                          className="text-xs rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 ml-auto"
                         >
                           {form.status === "None" ? (
                             <>
@@ -589,37 +612,37 @@ function CspMbrContent() {
 
           {/* Enhanced Table */}
           <div className="overflow-x-auto rounded-lg border border-border">
-            <table className="w-full text-left">
+            <table className="w-full">
               <thead className="bg-muted/60 border-b border-border">
                 <tr>
-                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">File Name</th>
-                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Category</th>
-                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Linked To</th>
+                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-left">File Name</th>
+                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-left">Category</th>
+                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-left">Linked To</th>
                   <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {corporateDocuments.map((doc, idx) => (
                   <tr key={idx} className="border-b border-border hover:bg-muted/30 transition-colors">
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 text-left">
                       <div className="flex items-center gap-2">
                         <FileText className="w-4 h-4 text-primary" />
                         <p className="font-semibold text-brand-body">{doc.fileName}</p>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 text-left">
                       <span className="text-xs rounded-lg border border-border bg-muted/30 px-2.5 py-1 text-brand-body">
                         {doc.category}
                       </span>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 text-left">
                       <p className="text-sm text-brand-body">{doc.linkedTo}</p>
                     </td>
                     <td className="px-5 py-4 text-right">
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-xs rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-1.5"
+                        className="text-xs rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 ml-auto"
                       >
                         {doc.action === "Download" ? (
                           <>
@@ -661,21 +684,21 @@ function CspMbrContent() {
 
           {/* Enhanced Table */}
           <div className="overflow-x-auto rounded-lg border border-border">
-            <table className="w-full text-left">
+            <table className="w-full">
               <thead className="bg-muted/60 border-b border-border">
                 <tr>
-                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Request Type</th>
-                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
+                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-left">Request Type</th>
+                  <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-center">Status</th>
                   <th className="px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {cspRequests.map((request, idx) => (
                   <tr key={idx} className="border-b border-border hover:bg-muted/30 transition-colors">
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 text-left">
                       <p className="font-semibold text-brand-body">{request.type}</p>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 text-center">
                       <span className={`inline-flex items-center gap-1.5 text-xs rounded-full px-3 py-1.5 font-medium ${
                         request.status === "Completed" ? "bg-success/20 text-success" :
                         request.status === "In progress" ? "bg-info/20 text-info" :
@@ -691,7 +714,7 @@ function CspMbrContent() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-xs rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-1.5"
+                        className="text-xs rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 ml-auto"
                       >
                         {request.action === "View" ? (
                           <>

@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
+import Dropdown from "@/components/Dropdown";
+import { ChevronDown } from "lucide-react";
 
 type ServiceCode =
   | "bookkeeping"
@@ -129,24 +130,23 @@ export default function ServiceRequestPage() {
           <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-semibold text-brand-body">Service</label>
-              <Select
-                value={form.serviceCode}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    serviceCode: e.target.value as ServiceCode,
-                    requiredDocs: {},
-                  }))
-                }
+              <Dropdown
                 className="w-full"
-              >
-                <option value="">Select service</option>
-                {Object.entries(serviceLabels).map(([code, label]) => (
-                  <option key={code} value={code}>
-                    {label}
-                  </option>
-                ))}
-              </Select>
+                trigger={
+                  <Button variant="outline" className="w-full h-9 justify-between">
+                    {form.serviceCode ? serviceLabels[form.serviceCode as ServiceCode] || "Select service" : "Select service"}
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                }
+                items={[
+                  { id: "", label: "Select service", onClick: () => setForm((f) => ({ ...f, serviceCode: "" as ServiceCode, requiredDocs: {} })) },
+                  ...Object.entries(serviceLabels).map(([code, label]) => ({
+                    id: code,
+                    label: label,
+                    onClick: () => setForm((f) => ({ ...f, serviceCode: code as ServiceCode, requiredDocs: {} }))
+                  }))
+                ]}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold text-brand-body">Company</label>

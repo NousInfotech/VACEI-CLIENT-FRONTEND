@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import Dropdown from "@/components/Dropdown";
+import { ChevronDown } from "lucide-react";
 
 type GlobalUploadDrawerProps = {
   open: boolean;
@@ -133,47 +134,62 @@ export function GlobalUploadDrawer({ open, onClose }: GlobalUploadDrawerProps) {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                 <div className="space-y-1">
                   <p className="text-[11px] font-medium text-muted-foreground">Service</p>
-                  <Select
-                    className="h-9 text-xs"
-                    value={service}
-                    onChange={(e) => setService(e.target.value)}
-                  >
-                    <option value="auto">Auto</option>
-                    <option value="bookkeeping">Bookkeeping</option>
-                    <option value="vat">VAT &amp; Tax</option>
-                    <option value="payroll">Payroll</option>
-                    <option value="audit">Audit</option>
-                    <option value="csp">CSP / MBR</option>
-                    <option value="legal">Legal</option>
-                    <option value="projects">Projects</option>
-                  </Select>
+                  <Dropdown
+                    className="w-full"
+                    trigger={
+                      <Button variant="outline" size="sm" className="w-full h-9 justify-between text-xs">
+                        {service === "auto" ? "Auto" : service.charAt(0).toUpperCase() + service.slice(1).replace("_", " ")}
+                        <ChevronDown className="h-3 w-3 opacity-50" />
+                      </Button>
+                    }
+                    items={[
+                      { id: "auto", label: "Auto", onClick: () => setService("auto") },
+                      { id: "bookkeeping", label: "Bookkeeping", onClick: () => setService("bookkeeping") },
+                      { id: "vat", label: "VAT & Tax", onClick: () => setService("vat") },
+                      { id: "payroll", label: "Payroll", onClick: () => setService("payroll") },
+                      { id: "audit", label: "Audit", onClick: () => setService("audit") },
+                      { id: "csp", label: "CSP / MBR", onClick: () => setService("csp") },
+                      { id: "legal", label: "Legal", onClick: () => setService("legal") },
+                      { id: "projects", label: "Projects", onClick: () => setService("projects") }
+                    ]}
+                  />
                 </div>
                 <div className="space-y-1">
                   <p className="text-[11px] font-medium text-muted-foreground">Period</p>
-                  <Select
-                    className="h-9 text-xs"
-                    value={period}
-                    onChange={(e) => setPeriod(e.target.value)}
-                  >
-                    <option value="auto">Auto</option>
-                    <option value="q1">Q1</option>
-                    <option value="q2">Q2</option>
-                    <option value="q3">Q3</option>
-                    <option value="q4">Q4</option>
-                  </Select>
+                  <Dropdown
+                    className="w-full"
+                    trigger={
+                      <Button variant="outline" size="sm" className="w-full h-9 justify-between text-xs">
+                        {period === "auto" ? "Auto" : period.toUpperCase()}
+                        <ChevronDown className="h-3 w-3 opacity-50" />
+                      </Button>
+                    }
+                    items={[
+                      { id: "auto", label: "Auto", onClick: () => setPeriod("auto") },
+                      { id: "q1", label: "Q1", onClick: () => setPeriod("q1") },
+                      { id: "q2", label: "Q2", onClick: () => setPeriod("q2") },
+                      { id: "q3", label: "Q3", onClick: () => setPeriod("q3") },
+                      { id: "q4", label: "Q4", onClick: () => setPeriod("q4") }
+                    ]}
+                  />
                 </div>
                 <div className="space-y-1">
                   <p className="text-[11px] font-medium text-muted-foreground">Tag</p>
-                  <Select
-                    className="h-9 text-xs"
-                    value={tag}
-                    onChange={(e) => setTag(e.target.value)}
-                  >
-                    <option value="auto">Auto</option>
-                    <option value="invoices">Invoices</option>
-                    <option value="bank">Bank</option>
-                    <option value="payroll">Payroll</option>
-                  </Select>
+                  <Dropdown
+                    className="w-full"
+                    trigger={
+                      <Button variant="outline" size="sm" className="w-full h-9 justify-between text-xs">
+                        {tag === "auto" ? "Auto" : tag.charAt(0).toUpperCase() + tag.slice(1)}
+                        <ChevronDown className="h-3 w-3 opacity-50" />
+                      </Button>
+                    }
+                    items={[
+                      { id: "auto", label: "Auto", onClick: () => setTag("auto") },
+                      { id: "invoices", label: "Invoices", onClick: () => setTag("invoices") },
+                      { id: "bank", label: "Bank", onClick: () => setTag("bank") },
+                      { id: "payroll", label: "Payroll", onClick: () => setTag("payroll") }
+                    ]}
+                  />
                 </div>
               </div>
 

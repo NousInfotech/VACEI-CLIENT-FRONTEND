@@ -6,6 +6,8 @@ import Spinner from "@/components/Spinner";
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Button } from "@/components/ui/button";
+import Dropdown from "@/components/Dropdown";
+import { ChevronDown } from "lucide-react";
 interface Accountant {
     accountant: { id: number; first_name: string; last_name: string; email: string; name: string };
 }
@@ -163,29 +165,26 @@ export default function TaskForm({
                             <label htmlFor="priority" className="sr-only">
                                 Priority
                             </label>
-                            <select
-                                id="priority"
-                                value={priority ?? ""}
-                                onChange={(e) =>
-                                    setPriority(e.target.value ? (e.target.value as Priority) : null)
+                            <Dropdown
+                                className="w-full"
+                                trigger={
+                                    <Button variant="outline" className="w-full h-[42px] justify-between">
+                                        {priority ? priority.charAt(0) + priority.slice(1).toLowerCase() : "Select Priority"}
+                                        <ChevronDown className="h-4 w-4 opacity-50" />
+                                    </Button>
                                 }
-                                className="
-                  block w-full
-                  border border-border rounded-lg px-3 py-2 bg-card text-sm text-brand-body
-                  focus:outline-none focus:ring-0
-                  h-[42px]
-                "
-                            >
-                                <option value="">Select Priority</option>
-                                <option value="LOW">Low</option>
-                                <option value="MEDIUM">Medium</option>
-                                <option value="HIGH">High</option>
-                            </select>
+                                items={[
+                                    { id: "LOW", label: "Low", onClick: () => setPriority("LOW") },
+                                    { id: "MEDIUM", label: "Medium", onClick: () => setPriority("MEDIUM") },
+                                    { id: "HIGH", label: "High", onClick: () => setPriority("HIGH") }
+                                ]}
+                            />
                         </div>
                     </div>
 
                     <div className="flex flex-wrap gap-4 mb-3">
                         {/* Accountant Selection - Multi-select */}
+                        {/* Note: Using native <select multiple> because Dropdown component doesn't support multi-select functionality */}
                         <div className="flex-1 min-w-[200px] sm:min-w-[250px] md:min-w-[300px]">
                             <label htmlFor="assignedToAccountants" className="sr-only">
                                 Choose Accountant(s)
@@ -217,23 +216,20 @@ export default function TaskForm({
                             <label htmlFor="statusSelect" className="sr-only">
                                 Select Status
                             </label>
-                            <select
-                                id="statusSelect"
-                                value={statusId ?? ""}
-                                onChange={(e) => setStatusId(Number(e.target.value))}
-                                className="
-                  block w-full border border-border rounded-lg px-3 py-2 bg-card text-sm text-brand-body
-                  focus:outline-none focus:ring-0
-                  h-[42px]
-                "
-                            >
-                                <option value="">Select Status</option>
-                                {statuses.map((status) => (
-                                    <option key={status.id} value={status.id}>
-                                        {status.name}
-                                    </option>
-                                ))}
-                            </select>
+                            <Dropdown
+                                className="w-full"
+                                trigger={
+                                    <Button variant="outline" className="w-full h-[42px] justify-between">
+                                        {statusId ? statuses.find(s => s.id === statusId)?.name || "Select Status" : "Select Status"}
+                                        <ChevronDown className="h-4 w-4 opacity-50" />
+                                    </Button>
+                                }
+                                items={statuses.map((status) => ({
+                                    id: status.id,
+                                    label: status.name,
+                                    onClick: () => setStatusId(status.id)
+                                }))}
+                            />
                         </div>
                     </div>
 
