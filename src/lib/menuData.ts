@@ -1,4 +1,4 @@
-import { DashboardSquare02Icon,FileSyncIcon, TaskDaily01Icon, Book02Icon, ArrowRightDoubleIcon, CashbackPoundIcon, TransactionIcon, TaxesIcon, GitPullRequestIcon, DocumentValidationIcon, ProfileIcon, InstallingUpdates02Icon,NotificationIcon,InvoiceIcon, Message01Icon } from '@hugeicons/core-free-icons';
+import { DashboardSquare02Icon,FileSyncIcon, TaskDaily01Icon, Book02Icon, ArrowRightDoubleIcon, CashbackPoundIcon, TransactionIcon, TaxesIcon, GitPullRequestIcon, DocumentValidationIcon, ProfileIcon, InstallingUpdates02Icon,NotificationIcon,InvoiceIcon, Message01Icon, Building01Icon, CreditCardIcon, UserCheck01Icon, GiftIcon } from '@hugeicons/core-free-icons';
 
 export type MenuSection = "primary" | "workspaces" | "operations" | "settings";
 
@@ -10,6 +10,7 @@ export interface MenuItem {
     children?: MenuItem[];
     section?: MenuSection;
     description?: string;
+    isActive?: boolean; // New: indicates if service is active
 }
 
 export const menuData: MenuItem[] = [
@@ -20,7 +21,7 @@ export const menuData: MenuItem[] = [
         href: "/dashboard",
         children: [],
         section: "primary",
-        description: "Overview of your company's financial health",
+        description: "Company overview & status",
     },
     {
         slug: "documents",
@@ -29,127 +30,110 @@ export const menuData: MenuItem[] = [
         href: "/dashboard/documents",
         children: [],
         section: "primary",
-        description: "Manage your company's documents",
+        description: "Store and access documents",
     },
     {
         slug: "services-root",
         icon: GitPullRequestIcon,
         label: "Services",
-        href: "#",
+        href: "/dashboard/services",
         section: "primary",
-        description: "Access all audit and accounting services",
+        description: "Accounting, audit & corporate services",
         children: [
             {
-                slug: "services-main",
-                icon: GitPullRequestIcon,
-                label: "Services",
-                href: "/dashboard/services",
+                slug: "accounting-bookkeeping",
+                icon: Book02Icon,
+                label: "Accounting & Bookkeeping",
+                href: "/dashboard/services/bookkeeping",
+                isActive: true,
+            },
+            {
+                slug: "vat-tax",
+                icon: TaxesIcon,
+                label: "VAT & Tax",
+                href: "/dashboard/services/vat",
+                isActive: true,
+            },
+            {
+                slug: "payroll",
+                icon: CashbackPoundIcon,
+                label: "Payroll",
+                href: "/dashboard/services/payroll",
+                isActive: true,
             },
             {
                 slug: "audit",
-                icon: GitPullRequestIcon,
+                icon: DocumentValidationIcon,
                 label: "Audit",
-                href: "#",
+                href: "/dashboard/services/audit",
+                isActive: true,
                 children: [
                     {
-                        slug: "engagement",
-                        icon: DocumentValidationIcon,
-                        label: "Engagement",
-                        href: "/dashboard/engagement",
-                    },
-                    {
-                        slug: "company",
-                        icon: DocumentValidationIcon,
+                        slug: "audit-company",
                         label: "Company",
                         href: "/dashboard/company",
+                        icon: Building01Icon,
+                    },
+                    {
+                        slug: "audit-engagement",
+                        label: "Engagement",
+                        href: "/dashboard/engagement",
+                        icon: TaskDaily01Icon,
                     },
                 ]
             },
-            {
-                slug: "accounting",
-                icon: Book02Icon,
-                label: "Accounting",
-                href: "#",
-                children: [
                     {
-                        slug: "books",
-                        icon: Book02Icon,
-                        label: "Books",
-                        href: "#",
-                        children: [
-                            {
-                                slug: "profit-loss",
-                                icon: ArrowRightDoubleIcon,
-                                label: "Financial Statement",
-                                href: '/dashboard/financial-statements/profit-loss',
+                slug: "csp",
+                icon: Building01Icon,
+                label: "Corporate Services (CSP)",
+                href: "/dashboard/services/csp-mbr",
+                isActive: true,
+            },
+                    {
+                slug: "banking-payments",
+                icon: CreditCardIcon,
+                label: "Banking & Payments",
+                href: "/dashboard/services/banking-payments",
+                isActive: false,
                             },
                             {
-                                slug: "insights",
-                                icon: ArrowRightDoubleIcon,
-                                label: "Insights",
-                                href: "/dashboard/insights",
+                slug: "regulated-licences",
+                icon: ProfileIcon,
+                label: "Regulated Licences",
+                href: "/dashboard/services/regulated-licences",
+                isActive: false,
+            },
+                            {
+                slug: "residency-mobility",
+                icon: UserCheck01Icon,
+                label: "Residency & Mobility",
+                href: "/dashboard/services/residency-mobility",
+                isActive: false,
                             },
                             {
-                                slug: "account-receivable-aging",
-                                icon: ArrowRightDoubleIcon,
-                                label: "AP/AR Aging",
-                                href: "/dashboard/ap-ar-aging/account-receivable-aging",
-                            },
-                        ]
+                slug: "grants-incentives",
+                icon: GiftIcon,
+                label: "Grants & Incentives",
+                href: "/dashboard/services/grants-incentives",
+                isActive: false,
                     },
                     {
-                        slug: "cash",
-                        icon: CashbackPoundIcon,
-                        label: "Cash",
-                        href: "#",
-                        children: [
-                            {
-                                slug: "cash/accounts",
-                                icon: ArrowRightDoubleIcon,
-                                label: "Accounts",
-                                href: "/dashboard/cash/accounts",
-                            },
-                            {
-                                slug: "change-in-cash",
-                                icon: ArrowRightDoubleIcon,
-                                label: "Change in Cash",
-                                href: "/dashboard/cash/change-in-cash",
-                            },
-                            {
-                                slug: "cash-spend",
-                                icon: ArrowRightDoubleIcon,
-                                label: "Cash Spend",
-                                href: "/dashboard/cash/cash-spend"
-                            }
-                        ]
-                    },
-                    {
-                        slug: "bank-transactions",
+                slug: "corporate-transactions",
                         icon: TransactionIcon,
-                        label: "Bank Transactions",
-                        href: "/dashboard/bank-transactions",
-                    },
-                    {
-                        slug: "invoices",
-                        icon: InvoiceIcon,
-                        label: "Invoice",
-                        href: "/dashboard/invoices",
-                    },
-                    {
-                        slug: "tax",
-                        icon: TaxesIcon,
-                        label: "Tax",
-                        href: "/dashboard/tax",
-                    },
-                    {
-                        slug: "general-ledger",
-                        icon: ProfileIcon,
-                        label: "General Ledger",
-                        href: "/dashboard/general-ledger",
-                    },
-                ]
+                label: "Corporate Transactions",
+                href: "/dashboard/services/corporate-transactions",
+                isActive: false,
             },
         ]
+    },
+    {
+        slug: "business-plans",
+        icon: DocumentValidationIcon,
+        label: "Business Plans",
+        href: "/dashboard/business-plans",
+        children: [],
+        section: "primary",
+        description: "Request and track professional business plans",
     },
     {
         slug: "compliance",
@@ -158,7 +142,7 @@ export const menuData: MenuItem[] = [
         href: "/dashboard/compliance",
         children: [],
         section: "primary",
-        description: "Manage your company's compliance calendar",
+        description: "Statutory deadlines & filings",
     },
     {
         slug: "messages",
@@ -167,7 +151,7 @@ export const menuData: MenuItem[] = [
         href: "/dashboard/messages",
         children: [],
         section: "primary",
-        description: "Manage your company's messages",
+        description: "Chat with your service team",
     },
     {
         slug: "todo-list",
@@ -176,7 +160,7 @@ export const menuData: MenuItem[] = [
         href: "/dashboard/todo-list",
         children: [],
         section: "operations",
-        description: "Manage your company's to-do list",
+        description: "Tasks requiring your action",
     },
       {
         slug: "notifications",
@@ -185,14 +169,14 @@ export const menuData: MenuItem[] = [
         href: "/dashboard/notifications",
         children: [],
         section: "operations",
-        description: "Manage your company's alerts and notifications",
+        description: "Important updates & reminders",
     },
     {
        slug: "document-organizer",
         icon: DocumentValidationIcon,
         label: "Document Organizer",
-        href: "#",
-        description: "Manage your company's documents",
+        href: "/dashboard/document-organizer/document-listing",
+        description: "Auto-sort & organise files",
         children: [
             {
                 slug: "upload",
@@ -214,7 +198,7 @@ export const menuData: MenuItem[] = [
         icon: FileSyncIcon,
         label: "Quickbooks Sync",
         href: "/dashboard/quickbooks-sync",
-        description: "Manage your company's quickbooks sync",
+        description: "Accounting software connection",
         children: [],
         section: "operations",
     },
@@ -222,9 +206,28 @@ export const menuData: MenuItem[] = [
         slug: "settings",
         icon: InstallingUpdates02Icon,
         label: "Settings",
-        description: "Manage your company's settings",
+        description: "Company & user preferences",
         href: "/dashboard/settings",
-        children: [],
         section: "settings",
+        children: [
+            {
+                slug: "company-profile",
+                icon: Building01Icon,
+                label: "Company Profile",
+                href: "/dashboard/settings/company-profile",
+            },
+            {
+                slug: "users-permissions",
+                icon: ProfileIcon,
+                label: "Users & Permissions",
+                href: "/dashboard/settings/users-permissions",
+            },
+            {
+                slug: "preferences",
+                icon: InstallingUpdates02Icon,
+                label: "Preferences",
+                href: "/dashboard/settings/preferences",
+            },
+        ],
     }
 ];

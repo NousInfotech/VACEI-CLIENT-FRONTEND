@@ -20,13 +20,15 @@ interface SidebarMenuProps {
     isCollapsed?: boolean;
     isOpen?: boolean;
     onClose?: () => void;
+    onExpand?: () => void;
 }
 
 export default function SidebarMenu({ 
     menu, 
     isCollapsed = false, 
     isOpen = false, 
-    onClose 
+    onClose,
+    onExpand
 }: SidebarMenuProps) {
     const pathname = usePathname();
     const router = useRouter();
@@ -77,9 +79,35 @@ export default function SidebarMenu({
     };
 
     const handleMenuClick = (e: React.MouseEvent, item: MenuItem, hasChildren: boolean) => {
+        if (isCollapsed && hasChildren) {
+            if (onExpand) onExpand();
+            if (!openItems[item.slug]) {
+                toggleItem(item.slug);
+            }
+
+            // Scroll to the top of the clicked section after expansion
+            // Using a slightly longer timeout to account for the sidebar expansion transition (300ms)
+            const target = (e.currentTarget as HTMLElement).closest('li');
+            if (target) {
+                setTimeout(() => {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 400);
+            }
+
+            // Only prevent default if there's no actual link to navigate to
+            if (!item.href || item.href === "#") {
+                e.preventDefault();
+            }
+            return;
+        }
+
         if (hasChildren && !isCollapsed) {
-            e.preventDefault();
             toggleItem(item.slug);
+            // Allow navigation for specific hubs even if they have children
+            const isHub = ['services-root', 'document-organizer', 'settings'].includes(item.slug);
+            if (!isHub) {
+                e.preventDefault();
+            }
         } else if (item.href && item.href !== "#") {
             // onClose is for mobile
             if (onClose) onClose();
@@ -109,7 +137,18 @@ export default function SidebarMenu({
         const isItemOpen = openItems[item.slug];
         
         const checkActive = (it: MenuItem): boolean => {
-            if (pathname === it.href) return true;
+            if (!it.href || it.href === "#") {
+                return !!(it.children && it.children.some(checkActive));
+            }
+
+            // Special case for root Dashboard: only match exactly
+            if (it.href === "/dashboard") {
+                return pathname === "/dashboard";
+            }
+
+            // Exact match or starts with the href (for sub-pages)
+            const isCurrentPath = pathname === it.href || pathname.startsWith(it.href + "/");
+            if (isCurrentPath) return true;
             if (it.children) return it.children.some(checkActive);
             return false;
         };
@@ -210,30 +249,45 @@ export default function SidebarMenu({
         }
 
         // Recursive items (Level 2+)
+        const isServiceActive = item.isActive !== false; // Default to active if not specified
+        const serviceHref = isServiceActive ? (item.href || "#") : "/dashboard/services/request";
+        
         return (
             <li key={item.slug} className="space-y-1">
                 <Link
-                    href={item.href || "#"}
+                    href={serviceHref}
                     onClick={(e) => {
                         if (hasChildren) {
-                            e.preventDefault();
                             toggleItem(item.slug);
-                        } else if (onClose && item.href !== "#") {
+                            // Allow 'Audit' to navigate while being a dropdown
+                            const isNavigableHeader = ['audit'].includes(item.slug);
+                            if (!isNavigableHeader) {
+                                e.preventDefault();
+                            }
+                        } else if (onClose && serviceHref !== "#") {
                             onClose();
                         }
                     }}
                     className={cn(
-                        "flex items-center justify-between px-3 py-2 rounded-xl transition-all hover:bg-white/5",
-                        isActive ? "text-white font-medium" : "text-white/60",
+                        "flex items-center justify-between px-3 py-2 rounded-xl transition-all",
+                        isServiceActive 
+                            ? "hover:bg-white/5" 
+                            : "opacity-50 cursor-not-allowed hover:bg-white/5",
+                        isActive ? "text-white font-semibold bg-white/10 shadow-sm" : "text-white/60",
                         level >= 3 ? "text-md" : "text-sm"
                     )}
                 >
-                    <div className="flex items-center gap-3">
-                        <HugeiconsIcon icon={item.icon} className={level >= 3 ? "h-3 w-3" : "h-4 w-4"} />
-                        <span>{item.label}</span>
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <HugeiconsIcon icon={item.icon} className={cn(level >= 3 ? "h-3 w-3" : "h-4 w-4", !isServiceActive && "opacity-50")} />
+                        <span className="truncate">{item.label}</span>
                     </div>
+                    {!isServiceActive && !hasChildren && (
+                        <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider ml-2 shrink-0">
+                            Request service
+                        </span>
+                    )}
                     {hasChildren && (
-                        isItemOpen ? <ChevronUp className="h-3 w-3 opacity-50" /> : <ChevronDown className="h-3 w-3 opacity-50" />
+                        isItemOpen ? <ChevronUp className="h-3 w-3 opacity-50 shrink-0" /> : <ChevronDown className="h-3 w-3 opacity-50 shrink-0" />
                     )}
                 </Link>
 
