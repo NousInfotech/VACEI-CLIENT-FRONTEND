@@ -14,7 +14,7 @@ import type { Task } from "@/interfaces";
 import { HugeiconsIcon } from '@hugeicons/react';
 import { AddressBookIcon, Alert02Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
-import { User, AlertCircle, CheckCircle, ArrowRight } from "lucide-react";
+import { User, AlertCircle, CheckCircle, ArrowRight, Clock, MoreVertical, Upload, Plus, MessageCircle, Calendar } from "lucide-react";
 
 interface UploadStatusSummary {
   documentsUploaded: number;
@@ -176,15 +176,15 @@ export default function DashboardPage() {
 
   // Mock data for wireframe sections
   const topPriorityActions = [
-    { id: 1, text: "Upload March bank statement", action: "Upload", href: "/dashboard/document-organizer/document-upload" },
-    { id: 2, text: "Reply to Audit Query Q#12", action: "Reply", href: "/dashboard/messages" },
-    { id: 3, text: "VAT Q2 missing 1 sales invoice", action: "Upload", href: "/dashboard/document-organizer/document-upload" },
+    { id: 1, title: "Upload March bank statement", service: "Accounting", reason: "Due now", action: "Upload", href: "/dashboard/document-organizer/document-upload" },
+    { id: 2, title: "Reply to Audit Query #12", service: "Audit", reason: "Waiting on you", action: "Reply", href: "/dashboard/messages" },
+    { id: 3, title: "VAT Q2 – Missing 1 sales invoice", service: "VAT", reason: "Required for submission", action: "Upload", href: "/dashboard/document-organizer/document-upload" },
   ];
   const activeServices = [
-    { name: "Bookkeeping", status: "In progress", next: "Review March", href: "/dashboard/services/bookkeeping" },
-    { name: "VAT & Tax", status: "Due soon (30 Jun)", next: "Missing docs", href: "/dashboard/services/vat" },
-    { name: "Payroll", status: "Done", next: "Next run 28th", href: "/dashboard/services/payroll" },
-    { name: "Audit", status: "Waiting on you", next: "Reply Q#12", href: "/dashboard/services/audit" },
+    { name: "Bookkeeping", status: "In progress", next: "Review March", nextStepType: "client", href: "/dashboard/services/bookkeeping" },
+    { name: "VAT & Tax", status: "Due soon (30 Jun)", next: "Missing docs", nextStepType: "client", href: "/dashboard/services/vat" },
+    { name: "Payroll", status: "Done", next: "Next run 28th", nextStepType: "vacei", href: "/dashboard/services/payroll" },
+    { name: "Audit", status: "Waiting on you", next: "Reply Q#12", nextStepType: "client", href: "/dashboard/services/audit" },
   ];
   const recentlyCompleted = [
     { text: "VAT Q1 submitted", action: "View receipt", href: "/dashboard/services/vat" },
@@ -192,20 +192,28 @@ export default function DashboardPage() {
     { text: "MBR BO2 submitted", action: "View form", href: "/dashboard/services/csp-mbr/mbr-submissions/BO2" },
   ];
   const recentActivity = [
-    { text: "9 docs uploaded today", time: "2 hours ago" },
-    { text: "VAT checks completed", time: "5 hours ago" },
+    { text: "9 docs uploaded today", time: "2 hours ago", service: "Documents", href: "/dashboard/documents" },
+    { text: "VAT checks completed", time: "5 hours ago", service: "VAT & Tax", href: "/dashboard/services/vat" },
   ];
   const messagesUpdates = [
     { text: "Need 1 more invoice", sender: "John (Accountant)", time: "1 hour ago" },
     { text: "Audit query sent", sender: "System", time: "3 hours ago" },
   ];
   const healthStatus = complianceCounts.overdue > 0 ? "Needs attention" : complianceCounts.dueSoon > 0 ? "Needs attention" : "Healthy";
+  
+  // Calculate Risk Level
+  const getRiskLevel = () => {
+    if (complianceCounts.overdue > 0) return { level: "High", color: "text-destructive" };
+    if (complianceCounts.dueSoon > 2) return { level: "Medium", color: "text-warning" };
+    return { level: "Low", color: "text-success" };
+  };
+  const riskLevel = getRiskLevel();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return `Good morning, ${username}!`;
-    if (hour < 17) return `Good afternoon, ${username}!`;
-    return `Good evening, ${username}!`;
+    if (hour < 12) return "Good morning — here's your compliance status";
+    if (hour < 17) return "Good afternoon — here's your compliance status";
+    return "Good evening — here's your compliance status";
   };
 
   return (
@@ -234,6 +242,17 @@ export default function DashboardPage() {
                     healthStatus === "Healthy" ? "bg-success" : "bg-warning"
                   }`}></span>
                   {healthStatus}
+                </div>
+
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 font-bold text-xs uppercase tracking-widest shadow-sm text-white">
+                  <span className={`w-2 h-2 rounded-full ${
+                    riskLevel.level === "High" ? "bg-destructive" : 
+                    riskLevel.level === "Medium" ? "bg-warning" : "bg-success"
+                  }`}></span>
+                  Overall Risk Level: <span className={`${
+                    riskLevel.level === "High" ? "text-red-300" : 
+                    riskLevel.level === "Medium" ? "text-yellow-300" : "text-green-300"
+                  }`}>{riskLevel.level}</span>
                 </div>
               </div>
             </div>
@@ -274,70 +293,77 @@ export default function DashboardPage() {
         )}
 
 
-      {/* Performance Indicators / Compliance Overview */}
+      {/* Performance Indicators / Compliance Overview - Clickable Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <DashboardCard animate className="p-6">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-gray-700 tracking-widest">Overdue</span>
-            <span className="text-3xl font-semibold text-destructive tabular-nums">{complianceCounts.overdue}</span>
-          </div>
-        </DashboardCard>
-        <DashboardCard animate className="p-6">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-gray-700 tracking-widest">Due soon (7d)</span>
-            <span className="text-3xl font-semibold text-warning tabular-nums">{complianceCounts.dueSoon}</span>
-          </div>
-        </DashboardCard>
-        <DashboardCard animate className="p-6">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-gray-700 tracking-widest">Waiting</span>
-            <span className="text-3xl font-semibold text-info tabular-nums">{complianceCounts.waiting}</span>
-          </div>
-        </DashboardCard>
-        <DashboardCard animate className="p-6">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-gray-700 tracking-widest">Completed (30d)</span>
-            <span className="text-3xl font-semibold text-success tabular-nums">{complianceCounts.done}</span>
-          </div>
-        </DashboardCard>
+        <Link href="/dashboard/todo-list?filter=overdue">
+          <DashboardCard animate className="p-6 cursor-pointer hover:shadow-lg transition-all">
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-gray-700 tracking-widest">Overdue</span>
+              <span className="text-3xl font-semibold text-destructive tabular-nums">{complianceCounts.overdue}</span>
+            </div>
+          </DashboardCard>
+        </Link>
+        <Link href="/dashboard/compliance?filter=due-soon">
+          <DashboardCard animate className="p-6 cursor-pointer hover:shadow-lg transition-all">
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-gray-700 tracking-widest">Due soon (7d)</span>
+              <span className="text-3xl font-semibold text-warning tabular-nums">{complianceCounts.dueSoon}</span>
+            </div>
+          </DashboardCard>
+        </Link>
+        <Link href="/dashboard/todo-list?filter=waiting">
+          <DashboardCard animate className="p-6 cursor-pointer hover:shadow-lg transition-all">
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-gray-700 tracking-widest">Waiting</span>
+              <span className="text-3xl font-semibold text-info tabular-nums">{complianceCounts.waiting}</span>
+            </div>
+          </DashboardCard>
+        </Link>
+        <Link href="/dashboard/compliance?filter=completed">
+          <DashboardCard animate className="p-6 cursor-pointer hover:shadow-lg transition-all">
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-gray-700 tracking-widest">Completed (30d)</span>
+              <span className="text-3xl font-semibold text-success tabular-nums">{complianceCounts.done}</span>
+            </div>
+          </DashboardCard>
+        </Link>
       </div>
 
       {/* Main Content Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left Column - Priority Actions & Services */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Top Priority Actions */}
+          {/* Top Priority Actions - Simplified */}
           <DashboardCard animate className="overflow-hidden group">
             <div className="flex items-center justify-between px-8 py-6 border-b border-gray-300">
               <div className="flex items-center gap-4">
                 <div className="w-1 h-7 bg-gray-900 rounded-full" />
                 <div className="flex flex-col">
                   <h3 className="text-xl font-semibold text-gray-900">Top Priority Actions</h3>
-                  <p className="text-sm text-gray-600">Immediate steps required for your account</p>
                 </div>
               </div>
               <Link href="/dashboard/compliance/list">
                 <Button variant="default">View all</Button>
               </Link>
             </div>
-            <div className="p-4 space-y-3">
+            <div className="p-6 space-y-2">
               {topPriorityActions.map((action) => (
-                <DashboardCard key={action.id} className="flex items-center justify-between rounded-xl px-6 py-4 gap-4">
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="flex items-center justify-center rounded-xl font-medium text-lg shrink-0">
-                      {action.id}.
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-base font-semibold block truncate">{action.text}</span>
-                      <span className="text-xs text-gray-500">Verification required</span>
+                <div key={action.id} className="flex items-center justify-between gap-4 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors group/action">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="w-2 h-2 rounded-full bg-gray-900 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-base font-semibold text-gray-900 truncate">{action.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{action.service} · {action.reason}</p>
                     </div>
                   </div>
-                  <Link href={action.href} className="shrink-0">
-                    <Button size="sm" className="whitespace-nowrap">
-                      {action.action}
-                    </Button>
-                  </Link>
-                </DashboardCard>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Link href={action.href}>
+                      <Button size="sm" variant="default" className="whitespace-nowrap">
+                        {action.action}
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
               ))}
             </div>
           </DashboardCard>
@@ -374,8 +400,20 @@ export default function DashboardPage() {
                       </Link>
                     </div>
                     <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-[10px] font-medium gap-2">
-                      <span className="shrink-0">NEXT STEP</span>
-                      <span className="uppercase tracking-widest truncate">{service.next}</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {service.nextStepType === "client" ? (
+                          <>
+                            <User className="w-3 h-3 text-gray-600" />
+                            <span>Next step required from you:</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="w-3 h-3 text-success" />
+                            <span>Next step (we're working on it):</span>
+                          </>
+                        )}
+                      </div>
+                      <span className="uppercase tracking-widest truncate font-semibold">{service.next}</span>
                     </div>
                   </DashboardCard>
                 ))}
@@ -471,17 +509,24 @@ export default function DashboardPage() {
                 <p className="text-[15px] font-semibold uppercase tracking-widest mb-3">Live Updates</p>
                 <div className="space-y-3">
                   {recentActivity.map((activity, idx) => (
-                    <DashboardCard key={idx} className="p-4 border-none shadow-sm bg-gray-50/50 hover:bg-white transition-all transform hover:-translate-x-1">
-                      <div className="flex gap-4 items-start">
-                        <div className="mt-1.5 shrink-0">
-                          <div className="w-2 h-2 rounded-full bg-gray-900" />
+                    <Link key={idx} href={activity.href}>
+                      <DashboardCard className="p-4 border-none shadow-sm bg-gray-50/50 hover:bg-white transition-all transform hover:-translate-x-1 cursor-pointer">
+                        <div className="flex gap-4 items-start">
+                          <div className="mt-1.5 shrink-0">
+                            <div className="w-2 h-2 rounded-full bg-gray-900" />
+                          </div>
+                          <div className="space-y-1 flex-1 min-w-0">
+                            <p className="text-sm font-medium leading-tight text-gray-700">{activity.text}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-primary/10 text-primary uppercase tracking-widest">
+                                {activity.service}
+                              </span>
+                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">{activity.time}</p>
+                            </div>
+                          </div>
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium leading-tight text-gray-700">{activity.text}</p>
-                          <p className="text-[10px] font-medium text-gray-700 uppercase tracking-widest">{activity.time}</p>
-                        </div>
-                      </div>
-                    </DashboardCard>
+                      </DashboardCard>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -503,6 +548,42 @@ export default function DashboardPage() {
             </div>
           </DashboardCard>
 
+          {/* Quick Actions */}
+          <DashboardCard className="overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-300 flex items-center gap-4">
+              <div className="w-1 h-6 bg-gray-900 rounded-full" />
+              <h3 className="text-lg font-medium text-gray-900">Quick Actions</h3>
+            </div>
+            <div className="p-4 space-y-2">
+              <Link href="/dashboard/document-organizer/document-upload">
+                <Button variant="outline" className="w-full justify-start gap-3 h-11">
+                  <Upload className="w-4 h-4" />
+                  <span>Upload document</span>
+                </Button>
+              </Link>
+              <Link href="/dashboard/services/request">
+                <Button variant="outline" className="w-full justify-start gap-3 h-11">
+                  <Plus className="w-4 h-4" />
+                  <span>Request a service</span>
+                </Button>
+              </Link>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start gap-3 h-11"
+                onClick={handleContactAccountantClick}
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Message accountant</span>
+              </Button>
+              <Link href="/dashboard/compliance">
+                <Button variant="outline" className="w-full justify-start gap-3 h-11">
+                  <Calendar className="w-4 h-4" />
+                  <span>View compliance calendar</span>
+                </Button>
+              </Link>
+            </div>
+          </DashboardCard>
+
           {/* Compliance Snapshot */}
           <DashboardCard className="overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-300 flex items-center gap-4">
@@ -510,8 +591,13 @@ export default function DashboardPage() {
               <h3 className="text-lg font-medium text-gray-900">Compliance Snapshot</h3>
             </div>
             <div className="p-4">
+              {/* Next Statutory Deadline */}
+              <div className="mb-4 p-3 rounded-lg bg-warning/5 border border-warning/20">
+                <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest mb-1">Next Deadline:</p>
+                <p className="text-sm font-semibold text-gray-900">VAT Return – 30 June</p>
+              </div>
+              
               <div className="grid grid-cols-2 gap-3 mb-4">
-                
                 <Kpi label="Overdue" value={complianceCounts.overdue} tone="danger" />
                 <Kpi label="Due soon" value={complianceCounts.dueSoon} tone="warning" />
                 <Kpi label="Waiting" value={complianceCounts.waiting} tone="info" />

@@ -210,30 +210,41 @@ export default function SidebarMenu({
         }
 
         // Recursive items (Level 2+)
+        const isServiceActive = item.isActive !== false; // Default to active if not specified
+        const serviceHref = isServiceActive ? (item.href || "#") : "/dashboard/services/request";
+        
         return (
             <li key={item.slug} className="space-y-1">
                 <Link
-                    href={item.href || "#"}
+                    href={serviceHref}
                     onClick={(e) => {
                         if (hasChildren) {
                             e.preventDefault();
                             toggleItem(item.slug);
-                        } else if (onClose && item.href !== "#") {
+                        } else if (onClose && serviceHref !== "#") {
                             onClose();
                         }
                     }}
                     className={cn(
-                        "flex items-center justify-between px-3 py-2 rounded-xl transition-all hover:bg-white/5",
+                        "flex items-center justify-between px-3 py-2 rounded-xl transition-all",
+                        isServiceActive 
+                            ? "hover:bg-white/5" 
+                            : "opacity-50 cursor-not-allowed hover:bg-white/5",
                         isActive ? "text-white font-medium" : "text-white/60",
                         level >= 3 ? "text-md" : "text-sm"
                     )}
                 >
-                    <div className="flex items-center gap-3">
-                        <HugeiconsIcon icon={item.icon} className={level >= 3 ? "h-3 w-3" : "h-4 w-4"} />
-                        <span>{item.label}</span>
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <HugeiconsIcon icon={item.icon} className={cn(level >= 3 ? "h-3 w-3" : "h-4 w-4", !isServiceActive && "opacity-50")} />
+                        <span className="truncate">{item.label}</span>
                     </div>
+                    {!isServiceActive && !hasChildren && (
+                        <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider ml-2 shrink-0">
+                            Request service
+                        </span>
+                    )}
                     {hasChildren && (
-                        isItemOpen ? <ChevronUp className="h-3 w-3 opacity-50" /> : <ChevronDown className="h-3 w-3 opacity-50" />
+                        isItemOpen ? <ChevronUp className="h-3 w-3 opacity-50 shrink-0" /> : <ChevronDown className="h-3 w-3 opacity-50 shrink-0" />
                     )}
                 </Link>
 
