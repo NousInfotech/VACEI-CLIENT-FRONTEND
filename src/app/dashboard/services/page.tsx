@@ -1,5 +1,5 @@
 "use client";
-
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,8 +26,11 @@ import {
   ArrowRight, 
   Settings,
   Sparkles,
-  TrendingUp
+  TrendingUp, AlertTriangle,
+  Clock3,
+  CheckCheck,
 } from "lucide-react";
+
 import DashboardCard from "@/components/DashboardCard";
 
 // Service categories
@@ -152,6 +155,45 @@ const serviceCategories = [
   },
 ] as const;
 
+ const stats = [
+    {
+      label: "Active Services",
+      value: "9",
+      color: "text-green-600",
+      bg: "bg-green-100",
+      icon: CheckCircle2,
+      active: true,
+      status: "Active",
+      cta: "View services",
+      services: ["Bookkeeping", "VAT & Tax", "Payroll"], // Demo services
+    },
+    {
+      label: "Pending Actions",
+      value: "3",
+      color: "text-orange-600",
+      bg: "bg-orange-100",
+      icon: AlertTriangle,
+      active: false,
+    },
+    {
+      label: "Due Soon",
+      value: "2",
+      color: "text-blue-600",
+      bg: "bg-blue-100",
+      icon: Clock3,
+      active: false,
+    },
+    {
+      label: "Completed",
+      value: "5",
+      color: "text-purple-600",
+      bg: "bg-purple-100",
+      icon: CheckCheck,
+      active: false,
+    },
+  ];
+
+
 function StatusBadge({
   tone,
   children,
@@ -235,7 +277,11 @@ function ServiceCard({ service }: { service: ServiceType }) {
               </p>
             </div>
           </div>
-          <StatusBadge tone={service.statusTone}>{service.status}</StatusBadge>
+          <StatusBadge tone={service.statusTone}>
+  <span className={service.status === "Open" ? "text-green-600" : ""}>
+    {service.status}
+  </span>
+</StatusBadge>
         </div>
 
         <div className="mt-auto pt-4 border-t border-border flex items-center justify-between">
@@ -251,6 +297,15 @@ function ServiceCard({ service }: { service: ServiceType }) {
 }
 
 export default function ServicesHubPage() {
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalData, setModalData] = useState<string[]>([]);
+
+   const openModal = (services: string[]) => {
+    setModalData(services);
+    setIsModalOpen(true);
+  };
+
   return (
     <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-8">
       {/* Enhanced Header */}
@@ -287,21 +342,81 @@ export default function ServicesHubPage() {
         </div>
       </DashboardCard>
 
-      {/* Quick Stats Bar */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Active Services", value: "8", color: "text-brand-body" },
-          { label: "Pending Actions", value: "3", color: "text-warning" },
-          { label: "Due Soon", value: "2", color: "text-info" },
-          { label: "Completed", value: "5", color: "text-success" },
-        ].map((stat, i) => (
-          <DashboardCard key={i} className="px-6 py-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-2">{stat.label}</p>
-            <p className={`text-3xl font-bold ${stat.color} tracking-tight`}>{stat.value}</p>
-          </DashboardCard>
-        ))}
+{/* Status cards */}
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat, i) => {
+          const Icon = stat.icon;
+
+          return (
+            <DashboardCard
+              key={i}
+              className="px-6 py-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+            >
+              {/* Icon + Heading */}
+              <div className="mb-3 flex items-center gap-2">
+                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${stat.bg}`}>
+                  <Icon className={`h-4 w-4 ${stat.color}`} />
+                </div>
+
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
+                  {stat.label}
+                </p>
+              </div>
+
+              {/* Value */}
+              <p className={`text-3xl font-bold tracking-tight mb-2`}>{stat.value}</p>
+
+              {/* Active Service Rule */}
+              {stat.active && (
+                <div className="flex items-center justify-between">
+                  {/* Status */}
+                  <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+                    {stat.status}
+                  </span>
+
+                  {/* CTA */}
+                  <button
+                    className="text-xs font-semibold text-green-700 hover:underline cursor-pointer"
+                    onClick={() => openModal(stat.services!)}
+                  >
+                    {stat.cta}
+                  </button>
+                </div>
+              )}
+            </DashboardCard>
+          );
+        })}
       </div>
 
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg w-96 p-6 relative">
+            <h2 className="text-xl font-bold mb-4">Active Services</h2>
+            <ul className="mb-4">
+              {modalData.map((service, index) => (
+                <li key={index} className="border-b py-2">
+                  {service}
+                </li>
+              ))}
+            </ul>
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
+              onClick={() => setIsModalOpen(false)}
+            >
+              ✕
+            </button>
+            <button
+              className="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              onClick={() => setIsModalOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    
+    
       {/* Service Categories */}
       <div className="space-y-8">
         {serviceCategories.map((category) => (
