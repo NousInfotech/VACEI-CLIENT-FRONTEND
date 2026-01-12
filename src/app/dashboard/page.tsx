@@ -174,11 +174,56 @@ export default function DashboardPage() {
   const encodedProcessedStatus = btoa('2');
   const encodedNeedCorrectionStatus = btoa('3');
 
+  // Fetch CSP renewals for dashboard
+  const [cspRenewals, setCspRenewals] = useState<Array<{
+    id: string;
+    title: string;
+    service: string;
+    reason: string;
+    action: string;
+    href: string;
+  }>>([]);
+
+  useEffect(() => {
+    // TODO: Replace with actual API call
+    // const renewals = await fetchCSPRenewals();
+    
+    // Mock CSP renewals - services expiring soon
+    const mockCSPRenewals = [
+      {
+        id: "csp-renewal-1",
+        title: "Renew Company Secretary",
+        service: "Corporate Services",
+        reason: "Expires 31 Dec 2025",
+        action: "Renew now",
+        href: "/dashboard/services/csp-mbr/services/csp-2/renew"
+      },
+      {
+        id: "csp-renewal-2",
+        title: "Renew Director Services",
+        service: "Corporate Services",
+        reason: "Expires 30 Jun 2025",
+        action: "Renew now",
+        href: "/dashboard/services/csp-mbr/services/csp-3/renew"
+      }
+    ];
+    
+    setCspRenewals(mockCSPRenewals);
+  }, []);
+
   // Mock data for wireframe sections
   const topPriorityActions = [
     { id: 1, title: "Upload March bank statement", service: "Accounting", reason: "Due now", action: "Upload", href: "/dashboard/document-organizer/document-upload" },
     { id: 2, title: "Reply to Audit Query #12", service: "Audit", reason: "Waiting on you", action: "Reply", href: "/dashboard/messages" },
     { id: 3, title: "VAT Q2 – Missing 1 sales invoice", service: "VAT", reason: "Required for submission", action: "Upload", href: "/dashboard/document-organizer/document-upload" },
+    ...cspRenewals.map(renewal => ({
+      id: renewal.id,
+      title: renewal.title,
+      service: renewal.service,
+      reason: renewal.reason,
+      action: renewal.action,
+      href: renewal.href
+    }))
   ];
   const activeServices = [
     { name: "Bookkeeping", status: "In progress", next: "Review March", nextStepType: "client", href: "/dashboard/services/bookkeeping" },
@@ -297,35 +342,35 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Link href="/dashboard/todo-list?filter=overdue">
           <DashboardCard animate className="p-6 cursor-pointer hover:shadow-lg transition-all">
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium text-gray-700 tracking-widest">Overdue</span>
-              <span className="text-3xl font-semibold text-destructive tabular-nums">{complianceCounts.overdue}</span>
-            </div>
-          </DashboardCard>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-gray-700 tracking-widest">Overdue</span>
+            <span className="text-3xl font-semibold text-destructive tabular-nums">{complianceCounts.overdue}</span>
+          </div>
+        </DashboardCard>
         </Link>
         <Link href="/dashboard/compliance?filter=due-soon">
           <DashboardCard animate className="p-6 cursor-pointer hover:shadow-lg transition-all">
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium text-gray-700 tracking-widest">Due soon (7d)</span>
-              <span className="text-3xl font-semibold text-warning tabular-nums">{complianceCounts.dueSoon}</span>
-            </div>
-          </DashboardCard>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-gray-700 tracking-widest">Due soon (7d)</span>
+            <span className="text-3xl font-semibold text-warning tabular-nums">{complianceCounts.dueSoon}</span>
+          </div>
+        </DashboardCard>
         </Link>
         <Link href="/dashboard/todo-list?filter=waiting">
           <DashboardCard animate className="p-6 cursor-pointer hover:shadow-lg transition-all">
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium text-gray-700 tracking-widest">Waiting</span>
-              <span className="text-3xl font-semibold text-info tabular-nums">{complianceCounts.waiting}</span>
-            </div>
-          </DashboardCard>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-gray-700 tracking-widest">Waiting</span>
+            <span className="text-3xl font-semibold text-info tabular-nums">{complianceCounts.waiting}</span>
+          </div>
+        </DashboardCard>
         </Link>
         <Link href="/dashboard/compliance?filter=completed">
           <DashboardCard animate className="p-6 cursor-pointer hover:shadow-lg transition-all">
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium text-gray-700 tracking-widest">Completed (30d)</span>
-              <span className="text-3xl font-semibold text-success tabular-nums">{complianceCounts.done}</span>
-            </div>
-          </DashboardCard>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-gray-700 tracking-widest">Completed (30d)</span>
+            <span className="text-3xl font-semibold text-success tabular-nums">{complianceCounts.done}</span>
+          </div>
+        </DashboardCard>
         </Link>
       </div>
 
@@ -359,9 +404,9 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <Link href={action.href}>
                       <Button size="sm" variant="default" className="whitespace-nowrap">
-                        {action.action}
-                      </Button>
-                    </Link>
+                      {action.action}
+                    </Button>
+                  </Link>
                   </div>
                 </div>
               ))}
@@ -511,21 +556,21 @@ export default function DashboardPage() {
                   {recentActivity.map((activity, idx) => (
                     <Link key={idx} href={activity.href}>
                       <DashboardCard className="p-4 border-none shadow-sm bg-gray-50/50 hover:bg-white transition-all transform hover:-translate-x-1 cursor-pointer">
-                        <div className="flex gap-4 items-start">
-                          <div className="mt-1.5 shrink-0">
-                            <div className="w-2 h-2 rounded-full bg-gray-900" />
-                          </div>
+                      <div className="flex gap-4 items-start">
+                        <div className="mt-1.5 shrink-0">
+                          <div className="w-2 h-2 rounded-full bg-gray-900" />
+                        </div>
                           <div className="space-y-1 flex-1 min-w-0">
-                            <p className="text-sm font-medium leading-tight text-gray-700">{activity.text}</p>
+                          <p className="text-sm font-medium leading-tight text-gray-700">{activity.text}</p>
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-primary/10 text-primary uppercase tracking-widest">
                                 {activity.service}
                               </span>
                               <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">{activity.time}</p>
                             </div>
-                          </div>
                         </div>
-                      </DashboardCard>
+                      </div>
+                    </DashboardCard>
                     </Link>
                   ))}
                 </div>

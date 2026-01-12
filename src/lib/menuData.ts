@@ -21,7 +21,7 @@ export const menuData: MenuItem[] = [
         href: "/dashboard",
         children: [],
         section: "primary",
-        description: "Overview of your company's financial health",
+        description: "Company overview & status",
     },
     {
         slug: "documents",
@@ -30,7 +30,7 @@ export const menuData: MenuItem[] = [
         href: "/dashboard/documents",
         children: [],
         section: "primary",
-        description: "Manage your company's documents",
+        description: "Store and access documents",
     },
     {
         slug: "services-root",
@@ -38,7 +38,7 @@ export const menuData: MenuItem[] = [
         label: "Services",
         href: "#",
         section: "primary",
-        description: "Access all accounting and professional services",
+        description: "Accounting, audit & corporate services",
         children: [
             {
                 slug: "accounting-bookkeeping",
@@ -128,7 +128,7 @@ export const menuData: MenuItem[] = [
         href: "/dashboard/compliance",
         children: [],
         section: "primary",
-        description: "Manage your company's compliance calendar",
+        description: "Statutory deadlines & filings",
     },
     {
         slug: "messages",
@@ -137,7 +137,7 @@ export const menuData: MenuItem[] = [
         href: "/dashboard/messages",
         children: [],
         section: "primary",
-        description: "Manage your company's messages",
+        description: "Chat with your service team",
     },
     {
         slug: "todo-list",
@@ -146,7 +146,7 @@ export const menuData: MenuItem[] = [
         href: "/dashboard/todo-list",
         children: [],
         section: "operations",
-        description: "Manage your company's to-do list",
+        description: "Tasks requiring your action",
     },
       {
         slug: "notifications",
@@ -155,14 +155,14 @@ export const menuData: MenuItem[] = [
         href: "/dashboard/notifications",
         children: [],
         section: "operations",
-        description: "Manage your company's alerts and notifications",
+        description: "Important updates & reminders",
     },
     {
        slug: "document-organizer",
         icon: DocumentValidationIcon,
         label: "Document Organizer",
         href: "#",
-        description: "Manage your company's documents",
+        description: "Auto-sort & organise files",
         children: [
             {
                 slug: "upload",
@@ -184,7 +184,7 @@ export const menuData: MenuItem[] = [
         icon: FileSyncIcon,
         label: "Quickbooks Sync",
         href: "/dashboard/quickbooks-sync",
-        description: "Manage your company's quickbooks sync",
+        description: "Accounting software connection",
         children: [],
         section: "operations",
     },
@@ -192,7 +192,7 @@ export const menuData: MenuItem[] = [
         slug: "settings",
         icon: InstallingUpdates02Icon,
         label: "Settings",
-        description: "Manage your company's settings",
+        description: "Company & user preferences",
         href: "#",
         section: "settings",
         children: [

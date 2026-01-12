@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Dropdown from "@/components/Dropdown";
-import { ChevronDown } from "lucide-react";
+import { AlertModal } from "@/components/ui/modal";
+import { ChevronDown, CheckCircle2 } from "lucide-react";
+import { addCSPService } from "@/lib/cspStorage";
 
 type ServiceCode =
   | "bookkeeping"
@@ -54,6 +56,9 @@ export default function ServiceRequestPage() {
     notes: "",
     requiredDocs: {},
   });
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // hydrate from localStorage
   useEffect(() => {
@@ -100,7 +105,72 @@ export default function ServiceRequestPage() {
   };
 
   const handleSubmit = () => {
-    alert("This is a UI-only intake form. Wire to backend when ready.");
+    if (!form.serviceCode) {
+      setErrorMessage("Please select a service.");
+      setShowErrorModal(true);
+      return;
+    }
+
+    if (!form.companyName.trim()) {
+      setErrorMessage("Please enter a company name.");
+      setShowErrorModal(true);
+      return;
+    }
+
+    try {
+      // Get active company ID
+      const activeCompanyId = localStorage.getItem("vacei-active-company");
+      if (!activeCompanyId) {
+        setErrorMessage("No active company found. Please select a company first.");
+        setShowErrorModal(true);
+        return;
+      }
+
+      // Save service request to localStorage
+      const requestKey = `vacei-service-requests-${activeCompanyId}`;
+      const existingRequests = JSON.parse(localStorage.getItem(requestKey) || "[]");
+      const newRequest = {
+        id: `req-${Date.now()}`,
+        ...form,
+        submittedAt: new Date().toISOString(),
+        status: "pending"
+      };
+      existingRequests.push(newRequest);
+      localStorage.setItem(requestKey, JSON.stringify(existingRequests));
+
+      // If it's a CSP service, add it as a new service
+      if (form.serviceCode === "csp_mbr") {
+        const cspServiceType = form.notes.toLowerCase().includes("registered office") ? "registered_office" :
+                               form.notes.toLowerCase().includes("secretary") ? "company_secretary" :
+                               form.notes.toLowerCase().includes("director") ? "director_services" :
+                               "ubo_maintenance";
+        
+        const serviceName = form.notes.split("\n")[0] || "CSP Service";
+        
+        addCSPService({
+          company_id: activeCompanyId,
+          service_type: cspServiceType,
+          service_name: serviceName,
+          start_date: "",
+          expiry_date: "",
+          renewal_cycle: "annual",
+          renewal_price: 0,
+          auto_renew: false,
+          assigned_party: "",
+          description: form.notes || "Service requested by client"
+        }, activeCompanyId);
+      }
+
+      // Clear form
+      resetForm();
+      
+      // Show success modal
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("Error submitting request:", error);
+      setErrorMessage("Failed to submit request. Please try again.");
+      setShowErrorModal(true);
+    }
   };
 
   return (
@@ -222,6 +292,26 @@ export default function ServiceRequestPage() {
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      <AlertModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title="Request Submitted"
+        message="Your service request has been submitted successfully. Our team will review it and get back to you soon."
+        type="success"
+        confirmText="OK"
+      />
+
+      {/* Error Modal */}
+      <AlertModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title="Error"
+        message={errorMessage}
+        type="error"
+        confirmText="OK"
+      />
     </section>
   );
 }
