@@ -113,6 +113,15 @@ export const menuData: MenuItem[] = [
         ]
     },
     {
+        slug: "business-plans",
+        icon: DocumentValidationIcon,
+        label: "Business Plans",
+        href: "/dashboard/business-plans",
+        children: [],
+        section: "primary",
+        description: "Request and track professional business plans",
+    },
+    {
         slug: "compliance",
         icon: TaxesIcon,
         label: "Compliance Calendar",
