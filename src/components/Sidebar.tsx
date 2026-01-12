@@ -7,13 +7,14 @@ interface SidebarProps {
     isOpen?: boolean;
     onClose?: () => void;
     isCollapsed?: boolean;
+    onExpand?: () => void;
 }
 
 /**
  * Sidebar component that acts as a wrapper for SidebarMenu.
  * The new premium design is implemented directly in SidebarMenu.
  */
-export default function Sidebar({ isOpen = false, onClose, isCollapsed = false }: SidebarProps) {
+export default function Sidebar({ isOpen = false, onClose, isCollapsed = false, onExpand }: SidebarProps) {
     return (
         <div className="hidden lg:block">
             <SidebarMenu 
@@ -21,6 +22,7 @@ export default function Sidebar({ isOpen = false, onClose, isCollapsed = false }
                 isCollapsed={isCollapsed} 
                 isOpen={isOpen}
                 onClose={onClose}
+                onExpand={onExpand}
             />
         </div>
     );

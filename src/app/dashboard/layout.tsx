@@ -27,6 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
                 isCollapsed={isSidebarCollapsed}
+                onExpand={() => setIsSidebarCollapsed(false)}
             />
 
             {/* Mobile Backdrop Overlay */}
@@ -44,6 +45,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     isCollapsed={false} 
                     isOpen={isSidebarOpen}
                     onClose={() => setIsSidebarOpen(false)}
+                    onExpand={() => setIsSidebarCollapsed(false)}
                 />
             </div>
 
@@ -56,11 +58,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
                 {/* Mobile Header */}
                 <header
-                    className="lg:hidden sticky top-0 z-10 bg-[hsl(var(--background))] border-b backdrop-blur-xl flex justify-between items-center px-4 py-4"
+                    className="lg:hidden sticky top-0 z-10 bg-background border-b backdrop-blur-xl flex justify-between items-center px-4 py-4"
                     style={{ borderColor: `hsl(var(--border))` }}
                 >
                     <button
-                        className="text-[hsl(var(--foreground))] text-2xl cursor-pointer p-2 rounded-lg hover:bg-[hsl(var(--muted))]"
+                        className="text-foreground text-2xl cursor-pointer p-2 rounded-lg hover:bg-muted"
                         aria-label="Open sidebar"
                         onClick={() => setIsSidebarOpen(true)}
                     >

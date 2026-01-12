@@ -36,7 +36,7 @@ export const menuData: MenuItem[] = [
         slug: "services-root",
         icon: GitPullRequestIcon,
         label: "Services",
-        href: "#",
+        href: "/dashboard/services",
         section: "primary",
         description: "Accounting, audit & corporate services",
         children: [
@@ -67,7 +67,21 @@ export const menuData: MenuItem[] = [
                 label: "Audit",
                 href: "/dashboard/services/audit",
                 isActive: true,
+                children: [
+                    {
+                        slug: "audit-company",
+                        label: "Company",
+                        href: "/dashboard/company",
+                        icon: Building01Icon,
                     },
+                    {
+                        slug: "audit-engagement",
+                        label: "Engagement",
+                        href: "/dashboard/engagement",
+                        icon: TaskDaily01Icon,
+                    },
+                ]
+            },
                     {
                 slug: "csp",
                 icon: Building01Icon,
@@ -161,7 +175,7 @@ export const menuData: MenuItem[] = [
        slug: "document-organizer",
         icon: DocumentValidationIcon,
         label: "Document Organizer",
-        href: "#",
+        href: "/dashboard/document-organizer/document-listing",
         description: "Auto-sort & organise files",
         children: [
             {
@@ -193,7 +207,7 @@ export const menuData: MenuItem[] = [
         icon: InstallingUpdates02Icon,
         label: "Settings",
         description: "Company & user preferences",
-        href: "#",
+        href: "/dashboard/settings",
         section: "settings",
         children: [
             {

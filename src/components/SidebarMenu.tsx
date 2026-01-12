@@ -20,13 +20,15 @@ interface SidebarMenuProps {
     isCollapsed?: boolean;
     isOpen?: boolean;
     onClose?: () => void;
+    onExpand?: () => void;
 }
 
 export default function SidebarMenu({ 
     menu, 
     isCollapsed = false, 
     isOpen = false, 
-    onClose 
+    onClose,
+    onExpand
 }: SidebarMenuProps) {
     const pathname = usePathname();
     const router = useRouter();
@@ -77,9 +79,35 @@ export default function SidebarMenu({
     };
 
     const handleMenuClick = (e: React.MouseEvent, item: MenuItem, hasChildren: boolean) => {
+        if (isCollapsed && hasChildren) {
+            if (onExpand) onExpand();
+            if (!openItems[item.slug]) {
+                toggleItem(item.slug);
+            }
+
+            // Scroll to the top of the clicked section after expansion
+            // Using a slightly longer timeout to account for the sidebar expansion transition (300ms)
+            const target = (e.currentTarget as HTMLElement).closest('li');
+            if (target) {
+                setTimeout(() => {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 400);
+            }
+
+            // Only prevent default if there's no actual link to navigate to
+            if (!item.href || item.href === "#") {
+                e.preventDefault();
+            }
+            return;
+        }
+
         if (hasChildren && !isCollapsed) {
-            e.preventDefault();
             toggleItem(item.slug);
+            // Allow navigation for specific hubs even if they have children
+            const isHub = ['services-root', 'document-organizer', 'settings'].includes(item.slug);
+            if (!isHub) {
+                e.preventDefault();
+            }
         } else if (item.href && item.href !== "#") {
             // onClose is for mobile
             if (onClose) onClose();
@@ -109,7 +137,18 @@ export default function SidebarMenu({
         const isItemOpen = openItems[item.slug];
         
         const checkActive = (it: MenuItem): boolean => {
-            if (pathname === it.href) return true;
+            if (!it.href || it.href === "#") {
+                return !!(it.children && it.children.some(checkActive));
+            }
+
+            // Special case for root Dashboard: only match exactly
+            if (it.href === "/dashboard") {
+                return pathname === "/dashboard";
+            }
+
+            // Exact match or starts with the href (for sub-pages)
+            const isCurrentPath = pathname === it.href || pathname.startsWith(it.href + "/");
+            if (isCurrentPath) return true;
             if (it.children) return it.children.some(checkActive);
             return false;
         };
@@ -219,8 +258,12 @@ export default function SidebarMenu({
                     href={serviceHref}
                     onClick={(e) => {
                         if (hasChildren) {
-                            e.preventDefault();
                             toggleItem(item.slug);
+                            // Allow 'Audit' to navigate while being a dropdown
+                            const isNavigableHeader = ['audit'].includes(item.slug);
+                            if (!isNavigableHeader) {
+                                e.preventDefault();
+                            }
                         } else if (onClose && serviceHref !== "#") {
                             onClose();
                         }
@@ -230,7 +273,7 @@ export default function SidebarMenu({
                         isServiceActive 
                             ? "hover:bg-white/5" 
                             : "opacity-50 cursor-not-allowed hover:bg-white/5",
-                        isActive ? "text-white font-medium" : "text-white/60",
+                        isActive ? "text-white font-semibold bg-white/10 shadow-sm" : "text-white/60",
                         level >= 3 ? "text-md" : "text-sm"
                     )}
                 >
