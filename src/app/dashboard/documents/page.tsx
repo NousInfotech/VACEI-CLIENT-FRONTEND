@@ -1,109 +1,269 @@
 "use client";
 
-import Link from "next/link";
-import React, { useEffect, useState, Suspense } from "react";
-import DocumentForm from "@/app/dashboard/document-organizer/components/DocumentForm";
+import React, { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { Button } from "@/components/ui/button";
-import Dropdown from "@/components/Dropdown";
-import { MoreVertical, CheckCircle2, Circle, Upload, List, LayoutGrid, ChevronDown, Files, FileQuestion, FileCheck, ListTodo } from "lucide-react";
+import { Upload, ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import PillTabs from "@/components/shared/PillTabs";
-import { useTabQuery } from "@/hooks/useTabQuery";
 import DashboardCard from "@/components/DashboardCard";
+import { fetchCategories, createOrUpdateDocument } from "@/api/documenService";
+import { fetchTasks, updateTaskStatus, fetchTaskStatuses } from "@/api/taskService";
+import DocumentList from "@/components/documents/DocumentList";
 
-type DocumentsTab = "all" | "requested" | "uploaded";
+// Utility functions moved here to avoid import issues
+const generateYears = (currentYear: number, range: number = 5): number[] => {
+  return Array.from({ length: range }, (_, i) => currentYear - (range - 1) + i);
+};
 
-interface ChecklistItem {
-  id: string;
-  title: string;
-  description: string;
-  href: string;
-  done: boolean;
+const toOptions = (years: number[]) => {
+  return years.map((y) => ({
+    value: y.toString(),
+    label: y.toString(),
+  }));
+};
+
+type FileWithMeta = File & { _key: string };
+
+function makeFileKey(file: File) {
+  return `${file.name}__${file.size}__${file.lastModified}`;
 }
 
-const DOCS_UI_KEY = "vacei-documents-ui-state";
-
 function DocumentsMasterPage() {
-  const [activeTab, setActiveTab] = useTabQuery("all") as [DocumentsTab, (t: DocumentsTab) => void];
-  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+  const dropRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [files, setFiles] = useState<FileWithMeta[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadedCount, setUploadedCount] = useState<number | null>(null);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [loadedCategories, setLoadedCategories] = useState(false);
 
-  // Hydrate UI state from localStorage once on mount
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [service, setService] = useState("");
+  const [periodYear, setPeriodYear] = useState("");
+  const [periodMonth, setPeriodMonth] = useState("");
+
+  const [uploadedDocIds, setUploadedDocIds] = useState<string[]>([]);
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [postUploadNotes, setPostUploadNotes] = useState("");
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [notesSaved, setNotesSaved] = useState(false);
+
+  const [openRequests, setOpenRequests] = useState<any[]>([]);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const currentYear = new Date().getFullYear();
+  const yearOptions = useMemo(() => toOptions(generateYears(currentYear, 5)), [currentYear]);
+  const monthOptions = useMemo(() => [
+    { value: "1", label: "January" },
+    { value: "2", label: "February" },
+    { value: "3", label: "March" },
+    { value: "4", label: "April" },
+    { value: "5", label: "May" },
+    { value: "6", label: "June" },
+    { value: "7", label: "July" },
+    { value: "8", label: "August" },
+    { value: "9", label: "September" },
+    { value: "10", label: "October" },
+    { value: "11", label: "November" },
+    { value: "12", label: "December" },
+  ], []);
+
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    let cancelled = false;
 
-    try {
-      const raw = window.localStorage.getItem(DOCS_UI_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as {
-          activeTab?: DocumentsTab;
-          checklist?: ChecklistItem[];
-        };
-        if (parsed.activeTab) setActiveTab(parsed.activeTab);
-        if (parsed.checklist && parsed.checklist.length > 0) {
-          setChecklist(parsed.checklist);
-          return;
-        }
+    const load = async () => {
+      try {
+        const data = await fetchCategories();
+        const first = Array.isArray(data) ? data?.[0] : null;
+        const firstId = first?.id !== undefined && first?.id !== null ? String(first.id) : null;
+        if (!cancelled) setCategoryId(firstId);
+
+        // Fetch tasks for requests linking
+        const tasksRes = await fetchTasks({ limit: 50 }); // Fetch recent tasks
+        const tasks = tasksRes.data || [];
+        // Filter for "open" tasks. Assuming status "Completed" or "Done" means closed.
+        // We'll need to fetch statuses to be sure, or just rely on status name if available.
+        // For now, let's filter out anything that looks like "Done" or "Completed".
+        const openTasks = tasks.filter((t: any) => {
+             const statusVal = t.status?.name || t.status || "";
+             const s = typeof statusVal === 'string' ? statusVal.toLowerCase() : "";
+             return !s.includes("complete") && !s.includes("done") && !s.includes("closed");
+        });
+        if (!cancelled) setOpenRequests(openTasks);
+
+      } catch (err) {
+        console.error("Failed to load initial data:", err);
+        if (!cancelled) setCategoryId(null);
+      } finally {
+        if (!cancelled) setLoadedCategories(true);
       }
-    } catch {
-      // ignore parse errors and fall back to defaults
-    }
+    };
 
-    // Seed default checklist if nothing stored
-    setChecklist([
-      {
-        id: "bk-latest-period",
-        title: "Bookkeeping (latest period)",
-        description: "Upload bank statements and card statements.",
-        href: "/dashboard/document-organizer/document-upload",
-        done: false,
-      },
-      {
-        id: "vat-current-q",
-        title: "VAT (current Q)",
-        description: "Sales and purchase invoices still required.",
-        href: "/dashboard/document-organizer/document-upload",
-        done: false,
-      },
-      {
-        id: "audit-core-docs",
-        title: "Audit",
-        description: "Signed engagement letter and key contracts outstanding.",
-        href: "/dashboard/document-organizer/document-upload",
-        done: false,
-      },
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const acceptedTypes = useMemo(() => {
+    return new Set([
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-excel",
     ]);
   }, []);
 
-  // Persist UI state whenever it changes
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const payload = JSON.stringify({ activeTab, checklist });
-    window.localStorage.setItem(DOCS_UI_KEY, payload);
-  }, [activeTab, checklist]);
-
-  const markChecklistDone = (id: string, doneState?: boolean) => {
-    setChecklist((items: ChecklistItem[]) =>
-      items.map((item: ChecklistItem) =>
-        item.id === id ? { ...item, done: doneState !== undefined ? doneState : !item.done } : item
-      )
-    );
+  const addFiles = (incoming: File[]) => {
+    if (!incoming.length) return;
+    setError(null);
+    setFiles((prev) => {
+      const nextMap = new Map<string, FileWithMeta>();
+      for (const f of prev) nextMap.set(f._key, f);
+      for (const f of incoming) {
+        if (!acceptedTypes.has(f.type)) continue;
+        const key = makeFileKey(f);
+        nextMap.set(key, Object.assign(f, { _key: key }));
+      }
+      return Array.from(nextMap.values());
+    });
   };
 
-  const resetChecklist = () => {
-    setChecklist((items: ChecklistItem[]) => items.map((item: ChecklistItem) => ({ ...item, done: false })));
+  const onFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const list = e.target.files ? Array.from(e.target.files) : [];
+    addFiles(list);
+    e.target.value = "";
   };
 
-  const tabs = [
-    { id: "all" as const, label: "All Documents", icon: Files },
-    { id: "requested" as const, label: "Requested", icon: FileQuestion },
-    { id: "uploaded" as const, label: "Uploaded by you", icon: FileCheck },
-  ];
+  const removeFile = (key: string) => setFiles((prev) => prev.filter((f) => f._key !== key));
 
-  const activeTabLabel = tabs.find(t => t.id === activeTab)?.label || "All Documents";
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const list = e.dataTransfer.files ? Array.from(e.dataTransfer.files) : [];
+    addFiles(list);
+  };
+
+  const handleUpload = async () => {
+    if (uploading) return;
+    if (!files.length) {
+      setError("Please select at least one file to upload.");
+      return;
+    }
+    if (!loadedCategories) {
+      setError("Loading required settings. Please try again in a moment.");
+      return;
+    }
+    if (!categoryId && !service) {
+      setError("Upload setup is incomplete. Use Advanced options to upload.");
+      return;
+    }
+
+    setUploading(true);
+    setError(null);
+
+    const now = new Date();
+    const year = periodYear || String(now.getFullYear());
+    const month = periodMonth || String(now.getMonth() + 1);
+    const title = `Quick upload - ${now.toISOString().slice(0, 10)}`;
+
+    const formData = new FormData();
+    for (const file of files) formData.append("files", file);
+    formData.append("document_title", title);
+    formData.append("year", year);
+    formData.append("month", month);
+    if (categoryId) formData.append("category", categoryId);
+    formData.append("tagIds", JSON.stringify([]));
+    
+    if (service) {
+        formData.append("notes", `Related Service: ${service}`);
+    }
+
+    if (selectedRequestId) {
+        // Append request info to notes if linked
+        const req = openRequests.find(r => String(r.id) === selectedRequestId);
+        if (req) {
+            const existingNotes = formData.get("notes") || "";
+            formData.set("notes", `${existingNotes}\nLinked to Request: ${req.title} (ID: ${req.id})`.trim());
+        }
+    }
+
+    try {
+      const result = await createOrUpdateDocument(formData);
+      
+      // If linked to a request, mark it as completed
+      if (selectedRequestId) {
+          try {
+              // Find "Completed" status ID
+              const statuses = await fetchTaskStatuses();
+              const completedStatus = statuses.find((s: any) => s.name.toLowerCase() === "completed" || s.name.toLowerCase() === "done");
+              if (completedStatus) {
+                  await updateTaskStatus(Number(selectedRequestId), completedStatus.id);
+                  // Remove from local list
+                  setOpenRequests(prev => prev.filter(r => String(r.id) !== selectedRequestId));
+              }
+          } catch (err) {
+              console.error("Failed to update linked request status", err);
+              // Don't fail the upload if task update fails, just log it
+          }
+      }
+
+      const newIds: string[] = [];
+      if (Array.isArray(result)) {
+        result.forEach((doc: any) => {
+          if (doc.id) newIds.push(String(doc.id));
+        });
+      } else if (result && result.id) {
+        newIds.push(String(result.id));
+      } else if (result && result.data && Array.isArray(result.data)) {
+          result.data.forEach((doc: any) => {
+          if (doc.id) newIds.push(String(doc.id));
+        });
+      }
+      
+      setUploadedDocIds(newIds);
+      setUploadedCount(files.length);
+      setFiles([]);
+      setSelectedRequestId(null);
+      setRefreshKey(prev => prev + 1); // Refresh document list
+    } catch (e: any) {
+      setError(e?.message || "Error uploading documents.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSaveNotes = async () => {
+    if (!postUploadNotes.trim() || !uploadedDocIds.length) return;
+    setSavingNotes(true);
+    try {
+      await Promise.all(uploadedDocIds.map(async (id) => {
+        const fd = new FormData();
+        fd.append("notes", postUploadNotes);
+        await createOrUpdateDocument(fd, id);
+      }));
+      
+      setNotesSaved(true);
+      setTimeout(() => setIsNotesOpen(false), 1500);
+    } catch (e) {
+      console.error("Failed to save notes", e);
+    } finally {
+      setSavingNotes(false);
+    }
+  };
+
+  const handleDone = () => {
+    setUploadedCount(null);
+    setError(null);
+    setUploadedDocIds([]);
+    setPostUploadNotes("");
+    setNotesSaved(false);
+    setIsNotesOpen(false);
+  };
 
   return (
     <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-6">
-      {/* Page header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-2 md:px-0">
         <div>
           <h1 className="text-2xl md:text-4xl font-bold">
@@ -113,175 +273,259 @@ function DocumentsMasterPage() {
             Master vault for all documents, requests and smart checklists.
           </p>
         </div>
-
-        <div className="flex gap-3">
-          <Link href="/dashboard/document-organizer/document-upload">
-            <Button>
-              <Upload />
-              Upload documents
-            </Button>
-          </Link>
-          <Link href="/dashboard/document-organizer/document-listing">
-            <Button>
-              <List />
-              View all
-            </Button>
-          </Link>
-        </div>
       </div>
 
       <div className="bg-white/80 backdrop-blur-xl border border-gray-100 rounded-[2.5rem] shadow-2xl shadow-gray-200/50 p-6 md:p-8 space-y-8">
-        {/* Tabs - Responsive */}
-        <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-           {/* Desktop Tabs */}
-           <div className="hidden md:flex">
-            <PillTabs 
-              tabs={tabs} 
-              activeTab={activeTab} 
-              onTabChange={(id) => setActiveTab(id as DocumentsTab)} 
-            />
-          </div>
-
-          {/* Mobile Tab Dropdown */}
-          <div className="md:hidden w-full">
-             <Dropdown
-                align="left"
-                className="w-full"
-                contentClassName="w-full"
-                trigger={
-                   <Button variant="outline" className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 rounded-2xl border border-gray-100">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-gray-900">{activeTabLabel}</span>
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
-                   </Button>
-                }
-                items={tabs.map(tab => ({
-                   id: tab.id,
-                   label: tab.label,
-                   onClick: () => setActiveTab(tab.id)
-                }))}
-             />
-          </div>
-        </div>
-
-        {/* Content grid */}
-        <div className="grid gap-8 lg:grid-cols-[1.8fr,1.2fr]">
-          <div className={cn("space-y-6 relative z-1 hover:z-50 focus-within:z-50")}>
-            <div className="flex items-center justify-between">
-               <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center">
-                     <Upload className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    Upload zone
-                  </h2>
-               </div>
-              <span className="text-[10px] font-medium uppercase tracking-widest text-gray-700 rounded-full">
-                Drag & drop ready
-              </span>
+        <div className={cn("space-y-6 relative z-1 hover:z-50 focus-within:z-50")}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center">
+                <Upload className="w-5 h-5 text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                UPLOAD DOCUMENTS
+              </h2>
             </div>
-
-            <DashboardCard className="p-8 relative z-20">
-              <DocumentForm />
-            </DashboardCard>
           </div>
 
-          {/* Smart checklist */}
-          <DashboardCard className={cn("p-8 relative z-10 hover:z-50 focus-within:z-50")}>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center">
-                    <ListTodo className="w-5 h-5 text-indigo-600" />
-                  </div>
-                  <h2 className="text-2xl font-bold leading-tight">
-                    Smart checklist
-                  </h2>
+          {openRequests.length > 0 && uploadedCount === null && (
+            <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 space-y-3 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center gap-2 text-amber-800 font-medium text-sm">
+                    <span className="flex h-2 w-2 rounded-full bg-amber-500" />
+                    Pending Requests: Are these documents for...
                 </div>
-                <div className="flex gap-2">
-                  <Dropdown
-                    align="right"
-                    trigger={
-                      <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-gray-100">
-                        <MoreVertical className="w-5 h-5" />
-                      </Button>
-                    }
-                    items={[
-                      { id: 'reset', label: 'Reset Checklist', onClick: resetChecklist },
-                      { id: 'tasks', label: 'View All Tasks', onClick: () => window.location.href = "/dashboard/todo-list" }
-                    ]}
-                  />
+                <div className="flex flex-wrap gap-2">
+                    {openRequests.map((req) => (
+                        <button
+                            key={req.id}
+                            onClick={() => setSelectedRequestId(selectedRequestId === String(req.id) ? null : String(req.id))}
+                            className={cn(
+                                "text-xs px-3 py-1.5 rounded-lg border transition-all duration-200",
+                                selectedRequestId === String(req.id)
+                                    ? "bg-amber-100 border-amber-300 text-amber-900 font-medium ring-1 ring-amber-300"
+                                    : "bg-white border-amber-200 text-amber-700 hover:bg-amber-50 hover:border-amber-300"
+                            )}
+                        >
+                            {req.title}
+                        </button>
+                    ))}
+                    <button 
+                        onClick={() => setSelectedRequestId(null)}
+                        className="text-xs px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-900 transition-colors"
+                    >
+                        Ignore
+                    </button>
+                </div>
+            </div>
+          )}
+
+          <DashboardCard className="p-8 relative z-20">
+            {uploadedCount !== null ? (
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <p className="text-lg font-semibold text-gray-900">
+                    {uploadedCount} {uploadedCount === 1 ? "file" : "files"} uploaded successfully.
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Our team will review and organise them. You’ll be notified if anything else is needed.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsNotesOpen(!isNotesOpen)}
+                    className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900 underline underline-offset-4"
+                  >
+                    {isNotesOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    Add notes
+                  </button>
+                  
+                  {isNotesOpen && (
+                    <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
+                        <label className="block text-xs text-gray-500">
+                            Optional notes (if helpful):
+                        </label>
+                        <textarea
+                            value={postUploadNotes}
+                            onChange={(e) => setPostUploadNotes(e.target.value)}
+                            placeholder="e.g. March invoices, bank statement, audit documents"
+                            className="w-full max-w-md p-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                            rows={3}
+                        />
+                        <div className="flex items-center gap-2">
+                             <Button 
+                                size="sm" 
+                                onClick={handleSaveNotes} 
+                                disabled={savingNotes || !postUploadNotes.trim() || notesSaved}
+                                className={cn(notesSaved && "bg-green-600 hover:bg-green-700")}
+                             >
+                                {savingNotes ? "Saving..." : notesSaved ? "Saved" : "Save Note"}
+                             </Button>
+                        </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <Button onClick={handleDone} variant={notesSaved ? "outline" : "default"}>
+                    Done
+                  </Button>
                 </div>
               </div>
-              <p className="text-sm text-gray-500 font-medium">
-                Outstanding document requests and pending actions.
-              </p>
-            </div>
+            ) : (
+              <div className="space-y-6">
+                {error && (
+                  <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {error}
+                  </div>
+                )}
 
-            <div className="space-y-4 flex-1">
-              {checklist.map((item: ChecklistItem) => (
-                <DashboardCard
-                  key={item.id}
+                <div
+                  ref={dropRef}
+                  onDrop={handleDrop}
+                  onDragOver={(e) => e.preventDefault()}
                   className={cn(
-                    "group flex items-start gap-4 rounded-3xl border p-5 transition-all duration-300 relative hover:z-30 focus-within:z-30",
-                    item.done 
-                    ? "bg-gray-50/50 border-transparent opacity-60" 
-                    : "bg-white border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5"
+                    "group/drop relative w-full border-2 border-dashed rounded-3xl p-12 text-center transition-all duration-500 cursor-pointer overflow-hidden",
+                    "border-gray-200 bg-blue-50/30 hover:bg-white hover:border-gray-900 hover:shadow-2xl hover:shadow-gray-200/50"
                   )}
+                  onClick={() => inputRef.current?.click()}
                 >
-                  <div className={cn(
-                    "mt-1 w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors",
-                    item.done ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"
-                  )}>
-                    {item.done ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "font-medium text-sm text-gray-900 transition-all",
-                      item.done && "line-through text-gray-400"
-                    )}>
-                      {item.title}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1 line-clamp-2 leading-relaxed">
-                      {item.description}
-                    </p>
-                  </div>
-
-                  <Dropdown
-                    align="right"
-                    trigger={
-                      <Button variant="ghost" size="icon" className="h-8 w-8 p-2 -mr-2 text-gray-400 hover:text-gray-900 opacity-0 group-hover:opacity-100 transition-all">
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
-                    }
-                    items={[
-                      { 
-                        id: 'upload', 
-                        label: 'Upload Now', 
-                        icon: <Upload className="w-3.5 h-3.5" />,
-                        onClick: () => window.location.href = item.href 
-                      },
-                      { 
-                        id: 'toggle', 
-                        label: item.done ? 'Mark as Pending' : 'Mark as Done', 
-                        icon: item.done ? <Circle className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />,
-                        onClick: () => markChecklistDone(item.id) 
-                      }
-                    ]}
+                  <input
+                    ref={inputRef}
+                    type="file"
+                    multiple
+                    onChange={onFileInputChange}
+                    className="hidden"
+                    accept=".pdf,image/jpeg,image/png,.xlsx,.xls"
                   />
-                </DashboardCard>
-              ))}
-            </div>
 
-            <div className="pt-4 mt-auto">
-               <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                  <p className="text-[10px] font-bold text-blue-800 uppercase tracking-widest leading-relaxed">
-                    Note: This checklist is a real-time view of your outstanding requirements.
-                  </p>
-               </div>
-            </div>
+                  <div className="relative z-10 flex flex-col items-center">
+                    <div className="w-16 h-16 rounded-2xl bg-white shadow-xl shadow-gray-200/50 flex items-center justify-center mb-6 group-hover/drop:scale-110 group-hover/drop:rotate-6 transition-all duration-500">
+                      <Upload className="w-8 h-8 text-gray-900" />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-lg font-bold text-gray-900">
+                        Drag & drop files here
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        or click to upload
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        You can upload multiple files. We’ll organise them for you.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {files.length > 0 && (
+                  <div className="rounded-2xl border border-gray-100 bg-white p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-gray-900">
+                        Selected files ({files.length})
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setFiles([])}
+                        className="text-xs font-medium text-gray-600 hover:text-gray-900 underline underline-offset-4"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                    <div className="space-y-2 max-h-40 overflow-auto pr-1">
+                      {files.map((f) => (
+                        <div key={f._key} className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 px-3 py-2">
+                          <p className="text-xs text-gray-700 truncate">
+                            {f.name}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => removeFile(f._key)}
+                            className="text-xs font-medium text-gray-600 hover:text-gray-900 underline underline-offset-4 shrink-0"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+
+                <div className="space-y-4">
+                    <div className="flex flex-wrap items-center gap-3">
+                    <Button onClick={handleUpload} disabled={uploading}>
+                        {uploading ? "Uploading..." : "Upload files"}
+                    </Button>
+                    <Button 
+                        variant="outline" 
+                        disabled={uploading}
+                        onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
+                        className="gap-2"
+                    >
+                        Advanced options
+                        {isAdvancedOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </Button>
+                    </div>
+
+                    {isAdvancedOpen && (
+                        <div className="rounded-2xl border border-gray-100 bg-gray-50/50 p-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-gray-700">Related service (Optional)</label>
+                                <select
+                                    value={service}
+                                    onChange={(e) => setService(e.target.value)}
+                                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20"
+                                >
+                                    <option value="">Select service...</option>
+                                    <option value="Bookkeeping">Bookkeeping</option>
+                                    <option value="VAT">VAT</option>
+                                    <option value="Audit">Audit</option>
+                                    <option value="Payroll">Payroll</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-gray-700">Year (Optional)</label>
+                                    <select
+                                        value={periodYear}
+                                        onChange={(e) => setPeriodYear(e.target.value)}
+                                        className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20"
+                                    >
+                                        <option value="">Current ({currentYear})</option>
+                                        {yearOptions.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-gray-700">Month (Optional)</label>
+                                    <select
+                                        value={periodMonth}
+                                        onChange={(e) => setPeriodMonth(e.target.value)}
+                                        className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20"
+                                    >
+                                        <option value="">Current ({new Date().toLocaleString('default', { month: 'long' })})</option>
+                                        {monthOptions.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                            <p className="text-xs text-gray-400">
+                                Nothing is mandatory. This is for power users only.
+                            </p>
+                        </div>
+                    )}
+                </div>
+              </div>
+            )}
           </DashboardCard>
         </div>
+        
+        <DocumentList refreshTrigger={refreshKey} />
       </div>
     </section>
   );
@@ -298,5 +542,7 @@ export default function DocumentsPage() {
     </Suspense>
   );
 }
+
+
 
 
