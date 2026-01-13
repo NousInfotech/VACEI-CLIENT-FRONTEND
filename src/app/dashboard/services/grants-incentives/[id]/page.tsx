@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import DashboardCard from "@/components/DashboardCard";
+import PageHeader from "@/components/shared/PageHeader";
 import Dropdown from "@/components/Dropdown";
 
 // Data & Types
@@ -112,7 +113,10 @@ function GrantDetailsContent() {
         </button>
       </div>
 
-      <div className="max-w-xl mx-auto space-y-6">
+      <div className={cn(
+        "mx-auto space-y-6 transition-all duration-500",
+        step === 1 ? "max-w-5xl" : "max-w-xl"
+      )}>
         {/* Progress Indicator (from SupportWizard) */}
         {step > 1 && step < 5 && (
           <div className="flex items-center gap-2 px-2">
@@ -139,13 +143,17 @@ function GrantDetailsContent() {
             {/* STEP 1: Details (Exact replication of GrantDetailsModal) */}
             {step === 1 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-right-2">
-                <div className="space-y-1">
-                  <h2 className="text-2xl font-semibold leading-tight">{grant.title}</h2>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    <Badge variant="secondary" className="text-[10px] bg-primary-color-new text-white font-medium">{grant.provider}</Badge>
-                    <Badge variant="secondary" className="text-[10px] bg-primary-color-new text-white font-medium uppercase">{grant.category}</Badge>
-                  </div>
-                </div>
+                <PageHeader 
+                  title={grant.title}
+                  badge={
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Badge variant="secondary" className="text-[10px] bg-primary-color-new text-white font-medium">{grant.provider}</Badge>
+                      <Badge variant="secondary" className="text-[10px] bg-primary-color-new text-white font-medium uppercase">{grant.category}</Badge>
+                    </div>
+                  }
+                  animate={false}
+                  className="p-6 mb-6"
+                />
 
                 <div className="grid grid-cols-2 gap-4">
                   <DashboardCard className="p-3">
@@ -158,48 +166,62 @@ function GrantDetailsContent() {
                   </DashboardCard>
                 </div>
 
-                <div className="space-y-5">
-                  <div>
-                    <h4 className="text-sm font-bold text-brand-body mb-3 flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center bg-primary-color-new text-[10px] text-white font-bold">1</div>
-                      Eligibility Snapshot
-                    </h4>
-                    <ul className="space-y-2 pl-2">
-                      {grant.eligibility.map((item, i) => (
-                        <li key={i} className="text-sm text-brand-body/80 flex items-start gap-2.5 ">
-                          <div className="w-1.5 h-1.5 rounded-full bg-primary/30 mt-1.5 shrink-0" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="text-sm font-bold text-brand-body mb-3 flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center bg-primary-color-new text-[10px] text-white font-bold">1</div>
+                        Eligibility Snapshot
+                      </h4>
+                      <ul className="space-y-2 pl-2">
+                        {grant.eligibility.map((item, i) => (
+                          <li key={i} className="text-sm text-brand-body/80 flex items-start gap-2.5 ">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary/30 mt-1.5 shrink-0" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h4 className="text-sm font-bold text-brand-body mb-3 flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center bg-primary-color-new text-[10px] text-white font-bold">2</div>
+                        What you'll need
+                      </h4>
+                      <ul className="space-y-2 pl-2">
+                        {grant.documentsNeeded.map((doc, i) => (
+                          <li key={i} className="text-sm text-brand-body/80 flex items-start gap-2.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary/30 mt-1.5 shrink-0" />
+                            {doc}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
 
-                  <div>
-                    <h4 className="text-sm font-bold text-brand-body mb-3 flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center bg-primary-color-new text-[10px] text-white font-bold">2</div>
-                      What you'll need
-                    </h4>
-                    <ul className="space-y-2 pl-2">
-                      {grant.documentsNeeded.map((doc, i) => (
-                        <li key={i} className="text-sm text-brand-body/80 flex items-start gap-2.5">
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="text-sm font-bold text-brand-body mb-3 flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center bg-primary-color-new text-[10px] text-white font-bold">3</div>
+                        Estimated Timeline
+                      </h4>
+                      <ul className="pl-2">
+                        <li className="text-sm text-brand-body/80 flex items-start gap-2.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary/30 mt-1.5 shrink-0" />
-                          {doc}
+                          {grant.timeline} approval process
                         </li>
-                      ))}
-                    </ul>
-                  </div>
+                      </ul>
+                    </div>
 
-                  <div>
-                    <h4 className="text-sm font-bold text-brand-body mb-3 flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center bg-primary-color-new text-[10px] text-white font-bold">3</div>
-                      Estimated Timeline
-                    </h4>
-                    <ul className="pl-2">
-                      <li className="text-sm text-brand-body/80 flex items-start gap-2.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary/30 mt-1.5 shrink-0" />
-                        {grant.timeline} approval process
-                      </li>
-                    </ul>
+                    <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 space-y-3">
+                       <h4 className="text-sm font-bold text-primary flex items-center gap-2">
+                          <ShieldCheck className="w-4 h-4" />
+                          Expert Guidance
+                       </h4>
+                       <p className="text-xs text-muted-foreground leading-relaxed">
+                          Our specialists will guide you through the entire application process, from document preparation to submission.
+                       </p>
+                    </div>
                   </div>
                 </div>
 

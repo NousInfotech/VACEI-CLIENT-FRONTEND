@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import StatCard from "@/components/StatCard";
 import DashboardCard from "@/components/DashboardCard";
 import DashboardActionButton from "@/components/DashboardActionButton";
+import PageHeader from "@/components/shared/PageHeader";
 import CashFlowChart from "@/components/CashFlowChart";
 import PLSummaryChart from "@/components/PLSummaryChart";
 import { getDecodedUsername } from "@/utils/authUtils";
@@ -265,54 +266,29 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-brand-body p-6">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Premium Dashboard Header */}
-        <DashboardCard animate className="p-8 bg-[#0f1729] border-white/10">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <h1 className="text-3xl font-semibold text-white tracking-tight">
-                  {getGreeting()}
-                </h1>
-                <p className="text-white/60 font-medium">Welcome back! Here's what's happening with your business today.</p>
-              </div>
-              
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 flex items-center gap-3 shadow-sm">
-                  <span className="text-xs font-medium text-white/80 uppercase tracking-widest">Company</span>
-                  <div className="h-4 w-px bg-white/10" />
-                  <span className="text-sm font-bold text-white">{activeCompany}</span>
-                </div>
-                
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-700 font-bold text-xs uppercase tracking-widest shadow-sm text-white`}>
-                  <span className={`w-2 h-2 rounded-full animate-pulse ${
-                    healthStatus === "Healthy" ? "bg-success" : "bg-warning"
-                  }`}></span>
-                  {healthStatus}
-                </div>
-
-                <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 font-bold text-xs uppercase tracking-widest shadow-sm text-white">
-                  <span className={`w-2 h-2 rounded-full ${
-                    riskLevel.level === "High" ? "bg-destructive" : 
-                    riskLevel.level === "Medium" ? "bg-warning" : "bg-success"
-                  }`}></span>
-                  Overall Risk Level: <span className={`${
-                    riskLevel.level === "High" ? "text-red-300" : 
-                    riskLevel.level === "Medium" ? "text-yellow-300" : "text-green-300"
-                  }`}>{riskLevel.level}</span>
-                </div>
-              </div>
+        <PageHeader 
+          title={getGreeting()}
+          subtitle="Welcome back! Here's what's happening with your business today."
+          activeCompany={activeCompany}
+          badge={
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-700 font-bold text-xs uppercase tracking-widest shadow-sm text-white`}>
+              <span className={`w-2 h-2 rounded-full animate-pulse ${
+                healthStatus === "Healthy" ? "bg-success" : "bg-warning"
+              }`}></span>
+              {healthStatus}
             </div>
-
-            <div className="flex items-center gap-4">
-              <DashboardActionButton 
-                Icon={User}
-                title="Contact Accountant"
-                subtitle="Get expert assistance"
-                onClick={handleContactAccountantClick}
-                className="bg-white/5 border border-white/10 hover:bg-white/10 text-white"
-              />
-            </div>
-          </div>
-        </DashboardCard>
+          }
+          riskLevel={riskLevel}
+          actions={
+            <DashboardActionButton 
+              Icon={User}
+              title="Contact Accountant"
+              subtitle="Get expert assistance"
+              onClick={handleContactAccountantClick}
+              className="bg-white/5 border border-white/10 hover:bg-white/10 text-white"
+            />
+          }
+        />
 
         {/* Warning Banner */}
         {!uploadLoading && uploadSummary?.filesUploadedThisMonth === 0 && (

@@ -8,6 +8,7 @@ import DashboardCard from "@/components/DashboardCard";
 import { fetchCategories, createOrUpdateDocument } from "@/api/documenService";
 import { fetchTasks, updateTaskStatus, fetchTaskStatuses } from "@/api/taskService";
 import DocumentList from "@/components/documents/DocumentList";
+import PageHeader from "@/components/shared/PageHeader";
 
 // Utility functions moved here to avoid import issues
 const generateYears = (currentYear: number, range: number = 5): number[] => {
@@ -264,16 +265,10 @@ function DocumentsMasterPage() {
 
   return (
     <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-2 md:px-0">
-        <div>
-          <h1 className="text-2xl md:text-4xl font-bold">
-            Documents
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Master vault for all documents, requests and smart checklists.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Documents"
+        subtitle="Master vault for all documents, requests and smart checklists."
+      />
 
       <div className="bg-white/80 backdrop-blur-xl border border-gray-100 rounded-[2.5rem] shadow-2xl shadow-gray-200/50 p-6 md:p-8 space-y-8">
         <div className={cn("space-y-6 relative z-1 hover:z-50 focus-within:z-50")}>

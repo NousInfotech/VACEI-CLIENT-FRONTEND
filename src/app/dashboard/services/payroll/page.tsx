@@ -2,28 +2,27 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/shared/PageHeader";
 
 export default function PayrollWorkspacePage() {
   return (
     <section className="mx-auto max-w-[1200px] w-full pt-5 space-y-6">
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-semibold text-brand-body">Payroll</h1>
-          <p className="text-sm text-muted-foreground">
-            Payslips, run status, history, and payroll requests.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/dashboard/document-organizer/document-upload">
-            <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">Upload payroll docs</Button>
-          </Link>
-          <Link href="/dashboard/todo-list">
-            <Button variant="outline" className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">
-              View requests
-            </Button>
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="Payroll"
+        subtitle="Payslips, run status, history, and payroll requests."
+        actions={
+          <div className="flex gap-2">
+            <Link href="/dashboard/document-organizer/document-upload">
+              <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">Upload payroll docs</Button>
+            </Link>
+            <Link href="/dashboard/todo-list">
+              <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow text-primary-color-new bg-light">
+                View requests
+              </Button>
+            </Link>
+          </div>
+        }
+      />
 
       <div className="grid gap-5 md:grid-cols-[1.3fr,1fr]">
         <div className="space-y-5">

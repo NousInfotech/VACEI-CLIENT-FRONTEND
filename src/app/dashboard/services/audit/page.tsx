@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/shared/PageHeader";
 
 type TabKey = "requests" | "queries" | "reports" | "messages";
 
@@ -11,29 +12,26 @@ export default function AuditWorkspacePage() {
 
   return (
     <section className="mx-auto max-w-[1200px] w-full pt-5 space-y-6">
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-semibold text-brand-body">Audit</h1>
-          <p className="text-sm text-muted-foreground">
-            Engagement overview, document requests, audit queries, and reports.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/dashboard/document-organizer/document-upload">
-            <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">
-              Upload PBC docs
-            </Button>
-          </Link>
-          <Link href="/dashboard/todo-list">
-            <Button
-              variant="outline"
-              className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow"
-            >
-              View audit tasks
-            </Button>
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="Audit"
+        subtitle="Engagement overview, document requests, audit queries, and reports."
+        actions={
+          <div className="flex gap-2">
+            <Link href="/dashboard/document-organizer/document-upload">
+              <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">
+                Upload PBC docs
+              </Button>
+            </Link>
+            <Link href="/dashboard/todo-list">
+              <Button
+                className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow text-primary-color-new bg-light"
+              >
+                View audit tasks
+              </Button>
+            </Link>
+          </div>
+        }
+      />
 
       {/* Timeline / engagement overview */}
       <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-4">
@@ -96,7 +94,7 @@ export default function AuditWorkspacePage() {
                       <Link href="/dashboard/document-organizer/document-upload">
                         <Button
                           size="sm"
-                          className="h-7 rounded-lg text-[11px] px-3 shadow-sm hover:shadow-md transition-shadow"
+                          className="h-7 rounded-lg text-[11px] px-3 shadow-sm hover:shadow-md transition-shadow text-primary-color-new bg-light"
                         >
                           Upload
                         </Button>
@@ -135,7 +133,7 @@ export default function AuditWorkspacePage() {
                       <Link href="/dashboard/messages">
                         <Button
                           size="sm"
-                          className="h-7 rounded-lg text-[11px] px-3 shadow-sm hover:shadow-md transition-shadow"
+                          className="h-7 rounded-lg text-[11px] px-3 shadow-sm hover:shadow-md transition-shadow text-primary-color-new bg-light"
                         >
                           Open / Reply
                         </Button>
@@ -168,7 +166,7 @@ export default function AuditWorkspacePage() {
             Open the unified inbox to continue audit conversations, attach files and track read status.
           </p>
           <Link href="/dashboard/messages">
-            <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">
+            <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow text-primary-color-new bg-light">
               Go to Messages
             </Button>
           </Link>

@@ -3,6 +3,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import DashboardCard from "@/components/DashboardCard";
 import DashboardActionButton from "@/components/DashboardActionButton";
+import PageHeader from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle,
@@ -161,100 +162,74 @@ export default function LiquidationPage() {
 
   return (
     <section className="flex flex-col gap-6 px-4 py-4 md:px-6 md:py-6 pt-2 md:pt-4">
-      <DashboardCard animate className="p-8 bg-[#0f1729] border-white/10">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <h1 className="text-3xl font-semibold text-white tracking-tight">
-                Liquidation
-              </h1>
-              <p className="text-white/60 font-medium">
-                Managed company wind-down services, handled step by step.
-              </p>
-              <p className="text-white/50 text-sm max-w-2xl pt-2 leading-relaxed">
-                This page shows the current status of your company’s liquidation process, key milestones, required actions, and statutory deadlines. Our team manages the process and will guide you through each stage.
-              </p>
-            </div>
-            
-            <div className="flex flex-wrap items-center gap-4">
-              {strictStatus !== "draft" && (
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-700 font-bold text-xs uppercase tracking-widest shadow-sm text-white`}>
-                  <span className={`w-2 h-2 rounded-full animate-pulse ${
-                    strictStatus === "completed" ? "bg-green-500" :
-                    strictStatus === "in_progress" ? "bg-blue-500" :
-                    "bg-amber-500"
-                  }`}></span>
-                  <span>{strictStatus === "in_progress" ? "IN PROGRESS" : strictStatus === "waiting_on_you" ? "WAITING ON YOU" : "COMPLETED"}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="shrink-0 w-full lg:w-auto">
-            {activeLiquidation ? (
-              <DashboardActionButton 
-                Icon={Gavel}
-                title="Liquidation Active"
-                subtitle="View progress below"
-                className="bg-white/5 border border-white/10 hover:bg-white/10 text-white cursor-default"
-                showArrow={false}
-              />
-            ) : (
-              <DashboardActionButton
-                Icon={Gavel}
-                title="Start Liquidation"
-                subtitle="Begin the process"
-                className="bg-white/5 border border-white/10 hover:bg-white/10 text-white"
-                onClick={async () => {
-                  if (!liquidationType) return;
-                  const companyId = typeof window !== "undefined" ? localStorage.getItem("vacei-active-company") || "" : "";
-                  if (!companyId) return;
-                  const projectPayload = {
-                    company_id: companyId,
-                    project_type: "liquidation" as const,
-                    liquidation_type: liquidationType as "MVL" | "CVL" | "Strike-off",
-                    status: "in_progress" as const,
-                    start_date: new Date().toISOString().split("T")[0],
-                    expected_completion: expectedCompletion,
-                    liquidator: liquidatorName || "",
-                    milestones: milestones.map((m) => ({
-                      id: m.key,
-                      name: m.label,
-                      due: m.due,
-                      status: m.status,
-                      cta: m.cta,
-                    })),
-                    documents: liquidationDocs.map((d) => ({
-                      id: d.key,
-                      name: d.label,
-                      status: d.status,
-                    })),
-                    invoices: [],
-                  };
-                  try {
-                    const created = await createLiquidationProject(projectPayload);
-                    setActiveLiquidation(true);
-                    setInitiatedAt(new Date(created.start_date));
-                    setStartDate(created.start_date);
-                    setExpectedCompletion(created.expected_completion);
-                    setStrictStatus("in_progress");
-                    setMessages((prev) => [
-                      ...prev,
-                      {
-                        id: String(Date.now()),
-                        author: "System",
-                        text: "Liquidation started",
-                        timestamp: new Date().toLocaleString(),
-                      },
-                    ]);
-                    await upsertComplianceTasksForMilestones(created);
-                  } catch {}
-                }}
-              />
-            )}
-          </div>
-        </div>
-      </DashboardCard>
+      <PageHeader
+        title="Liquidation"
+        subtitle="Managed company wind-down services, handled step by step."
+        description="This page shows the current status of your company’s liquidation process, key milestones, required actions, and statutory deadlines. Our team manages the process and will guide you through each stage."
+        actions={
+          activeLiquidation ? (
+            <DashboardActionButton 
+              Icon={Gavel}
+              title="Liquidation Active"
+              subtitle="View progress below"
+              className="bg-white/5 border border-white/10 hover:bg-white/10 text-white cursor-default"
+              showArrow={false}
+            />
+          ) : (
+            <DashboardActionButton
+              Icon={Gavel}
+              title="Start Liquidation"
+              subtitle="Begin the process"
+              className="bg-white/5 border border-white/10 hover:bg-white/10 text-white"
+              onClick={async () => {
+                if (!liquidationType) return;
+                const companyId = typeof window !== "undefined" ? localStorage.getItem("vacei-active-company") || "" : "";
+                if (!companyId) return;
+                const projectPayload = {
+                  company_id: companyId,
+                  project_type: "liquidation" as const,
+                  liquidation_type: liquidationType as "MVL" | "CVL" | "Strike-off",
+                  status: "in_progress" as const,
+                  start_date: new Date().toISOString().split("T")[0],
+                  expected_completion: expectedCompletion,
+                  liquidator: liquidatorName || "",
+                  milestones: milestones.map((m) => ({
+                    id: m.key,
+                    name: m.label,
+                    due: m.due,
+                    status: m.status,
+                    cta: m.cta,
+                  })),
+                  documents: liquidationDocs.map((d) => ({
+                    id: d.key,
+                    name: d.label,
+                    status: d.status,
+                  })),
+                  invoices: [],
+                };
+                try {
+                  const created = await createLiquidationProject(projectPayload);
+                  setActiveLiquidation(true);
+                  setInitiatedAt(new Date(created.start_date));
+                  setStartDate(created.start_date);
+                  setExpectedCompletion(created.expected_completion);
+                  setStrictStatus("in_progress");
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      id: String(Date.now()),
+                      author: "System",
+                      text: "Liquidation started",
+                      timestamp: new Date().toLocaleString(),
+                    },
+                  ]);
+                  await upsertComplianceTasksForMilestones(created);
+                } catch {}
+              }}
+            />
+          )
+        }
+      />
 
       {actionsPending && !isCompleted && (
         <DashboardCard className="p-4 md:p-6 border-amber-200 bg-amber-50">
