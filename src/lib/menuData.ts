@@ -24,6 +24,15 @@ export const menuData: MenuItem[] = [
         description: "Company overview & status",
     },
     {
+        slug: "company",
+        icon: Building01Icon,
+        label: "Company",
+        href: "/dashboard/company",
+        children: [],
+        section: "primary",
+        description: "Company overview & status",
+    },
+    {
         slug: "documents",
         icon: DocumentValidationIcon,
         label: "Documents",
@@ -87,13 +96,7 @@ export const menuData: MenuItem[] = [
                     },
                 ]
             },
-            {
-                slug: "company",
-                label: "Company",
-                href: "/dashboard/company",
-                icon: Building01Icon,
-             },
-                    {
+           {
                 slug: "csp",
                 icon: Building01Icon,
                 label: "Corporate Services (CSP)",
