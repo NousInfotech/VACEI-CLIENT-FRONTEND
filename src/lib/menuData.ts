@@ -1,4 +1,4 @@
-import { DashboardSquare02Icon,FileSyncIcon, TaskDaily01Icon, Book02Icon, ArrowRightDoubleIcon, CashbackPoundIcon, TransactionIcon, TaxesIcon, GitPullRequestIcon, DocumentValidationIcon, ProfileIcon, InstallingUpdates02Icon,NotificationIcon,InvoiceIcon, Message01Icon, Building01Icon, CreditCardIcon, UserCheck01Icon, GiftIcon } from '@hugeicons/core-free-icons';
+import { DashboardSquare02Icon,FileSyncIcon, TaskDaily01Icon, Book02Icon, ArrowRightDoubleIcon, CashbackPoundIcon, TransactionIcon, TaxesIcon, GitPullRequestIcon, DocumentValidationIcon, ProfileIcon, InstallingUpdates02Icon,NotificationIcon,InvoiceIcon, Message01Icon, Building01Icon, CreditCardIcon, UserCheck01Icon, GiftIcon, Unlink03Icon } from '@hugeicons/core-free-icons';
 
 export type MenuSection = "primary" | "workspaces" | "operations" | "settings";
 
@@ -125,6 +125,15 @@ export const menuData: MenuItem[] = [
                 isActive: false,
             },
         ]
+    },
+    {
+        slug: "liquidation",
+        icon: Unlink03Icon,
+        label: "Liquidation",
+        href: "/dashboard/liquidation",
+        children: [],
+        section: "primary",
+        description: "Managed company wind-down",
     },
     {
         slug: "business-plans",
