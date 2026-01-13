@@ -12,6 +12,7 @@ import { fetchDashboardSummary, ProcessedDashboardStat } from "@/api/financialRe
 import { fetchUploadStatusSummary } from "@/api/documentApi";
 import { fetchTasks } from "@/api/taskService";
 import type { Task } from "@/interfaces";
+import { fetchPayrollData, transformPayrollSubmissionsToComplianceItems } from "@/lib/payrollComplianceIntegration";
 import { HugeiconsIcon } from '@hugeicons/react';
 import { AddressBookIcon, Alert02Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
@@ -142,6 +143,18 @@ export default function DashboardPage() {
           }
           waiting += 1;
         });
+        // Include payroll submissions in compliance counts
+        const payrollData = await fetchPayrollData();
+        if (payrollData) {
+          const payrollItems = transformPayrollSubmissionsToComplianceItems(payrollData, 1000000);
+          payrollItems.forEach((item) => {
+            if (item.status === "Overdue") overdue += 1;
+            else if (item.status === "Due soon") dueSoon += 1;
+            else if (item.status === "Waiting on you") waiting += 1;
+            else if (item.status === "Completed") done += 1;
+          });
+        }
+        
         setComplianceCounts({ overdue, dueSoon, waiting, done });
         setPendingTasks(tasks.slice(0, 5));
       } catch (e) {

@@ -5,10 +5,11 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import DashboardCard from "@/components/DashboardCard";
 import Dropdown from "@/components/Dropdown";
-import { ChevronDown, Calendar as CalendarIcon, List, HelpCircle, Download, Upload, MessageSquare, CheckCircle, Eye, AlertCircle, X } from "lucide-react";
+import { ChevronDown, Calendar as CalendarIcon, List, HelpCircle, Download, Upload, MessageSquare, CheckCircle, Eye, AlertCircle, X, ArrowRight, Users } from "lucide-react";
 import { fetchTasks } from "@/api/taskService";
 import type { Task } from "@/interfaces";
 import ParentSchedule from "@/app/dashboard/schedule/page";
+import { fetchPayrollData, transformPayrollSubmissionsToComplianceItems } from "@/lib/payrollComplianceIntegration";
 
 // Compliance status types
 type ComplianceStatus = "Waiting on you" | "In progress" | "Due soon" | "Completed" | "Overdue";
@@ -28,6 +29,92 @@ interface ComplianceItem {
   status: ComplianceStatus;
   actionType: "upload" | "reply" | "approve" | "view" | "resolve";
   relatedServiceId?: number;
+}
+
+// Payroll Service Card Component
+function PayrollServiceCard() {
+  const [payrollSubmissions, setPayrollSubmissions] = useState<Array<{ name: string; status: string; due_date?: string }>>([]);
+  
+  useEffect(() => {
+    const loadPayrollData = async () => {
+      const data = await fetchPayrollData();
+      if (data) {
+        setPayrollSubmissions(data.submissions);
+      }
+    };
+    loadPayrollData();
+  }, []);
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "—";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const getStatusBadge = (status: string) => {
+    if (status === "submitted") {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium bg-success/10 text-success border-success/30 shadow-sm">
+          Submitted
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium bg-muted text-muted-foreground border-border shadow-sm">
+        Pending
+      </span>
+    );
+  };
+
+  return (
+    <DashboardCard className="border-l-4 border-l-primary">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
+            <Users className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-brand-body">Payroll Service</h2>
+            <p className="text-xs text-muted-foreground">Statutory submissions and obligations</p>
+          </div>
+        </div>
+        <Link href="/dashboard/services/payroll">
+          <Button variant="default" size="sm" className="rounded-lg">
+            Go to Payroll
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </Link>
+      </div>
+      
+      <div className="space-y-3 pt-4 border-t border-border">
+        <h3 className="text-sm font-semibold text-brand-body mb-2">STATUTORY SUBMISSIONS</h3>
+        {payrollSubmissions.map((submission, index) => (
+          <div
+            key={index}
+            className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30"
+          >
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-sm font-medium text-brand-body">
+                  • {submission.name}
+                </span>
+              </div>
+              {submission.due_date && (
+                <p className="text-xs text-muted-foreground">
+                  Due: {formatDate(submission.due_date)}
+                </p>
+              )}
+            </div>
+            {getStatusBadge(submission.status)}
+          </div>
+        ))}
+      </div>
+    </DashboardCard>
+  );
 }
 
 export default function ComplianceCalendarPage() {
@@ -112,15 +199,22 @@ export default function ComplianceCalendarPage() {
           };
         });
 
-      setComplianceItems(items);
+      // Fetch and add payroll submissions
+      const payrollData = await fetchPayrollData();
+      const payrollItems = payrollData 
+        ? transformPayrollSubmissionsToComplianceItems(payrollData, 1000000)
+        : [];
+      
+      const allItems = [...items, ...payrollItems];
+      setComplianceItems(allItems);
       
       // Calculate summary counts
       const now = new Date();
       const counts = {
-        overdue: items.filter(item => item.status === "Overdue").length,
-        waitingOnYou: items.filter(item => item.status === "Waiting on you").length,
-        dueSoon: items.filter(item => item.status === "Due soon").length,
-        upcoming: items.filter(item => {
+        overdue: allItems.filter(item => item.status === "Overdue").length,
+        waitingOnYou: allItems.filter(item => item.status === "Waiting on you").length,
+        dueSoon: allItems.filter(item => item.status === "Due soon").length,
+        upcoming: allItems.filter(item => {
           const due = new Date(item.dueDate);
           const daysUntilDue = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
           return daysUntilDue > 7 && item.status !== "Completed" && item.status !== "Overdue";
@@ -190,7 +284,10 @@ export default function ComplianceCalendarPage() {
       resolve: "Resolve",
     }[item.actionType];
 
-    const href = item.actionType === "upload" 
+    // Link payroll items to payroll page
+    const href = item.service === "Payroll"
+      ? `/dashboard/services/payroll`
+      : item.actionType === "upload" 
       ? `/dashboard/document-organizer/document-upload`
       : item.actionType === "reply" || item.actionType === "approve"
       ? `/dashboard/messages`
@@ -331,6 +428,9 @@ export default function ComplianceCalendarPage() {
           isActive={summaryFilter === "Upcoming"}
         />
       </div>
+
+      {/* Payroll Service Card */}
+      <PayrollServiceCard />
 
       {/* Main Content */}
       <DashboardCard className="overflow-hidden">
