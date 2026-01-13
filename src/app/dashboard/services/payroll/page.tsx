@@ -391,7 +391,7 @@ export default function PayrollWorkspacePage() {
         {/* 1️⃣ PAGE HEADER */}
         <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between bg-primary-color-new p-7 rounded-3xl text-light shadow-xl shadow-primary/10">
           <div>
-            <h1 className="text-2xl md:text-3xl font-semibold text-brand-body">
+            <h1 className="text-2xl md:text-3xl font-semibold text-light">
               Payroll
             </h1>
             <p className="text-sm text-light">
