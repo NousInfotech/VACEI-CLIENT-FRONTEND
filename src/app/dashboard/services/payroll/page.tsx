@@ -389,12 +389,12 @@ export default function PayrollWorkspacePage() {
       <section className="mx-auto max-w-[1200px] w-full pt-5 space-y-6 pb-10">
         
         {/* 1️⃣ PAGE HEADER */}
-        <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+        <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between bg-primary-color-new p-7 rounded-3xl text-light shadow-xl shadow-primary/10">
           <div>
-            <h1 className="text-2xl md:text-3xl font-semibold text-brand-body">
+            <h1 className="text-2xl md:text-3xl font-semibold text-light">
               Payroll
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-light">
               Monthly payroll processing and statutory submissions handled for
               you.
             </p>
@@ -407,8 +407,8 @@ export default function PayrollWorkspacePage() {
               onClick={scrollToBilling}
               className="flex items-center gap-2 text-xs px-3 py-1 rounded-full border bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
             >
-              <Receipt className="w-3 h-3 text-muted-foreground" />
-              <span className="text-muted-foreground">Invoice: </span>
+              <Receipt className="w-3 h-3 text-light" />
+              <span className="text-light">Invoice: </span>
               <span className={`font-medium ${payrollData.billing.status === 'unpaid' ? 'text-warning' : payrollData.billing.status === 'overdue' ? 'text-destructive' : 'text-success'}`}>
                 {payrollData.billing.status.charAt(0).toUpperCase() + payrollData.billing.status.slice(1)}
               </span>
