@@ -1,4 +1,4 @@
-import { DashboardSquare02Icon,FileSyncIcon, TaskDaily01Icon, Book02Icon, ArrowRightDoubleIcon, CashbackPoundIcon, TransactionIcon, TaxesIcon, GitPullRequestIcon, DocumentValidationIcon, ProfileIcon, InstallingUpdates02Icon,NotificationIcon,InvoiceIcon, Message01Icon, Building01Icon, CreditCardIcon, UserCheck01Icon, GiftIcon } from '@hugeicons/core-free-icons';
+import { DashboardSquare02Icon,FileSyncIcon, TaskDaily01Icon, Book02Icon, ArrowRightDoubleIcon, CashbackPoundIcon, TransactionIcon, TaxesIcon, GitPullRequestIcon, DocumentValidationIcon, ProfileIcon, InstallingUpdates02Icon,NotificationIcon,InvoiceIcon, Message01Icon, Building01Icon, CreditCardIcon, UserCheck01Icon, GiftIcon, Unlink03Icon } from '@hugeicons/core-free-icons';
 
 export type MenuSection = "primary" | "workspaces" | "operations" | "settings";
 
@@ -24,6 +24,15 @@ export const menuData: MenuItem[] = [
         description: "Company overview & status",
     },
     {
+        slug: "company",
+        icon: Building01Icon,
+        label: "Company",
+        href: "/dashboard/company",
+        children: [],
+        section: "primary",
+        description: "Company overview & status",
+    },
+    {
         slug: "documents",
         icon: DocumentValidationIcon,
         label: "Documents",
@@ -32,6 +41,16 @@ export const menuData: MenuItem[] = [
         section: "primary",
         description: "Store and access documents",
     },
+
+    {
+        slug: "incorporation",
+        icon: GitPullRequestIcon,
+        label: "Incorporation",
+        href: "/dashboard/incorporation",
+        section: "primary",
+        description: "Incorporate your company",
+    },
+    
     {
         slug: "services-root",
         icon: GitPullRequestIcon,
@@ -68,12 +87,7 @@ export const menuData: MenuItem[] = [
                 href: "/dashboard/services/audit",
                 isActive: true,
                 children: [
-                    {
-                        slug: "audit-company",
-                        label: "Company",
-                        href: "/dashboard/company",
-                        icon: Building01Icon,
-                    },
+               
                     {
                         slug: "audit-engagement",
                         label: "Engagement",
@@ -82,7 +96,7 @@ export const menuData: MenuItem[] = [
                     },
                 ]
             },
-                    {
+           {
                 slug: "csp",
                 icon: Building01Icon,
                 label: "Corporate Services (CSP)",
@@ -115,7 +129,7 @@ export const menuData: MenuItem[] = [
                 icon: GiftIcon,
                 label: "Grants & Incentives",
                 href: "/dashboard/services/grants-incentives",
-                isActive: false,
+                isActive: true,
                     },
                     {
                 slug: "corporate-transactions",
@@ -125,6 +139,15 @@ export const menuData: MenuItem[] = [
                 isActive: false,
             },
         ]
+    },
+    {
+        slug: "liquidation",
+        icon: Unlink03Icon,
+        label: "Liquidation",
+        href: "/dashboard/liquidation",
+        children: [],
+        section: "primary",
+        description: "Managed company wind-down",
     },
     {
         slug: "business-plans",
