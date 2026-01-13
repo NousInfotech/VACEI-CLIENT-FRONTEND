@@ -13,10 +13,10 @@ export default function VatWorkspacePage() {
         actions={
           <div className="flex gap-2">
             <Link href="/dashboard/document-organizer/document-upload">
-              <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">Upload documents</Button>
+              <Button variant="outline" className="bg-light text-primary-color-new">Upload documents</Button>
             </Link>
             <Link href="/dashboard/todo-list">
-              <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow text-primary-color-new bg-light">
+              <Button variant="outline" className="bg-light text-primary-color-new">
                 View requests
               </Button>
             </Link>

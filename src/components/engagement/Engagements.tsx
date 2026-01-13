@@ -102,7 +102,7 @@ const Engagements = () => {
               </div>
               <Button 
                 onClick={() => router.push(`/dashboard/engagement/${engagement._id}`)}
-                className="w-full text-primary-color-new bg-light"
+                className="w-full"
               >
                 View Engagement
               </Button>

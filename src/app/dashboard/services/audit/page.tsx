@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/shared/PageHeader";
+import PillTabs from "@/components/shared/PillTabs";
 
 type TabKey = "requests" | "queries" | "reports" | "messages";
 
@@ -18,14 +19,12 @@ export default function AuditWorkspacePage() {
         actions={
           <div className="flex gap-2">
             <Link href="/dashboard/document-organizer/document-upload">
-              <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">
+              <Button variant="outline" className="bg-light text-primary-color-new">
                 Upload PBC docs
               </Button>
             </Link>
             <Link href="/dashboard/todo-list">
-              <Button
-                className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow text-primary-color-new bg-light"
-              >
+              <Button variant="outline" className="bg-light text-primary-color-new">
                 View audit tasks
               </Button>
             </Link>
@@ -45,27 +44,16 @@ export default function AuditWorkspacePage() {
       </div>
 
       {/* Tabs: Requests / Queries / Reports / Messages */}
-      <div className="bg-card border border-border rounded-card shadow-md p-2 flex gap-2 text-xs w-fit">
-        {[
+      <PillTabs
+        tabs={[
           { id: "requests", label: "Requests" },
           { id: "queries", label: "Queries" },
           { id: "reports", label: "Reports" },
           { id: "messages", label: "Messages" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id as TabKey)}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
-              activeTab === tab.id
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-card text-brand-body hover:bg-muted"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+        ]}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id as TabKey)}
+      />
 
       {/* Tab content */}
       {activeTab === "requests" && (

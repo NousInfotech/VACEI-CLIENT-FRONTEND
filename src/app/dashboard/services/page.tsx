@@ -317,13 +317,13 @@ export default function ServicesHubPage() {
         actions={
           <div className="flex flex-wrap gap-3">
             <Link href="/dashboard/compliance/list">
-              <Button>
+              <Button variant="outline" className="bg-light text-primary-color-new">
                 <AlertCircle className="w-4 h-4" />
                 Pending Actions
               </Button>
             </Link>
             <Link href="/dashboard/services/request">
-              <Button className="h-11 rounded-xl px-5 py-2.5 text-sm shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all flex items-center gap-2">
+              <Button variant="outline" className="bg-light text-primary-color-new">
                 <Plus className="w-4 h-4" />
                 Request Service
               </Button>

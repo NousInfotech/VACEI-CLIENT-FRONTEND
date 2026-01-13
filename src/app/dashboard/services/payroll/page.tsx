@@ -384,10 +384,10 @@ export default function PayrollWorkspacePage() {
         actions={
           <div className="flex gap-2">
             <Link href="/dashboard/document-organizer/document-upload">
-              <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">Upload payroll docs</Button>
+              <Button variant="outline" className="bg-light text-primary-color-new">Upload payroll docs</Button>
             </Link>
             <Link href="/dashboard/todo-list">
-              <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow text-primary-color-new bg-light">
+              <Button variant="outline" className="bg-light text-primary-color-new">
                 View requests
               </Button>
             </Link>
