@@ -32,6 +32,16 @@ export const menuData: MenuItem[] = [
         section: "primary",
         description: "Store and access documents",
     },
+
+    {
+        slug: "incorporation",
+        icon: GitPullRequestIcon,
+        label: "Incorporation",
+        href: "/dashboard/incorporation",
+        section: "primary",
+        description: "Incorporate your company",
+    },
+    
     {
         slug: "services-root",
         icon: GitPullRequestIcon,
@@ -68,12 +78,7 @@ export const menuData: MenuItem[] = [
                 href: "/dashboard/services/audit",
                 isActive: true,
                 children: [
-                    {
-                        slug: "audit-company",
-                        label: "Company",
-                        href: "/dashboard/company",
-                        icon: Building01Icon,
-                    },
+               
                     {
                         slug: "audit-engagement",
                         label: "Engagement",
@@ -82,6 +87,12 @@ export const menuData: MenuItem[] = [
                     },
                 ]
             },
+            {
+                slug: "company",
+                label: "Company",
+                href: "/dashboard/company",
+                icon: Building01Icon,
+             },
                     {
                 slug: "csp",
                 icon: Building01Icon,
@@ -115,7 +126,7 @@ export const menuData: MenuItem[] = [
                 icon: GiftIcon,
                 label: "Grants & Incentives",
                 href: "/dashboard/services/grants-incentives",
-                isActive: false,
+                isActive: true,
                     },
                     {
                 slug: "corporate-transactions",
