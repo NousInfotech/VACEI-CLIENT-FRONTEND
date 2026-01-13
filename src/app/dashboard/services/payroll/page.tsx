@@ -279,7 +279,6 @@ function formatPeriod(period: string): string {
 // ------------------------------------------------------------------
 // MAIN COMPONENT
 // ------------------------------------------------------------------
-import PageHeader from "@/components/shared/PageHeader";
 
 export default function PayrollWorkspacePage() {
   const [payrollData, setPayrollData] = useState<PayrollData>(initialPayrollData);
@@ -377,23 +376,305 @@ export default function PayrollWorkspacePage() {
   };
 
   return (
-    <section className="mx-auto max-w-[1200px] w-full pt-5 space-y-6">
-      <PageHeader
-        title="Payroll"
-        subtitle="Payslips, run status, history, and payroll requests."
-        actions={
-          <div className="flex gap-2">
-            <Link href="/dashboard/document-organizer/document-upload">
-              <Button variant="outline" className="bg-light text-primary-color-new">Upload payroll docs</Button>
-            </Link>
-            <Link href="/dashboard/todo-list">
-              <Button variant="outline" className="bg-light text-primary-color-new">
-                View requests
+    <>
+      {/* Hidden file input for payroll upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx,.xls,.csv,.pdf"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+      
+      <section className="mx-auto max-w-[1200px] w-full pt-5 space-y-6 pb-10">
+        
+        {/* 1️⃣ PAGE HEADER */}
+        <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between bg-primary-color-new p-7 rounded-3xl text-light shadow-xl shadow-primary/10">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-semibold text-light">
+              Payroll
+            </h1>
+            <p className="text-sm text-light">
+              Monthly payroll processing and statutory submissions handled for
+              you.
+            </p>
+          </div>
+          
+          {/* Part 6: Billing Logic - Implemented as Header Indicator */}
+          {/* Policy: Payroll does not block access if invoice unpaid */}
+          <div className="flex flex-col items-end gap-2">
+            <button
+              onClick={scrollToBilling}
+              className="flex items-center gap-2 text-xs px-3 py-1 rounded-full border bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+            >
+              <Receipt className="w-3 h-3 text-light" />
+              <span className="text-light">Invoice: </span>
+              <span className={`font-medium ${payrollData.billing.status === 'unpaid' ? 'text-warning' : payrollData.billing.status === 'overdue' ? 'text-destructive' : 'text-success'}`}>
+                {payrollData.billing.status.charAt(0).toUpperCase() + payrollData.billing.status.slice(1)}
+              </span>
+            </button>
+            
+            {/* Right-side CTA (conditional) */}
+            {needsAction && (
+              <Button 
+                onClick={handleUpload}
+                className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload payroll information
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Intro */}
+        <p className="text-sm text-muted-foreground">
+          This page shows the status of your payroll, upcoming deadlines, and
+          any information we may need from you. Upload what&apos;s requested and
+          we&apos;ll take care of the rest.
+        </p>
+
+        {/* 2️⃣ PAYROLL STATUS SUMMARY (TOP) */}
+        <div className="bg-card border border-border rounded-card shadow-md p-4">
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">Current payroll: </span>
+              <span className="font-semibold text-brand-body">
+                {currentPeriodFormatted}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Status: </span>
+              <StatusBadge status={payrollData.status} />
+            </div>
+            <div>
+              <span className="text-muted-foreground">Next deadline: </span>
+              <span className="font-semibold text-destructive">
+                {submissionDueFormatted}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 3️⃣ ACTION REQUIRED (ONLY IF NEEDED) */}
+        {needsAction && (
+          <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-info" />
+              <h2 className="text-lg font-semibold text-brand-body">
+                ACTION REQUIRED
+              </h2>
+            </div>
+            
+            <div className="space-y-3">
+              <p className="text-sm text-brand-body">
+                Upload payroll changes for {currentPeriodFormatted} if you have any updates to report.
+              </p>
+              
+              {/* What to Upload - Help Section */}
+              <div className="p-4 rounded-lg bg-info/5 border border-info/20">
+                <button
+                  onClick={() => setShowUploadHelp(!showUploadHelp)}
+                  className="flex items-center justify-between w-full text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <Info className="w-4 h-4 text-info" />
+                    <span className="text-sm font-medium text-brand-body">
+                      What are payroll changes?
+                    </span>
+                  </div>
+                  {showUploadHelp ? (
+                    <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </button>
+                
+                {showUploadHelp && (
+                  <div className="mt-4 space-y-3 pt-4 border-t border-info/20">
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Upload a file (Excel, CSV, or PDF) containing any of the following changes for this payroll period:
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="flex items-start gap-2">
+                        <UserPlus className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-brand-body">New employee</p>
+                          <p className="text-xs text-muted-foreground">Someone joined your company</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <UserMinus className="w-4 h-4 text-destructive mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-brand-body">Termination</p>
+                          <p className="text-xs text-muted-foreground">Someone left your company</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <TrendingUp className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-brand-body">Salary change</p>
+                          <p className="text-xs text-muted-foreground">Pay raise or reduction</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Calendar className="w-4 h-4 text-warning mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-brand-body">Leave / Unpaid leave</p>
+                          <p className="text-xs text-muted-foreground">Time off or unpaid absence</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-4 p-3 rounded bg-muted/50 border border-border">
+                      <p className="text-xs text-muted-foreground">
+                        <strong className="text-brand-body">No changes?</strong> You don&apos;t need to upload anything. 
+                        We&apos;ll use the previous month&apos;s data.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <Button 
+                onClick={handleUpload}
+                className="w-full sm:w-auto rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload payroll changes
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* 4️⃣ CURRENT PAYROLL CYCLE (MAIN SECTION) */}
+        <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-4">
+          <h2 className="text-lg font-semibold text-brand-body">
+            CURRENT PAYROLL CYCLE
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Month</p>
+              <p className="text-sm font-semibold text-brand-body">
+                {currentPeriodFormatted}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">
+                Submission due
+              </p>
+              <p className="text-sm font-semibold text-destructive">
+                {submissionDueFormatted}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Status</p>
+              <StatusBadge status={payrollData.status} />
+            </div>
+          </div>
+          <div className="pt-2">
+            {/* CTA Logic: Waiting on you → Upload, In progress/Completed → View */}
+            {payrollData.status === "waiting_on_client" ? (
+              <Button 
+                onClick={handleUpload}
+                className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                View
+              </Button>
+            )}
+            {/* Visual indicator for User Flow Simulation */}
+            {payrollData.status === "in_progress" && (
+               <span className="ml-4 text-xs text-primary animate-pulse">Processing payroll...</span>
+            )}
+          </div>
+        </div>
+
+        {/* 5️⃣ STATUTORY SUBMISSIONS (READ-ONLY) */}
+        <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-brand-body">
+              STATUTORY SUBMISSIONS
+            </h2>
+            <Link href="/dashboard/compliance?service=Payroll">
+              <Button variant="outline" size="sm" className="text-xs">
+                View in Compliance Calendar
+                <ExternalLink className="w-3 h-3 ml-2" />
               </Button>
             </Link>
           </div>
-        }
-      />
+          <div className="space-y-3">
+            {payrollData.submissions.map((submission, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30"
+              >
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-medium text-brand-body">
+                      • {submission.name}
+                    </span>
+                  </div>
+                  {submission.due_date && (
+                    <p className="text-xs text-destructive font-medium">
+                      Due: {formatDate(submission.due_date)}
+                    </p>
+                  )}
+                </div>
+                <SubmissionBadge status={submission.status} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 6️⃣ DOCUMENTS (PAYROLL ONLY) */}
+        <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-4">
+          <h2 className="text-lg font-semibold text-brand-body">
+            PAYROLL DOCUMENTS
+          </h2>
+          <div className="space-y-3">
+            {payrollData.documents.map((doc) => (
+              <div
+                key={doc.id}
+                className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30"
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-brand-body">
+                    {doc.name}
+                    {doc.type === "inputs" && " (uploaded by you)"}
+                  </span>
+                  <DocumentStatusBadge status={doc.status} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-lg text-xs"
+                  >
+                    <Eye className="w-3 h-3 mr-1" />
+                    View
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-lg text-xs"
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    Download
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* 7️⃣ PAYROLL HISTORY (COLLAPSED) */}
         <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-4">
@@ -555,5 +836,6 @@ export default function PayrollWorkspacePage() {
           </div>
         </div>
       </section>
-    );
-  }
+    </>
+  );
+}
