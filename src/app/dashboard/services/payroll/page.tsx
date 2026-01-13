@@ -555,6 +555,5 @@ export default function PayrollWorkspacePage() {
           </div>
         </div>
       </section>
-    </>
-  );
-}
+    );
+  }
