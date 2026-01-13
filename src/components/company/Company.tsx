@@ -16,6 +16,7 @@ import EmptyState from '../shared/EmptyState'
 import { AlertCircle } from 'lucide-react'
 import { Company as CompanyType } from '@/api/auditService'
 import { DetailsSkeleton } from '../shared/CommonSkeletons'
+import PageHeader from '../shared/PageHeader'
 
 const Company = () => {
   const [activeTab, setActiveTab] = useTabQuery('detail')
@@ -78,15 +79,17 @@ const Company = () => {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <BackButton />
-      <div className="flex flex-col space-y-4">
-        <h1 className="text-4xl font-medium">Company Overview</h1>
-        
-        <PillTabs 
-          tabs={tabs} 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab} 
-        />
-      </div>
+      <PageHeader
+        title={data?.name || "Company Overview"}
+        description="Detailed company profile, including distribution, hierarchy, and KYC status."
+        className="mb-6"
+      />
+      
+      <PillTabs 
+        tabs={tabs} 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+      />
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         {renderContent()}

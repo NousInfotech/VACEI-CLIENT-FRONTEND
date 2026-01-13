@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card2'
 import { Button } from '@/components/ui/button'
 
 import { ListSkeleton } from '../shared/CommonSkeletons'
+import PageHeader from '../shared/PageHeader'
 
 const Engagements = () => {
   const { engagements, loading, error } = useEngagements()
@@ -67,10 +68,11 @@ const Engagements = () => {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <BackButton />
-      <div className="flex flex-col space-y-4">
-        <h1 className="text-4xl font-medium">Engagements</h1>
-        <p className="text-gray-600">Total: {engagements.length}</p>
-      </div>
+      <PageHeader
+        title="Engagements"
+        subtitle={`Total active engagements: ${engagements.length}`}
+        className="mb-8"
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {engagements.map((engagement) => (
@@ -100,7 +102,7 @@ const Engagements = () => {
               </div>
               <Button 
                 onClick={() => router.push(`/dashboard/engagement/${engagement._id}`)}
-                className="w-full"
+                className="w-full text-primary-color-new bg-light"
               >
                 View Engagement
               </Button>

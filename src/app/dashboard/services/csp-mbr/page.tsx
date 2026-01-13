@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import DashboardCard from "@/components/DashboardCard";
+import PageHeader from "@/components/shared/PageHeader";
 import Dropdown from "@/components/Dropdown";
 import { 
   Building2, 
@@ -298,17 +299,11 @@ function CspMbrContent() {
       <BackButton />
       
       {/* Page Header */}
-      <div className="space-y-3">
-        <h1 className="text-3xl md:text-4xl font-bold text-brand-body">
-          Corporate Services (CSP)
-        </h1>
-        <p className="text-base text-muted-foreground max-w-3xl">
-          Your company's statutory appointments, governance services, and corporate maintenance — all in one place.
-        </p>
-        <p className="text-sm text-muted-foreground max-w-3xl">
-          This page shows which corporate services are currently in place for your company, when they expire, and which additional services may be required to remain compliant under Maltese company law.
-        </p>
-      </div>
+      <PageHeader
+        title="Corporate Services (CSP)"
+        subtitle="Your company's statutory appointments, governance services, and corporate maintenance — all in one place."
+        description="This page shows which corporate services are currently in place for your company, when they expire, and which additional services may be required to remain compliant under Maltese company law."
+      />
 
       {/* Summary Strip */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

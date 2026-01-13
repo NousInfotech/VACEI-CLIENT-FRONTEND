@@ -1,4 +1,4 @@
-import { DashboardSquare02Icon,FileSyncIcon, TaskDaily01Icon, Book02Icon, ArrowRightDoubleIcon, CashbackPoundIcon, TransactionIcon, TaxesIcon, GitPullRequestIcon, DocumentValidationIcon, ProfileIcon, InstallingUpdates02Icon,NotificationIcon,InvoiceIcon, Message01Icon, Building01Icon, CreditCardIcon, UserCheck01Icon, GiftIcon, Unlink03Icon } from '@hugeicons/core-free-icons';
+import { DashboardSquare02Icon,FileSyncIcon, TaskDaily01Icon, Book02Icon, ArrowRightDoubleIcon, Wallet01Icon, CashbackPoundIcon, TransactionIcon, TaxesIcon, GitPullRequestIcon, DocumentValidationIcon, ProfileIcon, InstallingUpdates02Icon,NotificationIcon,InvoiceIcon, Message01Icon, Building01Icon, CreditCardIcon, UserCheck01Icon, GiftIcon, Unlink03Icon } from '@hugeicons/core-free-icons';
 
 export type MenuSection = "primary" | "workspaces" | "operations" | "settings";
 
@@ -78,6 +78,13 @@ export const menuData: MenuItem[] = [
                 icon: CashbackPoundIcon,
                 label: "Payroll",
                 href: "/dashboard/services/payroll",
+                isActive: true,
+            },
+             {
+                slug: "client-facing-content",
+                icon: Wallet01Icon,
+                label: "CFO",
+                href: "/dashboard/services/cfo",
                 isActive: true,
             },
             {
