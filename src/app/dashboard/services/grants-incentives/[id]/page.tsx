@@ -422,6 +422,9 @@ function GrantDetailsContent() {
                     Book & Submit
                   </Button>
                 </div>
+                <p className="text-[10px] text-muted-foreground text-center pt-2">
+                  Note: Call confirmation will be sent to your registered email address.
+                </p>
               </div>
             )}
           </div>

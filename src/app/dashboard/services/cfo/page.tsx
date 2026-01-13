@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import DashboardCard from "@/components/DashboardCard";
 
-export default function CFOServicesPage({ cfoActive = true }) {
+export default function CFOServicesPage() {
+  const cfoActive = true;
   return (
     <section className="mx-auto max-w-[1200px] w-full space-y-8 pt-5">
     {/* Header Card */}
