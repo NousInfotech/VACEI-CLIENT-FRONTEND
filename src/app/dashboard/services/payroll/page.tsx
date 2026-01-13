@@ -279,7 +279,6 @@ function formatPeriod(period: string): string {
 // ------------------------------------------------------------------
 // MAIN COMPONENT
 // ------------------------------------------------------------------
-import PageHeader from "@/components/shared/PageHeader";
 
 export default function PayrollWorkspacePage() {
   const [payrollData, setPayrollData] = useState<PayrollData>(initialPayrollData);
@@ -392,7 +391,7 @@ export default function PayrollWorkspacePage() {
         {/* 1️⃣ PAGE HEADER */}
         <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between bg-primary-color-new p-7 rounded-3xl text-light shadow-xl shadow-primary/10">
           <div>
-            <h1 className="text-2xl md:text-3xl font-semibold text-light">
+            <h1 className="text-2xl md:text-3xl font-semibold text-brand-body">
               Payroll
             </h1>
             <p className="text-sm text-light">
@@ -611,8 +610,71 @@ export default function PayrollWorkspacePage() {
               </Button>
             </Link>
           </div>
-        }
-      />
+          <div className="space-y-3">
+            {payrollData.submissions.map((submission, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30"
+              >
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-medium text-brand-body">
+                      • {submission.name}
+                    </span>
+                  </div>
+                  {submission.due_date && (
+                    <p className="text-xs text-destructive font-medium">
+                      Due: {formatDate(submission.due_date)}
+                    </p>
+                  )}
+                </div>
+                <SubmissionBadge status={submission.status} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 6️⃣ DOCUMENTS (PAYROLL ONLY) */}
+        <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-4">
+          <h2 className="text-lg font-semibold text-brand-body">
+            PAYROLL DOCUMENTS
+          </h2>
+          <div className="space-y-3">
+            {payrollData.documents.map((doc) => (
+              <div
+                key={doc.id}
+                className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30"
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-brand-body">
+                    {doc.name}
+                    {doc.type === "inputs" && " (uploaded by you)"}
+                  </span>
+                  <DocumentStatusBadge status={doc.status} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-lg text-xs"
+                  >
+                    <Eye className="w-3 h-3 mr-1" />
+                    View
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-lg text-xs"
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    Download
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* 7️⃣ PAYROLL HISTORY (COLLAPSED) */}
         <div className="bg-card border border-border rounded-card shadow-md p-6 space-y-4">
@@ -774,5 +836,6 @@ export default function PayrollWorkspacePage() {
           </div>
         </div>
       </section>
-    );
-  }
+    </>
+  );
+}
