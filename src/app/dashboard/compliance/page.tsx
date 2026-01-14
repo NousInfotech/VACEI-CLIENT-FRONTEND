@@ -72,7 +72,7 @@ function PayrollServiceCard() {
   };
 
   return (
-    <DashboardCard className="border-l-4 border-l-primary">
+    <DashboardCard className="border-l-4 border-l-primary p-6 md:p-8">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
@@ -92,7 +92,7 @@ function PayrollServiceCard() {
       </div>
       
       <div className="space-y-3 pt-4 border-t border-border">
-        <h3 className="text-sm font-semibold text-brand-body mb-2">STATUTORY SUBMISSIONS</h3>
+        <h3 className="mt-3 text-sm font-semibold text-brand-body mb-2">STATUTORY SUBMISSIONS</h3>
         {payrollSubmissions.map((submission, index) => (
           <div
             key={index}
@@ -427,7 +427,7 @@ export default function ComplianceCalendarPage() {
       <PayrollServiceCard />
 
       {/* Main Content */}
-      <DashboardCard className="overflow-hidden">
+      <DashboardCard className="overflow-visible">
         {/* View Toggle & Filters */}
         <div className="px-6 py-4 border-b border-border flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">

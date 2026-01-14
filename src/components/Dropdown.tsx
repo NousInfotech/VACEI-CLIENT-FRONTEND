@@ -72,10 +72,12 @@ export const Dropdown = ({
         const boundaryLeft = mainElement ? mainElement.getBoundingClientRect().left : 0;
         const spaceBelow = window.innerHeight - rect.bottom - 20; 
         const spaceAbove = rect.top - 20; 
+        const minSpaceForBottom = 200;
+        const preferredSide: "top" | "bottom" =
+          spaceBelow < minSpaceForBottom && spaceAbove > spaceBelow ? "top" : "bottom";
 
         if (autoPosition) {
-          const bestSide = (spaceBelow < 320 && spaceAbove > spaceBelow) ? "top" : "bottom";
-          setCalculatedSide(bestSide);
+          setCalculatedSide(preferredSide);
         } else {
           setCalculatedSide(side);
         }
@@ -100,8 +102,7 @@ export const Dropdown = ({
           setCalculatedAlign(align);
         }
         
-        // Set max height based on final side
-        const finalSide = autoPosition ? (spaceBelow < 320 && spaceAbove > spaceBelow ? "top" : "bottom") : side;
+        const finalSide = autoPosition ? preferredSide : side;
         const availableHeight = finalSide === "top" ? spaceAbove : spaceBelow;
         const contentMaxHeight = searchable ? availableHeight - 50 : availableHeight;
         setMaxHeight(Math.max(160, Math.min(contentMaxHeight, children ? availableHeight : 320)));

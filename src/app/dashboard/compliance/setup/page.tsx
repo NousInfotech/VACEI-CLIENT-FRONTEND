@@ -385,24 +385,21 @@ export default function ComplianceSetupPage() {
                 ]}
               />
             </div>
-            <p className="text-xs text-muted-foreground">
-              To keep your system flexible, store rule definitions in a central rule library (per jurisdiction) and avoid hard-coding due dates in the calendar UI.
-            </p>
+            
             <div className="mt-4 pt-4 border-t border-border space-y-4">
               <div className="space-y-2">
                 <h3 className="text-sm font-semibold text-brand-body">
                   Statuses &amp; action logic
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Client-facing obligations use a small, fixed set of statuses and a single primary action.
+                  Defines the allowed client-facing statuses and the single primary action per obligation.
                 </p>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-1">
                     <div className="text-xs font-semibold text-brand-body">
-                      Global statuses
+                      Allowed statuses
                     </div>
                     <ul className="text-xs text-muted-foreground space-y-1">
-                      <li>Not active (for catalogue-only items, optional)</li>
                       <li>Upcoming</li>
                       <li>Due soon</li>
                       <li>Waiting on you</li>
@@ -420,44 +417,6 @@ export default function ComplianceSetupPage() {
                       <li>In progress → View</li>
                       <li>Completed → View</li>
                       <li>Overdue → Resolve (opens upload / reply flow)</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-brand-body">
-                  Example page data (Acme Ltd)
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Static sample configuration used for demo/testing of the Compliance Calendar.
-                </p>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-1">
-                    <div className="text-xs font-semibold text-brand-body">
-                      Sample configuration
-                    </div>
-                    <ul className="text-xs text-muted-foreground space-y-1">
-                      <li>Client: Acme Ltd</li>
-                      <li>VAT frequency: Quarterly</li>
-                      <li>Financial year-end: 31 Dec 2025</li>
-                      <li>Payroll: Monthly</li>
-                      <li>Services active: VAT, Payroll, Audit, Corporate</li>
-                    </ul>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-xs font-semibold text-brand-body">
-                      Generated obligations (examples)
-                    </div>
-                    <ul className="text-xs text-muted-foreground space-y-1">
-                      <li>VAT Return Q2: 15 Aug 2025</li>
-                      <li>VAT Return Q3: 15 Nov 2025</li>
-                      <li>Payroll submissions: 15th of each month</li>
-                      <li>SSC: 10th of each month</li>
-                      <li>AGM: 31 Oct 2026 (10 months after FY end)</li>
-                      <li>FS filing: 42 days after AGM</li>
-                      <li>Audit sign-off: 7 days before FS filing</li>
-                      <li>Annual return: company anniversary date (sample date)</li>
                     </ul>
                   </div>
                 </div>
