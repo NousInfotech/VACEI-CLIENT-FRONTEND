@@ -215,7 +215,7 @@ export default function LiquidationPage() {
                     liquidation_type: liquidationType as "MVL" | "CVL" | "Strike-off",
                     status: "in_progress" as const,
                     start_date: new Date().toISOString().split("T")[0],
-                    expected_completion,
+                    expected_completion: expectedCompletion,
                     liquidator: liquidatorName || "",
                     milestones: milestones.map((m) => ({
                       id: m.key,

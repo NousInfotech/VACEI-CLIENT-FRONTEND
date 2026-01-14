@@ -22,6 +22,7 @@ interface DropdownProps {
   contentClassName?: string;
   align?: "left" | "right" | "center";
   side?: "top" | "bottom";
+  autoPosition?: boolean;
   closeOnClick?: boolean;
   searchable?: boolean;
   searchPlaceholder?: string;
@@ -37,6 +38,7 @@ export const Dropdown = ({
   contentClassName,
   align = "right",
   side = "bottom",
+  autoPosition = true,
   closeOnClick = true,
   searchable = false,
   searchPlaceholder = "Search...",
@@ -63,19 +65,20 @@ export const Dropdown = ({
         setTimeout(() => searchInputRef.current?.focus(), 100);
       }
 
-      // Handle auto-positioning
+      // Handle positioning
       if (dropdownRef.current) {
         const rect = dropdownRef.current.getBoundingClientRect();
-        
-        // Find visible horizontal boundary (main layout defines the clipping area)
         const mainElement = document.querySelector('main');
         const boundaryLeft = mainElement ? mainElement.getBoundingClientRect().left : 0;
-        
-        // Vertical positioning
         const spaceBelow = window.innerHeight - rect.bottom - 20; 
         const spaceAbove = rect.top - 20; 
-        const bestSide = (spaceBelow < 320 && spaceAbove > spaceBelow) ? "top" : "bottom";
-        setCalculatedSide(bestSide);
+
+        if (autoPosition) {
+          const bestSide = (spaceBelow < 320 && spaceAbove > spaceBelow) ? "top" : "bottom";
+          setCalculatedSide(bestSide);
+        } else {
+          setCalculatedSide(side);
+        }
         
         // Horizontal positioning
         const buffer = 20;
@@ -84,21 +87,22 @@ export const Dropdown = ({
         const spaceLeftRelativeToBoundary = rect.right - boundaryLeft - buffer;
 
         if (!fullWidth) {
-          // If we're aligned right, we grow LEFT. Ensure we don't hit the boundary on the left.
           if (align === "right" && spaceLeftRelativeToBoundary < dropdownWidth && spaceRight > spaceLeftRelativeToBoundary) {
             setCalculatedAlign("left");
           } 
-          // If we're aligned left, we grow RIGHT. Ensure we don't hit the screen edge.
           else if (align === "left" && spaceRight < dropdownWidth && spaceLeftRelativeToBoundary > spaceRight) {
             setCalculatedAlign("right");
           } 
           else {
             setCalculatedAlign(align);
           }
+        } else {
+          setCalculatedAlign(align);
         }
         
-        // Set max height based on side
-        const availableHeight = bestSide === "top" ? spaceAbove : spaceBelow;
+        // Set max height based on final side
+        const finalSide = autoPosition ? (spaceBelow < 320 && spaceAbove > spaceBelow ? "top" : "bottom") : side;
+        const availableHeight = finalSide === "top" ? spaceAbove : spaceBelow;
         const contentMaxHeight = searchable ? availableHeight - 50 : availableHeight;
         setMaxHeight(Math.max(160, Math.min(contentMaxHeight, children ? availableHeight : 320)));
       }
@@ -148,7 +152,7 @@ export const Dropdown = ({
   };
 
   return (
-    <div className={cn("relative inline-block text-left z-20 hover:z-100 focus-within:z-100", className)} ref={dropdownRef}>
+    <div className={cn("relative inline-block text-left z-20 hover:z-[100] focus-within:z-[100]", className)} ref={dropdownRef}>
       {/* Trigger */}
       <div onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
         {trigger ? (
@@ -173,7 +177,7 @@ export const Dropdown = ({
       {/* Dropdown menu */}
       <div
         className={cn(
-          "absolute z-999 origin-top rounded-2xl bg-white/95 backdrop-blur-md p-1.5 shadow-2xl ring-1 ring-black/5 focus:outline-none transition-all duration-300 ease-in-out",
+          "absolute z-[999] origin-top rounded-2xl bg-white/95 backdrop-blur-md p-1.5 shadow-2xl ring-1 ring-black/5 focus:outline-none transition-all duration-300 ease-in-out",
           fullWidth ? "w-full" : "w-64",
           alignmentClasses[calculatedAlign],
           sideClasses[calculatedSide],
@@ -203,7 +207,7 @@ export const Dropdown = ({
             <div 
                 onClick={() => closeOnClick && setIsOpen(false)}
                 style={{ maxHeight: `${maxHeight}px`, overflowY: 'auto' }}
-                className="custom-scrollbar z-999"
+                className="custom-scrollbar z-[999]"
             >
                 {children}
             </div>

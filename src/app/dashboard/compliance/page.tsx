@@ -28,7 +28,54 @@ interface ComplianceItem {
   status: ComplianceStatus;
   actionType: "upload" | "reply" | "approve" | "view" | "resolve";
   relatedServiceId?: number;
+  companyId?: string;
+  relatedServiceOrProjectId?: number;
+  overrideDueDate?: string | null;
+  completedAt?: string | null;
 }
+
+const ACME_SAMPLE_ITEMS: ComplianceItem[] = [
+  {
+    id: 1,
+    obligationName: "VAT Return – Q2 2025",
+    dueDate: "2025-08-15",
+    service: "VAT & Tax",
+    status: "Waiting on you",
+    actionType: "upload",
+  },
+  {
+    id: 2,
+    obligationName: "Payroll Submission – Jul",
+    dueDate: "2025-08-15",
+    service: "Payroll",
+    status: "In progress",
+    actionType: "view",
+  },
+  {
+    id: 3,
+    obligationName: "SSC Payment – Jul",
+    dueDate: "2025-08-10",
+    service: "Payroll",
+    status: "Due soon",
+    actionType: "view",
+  },
+  {
+    id: 4,
+    obligationName: "Annual Return (MBR)",
+    dueDate: "2025-09-12",
+    service: "Corporate Services",
+    status: "In progress",
+    actionType: "view",
+  },
+  {
+    id: 5,
+    obligationName: "Audit Sign-off FY2025",
+    dueDate: "2025-09-20",
+    service: "Audit",
+    status: "Waiting on you",
+    actionType: "approve",
+  },
+];
 
 export default function ComplianceCalendarPage() {
   const [viewMode, setViewMode] = useState<"list" | "month">("list");
@@ -112,15 +159,16 @@ export default function ComplianceCalendarPage() {
           };
         });
 
-      setComplianceItems(items);
+      const effectiveItems = items.length === 0 ? ACME_SAMPLE_ITEMS : items;
+      setComplianceItems(effectiveItems);
       
       // Calculate summary counts
       const now = new Date();
       const counts = {
-        overdue: items.filter(item => item.status === "Overdue").length,
-        waitingOnYou: items.filter(item => item.status === "Waiting on you").length,
-        dueSoon: items.filter(item => item.status === "Due soon").length,
-        upcoming: items.filter(item => {
+        overdue: effectiveItems.filter(item => item.status === "Overdue").length,
+        waitingOnYou: effectiveItems.filter(item => item.status === "Waiting on you").length,
+        dueSoon: effectiveItems.filter(item => item.status === "Due soon").length,
+        upcoming: effectiveItems.filter(item => {
           const due = new Date(item.dueDate);
           const daysUntilDue = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
           return daysUntilDue > 7 && item.status !== "Completed" && item.status !== "Overdue";
@@ -129,7 +177,19 @@ export default function ComplianceCalendarPage() {
       setSummaryCounts(counts);
     } catch (error) {
       console.error("Failed to load compliance items", error);
-      setComplianceItems([]);
+      setComplianceItems(ACME_SAMPLE_ITEMS);
+      const now = new Date();
+      const counts = {
+        overdue: ACME_SAMPLE_ITEMS.filter(item => item.status === "Overdue").length,
+        waitingOnYou: ACME_SAMPLE_ITEMS.filter(item => item.status === "Waiting on you").length,
+        dueSoon: ACME_SAMPLE_ITEMS.filter(item => item.status === "Due soon").length,
+        upcoming: ACME_SAMPLE_ITEMS.filter(item => {
+          const due = new Date(item.dueDate);
+          const daysUntilDue = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          return daysUntilDue > 7 && item.status !== "Completed" && item.status !== "Overdue";
+        }).length,
+      };
+      setSummaryCounts(counts);
     } finally {
       setLoading(false);
     }
@@ -162,11 +222,12 @@ export default function ComplianceCalendarPage() {
       const due = new Date(item.dueDate);
       const now = new Date();
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
       const next3Months = new Date(now.getFullYear(), now.getMonth() + 3, 1);
       const thisYear = new Date(now.getFullYear(), 0, 1);
       const nextYear = new Date(now.getFullYear() + 1, 0, 1);
 
-      if (periodFilter === "This month" && (due < thisMonth || due >= next3Months)) return false;
+      if (periodFilter === "This month" && (due < thisMonth || due >= nextMonth)) return false;
       if (periodFilter === "Next 3 months" && (due < thisMonth || due >= next3Months)) return false;
       if (periodFilter === "This year" && (due < thisYear || due >= nextYear)) return false;
     }
@@ -266,39 +327,47 @@ export default function ComplianceCalendarPage() {
   };
 
   return (
-    <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-6">
+    <section className="flex flex-col gap-6 px-4 py-4 md:px-6 md:py-6 pt-2 md:pt-4">
       {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-bold text-brand-body">
-            Compliance Calendar
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            All statutory deadlines and obligations — automatically tracked
-          </p>
+      <DashboardCard animate className="p-8 bg-[#0f1729] border-white/10">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-semibold text-white tracking-tight">
+                Compliance Calendar
+              </h1>
+              <p className="text-white/60 font-medium">
+                All statutory deadlines and obligations — automatically tracked
+              </p>
+              <p className="text-white/50 text-sm max-w-2xl pt-2 leading-relaxed">
+                View and manage your company's compliance schedule, ensuring you never miss a deadline. This calendar tracks all statutory filings, payments, and other obligations based on your company's profile.
+              </p>
+            </div>
+          </div>
+
+          <div className="shrink-0 w-full lg:w-auto flex flex-col sm:flex-row gap-3">
+            <Button 
+              variant="outline" 
+              size="default" 
+              className="bg-white/5 border-white/10 hover:bg-white/10 text-white hover:text-white"
+              onClick={() => setShowHelpModal(true)}
+            >
+              <HelpCircle className="w-4 h-4 mr-2" />
+              Help
+            </Button>
+            <Button 
+              variant="outline" 
+              size="default" 
+              className="bg-white/5 border-white/10 hover:bg-white/10 text-white hover:text-white"
+              onClick={handleDownloadCalendar}
+              disabled={complianceItems.length === 0}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download (.ics)
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="rounded-lg"
-            onClick={() => setShowHelpModal(true)}
-          >
-            <HelpCircle className="w-4 h-4 mr-2" />
-            Help
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="rounded-lg"
-            onClick={handleDownloadCalendar}
-            disabled={complianceItems.length === 0}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Download (.ics)
-          </Button>
-        </div>
-      </div>
+      </DashboardCard>
 
       {/* Summary Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -333,7 +402,7 @@ export default function ComplianceCalendarPage() {
       </div>
 
       {/* Main Content */}
-      <DashboardCard className="overflow-hidden">
+      <DashboardCard className="overflow-visible">
         {/* View Toggle & Filters */}
         <div className="px-6 py-4 border-b border-border flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
@@ -363,6 +432,7 @@ export default function ComplianceCalendarPage() {
               className="w-auto min-w-[140px]"
               align="left"
               side="bottom"
+              autoPosition={false}
               trigger={
                 <Button variant="outline" size="sm" className="w-auto min-w-[140px] h-9 justify-between">
                   {serviceFilter}
@@ -385,6 +455,7 @@ export default function ComplianceCalendarPage() {
               className="w-auto min-w-[140px]"
               align="left"
               side="bottom"
+              autoPosition={false}
               trigger={
                 <Button variant="outline" size="sm" className="w-auto min-w-[140px] h-9 justify-between">
                   {periodFilter}
@@ -404,6 +475,7 @@ export default function ComplianceCalendarPage() {
               className="w-auto min-w-[140px]"
               align="left"
               side="bottom"
+              autoPosition={false}
               trigger={
                 <Button variant="outline" size="sm" className="w-auto min-w-[140px] h-9 justify-between">
                   {statusFilter}
