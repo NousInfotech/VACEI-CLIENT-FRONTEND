@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import DashboardCard from "@/components/DashboardCard";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { 
   FileText, 
   Upload, 
@@ -206,36 +207,29 @@ export default function BusinessPlansPage() {
 
   return (
     <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-2">
-          <h1 className="text-3xl md:text-4xl font-bold text-brand-body">
-            Business Plans
-          </h1>
-          <p className="text-sm text-muted-foreground max-w-2xl">
-            Professional business plans prepared for banks, grants, investors, and strategic planning.
-          </p>
-          <p className="text-sm text-muted-foreground max-w-2xl mt-2">
-            Use this page to request a new business plan, track progress, upload information, and review drafts. Our team will guide you step by step.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {activeProject ? (
-            <Link href={`/dashboard/business-plans/${activeProject.project_id}`}>
-              <Button variant="outline" className="min-w-[200px]">
-                <Eye className="w-4 h-4 mr-2" />
-                View Business Plan 
+      <PageHeader
+        title="Business Plans"
+        subtitle="Professional business plans prepared for banks, grants, investors, and strategic planning."
+        description="Use this page to request a new business plan, track progress, upload information, and review drafts. Our team will guide you step by step."
+        actions={
+          <div className="flex items-center gap-3">
+            {activeProject && (
+              <Link href={`/dashboard/business-plans/${activeProject.project_id}`}>
+                <Button variant="outline" className="bg-light text-primary-color-new">
+                  <Eye className="w-4 h-4 mr-2" />
+                  View Business Plan
+                </Button>
+              </Link>
+            )}
+            <Link href="/dashboard/business-plans/request">
+              <Button variant="outline" className="bg-light text-primary-color-new">
+                <Plus className="w-4 h-4 mr-2" />
+                Request Business Plan
               </Button>
             </Link>
-          ) : null}
-          <Link href="/dashboard/business-plans/request">
-            <Button variant="default" className="min-w-[180px]">
-              <Plus className="w-4 h-4 mr-2" />
-              Request Business Plan
-            </Button>
-          </Link>
-        </div>
-      </div>
+          </div>
+        }
+      />
 
       {loading ? (
         <DashboardCard className="p-12 text-center">
@@ -244,7 +238,7 @@ export default function BusinessPlansPage() {
       ) : activeProject ? (
         <>
           {/* Active Business Plan Project Card */}
-          <DashboardCard className="p-6 border-l-4 border-l-primary bg-gradient-to-r from-primary/5 to-transparent">
+          <DashboardCard className="p-6 border-l-4 border-l-primary bg-linear-to-r from-primary/5 to-transparent">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
@@ -307,11 +301,11 @@ export default function BusinessPlansPage() {
                         <CheckCircle2 className="w-5 h-5 text-success" />
                       </div>
                     ) : milestone.status === "active" ? (
-                      <div className="w-7 h-7 rounded-full border-2 border-primary bg-primary/5 flex items-center justify-center">
-                        <div className="w-3 h-3 rounded-full bg-primary"></div>
+                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Clock className="w-4 h-4 text-primary" />
                       </div>
                     ) : (
-                      <div className="w-7 h-7 rounded-full border-2 border-border flex items-center justify-center">
+                      <div className="w-7 h-7 rounded-full bg-muted/20 flex items-center justify-center">
                         <Circle className="w-4 h-4 text-muted-foreground" />
                       </div>
                     )}
@@ -339,7 +333,7 @@ export default function BusinessPlansPage() {
 
           {/* Required Actions */}
           {activeProject.status === "waiting_on_you" && requiredActions.length > 0 && (
-            <DashboardCard className="p-6 border-l-4 border-l-warning bg-gradient-to-r from-warning/5 to-transparent">
+            <DashboardCard className="p-6 border-l-4 border-l-warning bg-linear-to-r from-warning/5 to-transparent">
               <div className="flex items-center gap-2.5 mb-5">
                 <AlertCircle className="w-5 h-5 text-warning" />
                 <h3 className="text-lg font-semibold text-brand-body">ACTION REQUIRED</h3>

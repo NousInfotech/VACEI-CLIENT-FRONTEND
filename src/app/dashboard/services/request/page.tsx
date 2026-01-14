@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Dropdown from "@/components/Dropdown";
 import { ChevronDown } from "lucide-react";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 type ServiceCode =
   | "bookkeeping"
@@ -371,25 +372,29 @@ const handleSubmit = (e: React.MouseEvent) => {
 
   return (
     <section className="mx-auto max-w-[1200px] w-full pt-5 space-y-6">
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-semibold text-brand-body">
-            Request a Service
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Select the service, confirm required documents, and share details.
-            Drafts are saved locally.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" onClick={resetForm} className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow">
-            Clear draft
-          </Button>
-          <Button className="rounded-lg text-xs shadow-sm hover:shadow-md transition-shadow text-primary-foreground" onClick={handleSubmit} disabled={!isFormValid}>
-            Submit request
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Request a Service"
+        subtitle="Select the service, confirm required documents, and share details. Drafts are saved locally."
+        actions={
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="bg-light text-primary-color-new"
+              onClick={resetForm}
+            >
+              Clear draft
+            </Button>
+            <Button
+              variant="outline"
+              className="bg-light text-primary-color-new"
+              onClick={handleSubmit}
+              disabled={!isFormValid}
+            >
+              Submit request
+            </Button>
+          </div>
+        }
+      />
       {showSuccess && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
             <div className="bg-white rounded-lg p-6 w-96 text-center">

@@ -32,7 +32,7 @@ const PillTabs: React.FC<PillTabsProps> = ({
             className={`
               flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200
               ${isActive 
-                ? 'bg-white text-primary-color-new shadow-sm' 
+                ? 'bg-primary-color-new text-light shadow-sm' 
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}
             `}
           >

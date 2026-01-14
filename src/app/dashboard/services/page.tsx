@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 
 import DashboardCard from "@/components/DashboardCard";
+import PageHeader from "@/components/shared/PageHeader";
 
 // Service categories
 const serviceCategories = [
@@ -309,38 +310,27 @@ export default function ServicesHubPage() {
   return (
     <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-8">
       {/* Enhanced Header */}
-      <DashboardCard className="p-8">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-3">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shadow-inner">
-                <Sparkles className="w-6 h-6 text-primary" />
-              </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-brand-body tracking-tight">
-                Services Hub
-              </h1>
-            </div>
-            <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
-              Access all your active workspaces – bookkeeping, VAT, payroll, audit, compliance, and more. 
-              Manage your services in one centralized location with real-time status tracking.
-            </p>
-          </div>
+      <PageHeader 
+        title="Services Hub"
+        subtitle="Access all your active workspaces – bookkeeping, VAT, payroll, audit, compliance, and more."
+        description="Manage your services in one centralized location with real-time status tracking."
+        actions={
           <div className="flex flex-wrap gap-3">
             <Link href="/dashboard/compliance/list">
-              <Button variant="outline" className="h-11 rounded-xl px-5 py-2.5 text-sm shadow-sm hover:shadow-md transition-all flex items-center gap-2 border-gray-200">
+              <Button variant="outline" className="bg-light text-primary-color-new">
                 <AlertCircle className="w-4 h-4" />
                 Pending Actions
               </Button>
             </Link>
             <Link href="/dashboard/services/request">
-              <Button className="h-11 rounded-xl px-5 py-2.5 text-sm shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all flex items-center gap-2">
+              <Button variant="outline" className="bg-light text-primary-color-new">
                 <Plus className="w-4 h-4" />
                 Request Service
               </Button>
             </Link>
           </div>
-        </div>
-      </DashboardCard>
+        }
+      />
 
 {/* Status cards */}
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -459,13 +449,13 @@ export default function ServicesHubPage() {
           </div>
           <div className="flex flex-wrap justify-center gap-4 shrink-0">
             <Link href="/dashboard/services/request">
-              <Button className="h-12 rounded-xl px-8 py-2.5 text-sm font-bold uppercase tracking-widest shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all active:scale-95">
+              <Button variant="default">
                 <Plus className="w-4 h-4 mr-2" />
                 Request Service
               </Button>
             </Link>
             <Link href="/dashboard/quickbooks-sync">
-              <Button variant="outline" className="h-12 rounded-xl px-8 py-2.5 text-sm font-bold uppercase tracking-widest border-gray-200 hover:bg-gray-50 transition-all active:scale-95">
+              <Button variant="outline">
                 <Settings className="w-4 h-4 mr-2" />
                 Integrations
               </Button>

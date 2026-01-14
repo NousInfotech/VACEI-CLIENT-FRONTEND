@@ -4,11 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import DashboardCard from "@/components/DashboardCard";
+import { PageHeader } from "@/components/shared/PageHeader";
 import Dropdown from "@/components/Dropdown";
-import { ChevronDown, Calendar as CalendarIcon, List, HelpCircle, Download, Upload, MessageSquare, CheckCircle, Eye, AlertCircle, X } from "lucide-react";
+import { ChevronDown, Calendar as CalendarIcon, List, HelpCircle, Download, Upload, MessageSquare, CheckCircle, Eye, AlertCircle, X, ArrowRight, Users } from "lucide-react";
 import { fetchTasks } from "@/api/taskService";
 import type { Task } from "@/interfaces";
 import ParentSchedule from "@/app/dashboard/schedule/page";
+import { fetchPayrollData, transformPayrollSubmissionsToComplianceItems } from "@/lib/payrollComplianceIntegration";
 
 // Compliance status types
 type ComplianceStatus = "Waiting on you" | "In progress" | "Due soon" | "Completed" | "Overdue";
@@ -28,54 +30,93 @@ interface ComplianceItem {
   status: ComplianceStatus;
   actionType: "upload" | "reply" | "approve" | "view" | "resolve";
   relatedServiceId?: number;
-  companyId?: string;
-  relatedServiceOrProjectId?: number;
-  overrideDueDate?: string | null;
-  completedAt?: string | null;
 }
 
-const ACME_SAMPLE_ITEMS: ComplianceItem[] = [
-  {
-    id: 1,
-    obligationName: "VAT Return – Q2 2025",
-    dueDate: "2025-08-15",
-    service: "VAT & Tax",
-    status: "Waiting on you",
-    actionType: "upload",
-  },
-  {
-    id: 2,
-    obligationName: "Payroll Submission – Jul",
-    dueDate: "2025-08-15",
-    service: "Payroll",
-    status: "In progress",
-    actionType: "view",
-  },
-  {
-    id: 3,
-    obligationName: "SSC Payment – Jul",
-    dueDate: "2025-08-10",
-    service: "Payroll",
-    status: "Due soon",
-    actionType: "view",
-  },
-  {
-    id: 4,
-    obligationName: "Annual Return (MBR)",
-    dueDate: "2025-09-12",
-    service: "Corporate Services",
-    status: "In progress",
-    actionType: "view",
-  },
-  {
-    id: 5,
-    obligationName: "Audit Sign-off FY2025",
-    dueDate: "2025-09-20",
-    service: "Audit",
-    status: "Waiting on you",
-    actionType: "approve",
-  },
-];
+// Payroll Service Card Component
+function PayrollServiceCard() {
+  const [payrollSubmissions, setPayrollSubmissions] = useState<Array<{ name: string; status: string; due_date?: string }>>([]);
+  
+  useEffect(() => {
+    const loadPayrollData = async () => {
+      const data = await fetchPayrollData();
+      if (data) {
+        setPayrollSubmissions(data.submissions);
+      }
+    };
+    loadPayrollData();
+  }, []);
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "—";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const getStatusBadge = (status: string) => {
+    if (status === "submitted") {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium bg-success/10 text-success border-success/30 shadow-sm">
+          Submitted
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium bg-muted text-muted-foreground border-border shadow-sm">
+        Pending
+      </span>
+    );
+  };
+
+  return (
+    <DashboardCard className="border-l-4 border-l-primary">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
+            <Users className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-brand-body">Payroll Service</h2>
+            <p className="text-xs text-muted-foreground">Statutory submissions and obligations</p>
+          </div>
+        </div>
+        <Link href="/dashboard/services/payroll">
+          <Button variant="default" size="sm" className="rounded-lg">
+            Go to Payroll
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </Link>
+      </div>
+      
+      <div className="space-y-3 pt-4 border-t border-border">
+        <h3 className="text-sm font-semibold text-brand-body mb-2">STATUTORY SUBMISSIONS</h3>
+        {payrollSubmissions.map((submission, index) => (
+          <div
+            key={index}
+            className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30"
+          >
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-sm font-medium text-brand-body">
+                  • {submission.name}
+                </span>
+              </div>
+              {submission.due_date && (
+                <p className="text-xs text-muted-foreground">
+                  Due: {formatDate(submission.due_date)}
+                </p>
+              )}
+            </div>
+            {getStatusBadge(submission.status)}
+          </div>
+        ))}
+      </div>
+    </DashboardCard>
+  );
+}
 
 export default function ComplianceCalendarPage() {
   const [viewMode, setViewMode] = useState<"list" | "month">("list");
@@ -159,16 +200,22 @@ export default function ComplianceCalendarPage() {
           };
         });
 
-      const effectiveItems = items.length === 0 ? ACME_SAMPLE_ITEMS : items;
-      setComplianceItems(effectiveItems);
+      // Fetch and add payroll submissions
+      const payrollData = await fetchPayrollData();
+      const payrollItems = payrollData 
+        ? transformPayrollSubmissionsToComplianceItems(payrollData, 1000000)
+        : [];
+      
+      const allItems = [...items, ...payrollItems];
+      setComplianceItems(allItems);
       
       // Calculate summary counts
       const now = new Date();
       const counts = {
-        overdue: effectiveItems.filter(item => item.status === "Overdue").length,
-        waitingOnYou: effectiveItems.filter(item => item.status === "Waiting on you").length,
-        dueSoon: effectiveItems.filter(item => item.status === "Due soon").length,
-        upcoming: effectiveItems.filter(item => {
+        overdue: allItems.filter(item => item.status === "Overdue").length,
+        waitingOnYou: allItems.filter(item => item.status === "Waiting on you").length,
+        dueSoon: allItems.filter(item => item.status === "Due soon").length,
+        upcoming: allItems.filter(item => {
           const due = new Date(item.dueDate);
           const daysUntilDue = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
           return daysUntilDue > 7 && item.status !== "Completed" && item.status !== "Overdue";
@@ -177,19 +224,7 @@ export default function ComplianceCalendarPage() {
       setSummaryCounts(counts);
     } catch (error) {
       console.error("Failed to load compliance items", error);
-      setComplianceItems(ACME_SAMPLE_ITEMS);
-      const now = new Date();
-      const counts = {
-        overdue: ACME_SAMPLE_ITEMS.filter(item => item.status === "Overdue").length,
-        waitingOnYou: ACME_SAMPLE_ITEMS.filter(item => item.status === "Waiting on you").length,
-        dueSoon: ACME_SAMPLE_ITEMS.filter(item => item.status === "Due soon").length,
-        upcoming: ACME_SAMPLE_ITEMS.filter(item => {
-          const due = new Date(item.dueDate);
-          const daysUntilDue = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-          return daysUntilDue > 7 && item.status !== "Completed" && item.status !== "Overdue";
-        }).length,
-      };
-      setSummaryCounts(counts);
+      setComplianceItems([]);
     } finally {
       setLoading(false);
     }
@@ -222,12 +257,11 @@ export default function ComplianceCalendarPage() {
       const due = new Date(item.dueDate);
       const now = new Date();
       const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
       const next3Months = new Date(now.getFullYear(), now.getMonth() + 3, 1);
       const thisYear = new Date(now.getFullYear(), 0, 1);
       const nextYear = new Date(now.getFullYear() + 1, 0, 1);
 
-      if (periodFilter === "This month" && (due < thisMonth || due >= nextMonth)) return false;
+      if (periodFilter === "This month" && (due < thisMonth || due >= next3Months)) return false;
       if (periodFilter === "Next 3 months" && (due < thisMonth || due >= next3Months)) return false;
       if (periodFilter === "This year" && (due < thisYear || due >= nextYear)) return false;
     }
@@ -251,7 +285,10 @@ export default function ComplianceCalendarPage() {
       resolve: "Resolve",
     }[item.actionType];
 
-    const href = item.actionType === "upload" 
+    // Link payroll items to payroll page
+    const href = item.service === "Payroll"
+      ? `/dashboard/services/payroll`
+      : item.actionType === "upload" 
       ? `/dashboard/document-organizer/document-upload`
       : item.actionType === "reply" || item.actionType === "approve"
       ? `/dashboard/messages`
@@ -327,38 +364,23 @@ export default function ComplianceCalendarPage() {
   };
 
   return (
-    <section className="flex flex-col gap-6 px-4 py-4 md:px-6 md:py-6 pt-2 md:pt-4">
-      {/* Header */}
-      <DashboardCard animate className="p-8 bg-[#0f1729] border-white/10">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <h1 className="text-3xl font-semibold text-white tracking-tight">
-                Compliance Calendar
-              </h1>
-              <p className="text-white/60 font-medium">
-                All statutory deadlines and obligations — automatically tracked
-              </p>
-              <p className="text-white/50 text-sm max-w-2xl pt-2 leading-relaxed">
-                View and manage your company's compliance schedule, ensuring you never miss a deadline. This calendar tracks all statutory filings, payments, and other obligations based on your company's profile.
-              </p>
-            </div>
-          </div>
-
-          <div className="shrink-0 w-full lg:w-auto flex flex-col sm:flex-row gap-3">
-            <Button 
-              variant="outline" 
-              size="default" 
-              className="bg-white/5 border-white/10 hover:bg-white/10 text-white hover:text-white"
+    <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-6">
+      <PageHeader
+        title="Compliance Calendar"
+        subtitle="All statutory deadlines and obligations — automatically tracked"
+        actions={
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              className="bg-light text-primary-color-new"
               onClick={() => setShowHelpModal(true)}
             >
               <HelpCircle className="w-4 h-4 mr-2" />
               Help
             </Button>
-            <Button 
-              variant="outline" 
-              size="default" 
-              className="bg-white/5 border-white/10 hover:bg-white/10 text-white hover:text-white"
+            <Button
+              variant="outline"
+              className="bg-light text-primary-color-new"
               onClick={handleDownloadCalendar}
               disabled={complianceItems.length === 0}
             >
@@ -366,8 +388,8 @@ export default function ComplianceCalendarPage() {
               Download (.ics)
             </Button>
           </div>
-        </div>
-      </DashboardCard>
+        }
+      />
 
       {/* Summary Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -401,8 +423,11 @@ export default function ComplianceCalendarPage() {
         />
       </div>
 
+      {/* Payroll Service Card */}
+      <PayrollServiceCard />
+
       {/* Main Content */}
-      <DashboardCard className="overflow-visible">
+      <DashboardCard className="overflow-hidden">
         {/* View Toggle & Filters */}
         <div className="px-6 py-4 border-b border-border flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
@@ -432,7 +457,6 @@ export default function ComplianceCalendarPage() {
               className="w-auto min-w-[140px]"
               align="left"
               side="bottom"
-              autoPosition={false}
               trigger={
                 <Button variant="outline" size="sm" className="w-auto min-w-[140px] h-9 justify-between">
                   {serviceFilter}
@@ -455,7 +479,6 @@ export default function ComplianceCalendarPage() {
               className="w-auto min-w-[140px]"
               align="left"
               side="bottom"
-              autoPosition={false}
               trigger={
                 <Button variant="outline" size="sm" className="w-auto min-w-[140px] h-9 justify-between">
                   {periodFilter}
@@ -475,7 +498,6 @@ export default function ComplianceCalendarPage() {
               className="w-auto min-w-[140px]"
               align="left"
               side="bottom"
-              autoPosition={false}
               trigger={
                 <Button variant="outline" size="sm" className="w-auto min-w-[140px] h-9 justify-between">
                   {statusFilter}
@@ -625,7 +647,7 @@ function ListContentView({
 function MonthContentView({ items }: { items: ComplianceItem[] }) {
   return (
     <div className="compliance-calendar-wrapper">
-      <div className="bg-gradient-to-br from-card to-card/50 border border-border rounded-xl shadow-lg p-6 backdrop-blur-sm">
+      <div className="bg-linear-to-br from-card to-card/50 border border-border rounded-xl shadow-lg p-6 backdrop-blur-sm">
         <div className="mb-4 pb-4 border-b border-border">
           <h3 className="text-lg font-semibold text-brand-body">Calendar View</h3>
           <p className="text-sm text-muted-foreground mt-1">

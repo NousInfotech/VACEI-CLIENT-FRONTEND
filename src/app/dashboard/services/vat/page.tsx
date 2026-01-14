@@ -2,28 +2,27 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/shared/PageHeader";
 
 export default function VatWorkspacePage() {
   return (
     <section className="mx-auto max-w-[1200px] w-full pt-5 space-y-6">
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-semibold text-brand-body">VAT & Tax</h1>
-          <p className="text-sm text-muted-foreground">
-            VAT overview, periods, missing items, submission status, and payment info.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/dashboard/document-organizer/document-upload">
-            <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">Upload documents</Button>
-          </Link>
-          <Link href="/dashboard/todo-list">
-            <Button variant="outline" className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">
-              View requests
-            </Button>
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="VAT & Tax"
+        subtitle="VAT overview, periods, missing items, submission status, and payment info."
+        actions={
+          <div className="flex gap-2">
+            <Link href="/dashboard/document-organizer/document-upload">
+              <Button variant="outline" className="bg-light text-primary-color-new">Upload documents</Button>
+            </Link>
+            <Link href="/dashboard/todo-list">
+              <Button variant="outline" className="bg-light text-primary-color-new">
+                View requests
+              </Button>
+            </Link>
+          </div>
+        }
+      />
 
       <div className="grid gap-5 md:grid-cols-[1.3fr,1fr]">
         <div className="space-y-5">

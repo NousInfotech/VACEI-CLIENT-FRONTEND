@@ -14,6 +14,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Button } from "@/components/ui/button";
 import Dropdown from "@/components/Dropdown";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { ChevronDown, Clock } from "lucide-react";
 // Custom hook for debouncing a value
 function useDebounce<T>(value: T, delay: number): T {
@@ -333,10 +334,12 @@ export default function TodoList() {
     }
 
     return (
-        <section className="mx-auto max-w-[1400px] w-full pt-5">
+        <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-4">
+            <PageHeader
+                title="To-Do List"
+                subtitle="Manage your tasks, track progress, and collaborate with your team."
+            />
             <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
-                <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">To-Do List</h1>
-                <hr className="my-3 border-t border-gray-100"></hr>
                 {message && <AlertMessage message={message} variant={alertVariant} onClose={() => setMessage("")} duration={6000} />}
                 <TodoListTabs categories={categories} onCategoryClick={handleCategoryClick} />
 
@@ -425,7 +428,7 @@ export default function TodoList() {
                     <Button
                         variant="outline"
                         onClick={clearFilters}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm cursor-pointer text-card-foreground !font-normal"
+                        className="bg-light text-primary-color-new"
                     >
                         Clear
                     </Button>
@@ -439,7 +442,7 @@ export default function TodoList() {
                             // Skeleton Loader
                             <div className="space-y-3">
                                 {[...Array(3)].map((_, index) => ( // Render 3 skeleton items
-                                    <div key={index} className="bg-gradient-to-l from-white/80 to-blue-100/50 backdrop-blur[10px] border border-border rounded-[16px] py-3 px-4 flex justify-between items-center animate-pulse">
+                                    <div key={index} className="bg-linear-to-l from-white/80 to-blue-100/50 backdrop-blur[10px] border border-border rounded-[16px] py-3 px-4 flex justify-between items-center animate-pulse">
                                         <div className="flex-1">
                                             <div className="h-4 bg-black/10 rounded w-3/4 mb-2"></div>
                                             <div className="h-3 bg-black/10 rounded w-1/2"></div>

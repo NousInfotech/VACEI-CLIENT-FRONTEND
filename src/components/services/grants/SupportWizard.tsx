@@ -1,0 +1,286 @@
+"use client";
+
+import React, { useState } from 'react';
+import { Modal } from "@/components/ui/modal";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import Dropdown from "@/components/Dropdown";
+import { 
+  ArrowRight, 
+  ChevronDown, 
+  CheckCircle2, 
+  Calendar, 
+  FileText, 
+  Clock, 
+  ShieldCheck 
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Grant } from "./types";
+
+interface SupportWizardProps {
+  isOpen: boolean;
+  onClose: () => void;
+  selectedGrant: Grant | null;
+}
+
+export default function SupportWizard({ isOpen, onClose, selectedGrant }: SupportWizardProps) {
+  const [step, setStep] = useState(1);
+  const [wizardData, setWizardData] = useState({
+    description: "",
+    budget: "",
+    timeline: "",
+    previouslyApplied: false,
+    callDate: "",
+    callTime: "",
+    callType: "Video",
+    docsUploaded: false
+  });
+
+  const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
+  const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+
+  const handleClose = () => {
+    onClose();
+    setTimeout(() => setStep(1), 300);
+  };
+
+  return (
+    <Modal 
+      isOpen={isOpen} 
+      onClose={handleClose}
+      title={step === 4 ? "Request Confirmed" : "Request Support"}
+    >
+      <div className="space-y-6 max-h-[500px] px-2 overflow-y-auto">
+        {/* Progress Indicator */}
+        {step < 4 && (
+          <div className="flex items-center gap-2">
+            {[1, 2, 3].map((s) => (
+              <div 
+                key={s} 
+                className={cn(
+                  "h-1.5 flex-1 rounded-full transition-all duration-500",
+                  step >= s ? "bg-primary-color-new" : "bg-gray-200"
+                )} 
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Step 1: Confirm Grant */}
+        {step === 1 && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-right-2">
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-muted-foreground">Select Grant</label>
+              <div className="p-4 rounded-2xl border-2 border-primary-color-new bg-primary/5 space-y-1">
+                <h4 className="text-base font-bold text-brand-body">{selectedGrant?.title || "No grant selected"}</h4>
+                <p className="text-xs text-muted-foreground">{selectedGrant?.provider}</p>
+              </div>
+              <Button variant="link" className="p-0 h-auto text-xs text-primary font-bold">
+                I'm not sure, recommend the best match
+              </Button>
+            </div>
+            <div className="pt-4">
+              <Button className="w-full rounded-xl h-12 font-bold bg-primary-color-new text-white" onClick={nextStep}>
+                Continue <ArrowRight className="ml-2 w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Basic Info */}
+        {step === 2 && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-right-2">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase text-muted-foreground">Contact Person</label>
+                <Input defaultValue="John Doe" disabled className="bg-muted/30 h-11 rounded-xl" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase text-muted-foreground">Short Project Description</label>
+                <Input 
+                  placeholder="Describe your goals in 1-2 sentences..." 
+                  className="h-11 rounded-xl"
+                  value={wizardData.description}
+                  onChange={e => setWizardData({...wizardData, description: e.target.value})}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase text-muted-foreground">Estimated Budget</label>
+                <Dropdown 
+                  trigger={
+                    <Button variant="outline" className="w-full h-11 justify-between rounded-xl">
+                      {wizardData.budget || "Select range"} 
+                      <ChevronDown className="w-4 h-4 opacity-50"/>
+                    </Button>
+                  }
+                  className="w-full"
+                  items={[
+                    { id: "1", label: "< €10,000", onClick: () => setWizardData({...wizardData, budget: "< €10,000"}) },
+                    { id: "2", label: "€10,000 - €50,000", onClick: () => setWizardData({...wizardData, budget: "€10,000 - €50,000"}) },
+                    { id: "3", label: "€50,000+", onClick: () => setWizardData({...wizardData, budget: "€50,000+"}) }
+                  ]}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase text-muted-foreground">Timeline</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {["Now", "1-3 months", "3-6 months", "6+ months"].map(t => (
+                    <Button 
+                      key={t}
+                      variant={wizardData.timeline === t ? "default" : "outline"}
+                      className={cn(
+                        "text-[12px] h-9 font-bold rounded-xl",
+                        wizardData.timeline === t ? "bg-primary-color-new text-white" : "border-primary/10 text-primary"
+                      )}
+                      onClick={() => setWizardData({...wizardData, timeline: t})}
+                    >
+                      {t}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase text-muted-foreground">Have you applied for grants before?</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant={wizardData.previouslyApplied ? "default" : "outline"}
+                    className={cn(
+                      "text-[12px] h-9 font-bold rounded-xl",
+                      wizardData.previouslyApplied ? "bg-primary-color-new text-white" : "border-primary/10 text-primary"
+                    )}
+                    onClick={() => setWizardData({...wizardData, previouslyApplied: true})}
+                  >
+                    Yes
+                  </Button>
+                  <Button 
+                    variant={!wizardData.previouslyApplied ? "default" : "outline"}
+                    className={cn(
+                      "text-[12px] h-9 font-bold rounded-xl",
+                      !wizardData.previouslyApplied ? "bg-primary-color-new text-white" : "border-primary/10 text-primary"
+                    )}
+                    onClick={() => setWizardData({...wizardData, previouslyApplied: false})}
+                  >
+                    No
+                  </Button>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl border border-dashed border-primary/30 bg-primary/5 flex flex-col items-center gap-2 cursor-pointer transition-colors hover:bg-primary/10">
+                <Clock className="w-5 h-5 text-primary" />
+                <span className="text-xs font-bold text-primary">Identity verification (KYC)</span>
+                <span className="text-[10px] text-muted-foreground">Upload Passport / ID for validation</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <input type="checkbox" className="rounded border-gray-300 text-primary-color-new focus:ring-primary-color-new" id="consent" />
+              <label htmlFor="consent" className="text-[11px] text-muted-foreground font-bold">
+                I confirm information is accurate
+              </label>
+            </div>
+            
+            <div className="pt-4 grid grid-cols-2 gap-3">
+              <Button variant="ghost" onClick={prevStep} className="font-bold rounded-xl h-11">Back</Button>
+              <Button className="bg-primary-color-new text-white font-bold rounded-xl h-11" onClick={nextStep}>Continue</Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Discovery Call */}
+        {step === 3 && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-right-2">
+            <div className="space-y-4">
+              <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 space-y-1.5">
+                <h4 className="text-sm font-bold text-primary flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Free Discovery Call
+                </h4>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Book a 15-min call to finalize your approach and dokumentation needs.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Preferred Date</label>
+                  <Input 
+                    type="date" 
+                    className="h-11 rounded-xl" 
+                    value={wizardData.callDate}
+                    onChange={e => setWizardData({...wizardData, callDate: e.target.value})}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                   <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Time</label>
+                      <Input 
+                        type="time" 
+                        className="h-11 rounded-xl"
+                        value={wizardData.callTime}
+                        onChange={e => setWizardData({...wizardData, callTime: e.target.value})}
+                      />
+                   </div>
+                   <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Meeting Type</label>
+                      <Dropdown 
+                        trigger={
+                          <Button variant="outline" className="w-full h-11 justify-between rounded-xl">
+                            {wizardData.callType} 
+                            <ChevronDown className="w-4 h-4 opacity-50"/>
+                          </Button>
+                        }
+                        className="w-full"
+                        items={[
+                          { id: "1", label: "Video Call", onClick: () => setWizardData({...wizardData, callType: "Video Call"}) },
+                          { id: "2", label: "Phone Call", onClick: () => setWizardData({...wizardData, callType: "Phone Call"}) }
+                        ]}
+                      />
+                   </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 grid grid-cols-2 gap-3">
+              <Button variant="ghost" onClick={prevStep} className="font-bold rounded-xl h-11">Back</Button>
+              <Button className="bg-primary-color-new text-white font-bold rounded-xl h-11" onClick={nextStep}>
+                Book & Submit
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Success */}
+        {step === 4 && (
+          <div className="py-8 text-center space-y-6 animate-in zoom-in-95 duration-500">
+            <div className="w-20 h-20 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto shadow-lg shadow-green-100">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-bold text-brand-body">Request Sent!</h3>
+              <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                We've received your request for the <b>{selectedGrant?.title}</b>. One of our specialists will confirm your discovery call shortly.
+              </p>
+            </div>
+            
+            <div className="p-5 rounded-2xl bg-muted/30 border border-border/40 text-left space-y-3">
+               <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white border border-border flex items-center justify-center shadow-sm">
+                    <ShieldCheck className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-brand-body">Discovery Call Booked</p>
+                    <p className="text-[10px] text-muted-foreground">{wizardData.callDate || "Jan 20, 2026"} at {wizardData.callTime || "10:00 AM"}</p>
+                  </div>
+               </div>
+            </div>
+
+            <Button className="w-full rounded-xl h-12 font-bold bg-primary-color-new text-white" onClick={handleClose}>
+              Go to my requests
+            </Button>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}

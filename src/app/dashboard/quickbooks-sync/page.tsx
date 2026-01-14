@@ -8,6 +8,7 @@ import AlertMessage from '../../../components/AlertMessage';
 import Image from 'next/image';
 import { syncItems } from './components/syncItems'; // Assuming this defines your sync items
 import { checkQuickbooksAuth, syncQuickbooksData } from '@/api/quickbooksApi'; // Import the new API functions
+import { PageHeader } from '@/components/shared/PageHeader';
 
 function SettingsContent() {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -119,9 +120,12 @@ function SettingsContent() {
     };
 
     return (
-        <section className="mx-auto max-w-[1400px] w-full pt-5">
+        <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-4">
+            <PageHeader
+                title="Quickbooks Sync"
+                subtitle="Sync your financial data from QuickBooks to VACEI."
+            />
             <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
-                <h1 className="text-xl leading-normal text-brand-body capitalize font-medium mb-3">Quickbooks Sync</h1>
 
                 {alert && (
                     <AlertMessage

@@ -9,6 +9,8 @@ import {
     markNotificationAsReadAPI,
     markAllNotificationsAsReadAPI,
 } from '@/api/notificationService'; // Adjust path as necessary
+import { PageHeader } from '@/components/shared/PageHeader';
+import { Button } from '@/components/ui/button';
 
 // Props interface for NotificationItem for better TypeScript clarity
 interface NotificationItemProps {
@@ -195,30 +197,33 @@ export default function NotificationsPage() {
     };
 
     return (
-        <section className="mx-auto max-w-[1400px] w-full pt-5">
-            <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
-                <h1 className="text-xl leading-normal text-brand-body capitalize font-medium"> Notifications ({unreadCount} Unread)</h1>
-
-                <div className="flex justify-between items-center mt-4 mb-4">
-                    <div>
-                        <button
+        <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-4">
+            <PageHeader
+                title={`Notifications (${unreadCount} Unread)`}
+                subtitle="Stay updated with the latest alerts, tasks, and messages."
+                actions={
+                    <div className="flex items-center gap-3">
+                        <Button
+                            variant="outline"
+                            className="bg-light text-primary-color-new"
                             onClick={handleMarkAllAsRead}
-                            className="px-4 py-2 bg-sidebar-background text-sidebar-foreground rounded-md hover:bg-sidebar-hover transition-colors mr-2 shadow-md"
                             disabled={unreadCount === 0 || loading}
                         >
                             Mark All As Read
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="bg-light text-primary-color-new"
                             onClick={handleToggleShowUnread}
-                            className={`px-4 py-2 rounded-md transition-colors shadow-md ${showUnreadOnly ? 'bg-sidebar-background text-sidebar-foreground hover:bg-sidebar-hover cursor-pointer' : 'cursor-pointer bg-sidebar-background text-sidebar-foreground hover:bg-sidebar-hover'
-                                }`}
                             disabled={loading}
                         >
                             {showUnreadOnly ? 'Show All' : 'Show Unread Only'}
-                        </button>
+                        </Button>
                     </div>
-                    {error && <p className="text-red-500">Error: {error}</p>}
-                </div>
+                }
+            />
+            <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
+                {error && <div className="mb-4 text-red-500">Error: {error}</div>}
 
                 <div className="space-y-4">
                     {loading ? (

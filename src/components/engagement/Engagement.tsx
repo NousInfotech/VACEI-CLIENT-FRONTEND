@@ -20,6 +20,7 @@ import { useTabQuery } from '@/hooks/useTabQuery';
 import BackButton from '../shared/BackButton';
 import EmptyState from '../shared/EmptyState';
 import { AlertCircle } from 'lucide-react';
+import { PageHeader } from '../shared/PageHeader';
 
 const Engagement = () => {
   const [activeTab, setActiveTab] = useTabQuery('etb');
@@ -115,15 +116,17 @@ const Engagement = () => {
   return (
     <div className="p-8 max-w-[1600px] mx-auto min-h-screen bg-white space-y-8">
       <BackButton />
-      <div className="flex flex-col space-y-6">
-        <h1 className="text-4xl font-medium">{engagement.title}</h1>
-        
-        <PillTabs 
-          tabs={tabs} 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab} 
-        />
-      </div>
+      <PageHeader
+        title={engagement.title || "Engagement Details"}
+        description={`Standard audit engagement for the current period.`}
+        className="mb-6"
+      />
+      
+      <PillTabs 
+        tabs={tabs} 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+      />
 
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
         {renderContent()}

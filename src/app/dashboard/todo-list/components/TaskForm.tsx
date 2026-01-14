@@ -318,8 +318,7 @@ export default function TaskForm({
                         <Button
                             variant="default"
                             type="submit"
-                            className={`cursor-pointer text-primary-foreground py-3 ps-3 pe-4 shadow-md rounded-lg transition-all ${isSubmitting ? "bg-gray-400" : "bg-primary hover:bg-primary/90"}`}
-                            disabled={isSubmitting}
+                         disabled={isSubmitting}
                         >
                             {editTaskId
                                 ? isSubmitting

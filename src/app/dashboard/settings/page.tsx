@@ -11,6 +11,7 @@ import Dropdown from "@/components/Dropdown";
 import { ChevronDown, Settings as SettingsIcon, Users, Bell, Shield, Wallet, Lock } from "lucide-react";
 import PillTabs from "@/components/shared/PillTabs";
 import { useTabQuery } from "@/hooks/useTabQuery";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 // Simple textarea using Input styling
 const Textarea = (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
@@ -178,8 +179,11 @@ function SettingsContent() {
 
     return (
         <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-6">
+            <PageHeader
+                title="Settings"
+                subtitle="Manage your account preferences, company profile, and security settings."
+            />
             <div className="bg-card border border-border rounded-card p-6 shadow-md w-full mx-auto space-y-6">
-                <h1 className="text-2xl font-semibold text-brand-body">Settings</h1>
 
                 {/* Tabs */}
                 <PillTabs

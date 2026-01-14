@@ -10,6 +10,7 @@ import EmptyState from '../shared/EmptyState'
 import BackButton from '../shared/BackButton'
 
 import { ListSkeleton } from '../shared/CommonSkeletons'
+import PageHeader from '../shared/PageHeader'
 
 const Companies = () => {
   const { companies, loading, error } = useCompanies()
@@ -70,9 +71,10 @@ const Companies = () => {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <BackButton />
-      <div className="flex flex-col space-y-4">
-        <h1 className="text-4xl font-medium">Companies</h1>
-      </div>
+      <PageHeader
+        title="Companies"
+        className="mb-8"
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {companies.map((company) => (
@@ -94,7 +96,7 @@ const Companies = () => {
               </div>
               <Button 
                 onClick={() => router.push(`/dashboard/company/${company._id}`)}
-                className="w-full"
+                className="w-full text-primary-color-new bg-light"
               >
                 View Company
               </Button>

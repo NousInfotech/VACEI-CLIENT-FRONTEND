@@ -11,3 +11,11 @@ export function formatAmount(val: number) {
     maximumFractionDigits: 0,
   });
 }
+export function createSlug(str: string) {
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}

@@ -6,30 +6,27 @@ import { Button } from "@/components/ui/button";
 import PillTabs from "@/components/shared/PillTabs";
 import { useTabQuery } from "@/hooks/useTabQuery";
 import { LayoutDashboard, LineChart } from "lucide-react";
+import PageHeader from "@/components/shared/PageHeader";
 
 function BookkeepingWorkspaceContent() {
   const [activeTab, setActiveTab] = useTabQuery("overview");
 
   return (
     <section className="mx-auto max-w-[1200px] w-full pt-5 space-y-6">
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-semibold text-brand-body">Bookkeeping</h1>
-          <p className="text-sm text-muted-foreground">
-            Overview of status, missing items, uploads, and monthly summaries.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/dashboard/document-organizer/document-upload">
-            <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">Upload documents</Button>
-          </Link>
-          <Link href="/dashboard/todo-list">
-            <Button variant="outline" className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">
-              View requests
-            </Button>
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="Bookkeeping"
+        subtitle="Overview of status, missing items, uploads, and monthly summaries."
+        actions={
+          <div className="flex gap-2">
+            <Link href="/dashboard/document-organizer/document-upload">
+              <Button variant="outline" className="bg-light text-primary-color-new">Upload documents</Button>
+            </Link>
+            <Link href="/dashboard/todo-list">
+              <Button variant="outline" className="bg-light text-primary-color-new">View requests</Button>
+            </Link>
+          </div>
+        }
+      />
 
       {/* Tabs: Overview / Insight */}
       <PillTabs
