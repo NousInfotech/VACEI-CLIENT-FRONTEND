@@ -10,6 +10,7 @@ import {
   FileText, 
   Upload, 
   CheckCircle2, 
+  Clock, 
   Circle, 
   Download, 
   Eye, 
@@ -258,19 +259,19 @@ export default function BusinessPlanDetailPage() {
           {project.milestones.map((milestone) => (
             <div key={milestone.id} className="flex items-start gap-4 pb-4 border-b border-border last:border-0 last:pb-0">
               <div className="shrink-0 mt-0.5">
-                {milestone.status === "completed" ? (
-                  <div className="w-7 h-7 rounded-full bg-success/10 flex items-center justify-center">
-                    <CheckCircle2 className="w-5 h-5 text-success" />
-                  </div>
-                ) : milestone.status === "active" ? (
-                  <div className="w-7 h-7 rounded-full border-2 border-primary bg-primary/5 flex items-center justify-center">
-                    <div className="w-3 h-3 rounded-full bg-primary"></div>
-                  </div>
-                ) : (
-                  <div className="w-7 h-7 rounded-full border-2 border-border flex items-center justify-center">
-                    <Circle className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                )}
+                    {milestone.status === "completed" ? (
+                      <div className="w-7 h-7 rounded-full bg-success/10 flex items-center justify-center">
+                        <CheckCircle2 className="w-5 h-5 text-success" />
+                      </div>
+                    ) : milestone.status === "active" ? (
+                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Clock className="w-4 h-4 text-primary" />
+                      </div>
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-muted/20 flex items-center justify-center">
+                        <Circle className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    )}
               </div>
               <div className="flex-1">
                 <p className={`font-semibold text-base ${
@@ -295,7 +296,7 @@ export default function BusinessPlanDetailPage() {
 
       {/* Required Actions */}
       {project.status === "waiting_on_you" && requiredActions.length > 0 && (
-        <DashboardCard className="p-6 border-l-4 border-l-warning bg-gradient-to-r from-warning/5 to-transparent">
+        <DashboardCard className="p-6 border-l-4 border-l-warning bg-linear-to-r from-warning/5 to-transparent">
           <div className="flex items-center gap-2.5 mb-5">
             <AlertCircle className="w-5 h-5 text-warning" />
             <h3 className="text-lg font-semibold text-brand-body">ACTION REQUIRED</h3>
