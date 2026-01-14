@@ -449,13 +449,13 @@ export default function ServicesHubPage() {
           </div>
           <div className="flex flex-wrap justify-center gap-4 shrink-0">
             <Link href="/dashboard/services/request">
-              <Button className="h-12 rounded-xl px-8 py-2.5 text-sm font-bold uppercase tracking-widest shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all active:scale-95">
+              <Button variant="default">
                 <Plus className="w-4 h-4 mr-2" />
                 Request Service
               </Button>
             </Link>
             <Link href="/dashboard/quickbooks-sync">
-              <Button className="h-12 rounded-xl px-8 py-2.5 text-sm font-bold uppercase tracking-widest transition-all active:scale-95 text-primary-color-new bg-light">
+              <Button variant="outline">
                 <Settings className="w-4 h-4 mr-2" />
                 Integrations
               </Button>

@@ -34,11 +34,10 @@ export default function ProjectsWorkspacePage() {
         actions={
           <div className="flex gap-2 items-center">
             <div className="flex items-center gap-2 text-xs mr-2">
-              <span className="text-muted-foreground">Type</span>
+              {/* <span className="text-muted-foreground">Type</span> */}
               <Dropdown
-                className="w-[170px]"
                 trigger={
-                  <Button size="sm" className="h-8 w-[170px] justify-between text-xs text-primary-color-new bg-light">
+                  <Button variant="outline" className="justify-between text-primary-color-new">
                     {projectType === "m&a" ? "M&A" : projectType.charAt(0).toUpperCase() + projectType.slice(1)}
                     <ChevronDown className="h-3 w-3 opacity-50" />
                   </Button>
@@ -51,11 +50,11 @@ export default function ProjectsWorkspacePage() {
                 ]}
               />
             </div>
-            <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">
+            <Button variant="outline">
               Create project
             </Button>
             <Link href="/dashboard/todo-list">
-              <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow text-primary-color-new bg-light">
+              <Button variant="outline">
                 View project tasks
               </Button>
             </Link>

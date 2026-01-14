@@ -13,10 +13,10 @@ export default function LegalWorkspacePage() {
         actions={
           <div className="flex gap-2">
             <Link href="/dashboard/document-organizer/document-upload">
-              <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">Upload contracts</Button>
+              <Button variant="outline" className="bg-light text-primary-color-new">Upload contracts</Button>
             </Link>
             <Link href="/dashboard/messages">
-              <Button className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow text-primary-color-new bg-light">
+              <Button variant="outline" className="bg-light text-primary-color-new">
                 Legal messages
               </Button>
             </Link>
