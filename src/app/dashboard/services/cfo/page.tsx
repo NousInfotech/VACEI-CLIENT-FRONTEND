@@ -4,9 +4,64 @@ import { Plus, Phone, TrendingUp, Wallet, LineChart } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import DashboardCard from "@/components/DashboardCard";
+import { cfoProjects } from "../cfo/[id]/cfoProjects";
+import { useRouter } from "next/navigation";
+
+
+const mockReports = [
+  {
+    id: "management-accounts",
+    title: "Management accounts",
+    status: "Latest",
+    statusColor: "text-green-600",
+    fileName: "management-accounts.pdf",
+    content: "Mock PDF content for Management Accounts",
+  },
+  {
+    id: "cash-flow-forecast",
+    title: "Cash flow forecast",
+    status: "Updating",
+    statusColor: "text-yellow-600",
+    fileName: "cash-flow-forecast.xlsx",
+    content: "Mock Excel content for Cash Flow Forecast",
+  },
+  {
+    id: "budget-vs-actual",
+    title: "Budget vs actual analysis",
+    status: "Draft",
+    statusColor: "text-gray-500",
+    fileName: "budget-vs-actual.pdf",
+    content: "Mock PDF content for Budget vs Actual",
+  },
+  {
+    id: "kpi-summary",
+    title: "KPI summary",
+    status: "Latest",
+    statusColor: "text-green-600",
+    fileName: "kpi-summary.pdf",
+    content: "Mock PDF content for KPI Summary",
+  },
+];
+
+const handleDownload = (fileName: string, content: string) => {
+  const blob = new Blob([content], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+
+  document.body.appendChild(link);
+  link.click();
+
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 
 export default function CFOServicesPage() {
   const cfoActive = true;
+  const router = useRouter();
   return (
     <section className="mx-auto max-w-[1200px] w-full space-y-8 pt-5">
     {/* Header Card */}
@@ -27,15 +82,14 @@ export default function CFOServicesPage() {
         </div>
         {/* Action Buttons */}
         <div className="flex gap-2 md:mt-0 mt-4">
-          <Link href="/dashboard/request-cfo-support">
-            <Button
-              className="bg-gray-800 hover:bg-gray-700 text-white text-xs px-4 py-2 flex items-center gap-2 rounded-lg shadow-sm"
-            >
-              <Plus className="h-4 w-4" />
-              Request CFO Support
-            </Button>
-          </Link>
-
+         <Button
+  asChild
+  className="bg-gray-800 hover:bg-gray-700 text-white text-xs px-4 py-2 flex items-center gap-2 rounded-lg shadow-sm">
+      <Link href="/dashboard/services/cfo/request">
+        <Plus className="h-4 w-4" />
+        Request CFO Support
+      </Link>
+    </Button>
           <Link href="/dashboard/book-cfo-call">
             <Button
               className="bg-gray-800 hover:bg-gray-700 text-white text-xs px-4 py-2 flex items-center gap-2 rounded-lg shadow-sm"
@@ -58,13 +112,14 @@ export default function CFOServicesPage() {
         Simple, reassuring summary
       </p>
     </div>
-
+<Link href="/dashboard/services/cfo/request">
     <Button
       className="bg-gray-800 hover:bg-gray-700 text-white text-xs px-4 py-2 flex items-center gap-2 rounded-lg shadow-sm"
     >
       <Plus className="h-4 w-4" />
       Request CFO Support
     </Button>
+    </Link>
   </div>
 
   {/* Status Grid */}
@@ -198,77 +253,47 @@ export default function CFOServicesPage() {
   <p className="text-sm text-muted-foreground mb-4">
     CFO deliverables prepared for review.
   </p>
+
   <div className="space-y-3">
+    {mockReports.map((report) => (
+      <div
+        key={report.id}
+        className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 bg-white"
+      >
+        <div>
+          <p className="text-sm font-medium text-gray-900">
+            {report.title}
+          </p>
+          <p className={`text-xs ${report.statusColor}`}>
+            Status: {report.status}
+          </p>
+        </div>
 
-    {/* Management Accounts */}
-    <div className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 bg-white">
-      <div>
-        <p className="text-sm font-medium text-gray-900">
-          Management accounts
-        </p>
-        <p className="text-xs text-green-600">
-          Status: Latest
-        </p>
-      </div>
+        <div className="flex gap-3 text-sm">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow"
+          >
+            View
+          </Button>
 
-      <div className="flex gap-3 text-sm">
-                <Button size="sm" variant="ghost" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow">view</Button>
-                <Button size="sm" variant="ghost" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow">download</Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow"
+            onClick={() =>
+              handleDownload(report.fileName, report.content)
+            }
+          >
+            Download
+          </Button>
+        </div>
       </div>
-    </div>
-
-    {/* Cash Flow Forecast */}
-    <div className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 bg-white">
-      <div>
-        <p className="text-sm font-medium text-gray-900">
-          Cash flow forecast
-        </p>
-        <p className="text-xs text-yellow-600">
-          Status: Updating
-        </p>
-      </div>
-
-      <div className="flex gap-3 text-sm">
-        <Button size="sm" variant="ghost" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow">view</Button>
-        <Button size="sm" variant="ghost" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow">download</Button>
-      </div>
-    </div>
-
-    {/* Budget vs Actual */}
-    <div className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 bg-white">
-      <div>
-        <p className="text-sm font-medium text-gray-900">
-          Budget vs actual analysis
-        </p>
-        <p className="text-xs text-gray-500">
-          Status: Draft
-        </p>
-      </div>
-
-      <div className="flex gap-3 text-sm">
-        <Button size="sm" variant="ghost" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow">view</Button>
-        <Button size="sm" variant="ghost" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow">download</Button>
-      </div>
-    </div>
-
-    {/* KPI Summary */}
-    <div className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 bg-white">
-      <div>
-        <p className="text-sm font-medium text-gray-900">
-          KPI summary
-        </p>
-        <p className="text-xs text-green-600">
-          Status: Latest
-        </p>
-      </div>
-
-      <div className="flex gap-3 text-sm">
-                <Button size="sm" variant="ghost" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow">view</Button>
-                <Button size="sm" variant="ghost" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow">download</Button>
-      </div>
-    </div>
+    ))}
   </div>
 </DashboardCard>
+
 <DashboardCard className="p-4 md:p-6">
 
   {/* Header Row */}
@@ -282,30 +307,64 @@ export default function CFOServicesPage() {
       </p>
     </div>
 
-    {/* Top-right Buttons */}
     <div className="flex gap-2">
-       <Button variant="outline" className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow">
-              View requests
-            </Button>
+      <Link href="dashboard/business-plans/bp-001">
+      <Button
+        variant="outline"
+        className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow"
+      >
+        View requests
+      </Button>
+      </Link>
+    <Link href="/dashboard/business-plans/request">
       <Button className="bg-gray-800 hover:bg-gray-700 text-white text-xs px-4 py-2 flex items-center gap-2 rounded-lg shadow-sm">
         <Plus className="h-4 w-4" />
         Request update
       </Button>
+      </Link>
     </div>
   </div>
 
   {/* Planning Items */}
   <div className="space-y-3">
-    <div className="rounded-xl border border-gray-200 px-4 py-3 bg-white">
-      <p className="text-sm font-medium text-gray-900">Annual budget</p>
+
+    {/* Annual Budget */}
+    <div className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 bg-white">
+      <p className="text-sm font-medium text-gray-900">
+        Annual budget
+      </p>
+      <Link
+        href="/dashboard/business-plans"
+        className="text-xs text-brand-primary hover:underline"
+      >
+        View
+      </Link>
     </div>
 
-    <div className="rounded-xl border border-gray-200 px-4 py-3 bg-white">
-      <p className="text-sm font-medium text-gray-900">3–5 year forecast</p>
+    {/* 3–5 Year Forecast */}
+    <div className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 bg-white">
+      <p className="text-sm font-medium text-gray-900">
+        3–5 year forecast
+      </p>
+      <Link
+        href="/planning/forecast"
+        className="text-xs text-brand-primary hover:underline"
+      >
+        View
+      </Link>
     </div>
 
-    <div className="rounded-xl border border-gray-200 px-4 py-3 bg-white">
-      <p className="text-sm font-medium text-gray-900">Scenario analysis</p>
+    {/* Scenario Analysis */}
+    <div className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 bg-white">
+      <p className="text-sm font-medium text-gray-900">
+        Scenario analysis
+      </p>
+      <Link
+        href="/planning/scenario-analysis"
+        className="text-xs text-brand-primary hover:underline"
+      >
+        View
+      </Link>
     </div>
   </div>
 </DashboardCard>
@@ -317,29 +376,31 @@ export default function CFOServicesPage() {
   <p className="text-sm text-muted-foreground mb-4">
     Project-based financial work currently in scope.
   </p>
-    
+
   <div className="space-y-3">
+    {cfoProjects.map((project) => (
+      <div
+        key={project.id}
+        onClick={() =>
+          router.push(`/dashboard/services/cfo/${project.id}`)
+        }
+        className="cursor-pointer rounded-xl border border-gray-200 px-4 py-3 bg-white hover:bg-gray-50 transition"
+      >
+        <div className="flex justify-between items-start">
+          <p className="text-sm font-medium text-gray-900">
+            {project.title}
+          </p>
 
-    {/* Project 1 */}
-    <div className="rounded-xl border border-gray-200 px-4 py-3 bg-white">
-      <p className="text-sm font-medium text-gray-900">
-        Business plan – bank financing
-      </p>
-    </div>
+          <span className="text-xs rounded-full bg-gray-100 px-2 py-1">
+            {project.status}
+          </span>
+        </div>
 
-    {/* Project 2 */}
-    <div className="rounded-xl border border-gray-200 px-4 py-3 bg-white">
-      <p className="text-sm font-medium text-gray-900">
-        Grant financial projections
-      </p>
-    </div>
-
-    {/* Project 3 */}
-    <div className="rounded-xl border border-gray-200 px-4 py-3 bg-white">
-      <p className="text-sm font-medium text-gray-900">
-        Acquisition financial review
-      </p>
-    </div>
+        <p className="text-xs text-muted-foreground mt-1">
+          Due: {project.dueDate}
+        </p>
+      </div>
+    ))}
   </div>
 </DashboardCard>
 <DashboardCard className="p-4 md:p-6">
