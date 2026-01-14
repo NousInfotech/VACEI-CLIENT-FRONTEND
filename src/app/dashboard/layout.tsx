@@ -91,7 +91,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Suspense>
 
                 {/* Breadcrumbs (desktop only) */}
-                <Breadcrumbs />
+                {/* <Breadcrumbs /> */}
 
                 {/* Main Content */}
                 <main className="flex-1 overflow-y-auto overflow-x-hidden bg-brand-body p-4 lg:p-6">

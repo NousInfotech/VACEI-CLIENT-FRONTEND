@@ -70,7 +70,7 @@ const AdjustmentsTab = () => {
             <CardHeader className="bg-slate-50/50 border-b border-gray-300 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-100 text-indigo-700 font-bold">
+                  <div className="flex items-center justify-center p-2 rounded-lg bg-indigo-100 text-indigo-700 font-bold">
                     {adj.adjustmentNo}
                   </div>
                   <div>

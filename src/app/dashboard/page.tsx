@@ -9,6 +9,7 @@ import CashFlowChart from "@/components/CashFlowChart";
 import PLSummaryChart from "@/components/PLSummaryChart";
 import { getDecodedUsername } from "@/utils/authUtils";
 import { fetchDashboardSummary, ProcessedDashboardStat } from "@/api/financialReportsApi";
+import NoticeBoard from "@/components/dashboard/NoticeBoard";
 import { fetchUploadStatusSummary } from "@/api/documentApi";
 import { fetchTasks } from "@/api/taskService";
 import type { Task } from "@/interfaces";
@@ -303,6 +304,8 @@ export default function DashboardPage() {
           }
         />
 
+        {/* Notice Board */}
+        <NoticeBoard />
         {/* Warning Banner */}
         {!uploadLoading && uploadSummary?.filesUploadedThisMonth === 0 && (
           <DashboardCard>
@@ -325,6 +328,7 @@ export default function DashboardPage() {
             </div>
           </DashboardCard>
         )}
+
 
 
       {/* Performance Indicators / Compliance Overview - Clickable Status Cards */}

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import ChatModule from "@/components/ChatModule";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 export default function MessagesPage() {
   useEffect(() => {
@@ -15,26 +16,22 @@ export default function MessagesPage() {
 
   return (
     <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-4">
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-semibold text-brand-body">
-            Messages
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Unified inbox for service-based threads and attachments.
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          className="rounded-lg px-4 text-sm shadow-sm hover:shadow-md transition-shadow"
-          onClick={() => {
-            const btn = document.getElementById("openChatBubble");
-            if (btn) btn.click();
-          }}
-        >
-          Open inbox
-        </Button>
-      </div>
+      <PageHeader
+        title="Messages"
+        subtitle="Unified inbox for service-based threads and attachments."
+        actions={
+          <Button
+            variant="outline"
+            className="bg-light text-primary-color-new"
+            onClick={() => {
+              const btn = document.getElementById("openChatBubble");
+              if (btn) btn.click();
+            }}
+          >
+            Open inbox
+          </Button>
+        }
+      />
 
       <div className="bg-card border border-border rounded-card shadow-md p-6">
         <p className="text-sm text-muted-foreground mb-4">

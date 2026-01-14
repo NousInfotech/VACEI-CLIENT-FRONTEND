@@ -23,6 +23,7 @@ import {
   TrendingUp,
   Calendar,
 } from "lucide-react";
+import PageHeader from "@/components/shared/PageHeader";
 
 // ------------------------------------------------------------------
 // PART 7 — DATA MODEL (MINIMUM) & EXTENSIONS
@@ -389,43 +390,37 @@ export default function PayrollWorkspacePage() {
       <section className="mx-auto max-w-[1200px] w-full pt-5 space-y-6 pb-10">
         
         {/* 1️⃣ PAGE HEADER */}
-        <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between bg-primary-color-new p-7 rounded-3xl text-light shadow-xl shadow-primary/10">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-semibold text-light">
-              Payroll
-            </h1>
-            <p className="text-sm text-light">
-              Monthly payroll processing and statutory submissions handled for
-              you.
-            </p>
-          </div>
-          
-          {/* Part 6: Billing Logic - Implemented as Header Indicator */}
-          {/* Policy: Payroll does not block access if invoice unpaid */}
-          <div className="flex flex-col items-end gap-2">
-            <button
-              onClick={scrollToBilling}
-              className="flex items-center gap-2 text-xs px-3 py-1 rounded-full border bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
-            >
-              <Receipt className="w-3 h-3 text-light" />
-              <span className="text-light">Invoice: </span>
-              <span className={`font-medium ${payrollData.billing.status === 'unpaid' ? 'text-warning' : payrollData.billing.status === 'overdue' ? 'text-destructive' : 'text-success'}`}>
-                {payrollData.billing.status.charAt(0).toUpperCase() + payrollData.billing.status.slice(1)}
-              </span>
-            </button>
-            
-            {/* Right-side CTA (conditional) */}
-            {needsAction && (
-              <Button 
-                onClick={handleUpload}
-                className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Upload payroll information
-              </Button>
-            )}
-          </div>
+        <PageHeader
+        title="Payroll"
+        description="Monthly payroll processing and statutory submissions handled for you."
+        actions={
+        <div className="flex flex-col items-end gap-2">
+        <Button
+          variant="outline"
+          onClick={scrollToBilling}
+          className="bg-light text-primary-color-new"
+        >
+          <Receipt className="w-3 h-3 mr-2" />
+          <span>Invoice: </span>
+          <span className={`font-medium ${payrollData.billing.status === 'unpaid' ? 'text-warning' : payrollData.billing.status === 'overdue' ? 'text-destructive' : 'text-success'}`}>
+            {payrollData.billing.status.charAt(0).toUpperCase() + payrollData.billing.status.slice(1)}
+          </span>
+        </Button>
+
+        {/* Right-side CTA (conditional) */}
+        {needsAction && (
+        <Button 
+          variant="outline"
+          onClick={handleUpload}
+          className="bg-light text-primary-color-new"
+        >
+          <Upload className="w-4 h-4 mr-2" />
+          Upload payroll information
+        </Button>
+        )}
         </div>
+        }
+        />
 
         {/* Intro */}
         <p className="text-sm text-muted-foreground">

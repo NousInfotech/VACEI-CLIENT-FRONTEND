@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import DashboardCard from "@/components/DashboardCard";
+import { PageHeader } from "@/components/shared/PageHeader";
 import Dropdown from "@/components/Dropdown";
 import { ChevronDown, Calendar as CalendarIcon, List, HelpCircle, Download, Upload, MessageSquare, CheckCircle, Eye, AlertCircle, X, ArrowRight, Users } from "lucide-react";
 import { fetchTasks } from "@/api/taskService";
@@ -364,38 +365,31 @@ export default function ComplianceCalendarPage() {
 
   return (
     <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-bold text-brand-body">
-            Compliance Calendar
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            All statutory deadlines and obligations — automatically tracked
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="rounded-lg"
-            onClick={() => setShowHelpModal(true)}
-          >
-            <HelpCircle className="w-4 h-4 mr-2" />
-            Help
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="rounded-lg"
-            onClick={handleDownloadCalendar}
-            disabled={complianceItems.length === 0}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Download (.ics)
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Compliance Calendar"
+        subtitle="All statutory deadlines and obligations — automatically tracked"
+        actions={
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              className="bg-light text-primary-color-new"
+              onClick={() => setShowHelpModal(true)}
+            >
+              <HelpCircle className="w-4 h-4 mr-2" />
+              Help
+            </Button>
+            <Button
+              variant="outline"
+              className="bg-light text-primary-color-new"
+              onClick={handleDownloadCalendar}
+              disabled={complianceItems.length === 0}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download (.ics)
+            </Button>
+          </div>
+        }
+      />
 
       {/* Summary Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -653,7 +647,7 @@ function ListContentView({
 function MonthContentView({ items }: { items: ComplianceItem[] }) {
   return (
     <div className="compliance-calendar-wrapper">
-      <div className="bg-gradient-to-br from-card to-card/50 border border-border rounded-xl shadow-lg p-6 backdrop-blur-sm">
+      <div className="bg-linear-to-br from-card to-card/50 border border-border rounded-xl shadow-lg p-6 backdrop-blur-sm">
         <div className="mb-4 pb-4 border-b border-border">
           <h3 className="text-lg font-semibold text-brand-body">Calendar View</h3>
           <p className="text-sm text-muted-foreground mt-1">
