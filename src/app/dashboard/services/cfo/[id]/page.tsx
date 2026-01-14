@@ -1,14 +1,16 @@
+"use client";
+
 import Link from "next/link";
-import { cfoProjects } from "../[id]/cfoProjects";
+import { useParams } from "next/navigation";
+import { cfoProjects } from "./cfoProjects";
 import { ArrowLeft, Download, Eye } from "lucide-react";
 
-export default function CFOProjectDetail({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function CFOProjectDetail() {
+  const params = useParams();
+  const id = params?.id as string;
+
   const project = cfoProjects.find(
-    (p) => p.id === params.id
+    (p) => p.id === id
   );
 
   if (!project) {
