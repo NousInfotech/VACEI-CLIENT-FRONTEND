@@ -249,7 +249,7 @@ function GrantDetailsContent() {
                     <h4 className="text-base font-bold text-brand-body">{grant.title}</h4>
                     <p className="text-xs text-muted-foreground">{grant.provider}</p>
                   </div>
-                  <Button variant="link" className="p-0 h-auto text-xs text-primary font-bold">
+                  <Button variant="link" className="p-0 h-auto text-xs text-primary">
                     I'm not sure, recommend the best match
                   </Button>
                 </div>
@@ -264,8 +264,8 @@ function GrantDetailsContent() {
 
             {/* STEP 3: SupportWizard Step 2 (Basic Info) */}
             {step === 3 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-right-2">
-                <div className="grid grid-cols-1 gap-4">
+              <div className="grid animate-in fade-in slide-in-from-right-2">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold uppercase text-muted-foreground">Contact Person</label>
                     <Input defaultValue="John Doe" disabled className="bg-muted/30 h-11 rounded-xl" />

@@ -134,27 +134,29 @@ export default function IncorporationPage() {
                   onChange={(e) => setFormData({...formData, regNumber: e.target.value})}
                 />
               </div>
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Business activity</label>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Dropdown 
-                    trigger={
-                      <Button variant="outline" className="h-11 w-full sm:w-64 justify-between rounded-xl">
-                        {formData.activity || "Select category"} <ChevronDown className="w-4 h-4 opacity-50" />
-                      </Button>
-                    }
-                    items={[
-                      { id: "it", label: "IT & Software", onClick: () => setFormData({...formData, activity: "IT & Software"}) },
-                      { id: "finance", label: "Finance & Fintech", onClick: () => setFormData({...formData, activity: "Finance & Fintech"}) },
-                      { id: "trading", label: "Trading & Commerce", onClick: () => setFormData({...formData, activity: "Trading & Commerce"}) },
-                      { id: "other", label: "Other", onClick: () => setFormData({...formData, activity: "Other"}) },
-                    ]}
-                  />
-                  <Input 
-                    placeholder="Describe specific business activity..." 
-                    className="h-11 rounded-xl flex-1"
-                  />
-                </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Business category</label>
+                <Dropdown 
+                  trigger={
+                    <Button variant="outline" className="h-11 w-full justify-between rounded-xl">
+                      {formData.activity || "Select category"} <ChevronDown className="w-4 h-4 opacity-50" />
+                    </Button>
+                  }
+                  className="w-full"
+                  items={[
+                    { id: "it", label: "IT & Software", onClick: () => setFormData({...formData, activity: "IT & Software"}) },
+                    { id: "finance", label: "Finance & Fintech", onClick: () => setFormData({...formData, activity: "Finance & Fintech"}) },
+                    { id: "trading", label: "Trading & Commerce", onClick: () => setFormData({...formData, activity: "Trading & Commerce"}) },
+                    { id: "other", label: "Other", onClick: () => setFormData({...formData, activity: "Other"}) },
+                  ]}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Describe specific business activity</label>
+                <Input 
+                  placeholder="Describe specific business activity..." 
+                  className="h-11 rounded-xl"
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Expected start date (optional)</label>
