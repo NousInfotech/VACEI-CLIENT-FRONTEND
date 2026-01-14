@@ -545,7 +545,7 @@ export default function DashboardPage() {
             <div className="p-5 space-y-6">
               <div>
                 <p className="text-[15px] font-semibold uppercase tracking-widest mb-3">Live Updates</p>
-                <div className="space-y-3">
+                <div className="flex flex-col gap-3">
                   {recentActivity.map((activity, idx) => (
                     <Link key={idx} href={activity.href}>
                       <DashboardCard className="p-4 border-none shadow-sm bg-gray-50/50 hover:bg-white transition-all transform hover:-translate-x-1 cursor-pointer">
@@ -592,7 +592,7 @@ export default function DashboardPage() {
               <div className="w-1 h-6 bg-gray-900 rounded-full" />
               <h3 className="text-lg font-medium text-gray-900">Quick Actions</h3>
             </div>
-            <div className="p-4 space-y-2">
+            <div className="flex flex-col gap-2 p-3">
               <Link href="/dashboard/document-organizer/document-upload">
                 <Button variant="outline" className="w-full justify-start gap-3 h-11">
                   <Upload className="w-4 h-4" />

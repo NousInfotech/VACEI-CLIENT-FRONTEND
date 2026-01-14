@@ -41,6 +41,32 @@ export default function SidebarMenu({
         email: "email@example.com",
         role: "user"
     });
+    
+    // Find the best matching menu item for the current path
+    const getBestMatch = (items: MenuItem[]): MenuItem | null => {
+        let best: MenuItem | null = null;
+        
+        const traverse = (list: MenuItem[]) => {
+            list.forEach(item => {
+                if (item.href && item.href !== "#") {
+                    const isExact = pathname === item.href;
+                    const isSubPath = item.href !== "/dashboard" && pathname.startsWith(item.href + "/");
+                    
+                    if (isExact || isSubPath) {
+                        if (!best || item.href.length > best.href.length) {
+                            best = item;
+                        }
+                    }
+                }
+                if (item.children) traverse(item.children);
+            });
+        };
+        
+        traverse(items);
+        return best;
+    };
+
+    const bestMatch = getBestMatch(menu);
 
     const branding = {
         sidebar_background_color: "15, 23, 41",
@@ -146,10 +172,13 @@ export default function SidebarMenu({
                 return pathname === "/dashboard";
             }
 
-            // Exact match or starts with the href (for sub-pages)
-            const isCurrentPath = pathname === it.href || pathname.startsWith(it.href + "/");
-            if (isCurrentPath) return true;
+            // Check if THIS is the best match in the entire menu
+            const isBestMatch = it.slug === bestMatch?.slug;
+            if (isBestMatch) return true;
+
+            // Otherwise, check if any children are active (for recursive highlighting)
             if (it.children) return it.children.some(checkActive);
+            
             return false;
         };
         const isActive = checkActive(item);
