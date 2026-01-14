@@ -157,6 +157,15 @@ export const menuData: MenuItem[] = [
         description: "Managed company wind-down",
     },
     {
+        slug: "compliance-setup",
+        icon: InstallingUpdates02Icon,
+        label: "Compliance Setup",
+        href: "/dashboard/compliance/setup",
+        children: [],
+        section: "primary",
+        description: "Configure compliance anchors & active services",
+    },
+    {
         slug: "business-plans",
         icon: DocumentValidationIcon,
         label: "Business Plans",
