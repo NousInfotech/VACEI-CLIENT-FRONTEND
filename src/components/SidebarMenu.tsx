@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Clock, Calendar, ChevronDown, ChevronUp, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
 import { MenuItem, MenuSection } from "@/lib/menuData";
@@ -13,7 +13,6 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import Image from "next/image";
 
 interface SidebarMenuProps {
     menu: MenuItem[];
@@ -31,8 +30,6 @@ export default function SidebarMenu({
     onExpand
 }: SidebarMenuProps) {
     const pathname = usePathname();
-    const router = useRouter();
-    const [loading, setLoading] = useState(false);
     const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
     
     // User data from localStorage
@@ -130,7 +127,7 @@ export default function SidebarMenu({
         if (hasChildren && !isCollapsed) {
             toggleItem(item.slug);
             // Allow navigation for specific hubs even if they have children
-            const isHub = ['services-root', 'document-organizer', 'settings'].includes(item.slug);
+            const isHub = ['services-root', 'document-organizer', 'settings', 'payroll'].includes(item.slug);
             if (!isHub) {
                 e.preventDefault();
             }
@@ -288,7 +285,8 @@ export default function SidebarMenu({
                     onClick={(e) => {
                         if (hasChildren) {
                             toggleItem(item.slug);
-                            const isNavigableHeader = ['audit', 'vat-tax'].includes(item.slug);
+                            // Allow 'Audit' to navigate while being a dropdown
+                            const isNavigableHeader = ['audit', 'vat-tax', 'payroll'].includes(item.slug);
                             if (!isNavigableHeader) {
                                 e.preventDefault();
                             }
