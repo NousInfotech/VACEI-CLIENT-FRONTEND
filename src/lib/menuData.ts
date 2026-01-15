@@ -79,7 +79,17 @@ export const menuData: MenuItem[] = [
                 label: "Payroll",
                 href: "/dashboard/services/payroll",
                 isActive: true,
+                children: [
+                    {
+                        slug: "payroll(malta)",
+                        icon: CashbackPoundIcon,
+                        label: "Payroll (Malta)",
+                        href: "/dashboard/services/payroll/malta",
+                        isActive: true,
+                    },
+                ],
             },
+            
              {
                 slug: "client-facing-content",
                 icon: Wallet01Icon,

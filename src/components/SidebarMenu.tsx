@@ -130,7 +130,7 @@ export default function SidebarMenu({
         if (hasChildren && !isCollapsed) {
             toggleItem(item.slug);
             // Allow navigation for specific hubs even if they have children
-            const isHub = ['services-root', 'document-organizer', 'settings'].includes(item.slug);
+            const isHub = ['services-root', 'document-organizer', 'settings', 'payroll'].includes(item.slug);
             if (!isHub) {
                 e.preventDefault();
             }
@@ -289,7 +289,7 @@ export default function SidebarMenu({
                         if (hasChildren) {
                             toggleItem(item.slug);
                             // Allow 'Audit' to navigate while being a dropdown
-                            const isNavigableHeader = ['audit'].includes(item.slug);
+                            const isNavigableHeader = ['audit', 'payroll'].includes(item.slug);
                             if (!isNavigableHeader) {
                                 e.preventDefault();
                             }
