@@ -288,8 +288,7 @@ export default function SidebarMenu({
                     onClick={(e) => {
                         if (hasChildren) {
                             toggleItem(item.slug);
-                            // Allow 'Audit' to navigate while being a dropdown
-                            const isNavigableHeader = ['audit'].includes(item.slug);
+                            const isNavigableHeader = ['audit', 'vat-tax'].includes(item.slug);
                             if (!isNavigableHeader) {
                                 e.preventDefault();
                             }

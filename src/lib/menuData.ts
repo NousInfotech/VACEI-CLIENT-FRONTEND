@@ -72,6 +72,15 @@ export const menuData: MenuItem[] = [
                 label: "VAT & Tax",
                 href: "/dashboard/services/vat",
                 isActive: true,
+                children: [
+                    {
+                        slug: "vat-malta",
+                        icon: TaxesIcon,
+                        label: "VAT — Malta",
+                        href: "/dashboard/services/vat/malta",
+                        isActive: true,
+                    }
+                ]
             },
             {
                 slug: "payroll",

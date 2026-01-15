@@ -9,6 +9,7 @@ import { fetchCategories, createOrUpdateDocument } from "@/api/documenService";
 import { fetchTasks, updateTaskStatus, fetchTaskStatuses } from "@/api/taskService";
 import DocumentList from "@/components/documents/DocumentList";
 import PageHeader from "@/components/shared/PageHeader";
+import Dropdown from "@/components/Dropdown";
 
 // Utility functions moved here to avoid import issues
 const generateYears = (currentYear: number, range: number = 5): number[] => {
@@ -449,9 +450,11 @@ function DocumentsMasterPage() {
 
                 <div className="space-y-4">
                     <div className="flex flex-wrap items-center gap-3">
-                    <Button onClick={handleUpload} disabled={uploading}>
-                        {uploading ? "Uploading..." : "Upload files"}
-                    </Button>
+                    {files.length > 0 && (
+                      <Button onClick={handleUpload} disabled={uploading}>
+                          {uploading ? "Uploading..." : "Upload files"}
+                      </Button>
+                    )}
                     <Button 
                         variant="outline" 
                         disabled={uploading}
@@ -467,46 +470,95 @@ function DocumentsMasterPage() {
                         <div className="rounded-2xl border border-gray-100 bg-gray-50/50 p-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
                             <div className="space-y-1">
                                 <label className="text-xs font-medium text-gray-700">Related service (Optional)</label>
-                                <select
-                                    value={service}
-                                    onChange={(e) => setService(e.target.value)}
-                                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20"
-                                >
-                                    <option value="">Select service...</option>
-                                    <option value="Bookkeeping">Bookkeeping</option>
-                                    <option value="VAT">VAT</option>
-                                    <option value="Audit">Audit</option>
-                                    <option value="Payroll">Payroll</option>
-                                    <option value="Other">Other</option>
-                                </select>
+                                <Dropdown
+                                    className="w-full"
+                                    align="left"
+                                    side="bottom"
+                                    autoPosition
+                                    trigger={
+                                        <button
+                                            type="button"
+                                            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-left text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20 flex items-center justify-between gap-2"
+                                        >
+                                            <span className="truncate">
+                                                {service || "Select service..."}
+                                            </span>
+                                            <ChevronDown className="w-4 h-4 text-gray-400" />
+                                        </button>
+                                    }
+                                    items={[
+                                        { id: "", label: "Select service...", onClick: () => setService("") },
+                                        { id: "Bookkeeping", label: "Bookkeeping", onClick: () => setService("Bookkeeping") },
+                                        { id: "VAT", label: "VAT", onClick: () => setService("VAT") },
+                                        { id: "Audit", label: "Audit", onClick: () => setService("Audit") },
+                                        { id: "Payroll", label: "Payroll", onClick: () => setService("Payroll") },
+                                        { id: "Other", label: "Other", onClick: () => setService("Other") },
+                                    ]}
+                                />
                             </div>
                             
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-xs font-medium text-gray-700">Year (Optional)</label>
-                                    <select
-                                        value={periodYear}
-                                        onChange={(e) => setPeriodYear(e.target.value)}
-                                        className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20"
-                                    >
-                                        <option value="">Current ({currentYear})</option>
-                                        {yearOptions.map((opt) => (
-                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                        ))}
-                                    </select>
+                                    <Dropdown
+                                        className="w-full"
+                                        align="left"
+                                        side="bottom"
+                                        autoPosition
+                                        trigger={
+                                            <button
+                                                type="button"
+                                                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-left text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20 flex items-center justify-between gap-2"
+                                            >
+                                                <span className="truncate">
+                                                    {periodYear || `Current (${currentYear})`}
+                                                </span>
+                                                <ChevronDown className="w-4 h-4 text-gray-400" />
+                                            </button>
+                                        }
+                                        items={[
+                                            { id: "", label: `Current (${currentYear})`, onClick: () => setPeriodYear("") },
+                                            ...yearOptions.map((opt) => ({
+                                                id: opt.value,
+                                                label: opt.label,
+                                                onClick: () => setPeriodYear(opt.value),
+                                            })),
+                                        ]}
+                                    />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-xs font-medium text-gray-700">Month (Optional)</label>
-                                    <select
-                                        value={periodMonth}
-                                        onChange={(e) => setPeriodMonth(e.target.value)}
-                                        className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20"
-                                    >
-                                        <option value="">Current ({new Date().toLocaleString('default', { month: 'long' })})</option>
-                                        {monthOptions.map((opt) => (
-                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                        ))}
-                                    </select>
+                                    <Dropdown
+                                        className="w-full"
+                                        align="left"
+                                        side="bottom"
+                                        autoPosition
+                                        trigger={
+                                            <button
+                                                type="button"
+                                                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-left text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20 flex items-center justify-between gap-2"
+                                            >
+                                                <span className="truncate">
+                                                    {periodMonth
+                                                        ? monthOptions.find((opt) => opt.value === periodMonth)?.label
+                                                        : `Current (${new Date().toLocaleString("default", { month: "long" })})`}
+                                                </span>
+                                                <ChevronDown className="w-4 h-4 text-gray-400" />
+                                            </button>
+                                        }
+                                        items={[
+                                            {
+                                                id: "",
+                                                label: `Current (${new Date().toLocaleString("default", { month: "long" })})`,
+                                                onClick: () => setPeriodMonth(""),
+                                            },
+                                            ...monthOptions.map((opt) => ({
+                                                id: opt.value,
+                                                label: opt.label,
+                                                onClick: () => setPeriodMonth(opt.value),
+                                            })),
+                                        ]}
+                                    />
                                 </div>
                             </div>
                             <p className="text-xs text-gray-400">

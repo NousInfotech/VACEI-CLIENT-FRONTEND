@@ -74,7 +74,7 @@ export const Dropdown = ({
         const spaceAbove = rect.top - 20; 
         const minSpaceForBottom = 200;
         const preferredSide: "top" | "bottom" =
-          spaceBelow < minSpaceForBottom && spaceAbove > spaceBelow ? "top" : "bottom";
+          spaceBelow < minSpaceForBottom ? "top" : "bottom";
 
         if (autoPosition) {
           setCalculatedSide(preferredSide);
