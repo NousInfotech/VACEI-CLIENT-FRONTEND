@@ -43,15 +43,6 @@ export const menuData: MenuItem[] = [
     },
 
     {
-        slug: "incorporation",
-        icon: GitPullRequestIcon,
-        label: "Incorporation",
-        href: "/dashboard/incorporation",
-        section: "primary",
-        description: "Incorporate your company",
-    },
-    
-    {
         slug: "services-root",
         icon: GitPullRequestIcon,
         label: "Services",
@@ -164,16 +155,35 @@ export const menuData: MenuItem[] = [
                 href: "/dashboard/services/corporate-transactions",
                 isActive: false,
             },
+            {
+                slug: "mbr-filing",
+                icon: DocumentValidationIcon,
+                label: "MBR Filing",
+                href: "/dashboard/services/mbr-filing",
+                isActive: true,
+            },
+            {
+                slug: "incorporation",
+                icon: GitPullRequestIcon,
+                label: "Incorporation",
+                href: "/dashboard/incorporation",
+                isActive: true,
+            },
+            {
+                slug: "business-plans",
+                icon: DocumentValidationIcon,
+                label: "Business Plans",
+                href: "/dashboard/business-plans",
+                isActive: true,
+            },
+            {
+                slug: "liquidation",
+                icon: Unlink03Icon,
+                label: "Liquidation",
+                href: "/dashboard/liquidation",
+                isActive: true,
+            },
         ]
-    },
-    {
-        slug: "liquidation",
-        icon: Unlink03Icon,
-        label: "Liquidation",
-        href: "/dashboard/liquidation",
-        children: [],
-        section: "primary",
-        description: "Managed company wind-down",
     },
     {
         slug: "compliance-setup",
@@ -183,15 +193,6 @@ export const menuData: MenuItem[] = [
         children: [],
         section: "primary",
         description: "Configure compliance anchors & active services",
-    },
-    {
-        slug: "business-plans",
-        icon: DocumentValidationIcon,
-        label: "Business Plans",
-        href: "/dashboard/business-plans",
-        children: [],
-        section: "primary",
-        description: "Request and track professional business plans",
     },
     {
         slug: "compliance",

@@ -20,7 +20,12 @@ import {
   Mail,
   Award,
   Banknote,
-  Briefcase
+  Briefcase,
+  GitBranch,
+  Home,
+  Settings,
+  MapPin,
+  Globe
 } from "lucide-react";
 import { 
   calculateNextRenewalPeriod, 
@@ -46,7 +51,14 @@ type CSPServiceType =
   | "director_declarations"
   | "mail_handling"
   | "certified_copies"
-  | "bank_liaison";
+  | "bank_liaison"
+  | "malta_company_formation"
+  | "malta_branch_establishment"
+  | "company_redomiciliation"
+  | "directorship_company_secretarial"
+  | "malta_back_office"
+  | "family_office_services"
+  | "dubai_company_registration";
 
 const getServiceIcon = (serviceType: CSPServiceType) => {
   const iconMap: Record<CSPServiceType, any> = {
@@ -64,7 +76,14 @@ const getServiceIcon = (serviceType: CSPServiceType) => {
     director_declarations: UserCheck,
     mail_handling: Mail,
     certified_copies: Award,
-    bank_liaison: Banknote
+    bank_liaison: Banknote,
+    malta_company_formation: Building2,
+    malta_branch_establishment: GitBranch,
+    company_redomiciliation: Globe,
+    directorship_company_secretarial: Users,
+    malta_back_office: Briefcase,
+    family_office_services: Home,
+    dubai_company_registration: MapPin
   };
   return iconMap[serviceType] || Building2;
 };

@@ -6,7 +6,7 @@
 import { CSPService, calculateCSPStatus } from "./cspRenewalUtils";
 
 const CSP_SERVICES_KEY = "vacei-csp-services";
-const CSP_SERVICES_VERSION = "1.0";
+const CSP_SERVICES_VERSION = "2.0"; // Updated to force refresh of services
 
 export interface StoredCSPService extends Omit<CSPService, "status"> {
   status?: string; // Will be calculated
@@ -81,6 +81,97 @@ export function initializeDefaultCSPServices(companyId: string): CSPService[] {
       auto_renew: false,
       assigned_party: "",
       description: "Recommended for audit and regulatory readiness"
+    },
+    {
+      id: "csp-6",
+      company_id: companyId,
+      service_type: "malta_company_formation",
+      service_name: "Malta Company Formation",
+      start_date: "",
+      expiry_date: "",
+      renewal_cycle: "annual",
+      renewal_price: 0,
+      auto_renew: false,
+      assigned_party: "",
+      description: "Incorporate a new company in Malta"
+    },
+    {
+      id: "csp-7",
+      company_id: companyId,
+      service_type: "malta_branch_establishment",
+      service_name: "Malta Branch Establishment",
+      start_date: "",
+      expiry_date: "",
+      renewal_cycle: "annual",
+      renewal_price: 0,
+      auto_renew: false,
+      assigned_party: "",
+      description: "Establish a branch office in Malta"
+    },
+    {
+      id: "csp-8",
+      company_id: companyId,
+      service_type: "company_redomiciliation",
+      service_name: "Company Redomiciliation",
+      start_date: "",
+      expiry_date: "",
+      renewal_cycle: "annual",
+      renewal_price: 0,
+      auto_renew: false,
+      assigned_party: "",
+      description: "Redomicile your company to or from Malta"
+    },
+    {
+      id: "csp-9",
+      company_id: companyId,
+      service_type: "directorship_company_secretarial",
+      service_name: "Directorship & Company Secretarial",
+      start_date: "",
+      expiry_date: "",
+      renewal_cycle: "annual",
+      renewal_price: 2000,
+      auto_renew: false,
+      assigned_party: "",
+      description: "Comprehensive directorship and company secretarial services"
+    },
+    {
+      id: "csp-10",
+      company_id: companyId,
+      service_type: "malta_back_office",
+      service_name: "Malta Back Office Administration",
+      start_date: "",
+      expiry_date: "",
+      renewal_cycle: "annual",
+      renewal_price: 1500,
+      auto_renew: false,
+      assigned_party: "",
+      description: "Complete back office administration services in Malta"
+    },
+    {
+      id: "csp-11",
+      company_id: companyId,
+      service_type: "family_office_services",
+      service_name: "Family Office Services in Malta",
+      start_date: "",
+      expiry_date: "",
+      renewal_cycle: "annual",
+      renewal_price: 0,
+      auto_renew: false,
+      assigned_party: "",
+      description: "Comprehensive family office services and administration"
+    },
+    {
+      id: "csp-12",
+      company_id: companyId,
+      service_type: "dubai_company_registration",
+      service_name: "Dubai Company Registration",
+      start_date: "",
+      expiry_date: "",
+      renewal_cycle: "annual",
+      renewal_price: 0,
+      auto_renew: false,
+      assigned_party: "",
+      description: "Register and establish a company in Dubai, UAE"
     }
   ];
 
@@ -104,28 +195,58 @@ export function getCSPServices(companyId: string): CSPService[] {
 
   try {
     const stored = localStorage.getItem(CSP_SERVICES_KEY);
+    const defaultServices = initializeDefaultCSPServices(companyId);
+    
     if (!stored) {
       // Initialize with default services
-      const defaultServices = initializeDefaultCSPServices(companyId);
       saveCSPServices(defaultServices);
       return defaultServices;
     }
 
     const data = JSON.parse(stored);
-    const services: StoredCSPService[] = data.services || [];
+    const existingServices: StoredCSPService[] = data.services || [];
+    const storedVersion = data.version || "1.0";
     
-    // Filter by company and calculate status
-    const companyServices = services
-      .filter(s => s.company_id === companyId)
-      .map(service => {
-        const serviceWithStatus: CSPService = {
-          ...service,
-          status: calculateCSPStatus(service as CSPService)
-        };
-        return serviceWithStatus;
-      });
+    // If version mismatch, merge services
+    const needsUpdate = storedVersion !== CSP_SERVICES_VERSION;
+    
+    // Filter by company
+    let companyServices = existingServices.filter(s => s.company_id === companyId);
+    
+    // Get all default service types
+    const defaultServiceTypes = defaultServices.map(s => s.service_type);
+    
+    // Find missing service types
+    const existingServiceTypes = companyServices.map(s => s.service_type);
+    const missingServiceTypes = defaultServiceTypes.filter(type => !existingServiceTypes.includes(type));
+    
+    // Add missing services from defaults (without status)
+    const missingServices = defaultServices
+      .filter(s => missingServiceTypes.includes(s.service_type))
+      .map(({ status, ...service }) => service);
+    
+    // Merge existing and missing services
+    const allCompanyServices = [...companyServices, ...missingServices];
+    
+    // Calculate status for all services
+    const servicesWithStatus: CSPService[] = allCompanyServices.map(service => {
+      const serviceWithStatus: CSPService = {
+        ...service,
+        status: calculateCSPStatus(service as CSPService)
+      };
+      return serviceWithStatus;
+    });
 
-    return companyServices;
+    // Save merged services back to localStorage if there were missing services or version mismatch
+    if (missingServices.length > 0 || needsUpdate) {
+      // Get services for other companies
+      const otherCompanyServices = existingServices.filter(s => s.company_id !== companyId);
+      // Combine with updated company services
+      const allStoredServices = [...otherCompanyServices, ...allCompanyServices];
+      saveCSPServices(allStoredServices.map(s => ({ ...s, status: calculateCSPStatus(s as CSPService) })));
+    }
+
+    return servicesWithStatus;
   } catch (error) {
     console.error("Error loading CSP services:", error);
     const defaultServices = initializeDefaultCSPServices(companyId);

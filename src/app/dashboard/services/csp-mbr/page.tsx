@@ -12,7 +12,7 @@ import {
   AlertCircle, 
   Clock, 
   Eye, 
-  ArrowRight, 
+  ArrowRight,
   MessageSquare,
   Plus,
   ChevronDown,
@@ -28,7 +28,11 @@ import {
   FileCheck,
   Mail,
   Award,
-  Banknote
+  Banknote,
+  GitBranch,
+  Home,
+  Settings,
+  MapPin
 } from "lucide-react";
 import PillTabs from "@/components/shared/PillTabs";
 import BackButton from "@/components/shared/BackButton";
@@ -61,49 +65,16 @@ type CSPServiceType =
   | "director_declarations"
   | "mail_handling"
   | "certified_copies"
-  | "bank_liaison";
-
-interface CorporateChange {
-  id: string;
-  name: string;
-  description: string;
-  icon: any;
-}
+  | "bank_liaison"
+  | "malta_company_formation"
+  | "malta_branch_establishment"
+  | "company_redomiciliation"
+  | "directorship_company_secretarial"
+  | "malta_back_office"
+  | "family_office_services"
+  | "dubai_company_registration";
 
 // Services will be loaded from localStorage in the component
-
-const corporateChanges: CorporateChange[] = [
-  {
-    id: "change-1",
-    name: "Share Transfer",
-    description: "Transfer shares between shareholders",
-    icon: Share2
-  },
-  {
-    id: "change-2",
-    name: "Director Change",
-    description: "Appoint or remove directors",
-    icon: UserCheck
-  },
-  {
-    id: "change-3",
-    name: "Share Capital Increase / Reduction",
-    description: "Modify company share capital",
-    icon: TrendingUp
-  },
-  {
-    id: "change-4",
-    name: "Cross-Border Merger",
-    description: "Merge with another company",
-    icon: Globe
-  },
-  {
-    id: "change-5",
-    name: "Company Name Change",
-    description: "Change your company name",
-    icon: Building2
-  }
-];
 
 const getServiceIcon = (serviceType: CSPServiceType) => {
   const iconMap: Record<CSPServiceType, any> = {
@@ -121,7 +92,14 @@ const getServiceIcon = (serviceType: CSPServiceType) => {
     director_declarations: UserCheck,
     mail_handling: Mail,
     certified_copies: Award,
-    bank_liaison: Banknote
+    bank_liaison: Banknote,
+    malta_company_formation: Building2,
+    malta_branch_establishment: GitBranch,
+    company_redomiciliation: Globe,
+    directorship_company_secretarial: Users,
+    malta_back_office: Briefcase,
+    family_office_services: Home,
+    dubai_company_registration: MapPin
   };
   return iconMap[serviceType] || Building2;
 };
@@ -158,29 +136,29 @@ const getCTAButton = (service: CSPService) => {
 
   switch (service.status) {
     case "active":
-      return (
+  return (
         <Button variant="outline" size="sm" className="min-w-[120px]" asChild>
           <Link href={`/dashboard/services/csp-mbr/services/${service.id}`}>
-            <Eye className="w-4 h-4 mr-1.5" />
-            View details
+        <Eye className="w-4 h-4 mr-1.5" />
+        View details
           </Link>
-        </Button>
-      );
+      </Button>
+    );
     case "expiring_soon":
-      return (
+    return (
         <Button variant="default" size="sm" className="min-w-[100px]" asChild>
           <Link href={`/dashboard/services/csp-mbr/services/${service.id}/renew`}>
             <ArrowRight className="w-4 h-4 mr-1.5" />
-            Renew
+        Renew
           </Link>
-        </Button>
-      );
+      </Button>
+    );
     case "expired":
-      return (
+    return (
         <Button variant="default" size="sm" className="min-w-[120px]" asChild>
           <Link href={`/dashboard/services/csp-mbr/services/${service.id}/renew`}>
             <ArrowRight className="w-4 h-4 mr-1.5" />
-            Renew now
+        Renew now
           </Link>
         </Button>
       );
@@ -191,11 +169,11 @@ const getCTAButton = (service: CSPService) => {
             <Plus className="w-4 h-4 mr-1.5" />
             Request service
           </Link>
-        </Button>
-      );
+      </Button>
+    );
   }
 };
-
+  
 export default function CspMbrWorkspacePage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
@@ -320,7 +298,7 @@ function CspMbrContent() {
             <CheckCircle2 className="w-5 h-5 text-success" />
           </div>
           <p className="text-3xl font-bold text-brand-body">{activeServices}</p>
-        </div>
+      </div>
         <div 
           onClick={() => setFilterStatus(filterStatus === "expiring_soon" ? "all" : "expiring_soon")}
           className={`p-5 rounded-lg border cursor-pointer transition-colors ${
@@ -332,9 +310,9 @@ function CspMbrContent() {
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Expiring soon</span>
             <AlertCircle className="w-5 h-5 text-warning" />
-          </div>
+              </div>
           <p className="text-3xl font-bold text-brand-body">{expiringSoon}</p>
-        </div>
+            </div>
         <div 
           onClick={() => setFilterStatus(filterStatus === "not_active" ? "all" : "not_active")}
           className={`p-5 rounded-lg border cursor-pointer transition-colors ${
@@ -346,31 +324,31 @@ function CspMbrContent() {
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Not active</span>
             <Clock className="w-5 h-5 text-muted-foreground" />
-          </div>
+              </div>
           <p className="text-3xl font-bold text-brand-body">{notActive}</p>
-        </div>
-      </div>
+            </div>
+          </div>
 
       {/* Section A: Active CSP Services */}
       {filterStatus === "all" && activeServicesList.length > 0 && (
-        <DashboardCard className="p-6">
-          <div className="mb-5">
+      <DashboardCard className="p-6">
+        <div className="mb-5">
             <h2 className="text-xl font-semibold text-brand-body mb-1">Active Services</h2>
-            <p className="text-sm text-muted-foreground">These services are currently in place for your company.</p>
-          </div>
-          <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">These services are currently in place for your company.</p>
+              </div>
+        <div className="space-y-3">
             {activeServicesList.map((service) => {
               const Icon = getServiceIcon(service.service_type as CSPServiceType);
               const statusBadge = getStatusBadge(service.status);
               const StatusIcon = statusBadge.icon;
               
               return (
-                <div key={service.id} className="flex items-center justify-between p-4 border border-border rounded-lg bg-card hover:bg-muted/20 transition-colors">
+              <div key={service.id} className="flex items-center justify-between p-4 border border-border rounded-lg bg-card hover:bg-muted/20 transition-colors">
                   <Link href={`/dashboard/services/csp-mbr/services/${service.id}`} className="flex items-center gap-4 flex-1 min-w-0">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                       <Icon className="w-5 h-5 text-primary" />
                     </div>
-                    <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-brand-body mb-1 hover:text-primary transition-colors">{service.service_name}</h3>
                       <div className="flex items-center gap-3 flex-wrap">
                         <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md font-medium ${statusBadge.className}`}>
@@ -380,17 +358,17 @@ function CspMbrContent() {
                         <span className="text-xs text-muted-foreground">
                           Expiry: <span className="font-medium text-brand-body">{formatDate(service.expiry_date)}</span>
                         </span>
-                      </div>
-                    </div>
+            </div>
+                </div>
                   </Link>
                   <div className="shrink-0 ml-4" onClick={(e) => e.stopPropagation()}>
                     {getCTAButton(service)}
-                  </div>
+                </div>
                 </div>
               );
             })}
-          </div>
-        </DashboardCard>
+            </div>
+      </DashboardCard>
       )}
 
       {/* Section B: Expiring Soon */}
@@ -410,16 +388,16 @@ function CspMbrContent() {
                     <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center shrink-0">
                       <Icon className="w-5 h-5 text-warning" />
                     </div>
-                    <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-brand-body mb-1 hover:text-primary transition-colors">{service.service_name}</h3>
                       <span className="text-xs text-muted-foreground">
                         Expiry: <span className="font-medium text-brand-body">{formatDate(service.expiry_date)}</span>
                       </span>
-                    </div>
+              </div>
                   </Link>
                   <div className="shrink-0 ml-4" onClick={(e) => e.stopPropagation()}>
                     {getCTAButton(service)}
-                  </div>
+            </div>
                 </div>
               );
             })}
@@ -491,78 +469,40 @@ function CspMbrContent() {
               const Icon = getServiceIcon(service.service_type as CSPServiceType);
               
               return (
-                <div key={service.id} className="flex items-center justify-between p-4 border border-border rounded-lg bg-card hover:bg-muted/20 transition-colors">
+              <div key={service.id} className="flex items-center justify-between p-4 border border-border rounded-lg bg-card hover:bg-muted/20 transition-colors">
                   <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                       <Icon className="w-5 h-5 text-primary" />
                     </div>
-                    <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-brand-body mb-1">{service.service_name}</h3>
                       <p className="text-xs text-muted-foreground">{service.description}</p>
                     </div>
                   </div>
                   <div className="shrink-0 ml-4">
                     {getCTAButton(service)}
-                  </div>
+                </div>
                 </div>
               );
             })}
-          </div>
+            </div>
         </DashboardCard>
       )}
 
-      {/* Section D: Corporate Changes & One-Off Actions */}
-      {filterStatus === "all" && (
-        <DashboardCard className="p-6">
-          <div className="mb-5">
-            <h2 className="text-xl font-semibold text-brand-body mb-1">Corporate Changes & One-Off Actions</h2>
-            <p className="text-sm text-muted-foreground">These are handled as individual projects.</p>
-          </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
-          {corporateChanges.map((change) => {
-            const Icon = change.icon;
-            return (
-              <Link 
-                key={change.id} 
-                href="/dashboard/services/request"
-                className="p-4 border border-border rounded-lg bg-card hover:bg-muted/20 transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-brand-body mb-1">{change.name}</h3>
-                    <p className="text-xs text-muted-foreground">{change.description}</p>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-        <Link href="/dashboard/services/request">
-          <Button variant="default" className="w-full md:w-auto min-w-[200px]">
-            <Plus className="w-4 h-4 mr-2" />
-            Start a corporate action
-          </Button>
-        </Link>
-        </DashboardCard>
-      )}
-
-      {/* Section E: Support */}
+      {/* Section D: Support */}
       {filterStatus === "all" && (
         <DashboardCard className="p-6 bg-muted/20">
         <div className="flex items-center justify-between">
-          <div>
+                  <div>
             <p className="text-sm text-muted-foreground mb-1">Need help with corporate services or changes?</p>
           </div>
           <Link href="/dashboard/messages">
             <Button variant="outline" className="min-w-[180px]">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Message CSP team
-            </Button>
-          </Link>
-        </div>
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Message CSP team
+                        </Button>
+                      </Link>
+              </div>
       </DashboardCard>
       )}
 

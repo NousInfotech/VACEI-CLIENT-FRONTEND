@@ -78,7 +78,7 @@ function PayrollServiceCard() {
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
             <Users className="h-5 w-5 text-primary" />
           </div>
-          <div>
+        <div>
             <h2 className="text-lg font-semibold text-brand-body">Payroll Service</h2>
             <p className="text-xs text-muted-foreground">Statutory submissions and obligations</p>
           </div>
@@ -90,7 +90,7 @@ function PayrollServiceCard() {
           </Button>
         </Link>
       </div>
-      
+
       <div className="space-y-3 pt-4 border-t border-border">
         <h3 className="mt-3 text-sm font-semibold text-brand-body mb-2">STATUTORY SUBMISSIONS</h3>
         {payrollSubmissions.map((submission, index) => (
