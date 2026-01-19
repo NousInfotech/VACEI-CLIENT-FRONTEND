@@ -173,7 +173,7 @@ export default function FinancialOverviewPage() { // Assuming this is your AR pa
                      </p>
                      <Link
                        href="/dashboard/quickbooks-sync"
-                       className="bg-primary hover:bg-primary/90 text-card-foreground font-medium px-4 py-2 rounded-lg shadow-md transition"
+                       className="bg-primary hover:bg-primary/90 text-white font-medium px-4 py-2 rounded-lg shadow-md transition"
                      >
                        Sync with QuickBooks
                      </Link>
