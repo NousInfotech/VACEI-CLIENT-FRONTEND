@@ -2,202 +2,192 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-
-const SERVICE_OPTIONS = [
-  "Monthly CFO support",
-  "Management accounts",
-  "Cash flow forecasting",
-  "Budgeting & planning",
-  "Financial review",
-  "Other",
-];
+import { ArrowLeft, Upload, FileText, X } from "lucide-react";
+import DashboardCard from "@/components/DashboardCard";
+import BackButton from "@/components/shared/BackButton";
 
 export default function RequestCfoService() {
-  const [step, setStep] = useState(1);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  const [form, setForm] = useState({
-    serviceNeeded: "",
-    mainConcern: "",
-    timeHorizon: "",
-  });
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setUploadedFiles([...uploadedFiles, ...files]);
+  };
 
-  // SUBMIT HANDLER
-  const handleSubmit = () => {
-    const isRecurring =
-      form.serviceNeeded === "Monthly CFO support";
+  const removeFile = (index: number) => {
+    setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async () => {
+    if (uploadedFiles.length === 0) {
+      alert("Please upload at least one file related to this service.");
+      return;
+    }
+
+    setSubmitting(true);
 
     const finalData = {
       service: "cfo",
       company_id: "COMPANY_001",
       status: "active",
-      type: isRecurring ? "recurring" : "project",
-      review_frequency: isRecurring ? "monthly" : null,
-      next_review_date: isRecurring ? "2025-08-20" : null,
-      request_details: {
-        service_needed: form.serviceNeeded,
-        main_concern: form.mainConcern,
-        time_horizon: form.timeHorizon,
-      },
-      insights: [],
-      deliverables: [],
-      projects: isRecurring
-        ? []
-        : [
-            {
-              name: form.serviceNeeded,
-              status: "In progress",
-              billing: "per project",
-            },
-          ],
+      uploadedFiles: uploadedFiles.map((f) => ({
+        name: f.name,
+        size: f.size,
+        type: f.type,
+      })),
+      notes: notes || undefined,
     };
 
-    console.log("✅ CFO REQUEST SUBMITTED:", finalData);
-    // alert("CFO request submitted. Check console.");
+    // Simulate API call
+    setTimeout(() => {
+      console.log("✅ CFO REQUEST SUBMITTED:", finalData);
+      setSubmitting(false);
+      setShowSuccess(true);
+    }, 1000);
   };
 
   return (
-    <section className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <section className="mx-auto max-w-[1000px] w-full pt-5 space-y-6">
+      <BackButton />
 
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard/services/cfo">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-          </Link>
+      {/* Page Header */}
+      <div className="flex items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-brand-body">
+            Request CFO Services
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Upload files related to your CFO service request
+          </p>
+        </div>
+      </div>
 
+      {/* Form */}
+      <DashboardCard className="p-6">
+        <h2 className="text-xl font-semibold text-brand-body mb-6">
+          Request Service
+        </h2>
+
+        <div className="space-y-6">
+          {/* File Upload Section */}
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">
-              Request CFO Services
-            </h1>
-            <p className="text-sm text-gray-500">
-              Step {step} of 2
+            <label className="block text-sm font-medium text-brand-body mb-2">
+              Upload Files <span className="text-destructive">*</span>
+            </label>
+            <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors bg-muted/20">
+              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <Upload className="w-10 h-10 mb-3 text-muted-foreground" />
+                <p className="mb-2 text-sm text-muted-foreground">
+                  <span className="font-semibold">Click to upload</span> or drag
+                  and drop
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Upload files related to this service
+                </p>
+              </div>
+              <Input
+                type="file"
+                onChange={handleFileUpload}
+                className="hidden"
+                multiple
+              />
+            </label>
+            {uploadedFiles.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {uploadedFiles.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border"
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm text-brand-body truncate">
+                        {file.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        ({(file.size / 1024).toFixed(2)} KB)
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFile(index)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Optional Notes */}
+          <div>
+            <label className="block text-sm font-medium text-brand-body mb-2">
+              Optional Notes
+            </label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add any additional notes or context (optional)..."
+              className="min-h-[120px]"
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              You can add any additional information or context if needed.
             </p>
           </div>
         </div>
 
-        {/* STEP 1 */}
-        {step === 1 && (
-          <div className="bg-white border rounded-xl p-6 space-y-4">
-            <h2 className="text-lg font-semibold">
-              What do you need?
+        {/* Action Buttons */}
+        <div className="flex items-center justify-between mt-8 pt-6 border-t">
+          <Link href="/dashboard/services/cfo">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Cancel
+            </Button>
+          </Link>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleSubmit}
+            disabled={uploadedFiles.length === 0 || submitting}
+            className="min-w-[140px]"
+          >
+            {submitting ? "Submitting..." : "Submit Request"}
+          </Button>
+        </div>
+      </DashboardCard>
+
+      {/* Success Modal */}
+      {showSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg p-6 w-96 text-center">
+            <h2 className="text-lg font-bold text-green-600 mb-2">
+              Request submitted successfully
             </h2>
-
-            <div className="space-y-3">
-              {SERVICE_OPTIONS.map((option) => (
-                <label
-                  key={option}
-                  className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer
-                  ${
-                    form.serviceNeeded === option
-                      ? "border-gray-900 bg-gray-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="service"
-                    checked={form.serviceNeeded === option}
-                    onChange={() =>
-                      setForm({ ...form, serviceNeeded: option })
-                    }
-                  />
-                  <span className="text-sm font-medium">
-                    {option}
-                  </span>
-                </label>
-              ))}
-            </div>
-
-            <div className="flex justify-end">
-              <Button
-                disabled={!form.serviceNeeded}
-                onClick={() => setStep(2)}
-              >
-                Continue
-              </Button>
-            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Your CFO service request has been submitted. We will contact you
+              shortly.
+            </p>
+            <button
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              onClick={() => {
+                setShowSuccess(false);
+                window.location.href = "/dashboard/services/cfo";
+              }}
+            >
+              OK
+            </button>
           </div>
-        )}
-
-        {/* STEP 2 */}
-        {step === 2 && (
-          <div className="bg-white border rounded-xl p-6 space-y-4">
-            <h2 className="text-lg font-semibold">
-              Priority & context
-            </h2>
-
-            {/* Main concern */}
-            <div>
-              <label className="text-sm font-medium">
-                Main concern
-              </label>
-              <textarea
-                className="w-full border rounded-lg p-3 mt-1 text-sm"
-                placeholder="Describe your concern"
-                value={form.mainConcern}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    mainConcern: e.target.value,
-                  })
-                }
-              />
-            </div>
-
-            {/* Time horizon */}
-            <div>
-              <label className="text-sm font-medium">
-                Time horizon
-              </label>
-              <div className="mt-2 space-y-2">
-                {["Immediate", "Next 3 months", "Strategic"].map(
-                  (t) => (
-                    <label
-                      key={t}
-                      className="flex items-center gap-2"
-                    >
-                      <input
-                        type="radio"
-                        checked={form.timeHorizon === t}
-                        onChange={() =>
-                          setForm({
-                            ...form,
-                            timeHorizon: t,
-                          })
-                        }
-                      />
-                      <span className="text-sm">{t}</span>
-                    </label>
-                  )
-                )}
-              </div>
-            </div>
-
-            <div className="flex justify-between">
-              <Button
-                variant="outline"
-                onClick={() => setStep(1)}
-              >
-                Back
-              </Button>
-
-              <Button
-                disabled={
-                  !form.mainConcern || !form.timeHorizon
-                }
-                onClick={handleSubmit}
-              >
-                Submit request
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </section>
   );
 }

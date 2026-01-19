@@ -19,7 +19,8 @@ import {
   TrendingUp,
   Globe,
   Building2,
-  CheckCircle2
+  CheckCircle2,
+  X
 } from "lucide-react";
 
 type MBRFilingType = "share_transfer" | "director_change" | "share_capital" | "cross_border_merger" | "company_name_change";
@@ -29,13 +30,6 @@ interface FilingTypeInfo {
   name: string;
   icon: any;
   description: string;
-  fields: {
-    label: string;
-    name: string;
-    type: "text" | "textarea" | "date" | "number" | "file";
-    required?: boolean;
-    placeholder?: string;
-  }[];
 }
 
 const filingTypeConfigs: Record<MBRFilingType, FilingTypeInfo> = {
@@ -44,69 +38,30 @@ const filingTypeConfigs: Record<MBRFilingType, FilingTypeInfo> = {
     name: "Share Transfer",
     icon: Share2,
     description: "Transfer shares between shareholders",
-    fields: [
-      { label: "Transferor Name", name: "transferor_name", type: "text", required: true, placeholder: "Enter transferor name" },
-      { label: "Transferee Name", name: "transferee_name", type: "text", required: true, placeholder: "Enter transferee name" },
-      { label: "Number of Shares", name: "share_count", type: "number", required: true, placeholder: "Enter number of shares" },
-      { label: "Share Class", name: "share_class", type: "text", required: true, placeholder: "e.g., Ordinary Shares" },
-      { label: "Transfer Date", name: "transfer_date", type: "date", required: true },
-      { label: "Consideration Amount", name: "consideration", type: "number", placeholder: "Enter consideration amount (if any)" },
-      { label: "Additional Notes", name: "notes", type: "textarea", placeholder: "Any additional information..." },
-    ]
   },
   director_change: {
     type: "director_change",
     name: "Director Change",
     icon: UserCheck,
     description: "Appoint or remove directors",
-    fields: [
-      { label: "Change Type", name: "change_type", type: "text", required: true, placeholder: "Appoint or Remove" },
-      { label: "Director Full Name", name: "director_name", type: "text", required: true, placeholder: "Enter director full name" },
-      { label: "Director ID Number", name: "director_id", type: "text", required: true, placeholder: "Enter ID/Passport number" },
-      { label: "Effective Date", name: "effective_date", type: "date", required: true },
-      { label: "Reason", name: "reason", type: "textarea", placeholder: "Reason for change..." },
-      { label: "Additional Notes", name: "notes", type: "textarea", placeholder: "Any additional information..." },
-    ]
   },
   share_capital: {
     type: "share_capital",
     name: "Share Capital Increase/Reduction",
     icon: TrendingUp,
     description: "Modify company share capital",
-    fields: [
-      { label: "Change Type", name: "change_type", type: "text", required: true, placeholder: "Increase or Reduction" },
-      { label: "Current Share Capital", name: "current_capital", type: "number", required: true, placeholder: "Enter current share capital" },
-      { label: "New Share Capital", name: "new_capital", type: "number", required: true, placeholder: "Enter new share capital" },
-      { label: "Effective Date", name: "effective_date", type: "date", required: true },
-      { label: "Reason", name: "reason", type: "textarea", placeholder: "Reason for capital change..." },
-      { label: "Additional Notes", name: "notes", type: "textarea", placeholder: "Any additional information..." },
-    ]
   },
   cross_border_merger: {
     type: "cross_border_merger",
     name: "Cross-Border Merger",
     icon: Globe,
     description: "Merge with another company",
-    fields: [
-      { label: "Merging Company Name", name: "merging_company", type: "text", required: true, placeholder: "Enter merging company name" },
-      { label: "Merging Company Jurisdiction", name: "merging_jurisdiction", type: "text", required: true, placeholder: "Enter jurisdiction" },
-      { label: "Merger Effective Date", name: "effective_date", type: "date", required: true },
-      { label: "Merger Description", name: "description", type: "textarea", required: true, placeholder: "Describe the merger..." },
-      { label: "Additional Notes", name: "notes", type: "textarea", placeholder: "Any additional information..." },
-    ]
   },
   company_name_change: {
     type: "company_name_change",
     name: "Company Name Change",
     icon: Building2,
     description: "Change your company name",
-    fields: [
-      { label: "Current Company Name", name: "current_name", type: "text", required: true, placeholder: "Enter current company name" },
-      { label: "New Company Name", name: "new_name", type: "text", required: true, placeholder: "Enter new company name" },
-      { label: "Effective Date", name: "effective_date", type: "date", required: true },
-      { label: "Reason", name: "reason", type: "textarea", placeholder: "Reason for name change..." },
-      { label: "Additional Notes", name: "notes", type: "textarea", placeholder: "Any additional information..." },
-    ]
   }
 };
 
@@ -115,8 +70,8 @@ export default function MBRFilingRequestPage() {
   const params = useParams();
   const filingType = params?.type as MBRFilingType;
   
-  const [formData, setFormData] = useState<Record<string, string>>({});
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [alertModalContent, setAlertModalContent] = useState({
@@ -138,10 +93,6 @@ export default function MBRFilingRequestPage() {
     return null;
   }
 
-  const handleInputChange = (name: string, value: string) => {
-    setFormData({ ...formData, [name]: value });
-  };
-
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     setUploadedFiles([...uploadedFiles, ...files]);
@@ -151,18 +102,12 @@ export default function MBRFilingRequestPage() {
     setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
   };
 
-  const isFormValid = () => {
-    return filingConfig.fields
-      .filter(f => f.required)
-      .every(f => formData[f.name] && formData[f.name].trim() !== "");
-  };
-
   const handleSubmit = async () => {
-    if (!isFormValid()) {
+    if (uploadedFiles.length === 0) {
       setShowAlertModal(true);
       setAlertModalContent({
         title: "Validation Error",
-        message: "Please fill in all required fields.",
+        message: "Please upload at least one file related to this service.",
         type: "error"
       });
       return;
@@ -183,8 +128,8 @@ export default function MBRFilingRequestPage() {
         icon: filingConfig.icon,
         status: "in_progress" as const,
         submissionDate: new Date().toISOString(),
-        formData: formData,
         uploadedFiles: uploadedFiles.map(f => f.name),
+        notes: notes,
         reference: `MBR-${filingType.toUpperCase().slice(0, 3)}-${Date.now().toString().slice(-6)}`
       };
 
@@ -234,73 +179,68 @@ export default function MBRFilingRequestPage() {
 
       {/* Form */}
       <DashboardCard className="p-6">
-        <h2 className="text-xl font-semibold text-brand-body mb-6">Filing Details</h2>
+        <h2 className="text-xl font-semibold text-brand-body mb-6">Request Service</h2>
         
-        <div className="space-y-5">
-          {filingConfig.fields.map((field) => (
-            <div key={field.name}>
-              <label className="block text-sm font-medium text-brand-body mb-2">
-                {field.label}
-                {field.required && <span className="text-destructive ml-1">*</span>}
-              </label>
-              {field.type === "textarea" ? (
-                <Textarea
-                  value={formData[field.name] || ""}
-                  onChange={(e) => handleInputChange(field.name, e.target.value)}
-                  placeholder={field.placeholder}
-                  className="min-h-[100px]"
-                  required={field.required}
-                />
-              ) : field.type === "file" ? (
-                <Input
-                  type="file"
-                  onChange={handleFileUpload}
-                  className="cursor-pointer"
-                  multiple
-                />
-              ) : (
-                <Input
-                  type={field.type}
-                  value={formData[field.name] || ""}
-                  onChange={(e) => handleInputChange(field.name, e.target.value)}
-                  placeholder={field.placeholder}
-                  required={field.required}
-                />
-              )}
-            </div>
-          ))}
-
+        <div className="space-y-6">
           {/* File Upload Section */}
           <div>
             <label className="block text-sm font-medium text-brand-body mb-2">
-              Supporting Documents (Optional)
+              Upload Files <span className="text-destructive">*</span>
             </label>
-            <Input
-              type="file"
-              onChange={handleFileUpload}
-              className="cursor-pointer mb-3"
-              multiple
-            />
+            <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors bg-muted/20">
+              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <Upload className="w-10 h-10 mb-3 text-muted-foreground" />
+                <p className="mb-2 text-sm text-muted-foreground">
+                  <span className="font-semibold">Click to upload</span> or drag and drop
+                </p>
+                <p className="text-xs text-muted-foreground">Upload files related to this service</p>
+              </div>
+              <Input
+                type="file"
+                onChange={handleFileUpload}
+                className="hidden"
+                multiple
+              />
+            </label>
             {uploadedFiles.length > 0 && (
-              <div className="space-y-2">
+              <div className="mt-4 space-y-2">
                 {uploadedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-brand-body">{file.name}</span>
+                  <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm text-brand-body truncate">{file.name}</span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        ({(file.size / 1024).toFixed(2)} KB)
+                      </span>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => removeFile(index)}
-                      className="text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
                     >
-                      Remove
+                      <X className="w-4 h-4" />
                     </Button>
                   </div>
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Optional Notes */}
+          <div>
+            <label className="block text-sm font-medium text-brand-body mb-2">
+              Optional Notes
+            </label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add any additional notes or context (optional)..."
+              className="min-h-[120px]"
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              You can add any additional information or context if needed.
+            </p>
           </div>
         </div>
 
@@ -316,14 +256,14 @@ export default function MBRFilingRequestPage() {
             variant="default"
             size="sm"
             onClick={handleSubmit}
-            disabled={!isFormValid() || submitting}
+            disabled={uploadedFiles.length === 0 || submitting}
             className="min-w-[140px]"
           >
             {submitting ? (
               "Submitting..."
             ) : (
               <>
-                Submit Filing
+                Submit Request
                 <ArrowRight className="w-4 h-4 ml-2" />
               </>
             )}
