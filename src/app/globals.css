@@ -170,7 +170,7 @@ html {
 }
 
 .bg-primary {
-  background-color: var(--primary) !important;
+  background-color: hsl(var(--primary)) !important;
 }
 .bg-cream {
   background-color: var(--bgCream) !important;

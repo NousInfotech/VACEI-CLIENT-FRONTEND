@@ -213,6 +213,15 @@ export const menuData: MenuItem[] = [
         description: "Chat with your service team",
     },
     {
+        slug: "reseller-analytics",
+        icon: TransactionIcon,
+        label: "Reseller Analytics",
+        href: "/dashboard/reseller-analytics",
+        children: [],
+        section: "primary",
+        description: "Track signups and commission earnings",
+    },
+    {
         slug: "todo-list",
         icon: TaskDaily01Icon,
         label: "To-Do List",

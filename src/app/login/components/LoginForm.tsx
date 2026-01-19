@@ -328,7 +328,7 @@ export default function LoginForm() {
                                 type="submit"
                                 variant="default"
                                 size="lg"
-                                className="w-full h-12 rounded-lg font-semibold text-base"
+                                className="w-full h-12 mt-2 rounded-lg font-semibold text-base bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary-hover))]"
                                 disabled={loading}
                             >
                                 {loading ? (
