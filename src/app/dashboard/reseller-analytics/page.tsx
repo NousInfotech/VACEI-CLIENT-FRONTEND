@@ -23,7 +23,9 @@ import {
   Search,
   Share2,
   Users,
+  Plus,
 } from "lucide-react";
+import CreateClientModal from "./components/CreateClientModal";
 
 interface ResellerSignup {
   id: string;
@@ -104,6 +106,7 @@ export default function ResellerAnalyticsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [isCreateClientModalOpen, setIsCreateClientModalOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -250,6 +253,12 @@ export default function ResellerAnalyticsPage() {
       <PageHeader
         title="Reseller Analytics"
         subtitle="Track your signups, earnings, and share your unique signup link."
+        actions={
+          <Button onClick={() => setIsCreateClientModalOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Client
+          </Button>
+        }
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
@@ -551,6 +560,11 @@ export default function ResellerAnalyticsPage() {
           </div>
         )}
       </div>
+      <CreateClientModal
+        isOpen={isCreateClientModalOpen}
+        onClose={() => setIsCreateClientModalOpen(false)}
+        resellerId={resellerId}
+      />
     </section>
   );
 }
