@@ -56,6 +56,93 @@ export const menuData: MenuItem[] = [
                 label: "Accounting & Bookkeeping",
                 href: "/dashboard/services/bookkeeping",
                 isActive: true,
+                children: [
+                   
+                    {
+                        slug: "invoices",
+                        icon: InvoiceIcon,
+                        label: "Invoices",
+                        href: "/dashboard/invoices",
+                        isActive: true,
+                    },
+                    
+                    {
+                        slug: "cash",
+                        icon: Wallet01Icon,
+                        label: "Cash",
+                        href: "/dashboard/cash",
+                        isActive: true,
+                    },
+                    {
+                        slug: "change-in-bank",
+                        icon: TransactionIcon,
+                        label: "Change in Bank Balances",
+                        href: "/dashboard/change-in-bank-balances",
+                        isActive: true,
+                    },
+                    {
+                        slug: "general-ledger",
+                        icon: Book02Icon,
+                        label: "General Ledger",
+                        href: "/dashboard/general-ledger",
+                        isActive: true,
+                    },
+                    {
+                        slug: "ap-ar-aging",
+                        icon: TransactionIcon,
+                        label: "AP/AR Aging",
+                        href: "#",
+                        isActive: true,
+                        children: [
+                            {
+                                slug: "ap-aging",
+                                label: "Accounts Payable",
+                                href: "/dashboard/ap-ar-aging/account-payble-aging",
+                                icon: TransactionIcon,
+                            },
+                            {
+                                slug: "ar-aging",
+                                label: "Accounts Receivable",
+                                href: "/dashboard/ap-ar-aging/account-receivable-aging",
+                                icon: TransactionIcon,
+                            }
+                        ]
+                    },
+                    {
+                        slug: "financial-statements",
+                        icon: DocumentValidationIcon,
+                        label: "Financial Statements",
+                        href: "#",
+                        isActive: true,
+                        children: [
+                            {
+                                slug: "balance-sheet",
+                                label: "Balance Sheet",
+                                href: "/dashboard/financial-statements/balance-sheet",
+                                icon: DocumentValidationIcon,
+                            },
+                            {
+                                slug: "profit-loss",
+                                label: "Profit & Loss",
+                                href: "/dashboard/financial-statements/profit-loss",
+                                icon: DocumentValidationIcon,
+                            },
+                            {
+                                slug: "cash-flow",
+                                label: "Cash Flow",
+                                href: "/dashboard/financial-statements/cash-flow-statement",
+                                icon: DocumentValidationIcon,
+                            }
+                        ]
+                    },
+                    {
+                        slug: "insights",
+                        icon: DashboardSquare02Icon,
+                        label: "Insights",
+                        href: "/dashboard/insights",
+                        isActive: true,
+                    },
+                ]
             },
             {
                 slug: "vat-tax",

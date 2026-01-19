@@ -51,6 +51,7 @@ export default function TopTransactions() {
           page: page.toString(),
           limit: limit.toString(),
           type,
+          intuitAccountId: '1',
         }).toString();
 
         const res = await fetch(`${backendUrl}transaction?${query}`, {
