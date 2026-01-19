@@ -65,7 +65,13 @@ export const menuData: MenuItem[] = [
                         href: "/dashboard/invoices",
                         isActive: true,
                     },
-                    
+                    {
+                        slug: "bank-transactions",
+                        icon: TransactionIcon,
+                        label: "Bank Transactions",
+                        href: "/dashboard/bank-transactions",
+                        isActive: true,
+                    },
                     {
                         slug: "cash",
                         icon: Wallet01Icon,
