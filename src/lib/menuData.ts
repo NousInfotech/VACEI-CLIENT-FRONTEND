@@ -57,7 +57,13 @@ export const menuData: MenuItem[] = [
                 href: "/dashboard/services/bookkeeping",
                 isActive: true,
                 children: [
-                   
+                    {
+                        slug: "accounting-engagement",
+                        label: "Engagement",
+                        href: "/dashboard/services/bookkeeping/engagement",
+                        icon: TaskDaily01Icon,
+                        isActive: true,
+                    },
                     {
                         slug: "invoices",
                         icon: InvoiceIcon,
@@ -158,6 +164,13 @@ export const menuData: MenuItem[] = [
                 isActive: true,
                 children: [
                     {
+                        slug: "vat-engagement",
+                        label: "Engagement",
+                        href: "/dashboard/services/vat/engagement",
+                        icon: TaskDaily01Icon,
+                        isActive: true,
+                    },
+                    {
                         slug: "vat-malta",
                         icon: TaxesIcon,
                         label: "VAT — Malta",
@@ -174,12 +187,19 @@ export const menuData: MenuItem[] = [
                 isActive: true,
                 children: [
                     {
+                        slug: "payroll-engagement",
+                        label: "Engagement",
+                        href: "/dashboard/services/payroll/engagement",
+                        icon: TaskDaily01Icon,
+                        isActive: true,
+                    },
+                    {
                         slug: "payroll(malta)",
                         icon: CashbackPoundIcon,
                         label: "Payroll (Malta)",
                         href: "/dashboard/services/payroll/malta",
                         isActive: true,
-                    },
+                    }
                 ],
             },
             
@@ -189,6 +209,15 @@ export const menuData: MenuItem[] = [
                 label: "CFO",
                 href: "/dashboard/services/cfo",
                 isActive: true,
+                children: [
+                    {
+                        slug: "cfo-engagement",
+                        label: "Engagement",
+                        href: "/dashboard/services/cfo/engagement",
+                        icon: TaskDaily01Icon,
+                        isActive: true,
+                    },
+                ]
             },
             {
                 slug: "audit",
@@ -201,7 +230,13 @@ export const menuData: MenuItem[] = [
                     {
                         slug: "audit-engagement",
                         label: "Engagement",
-                        href: "/dashboard/engagement",
+                        href: "/dashboard/services/audit/engagement",
+                        icon: TaskDaily01Icon,
+                    },
+                    {
+                        slug: "audit-engagements-list",
+                        label: "Engagements",
+                        href: "/dashboard/engagements",
                         icon: TaskDaily01Icon,
                     },
                 ]
@@ -212,6 +247,15 @@ export const menuData: MenuItem[] = [
                 label: "Corporate Services (CSP)",
                 href: "/dashboard/services/csp-mbr",
                 isActive: true,
+                children: [
+                    {
+                        slug: "csp-engagement",
+                        label: "Engagement",
+                        href: "/dashboard/services/csp-mbr/engagement",
+                        icon: TaskDaily01Icon,
+                        isActive: true,
+                    },
+                ]
             },
                     {
                 slug: "banking-payments",
@@ -234,12 +278,21 @@ export const menuData: MenuItem[] = [
                 href: "/dashboard/services/residency-mobility",
                 isActive: false,
                             },
-                            {
+                             {
                 slug: "grants-incentives",
                 icon: GiftIcon,
                 label: "Grants & Incentives",
                 href: "/dashboard/services/grants-incentives",
                 isActive: true,
+                children: [
+                    {
+                        slug: "grants-engagement",
+                        label: "Engagement",
+                        href: "/dashboard/services/grants-incentives/engagement",
+                        icon: TaskDaily01Icon,
+                        isActive: true,
+                    },
+                ]
                     },
                     {
                 slug: "corporate-transactions",
@@ -248,33 +301,77 @@ export const menuData: MenuItem[] = [
                 href: "/dashboard/services/corporate-transactions",
                 isActive: false,
             },
-            {
+             {
                 slug: "mbr-filing",
                 icon: DocumentValidationIcon,
                 label: "MBR Filing",
                 href: "/dashboard/services/mbr-filing",
                 isActive: true,
+                children: [
+                    {
+                        slug: "mbr-engagement",
+                        label: "Engagement",
+                        href: "/dashboard/services/mbr-filing/engagement",
+                        icon: TaskDaily01Icon,
+                        isActive: true,
+                    },
+                ]
             },
-            {
+             {
                 slug: "incorporation",
                 icon: GitPullRequestIcon,
                 label: "Incorporation",
                 href: "/dashboard/incorporation",
                 isActive: true,
+                children: [
+                    {
+                        slug: "incorporation-engagement",
+                        label: "Engagement",
+                        href: "/dashboard/incorporation/engagement",
+                        icon: TaskDaily01Icon,
+                        isActive: true,
+                    },
+                ]
             },
-            {
+             {
                 slug: "business-plans",
                 icon: DocumentValidationIcon,
                 label: "Business Plans",
                 href: "/dashboard/business-plans",
                 isActive: true,
+                children: [
+                    {
+                        slug: "business-plans-engagement",
+                        label: "Engagement",
+                        href: "/dashboard/business-plans/engagement",
+                        icon: TaskDaily01Icon,
+                        isActive: true,
+                    },
+                ]
             },
-            {
+             {
                 slug: "liquidation",
                 icon: Unlink03Icon,
                 label: "Liquidation",
                 href: "/dashboard/liquidation",
                 isActive: true,
+                children: [
+                    {
+                        slug: "liquidation-engagement",
+                        label: "Engagement",
+                        href: "/dashboard/liquidation/engagement",
+                        icon: TaskDaily01Icon,
+                        isActive: true,
+                    },
+                ]
+            },
+            {
+                slug: "library",
+                icon: Book02Icon,
+                label: "Library",
+                href: "/dashboard/services#library",
+                isActive: true,
+                description: "Centralized document vault",
             },
         ]
     },
