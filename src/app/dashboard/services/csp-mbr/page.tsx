@@ -165,7 +165,7 @@ const getCTAButton = (service: CSPService) => {
     case "not_active":
       return (
         <Button variant="outline" size="sm" className="min-w-[140px]" asChild>
-          <Link href="/dashboard/services/request">
+          <Link href={`/dashboard/services/csp-mbr/${service.id}/request`}>
             <Plus className="w-4 h-4 mr-1.5" />
             Request service
           </Link>
