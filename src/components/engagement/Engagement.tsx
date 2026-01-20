@@ -22,6 +22,8 @@ import EmptyState from '../shared/EmptyState';
 import { AlertCircle } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
 
+import EngagementSummary from './EngagementSummary';
+
 const Engagement = () => {
   const [activeTab, setActiveTab] = useTabQuery('etb');
   const { engagement, loading: engagementLoading, error: engagementError } = useEngagement();
@@ -113,23 +115,38 @@ const Engagement = () => {
     );
   }
 
+  // Derive summary data
+  const cycle = engagement.yearEndDate ? new Date(engagement.yearEndDate).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : 'FY 2024';
+  
   return (
-    <div className="p-8 max-w-[1600px] mx-auto min-h-screen bg-white space-y-8">
-      <BackButton />
-      <PageHeader
-        title={engagement.title || "Engagement Details"}
-        description={`Standard audit engagement for the current period.`}
-        className="mb-6"
+    <div className="p-8 max-w-[1600px] mx-auto min-h-screen bg-white space-y-10">
+      <div className="flex flex-col gap-2">
+        <BackButton />
+      </div>
+
+      <EngagementSummary 
+        serviceName={engagement.title || "Audit Engagement"}
+        description="Statutory audit engagement for the current financial period ensuring compliance with local regulations and international standards."
+        status="on_track"
+        cycle={cycle}
+        workflowStatus="in_progress"
+        neededFromUser="Please upload the signed management representation letter and bank confirmations."
+        actions={[
+          { type: 'upload', label: 'Upload Documents' },
+          { type: 'schedule', label: 'Schedule a call' }
+        ]}
       />
       
-      <PillTabs 
-        tabs={tabs} 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab} 
-      />
+      <div className="space-y-6">
+        <PillTabs 
+          tabs={tabs} 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab} 
+        />
 
-      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-        {renderContent()}
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {renderContent()}
+        </div>
       </div>
     </div>
   );

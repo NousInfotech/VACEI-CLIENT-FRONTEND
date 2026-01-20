@@ -127,7 +127,22 @@ export default function SidebarMenu({
         if (hasChildren && !isCollapsed) {
             toggleItem(item.slug);
             // Allow navigation for specific hubs even if they have children
-            const isHub = ['services-root', 'document-organizer', 'settings', 'payroll'].includes(item.slug);
+            const isHub = [
+                'services-root', 
+                'document-organizer', 
+                'settings', 
+                'payroll',
+                'accounting-bookkeeping',
+                'vat-tax',
+                'client-facing-content',
+                'audit',
+                'csp',
+                'grants-incentives',
+                'mbr-filing',
+                'incorporation',
+                'business-plans',
+                'liquidation'
+            ].includes(item.slug);
             if (!isHub) {
                 e.preventDefault();
             }
@@ -285,8 +300,20 @@ export default function SidebarMenu({
                     onClick={(e) => {
                         if (hasChildren) {
                             toggleItem(item.slug);
-                            // Allow 'Audit' to navigate while being a dropdown
-                            const isNavigableHeader = ['audit', 'vat-tax', 'payroll'].includes(item.slug);
+                            // Allow service headers to navigate while being a dropdown
+                            const isNavigableHeader = [
+                                'audit', 
+                                'vat-tax', 
+                                'payroll',
+                                'accounting-bookkeeping',
+                                'client-facing-content',
+                                'csp',
+                                'grants-incentives',
+                                'mbr-filing',
+                                'incorporation',
+                                'business-plans',
+                                'liquidation'
+                            ].includes(item.slug);
                             if (!isNavigableHeader) {
                                 e.preventDefault();
                             }

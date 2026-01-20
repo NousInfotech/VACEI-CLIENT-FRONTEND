@@ -308,7 +308,7 @@ export default function CFOServicesPage() {
     </div>
 
     <div className="flex gap-2">
-      <Link href="dashboard/business-plans/bp-001">
+      <Link href="/dashboard/business-plans">
       <Button
         variant="outline"
         className="rounded-lg text-xs px-4 shadow-sm hover:shadow-md transition-shadow"
@@ -347,7 +347,7 @@ export default function CFOServicesPage() {
         3–5 year forecast
       </p>
       <Link
-        href="/planning/forecast"
+        href="/dashboard/business-plans"
         className="text-xs text-brand-primary hover:underline"
       >
         View
@@ -360,7 +360,7 @@ export default function CFOServicesPage() {
         Scenario analysis
       </p>
       <Link
-        href="/planning/scenario-analysis"
+        href="/dashboard/business-plans"
         className="text-xs text-brand-primary hover:underline"
       >
         View

@@ -101,7 +101,7 @@ const Engagements = () => {
                 </div>
               </div>
               <Button 
-                onClick={() => router.push(`/dashboard/engagement/${engagement._id}`)}
+                onClick={() => router.push(`/dashboard/engagements/${engagement._id}`)}
                 className="w-full"
               >
                 View Engagement
