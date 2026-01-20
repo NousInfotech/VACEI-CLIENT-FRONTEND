@@ -3,13 +3,16 @@
 import React, { useMemo } from 'react';
 import ETBTable from './ETBTable';
 import AdjustmentsTab from './AdjustmentsTab';
-import { TableProperties, FileStack, Calculator, BarChart3, PieChart, Scale, FolderOpen } from 'lucide-react';
+import { TableProperties, FileStack, Calculator, BarChart3, PieChart, Scale, FolderOpen, Building2, Receipt, Share2 } from 'lucide-react';
 import { DetailsSkeleton } from '../shared/CommonSkeletons';
 import Reclassification from './Reclassification';
 import IncomeStatement from './IncomeStatement';
 import BalanceSheet from './BalanceSheet';
 import Classification from './Classification';
 import DocumentRequestsTab from './DocumentRequestsTab';
+import MBRTab from './MBRTab';
+import TaxTab from './TaxTab';
+import LibrarySharedFolderTab from './LibrarySharedFolderTab';
 import { extractETBData } from '@/lib/extractETBData';
 import { ETBRow } from './mockEngagementData';
 import { useEngagement } from './hooks/useEngagement';
@@ -65,6 +68,9 @@ const Engagement = () => {
     { id: 'balance_sheet', label: 'Balance Sheet', icon: Scale },
     { id: 'classification', label: 'Classification', icon: PieChart },
     { id: 'requests', label: 'Document Requests', icon: FolderOpen },
+    { id: 'mbr', label: 'MBR', icon: Building2 },
+    { id: 'tax', label: 'TAX', icon: Receipt },
+    { id: 'library', label: 'Library', icon: Share2 },
   ];
 
   const renderContent = () => {
@@ -76,6 +82,9 @@ const Engagement = () => {
       case 'balance_sheet': return extractedData ? <BalanceSheet data={extractedData} /> : null;
       case 'classification': return extractedData ? <Classification data={extractedData} /> : null;
       case 'requests': return <DocumentRequestsTab />;
+      case 'mbr': return <MBRTab />;
+      case 'tax': return <TaxTab />;
+      case 'library': return <LibrarySharedFolderTab />;
       default: return <ETBTable data={transformedEtbRows} />;
     }
   };

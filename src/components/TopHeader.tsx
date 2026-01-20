@@ -242,7 +242,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             <div className="flex items-center gap-4">
                 {onSidebarToggle && (
                     <button
-                        className="hidden md:flex p-2 rounded-2xl hover:bg-[hsl(var(--muted))] transition-colors group"
+                        className="md:flex hidden p-2 rounded-2xl hover:bg-[hsl(var(--muted))] transition-colors group"
                         onClick={onSidebarToggle}
                         aria-label={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
                         title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}

@@ -10,7 +10,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Upload, X, FileText } from "lucide
 type BusinessPlanPurpose = "bank" | "grant" | "investor" | "internal" | "other";
 
 interface RequestFormData {
-  purpose: BusinessPlanPurpose | "";
+  purpose: BusinessPlanPurpose[];
   business_description: string;
   industry: string;
   target_market: string;
@@ -23,7 +23,7 @@ export default function RequestBusinessPlanPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<RequestFormData>({
-    purpose: "",
+    purpose: [],
     business_description: "",
     industry: "",
     target_market: "",
@@ -51,7 +51,22 @@ export default function RequestBusinessPlanPage() {
   ];
 
   const handlePurposeSelect = (purpose: BusinessPlanPurpose) => {
-    setFormData({ ...formData, purpose });
+    const currentPurposes = formData.purpose;
+    const isSelected = currentPurposes.includes(purpose);
+    
+    if (isSelected) {
+      // Remove if already selected
+      setFormData({ 
+        ...formData, 
+        purpose: currentPurposes.filter(p => p !== purpose) 
+      });
+    } else {
+      // Add if not selected
+      setFormData({ 
+        ...formData, 
+        purpose: [...currentPurposes, purpose] 
+      });
+    }
   };
 
   const handleInputChange = (field: keyof RequestFormData, value: string | boolean) => {
@@ -74,7 +89,7 @@ export default function RequestBusinessPlanPage() {
   };
 
   const canProceedToStep2 = () => {
-    return formData.purpose !== "";
+    return formData.purpose.length > 0;
   };
 
   const canProceedToStep3 = () => {
@@ -164,7 +179,7 @@ export default function RequestBusinessPlanPage() {
         {step === 1 && (
           <Step1Purpose
             purposes={purposes}
-            selectedPurpose={formData.purpose}
+            selectedPurposes={formData.purpose}
             onSelect={handlePurposeSelect}
             onNext={() => setStep(2)}
             canProceed={canProceedToStep2()}
@@ -204,13 +219,13 @@ export default function RequestBusinessPlanPage() {
 // Step 1: Purpose
 function Step1Purpose({
   purposes,
-  selectedPurpose,
+  selectedPurposes,
   onSelect,
   onNext,
   canProceed,
 }: {
   purposes: { value: BusinessPlanPurpose; label: string }[];
-  selectedPurpose: BusinessPlanPurpose | "";
+  selectedPurposes: BusinessPlanPurpose[];
   onSelect: (purpose: BusinessPlanPurpose) => void;
   onNext: () => void;
   canProceed: boolean;
@@ -222,38 +237,62 @@ function Step1Purpose({
           What is the business plan for?
         </h2>
         <p className="text-muted-foreground">
-          Select the primary purpose for your business plan.
+          Select one or more purposes for your business plan. You can select multiple options.
         </p>
       </div>
 
       <div className="space-y-3">
-        {purposes.map((purpose) => (
-          <button
-            key={purpose.value}
-            onClick={() => onSelect(purpose.value as BusinessPlanPurpose)}
-            className={`w-full p-4 text-left border-2 rounded-lg transition-all ${
-              selectedPurpose === purpose.value
-                ? "border-primary bg-primary/5"
-                : "border-border hover:border-primary/50 hover:bg-muted/30"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                  selectedPurpose === purpose.value
-                    ? "border-primary"
-                    : "border-border"
-                }`}
-              >
-                {selectedPurpose === purpose.value && (
-                  <div className="w-3 h-3 rounded-full bg-primary" />
-                )}
+        {purposes.map((purpose) => {
+          const isSelected = selectedPurposes.includes(purpose.value);
+          return (
+            <button
+              key={purpose.value}
+              onClick={() => onSelect(purpose.value as BusinessPlanPurpose)}
+              className={`w-full p-4 text-left border-2 rounded-lg transition-all ${
+                isSelected
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/50 hover:bg-muted/30"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                    isSelected
+                      ? "border-primary bg-primary"
+                      : "border-border bg-card"
+                  }`}
+                >
+                  {isSelected && (
+                    <svg
+                      className="w-3 h-3 text-white"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="3"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+                <span className="font-medium text-brand-body">{purpose.label}</span>
               </div>
-              <span className="font-medium text-brand-body">{purpose.label}</span>
-            </div>
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </div>
+
+      {selectedPurposes.length > 0 && (
+        <div className="p-3 bg-muted/30 rounded-lg border border-border">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium text-brand-body">Selected:</span>{" "}
+            {selectedPurposes
+              .map((p) => purposes.find((opt) => opt.value === p)?.label)
+              .join(", ")}
+          </p>
+        </div>
+      )}
 
       <div className="flex justify-end pt-4 border-t border-border">
         <Button onClick={onNext} disabled={!canProceed} size="lg">

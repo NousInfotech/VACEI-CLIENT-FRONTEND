@@ -358,13 +358,13 @@ export default function SidebarMenu({
             <div
                 className={cn(
                     "flex flex-col transform transition-all duration-300 ease-in-out z-50",
-                    "fixed inset-y-0 left-0 w-64 h-full md:h-auto",
-                    isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+                    "fixed inset-y-0 left-0 w-64 h-full lg:h-auto",
+                    isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
                     isCollapsed 
-                        ? "md:fixed md:top-4 md:bottom-4 md:left-4 md:w-20 md:h-[calc(100vh-2rem)]" 
-                        : "md:absolute md:top-4 md:bottom-4 md:left-4 md:w-80 md:max-w-[4000px] md:h-[calc(100vh-2rem)]",
+                        ? "lg:fixed lg:top-4 lg:bottom-4 lg:left-4 lg:w-20 lg:h-[calc(100vh-2rem)]" 
+                        : "lg:absolute lg:top-4 lg:bottom-4 lg:left-4 lg:w-80 lg:max-w-[4000px] lg:h-[calc(100vh-2rem)]",
                     "border-r shadow-xl",
-                    "rounded-r-4xl md:rounded-4xl"
+                    "rounded-r-4xl lg:rounded-4xl"
                 )}
                 style={{
                     backgroundColor: `rgb(${branding?.sidebar_background_color || '15, 23, 41'})`,
@@ -410,7 +410,7 @@ export default function SidebarMenu({
                         
                         <div className={cn(
                             "flex-1 transition-all duration-300 ease-in-out",
-                            isCollapsed ? "md:opacity-0 md:w-0 md:overflow-hidden" : "md:opacity-100 md:w-auto"
+                            isCollapsed ? "lg:opacity-0 lg:w-0 lg:overflow-hidden" : "lg:opacity-100 lg:w-auto"
                         )}>
                             <div className="space-y-1">
                                 <h1 className="text-2xl font-bold tracking-tight" style={{ color: `hsl(var(--sidebar-foreground))` }}>{orgName}</h1>

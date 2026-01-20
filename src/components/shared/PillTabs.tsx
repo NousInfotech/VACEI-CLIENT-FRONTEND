@@ -30,14 +30,14 @@ const PillTabs: React.FC<PillTabsProps> = ({
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={`
-              flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200
+              flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 whitespace-nowrap
               ${isActive 
                 ? 'bg-primary-color-new text-light shadow-sm' 
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}
             `}
           >
-            {Icon && <Icon size={18} />}
-            <span className="font-medium text-sm">{tab.label}</span>
+            {Icon && <Icon size={18} className="shrink-0" />}
+            <span className="font-medium text-sm whitespace-nowrap">{tab.label}</span>
           </button>
         );
       })}
