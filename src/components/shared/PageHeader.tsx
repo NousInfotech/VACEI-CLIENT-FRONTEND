@@ -8,6 +8,7 @@ interface PageHeaderProps {
   title: React.ReactNode;
   subtitle?: React.ReactNode;
   description?: React.ReactNode;
+  icon?: React.ComponentType<{ className?: string }>;
   activeCompany?: string;
   badge?: React.ReactNode;
   riskLevel?: {
@@ -23,6 +24,7 @@ export const PageHeader = ({
   title,
   subtitle,
   description,
+  icon: Icon,
   activeCompany,
   badge,
   riskLevel,
@@ -36,16 +38,23 @@ export const PageHeader = ({
     <DashboardCard animate={animate} className={cn("p-8 bg-[#0f1729] border-white/10", className)}>
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
         <div className="space-y-4">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-semibold text-white tracking-tight">
-              {title}
-            </h1>
-            {subtitle && <p className="text-white/60 font-medium">{subtitle}</p>}
-            {description && (
-              <p className="text-white/50 text-sm max-w-2xl pt-2 leading-relaxed">
-                {description}
-              </p>
+          <div className="flex items-center gap-4">
+            {Icon && (
+              <div className="w-12 h-12 rounded-lg bg-white/15 flex items-center justify-center border border-white/30 shrink-0 shadow-sm">
+                <Icon className="w-6 h-6 text-white" />
+              </div>
             )}
+            <div className="space-y-1">
+              <h1 className="text-3xl font-semibold text-white tracking-tight">
+                {title}
+              </h1>
+              {subtitle && <p className="text-white/60 font-medium">{subtitle}</p>}
+              {description && (
+                <p className="text-white/50 text-sm max-w-2xl pt-2 leading-relaxed">
+                  {description}
+                </p>
+              )}
+            </div>
           </div>
           
           {hasStatusBar && (

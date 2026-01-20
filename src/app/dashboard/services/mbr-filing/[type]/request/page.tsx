@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import DashboardCard from "@/components/DashboardCard";
 import BackButton from "@/components/shared/BackButton";
+import PageHeader from "@/components/shared/PageHeader";
 import { AlertModal } from "@/components/ui/modal";
 import { 
   ArrowLeft, 
@@ -167,15 +168,11 @@ export default function MBRFilingRequestPage() {
       <BackButton />
       
       {/* Page Header */}
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-          <Icon className="w-6 h-6 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold text-brand-body">{filingConfig.name}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{filingConfig.description}</p>
-        </div>
-      </div>
+      <PageHeader
+        title={filingConfig.name}
+        description={filingConfig.description}
+        icon={Icon}
+      />
 
       {/* Form */}
       <DashboardCard className="p-6">
