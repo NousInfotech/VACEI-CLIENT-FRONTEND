@@ -52,7 +52,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Main Content Area */}
             <div
                 className={cn(
-                    "flex-1 flex flex-col transition-all duration-300",
+                    "flex-1 flex flex-col transition-all duration-300 min-w-0",
                     isSidebarCollapsed ? "lg:ml-24" : "lg:ml-84"
                 )}
             >
@@ -94,7 +94,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {/* <Breadcrumbs /> */}
 
                 {/* Main Content */}
-                <main className="flex-1 overflow-y-auto overflow-x-hidden bg-brand-body p-4 lg:p-6">
+                <main 
+                    className="flex-1 overflow-y-auto overflow-x-auto lg:overflow-x-hidden bg-brand-body p-4 lg:p-6 min-w-0"
+                >
                     {children}
                 </main>
             </div>
