@@ -431,7 +431,11 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                         size="icon"
                         onClick={() => {
                             if (typeof window !== 'undefined') {
-                                localStorage.clear();
+                                // Clear only auth-related items, preserve onboarding data
+                                localStorage.removeItem('token');
+                                localStorage.removeItem('username');
+                                localStorage.removeItem('email');
+                                localStorage.removeItem('user_id');
                                 document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax';
                                 document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=None; Secure';
                                 router.push('/login');

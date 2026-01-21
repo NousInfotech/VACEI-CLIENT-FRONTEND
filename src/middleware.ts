@@ -28,6 +28,11 @@ export async function middleware(req: NextRequest) {
 
   try {
     await jwtVerify(token, new TextEncoder().encode(process.env.JWT_SECRET));
+    
+    // Protect onboarding routes - require authentication
+    // Onboarding status check is done client-side in the onboarding page itself
+    // Dashboard access is checked client-side in the dashboard layout/page
+    
     return NextResponse.next(); // Valid token
   } catch (err) {
     console.log('error', err); // Debugging
@@ -39,5 +44,6 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     '/dashboard/:path*',
+    '/onboarding/:path*',
   ],
 };

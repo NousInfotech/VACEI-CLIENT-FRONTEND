@@ -253,3 +253,103 @@ export interface Pagination {
   total: number;
   limit: 10;
 }
+
+// --- Onboarding Interfaces ---
+
+export type CompanyType = 'existing' | 'new';
+export type OnboardingStatus = 'not_started' | 'in_progress' | 'completed';
+export type ServiceToggleOption = 'own' | 'service';
+export type AddressOption = 'have' | 'need_service';
+
+export interface OnboardingProgress {
+  onboardingStatus: OnboardingStatus;
+  currentStep: number;
+  completedSteps: number[];
+}
+
+export interface Person {
+  id?: string;
+  fullName: string;
+  email: string;
+  ownershipPercent?: number; // For shareholders only
+}
+
+export interface ExistingCompanyDetails {
+  companyName: string;
+  registrationNumber: string;
+  countryOfIncorporation: string;
+  vatNumber?: string;
+  businessActivity: string;
+  registeredAddress: string;
+}
+
+export interface NewCompanyDetails {
+  proposedNames: {
+    name1: string;
+    name2: string;
+    name3: string;
+  };
+  registeredAddress: {
+    option: AddressOption;
+    address?: string; // If option is 'have'
+  };
+  directors: {
+    option: ServiceToggleOption;
+    persons?: Person[]; // If option is 'own'
+  };
+  shareholders: Person[];
+  companySecretary: {
+    option: ServiceToggleOption;
+    person?: Person; // If option is 'own'
+  };
+  judicialRepresentative: {
+    option: ServiceToggleOption;
+    person?: Person; // If option is 'own'
+  };
+}
+
+export interface Service {
+  id: string;
+  name: string;
+  description: string;
+  selected: boolean;
+}
+
+export interface PricingInfo {
+  monthlyTransactions?: string;
+  employeeCount?: string;
+}
+
+export interface OnboardingData {
+  companyType: CompanyType;
+  existingCompanyDetails?: ExistingCompanyDetails;
+  newCompanyDetails?: NewCompanyDetails;
+  selectedServices: string[]; // Service IDs
+  pricingInfo?: PricingInfo;
+}
+
+export interface Quotation {
+  id: string;
+  reference: string;
+  services: Array<{
+    name: string;
+    fee: number;
+  }>;
+  totalFee: number;
+  terms: string;
+}
+
+export interface KYCPerson {
+  id: string;
+  name: string;
+  role: 'director' | 'shareholder';
+  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+}
+
+export interface KYCCompanyDocument {
+  id: string;
+  name: string;
+  type: 'company_profile' | 'supporting_document';
+  status: 'pending' | 'uploaded' | 'verified';
+  progress?: number;
+}

@@ -24,7 +24,11 @@ export default function LoginForm() {
     useEffect(() => {
         const message = searchParams.get("message");
         if (message) {
-            localStorage.clear();
+            // Clear only auth-related items, preserve onboarding data
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            localStorage.removeItem('email');
+            localStorage.removeItem('user_id');
             setAlertMessage(message);
             router.replace("/login", { scroll: false });
         }
@@ -84,7 +88,7 @@ export default function LoginForm() {
                 document.cookie = `client-token=${encodeURIComponent(token)}; ${cookieOptions}`;
             }
 
-            router.push("/dashboard");
+            router.push("/onboarding");
         } catch (err) {
             const errorMessage = (err as Error)?.message || "An unknown error occurred";
             setErrors({ email: errorMessage, password: "" });

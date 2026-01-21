@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import StatCard from "@/components/StatCard";
 import DashboardCard from "@/components/DashboardCard";
 import DashboardActionButton from "@/components/DashboardActionButton";
@@ -18,6 +19,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { AddressBookIcon, Alert02Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { User, AlertCircle, CheckCircle, ArrowRight, Clock, MoreVertical, Upload, Plus, MessageCircle, Calendar } from "lucide-react";
+import { getOnboardingProgress } from "@/api/onboardingService";
 
 interface UploadStatusSummary {
   documentsUploaded: number;
@@ -28,6 +30,7 @@ interface UploadStatusSummary {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [stats, setStats] = useState<ProcessedDashboardStat[]>([]);
   const [uploadSummary, setUploadSummary] = useState<UploadStatusSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,6 +41,30 @@ export default function DashboardPage() {
   const [complianceCounts, setComplianceCounts] = useState({ overdue: 0, dueSoon: 0, waiting: 0, done: 0 });
   const [pendingTasks, setPendingTasks] = useState<Task[]>([]);
   const [activeCompany, setActiveCompany] = useState<string>("ACME LTD");
+
+  // Check onboarding status on mount (using localStorage only - no backend)
+  useEffect(() => {
+    const checkOnboarding = () => {
+      // Check localStorage directly (no API calls)
+      const saved = localStorage.getItem('onboarding-progress');
+      if (saved) {
+        try {
+          const progress = JSON.parse(saved);
+          if (progress.onboardingStatus !== 'completed') {
+            router.push('/onboarding');
+          }
+          // If completed, allow access (no redirect needed)
+        } catch {
+          // Invalid saved data - redirect to onboarding
+          router.push('/onboarding');
+        }
+      } else {
+        // No saved data - redirect to onboarding
+        router.push('/onboarding');
+      }
+    };
+    checkOnboarding();
+  }, [router]);
 
   // Set username on client side to avoid hydration error
   useEffect(() => {

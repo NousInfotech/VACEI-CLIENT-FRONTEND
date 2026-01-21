@@ -20,6 +20,7 @@ export function useAuth() {
         credentials: 'include', // important to send cookies
       });
 
+      // Clear only auth-related items, preserve onboarding data
       localStorage.removeItem('token');
       localStorage.removeItem('username');
       localStorage.removeItem('email');
@@ -35,8 +36,12 @@ export function useAuth() {
       router.push('/login');
     } catch (err) {
       console.error('Logout failed:', err);
-      // Even if logout API fails, clear local storage and cookie
-      localStorage.clear();
+      // Even if logout API fails, clear only auth-related items, preserve onboarding data
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      localStorage.removeItem('email');
+      localStorage.removeItem('user_id');
+      
       if (typeof document !== 'undefined') {
         document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax';
         document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=None; Secure';
