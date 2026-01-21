@@ -25,6 +25,7 @@ interface CompanyDetailsScreenProps {
 
 export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }: CompanyDetailsScreenProps) {
   const [companyType, setCompanyType] = useState<CompanyType | undefined>(undefined);
+  const [directorError, setDirectorError] = useState<string>('');
   const [existingDetails, setExistingDetails] = useState<ExistingCompanyDetails>({
     companyName: '',
     registrationNumber: '',
@@ -94,6 +95,22 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
       return;
     }
 
+    // Validate directors if option is 'own'
+    if (companyType === 'new' && newDetails.directors.option === 'own') {
+      const directors = newDetails.directors.persons || [];
+      const validDirectors = directors.filter(
+        (person) => person && (person.fullName?.trim() || person.email?.trim())
+      );
+      
+      if (validDirectors.length === 0) {
+        setDirectorError('Please add at least one director with a name or email before continuing.');
+        return;
+      }
+    }
+    
+    // Clear any previous errors if validation passes
+    setDirectorError('');
+
     try {
       const data = companyType === 'existing' 
         ? { existingCompanyDetails: existingDetails }
@@ -121,6 +138,7 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
   };
 
   const addDirector = () => {
+    setDirectorError(''); // Clear error when adding a director
     setNewDetails(prev => ({
       ...prev,
       directors: {
@@ -131,6 +149,7 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
   };
 
   const updateDirector = (index: number, field: keyof Person, value: string | number) => {
+    setDirectorError(''); // Clear error when updating a director
     setNewDetails(prev => ({
       ...prev,
       directors: {
@@ -375,9 +394,16 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
                         canRemove={true}
                       />
                     ))}
-                    <Button type="button" variant="outline" size="sm" onClick={addDirector}>
-                      Add another director
-                    </Button>
+                    <div className="space-y-2">
+                      <Button type="button" variant="outline" size="sm" onClick={addDirector}>
+                        {(!newDetails.directors.persons || newDetails.directors.persons.length === 0) 
+                          ? 'Add director' 
+                          : 'Add another director'}
+                      </Button>
+                      {directorError && (
+                        <p className="text-sm text-red-500">{directorError}</p>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <InfoBox>
