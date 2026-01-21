@@ -49,7 +49,7 @@ export interface SearchResultItem {
   id: string;
   title: string;
   description: string;
-  type: 'Task' | 'Document' | 'Meeting'; // More specific types are better
+  type: 'Task' | 'Document' | 'Meeting' | 'Service' | 'Page'; // More specific types are better
   link: string;
   status?: string; // Specific to Task
   category?: string; // Specific to Task

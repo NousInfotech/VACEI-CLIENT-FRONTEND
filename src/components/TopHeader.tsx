@@ -105,9 +105,9 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
         const qParam = searchParams.get('q');
         if (pathname === '/dashboard/search' && qParam !== null) {
             setSearchTerm(decodeURIComponent(qParam));
-        } else if (pathname !== '/dashboard/search') {
-            setSearchTerm('');
         }
+        // Don't clear search term when navigating away - keep it for better UX
+        // Users can continue searching from any page
     }, [pathname, searchParams]);
 
     const getUnreadCount = useCallback(async () => {
@@ -191,7 +191,12 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
     };
 
     const handleSearchClick = () => {
-        router.push(`/dashboard/search${searchTerm ? `?q=${encodeURIComponent(searchTerm)}` : ''}`);
+        if (searchTerm.trim()) {
+            router.push(`/dashboard/search?q=${encodeURIComponent(searchTerm.trim())}`);
+        } else {
+            // If no search term, navigate to search page anyway
+            router.push('/dashboard/search');
+        }
     };
 
     const activeCompanyName = companies.find(c => c.id === activeCompany)?.name || "Select Company";
@@ -256,7 +261,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                 )}
 
                 <div className="flex items-center gap-2 max-w-[350px] flex-1">
-                        <div className="relative flex w-full">
+                        <div className="relative flex items-center w-full">
                             <Input
                                 type="text"
                                 placeholder="Search..."
