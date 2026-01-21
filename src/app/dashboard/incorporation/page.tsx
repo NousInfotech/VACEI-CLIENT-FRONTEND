@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Building2, 
@@ -28,6 +28,8 @@ export default function IncorporationPage() {
     csp: false
   });
 
+  const [openForm, setOpenForm] = useState<'people' | 'shares' | 'csp' | null>(null);
+
   const [formData, setFormData] = useState({
     name1: "",
     name2: "",
@@ -39,6 +41,17 @@ export default function IncorporationPage() {
 
   const [files, setFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (openForm) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [openForm]);
 
   const toggleSection = (section: keyof typeof isExpanded) => {
     setIsExpanded(prev => ({ ...prev, [section]: !prev[section] }));
@@ -58,6 +71,7 @@ export default function IncorporationPage() {
   };
 
   return (
+    <>
     <section className="mx-auto max-w-[1400px] w-full pt-5 px-4 md:px-6 space-y-6 pb-20">
       <div className="flex items-center">
         <button 
@@ -207,6 +221,14 @@ export default function IncorporationPage() {
                         <li>• At least one (1) Shareholder must be appointed.</li>
                       </ul>
                     </div>
+                    <div className="pt-4 border-t">
+                      <Button 
+                        onClick={() => setOpenForm('people')}
+                        className="w-full md:w-auto bg-primary-color-new text-white hover:bg-primary-color-new/90 h-11 px-6 rounded-xl font-semibold"
+                      >
+                        Fill People & Roles Form
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -237,6 +259,14 @@ export default function IncorporationPage() {
                       <li>Total Number of Shares</li>
                       <li>Detailed Allocation Table (Distribution among Shareholders)</li>
                     </ul>
+                    <div className="pt-4 border-t">
+                      <Button 
+                        onClick={() => setOpenForm('shares')}
+                        className="w-full md:w-auto bg-primary-color-new text-white hover:bg-primary-color-new/90 h-11 px-6 rounded-xl font-semibold"
+                      >
+                        Fill Shares & Ownership Form
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -285,6 +315,14 @@ export default function IncorporationPage() {
                         <li>• Bank Liaison support (CSP-level)</li>
                       </ul>
                     </div>
+                  </div>
+                  <div className="pt-6 mt-6 border-t">
+                    <Button 
+                      onClick={() => setOpenForm('csp')}
+                      className="w-full md:w-auto bg-primary-color-new text-white hover:bg-primary-color-new/90 h-11 px-6 rounded-xl font-semibold"
+                    >
+                      Fill CSP Services Form
+                    </Button>
                   </div>
                 </div>
               )}
@@ -397,6 +435,184 @@ export default function IncorporationPage() {
           </div>
         </DashboardCard>
       </div>
+
+      {/* People & Roles Form Modal */}
+      <div className={cn(
+        "fixed inset-0 z-50 flex items-center justify-center",
+        openForm === 'people' ? "flex" : "hidden"
+      )}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpenForm(null)}></div>
+        <div className="relative z-50 w-full max-w-2xl mx-4 bg-card border border-border rounded-lg shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-card">
+            <h2 className="text-xl font-semibold text-brand-body">People & Roles Form</h2>
+            <button onClick={() => setOpenForm(null)} className="text-muted-foreground hover:text-brand-body transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="p-6">
+            <div className="space-y-6">
+              <p className="text-sm text-muted-foreground">
+                Fill in the details for each Director and Shareholder.
+              </p>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-brand-body">Full Name</label>
+                  <Input placeholder="Enter full name" className="h-11" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-brand-body">Email Address</label>
+                  <Input type="email" placeholder="Enter email address" className="h-11" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-brand-body">Nationality</label>
+                  <Input placeholder="Enter nationality" className="h-11" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-brand-body">Role</label>
+                  <Dropdown
+                    trigger={
+                      <Button variant="outline" className="w-full h-11 justify-between">
+                        Select role <ChevronDown className="w-4 h-4 opacity-50" />
+                      </Button>
+                    }
+                    items={[
+                      { id: "director", label: "Director", onClick: () => {} },
+                      { id: "shareholder", label: "Shareholder", onClick: () => {} },
+                      { id: "both", label: "Both", onClick: () => {} },
+                    ]}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-brand-body">Percentage Ownership (for Shareholders)</label>
+                  <Input type="number" placeholder="Enter percentage" className="h-11" />
+                </div>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button variant="outline" onClick={() => setOpenForm(null)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button onClick={() => setOpenForm(null)} className="flex-1 bg-primary-color-new text-white">
+                  Save & Add Another
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Shares & Ownership Form Modal */}
+      <div className={cn(
+        "fixed inset-0 z-50 flex items-center justify-center",
+        openForm === 'shares' ? "flex" : "hidden"
+      )}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpenForm(null)}></div>
+        <div className="relative z-50 w-full max-w-2xl mx-4 bg-card border border-border rounded-lg shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-card">
+            <h2 className="text-xl font-semibold text-brand-body">Shares & Ownership Form</h2>
+            <button onClick={() => setOpenForm(null)} className="text-muted-foreground hover:text-brand-body transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="p-6">
+            <div className="space-y-6">
+              <p className="text-sm text-muted-foreground">
+                Enter the share capital details for the company.
+              </p>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-brand-body">Total Share Capital Amount</label>
+                  <Input type="number" placeholder="Enter amount" className="h-11" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-brand-body">Total Number of Shares</label>
+                  <Input type="number" placeholder="Enter number of shares" className="h-11" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-brand-body">Share Allocation Details</label>
+                  <textarea 
+                    placeholder="Enter detailed allocation table (Distribution among Shareholders)"
+                    className="w-full min-h-[120px] px-3 py-2 border border-border rounded-lg resize-none"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button variant="outline" onClick={() => setOpenForm(null)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button onClick={() => setOpenForm(null)} className="flex-1 bg-primary-color-new text-white">
+                  Save
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CSP Services Form Modal */}
+      <div className={cn(
+        "fixed inset-0 z-50 flex items-center justify-center",
+        openForm === 'csp' ? "flex" : "hidden"
+      )}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpenForm(null)}></div>
+        <div className="relative z-50 w-full max-w-2xl mx-4 bg-card border border-border rounded-lg shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-card">
+            <h2 className="text-xl font-semibold text-brand-body">CSP Services Form</h2>
+            <button onClick={() => setOpenForm(null)} className="text-muted-foreground hover:text-brand-body transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="p-6">
+            <div className="space-y-6">
+              <p className="text-sm text-muted-foreground">
+                Select the CSP services you require for your company.
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-semibold text-brand-body mb-3">Required Services</h4>
+                  <div className="space-y-2">
+                    {["Registered Office", "Company Secretary"].map((service) => (
+                      <div key={service} className="flex items-center gap-2 p-3 rounded-lg bg-green-50 border border-green-100">
+                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                        <span className="text-sm font-medium text-brand-body">{service}</span>
+                        <span className="ml-auto text-xs text-muted-foreground">Required</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-brand-body mb-3">Optional Services</h4>
+                  <div className="space-y-2">
+                    {[
+                      "Director Services",
+                      "Nominee Director",
+                      "Nominee Shareholder",
+                      "Statutory Registers Maintenance",
+                      "Beneficial Ownership (UBO) Maintenance",
+                      "Registered Office Mail Handling",
+                      "Certified Copies & Apostille coordination",
+                      "Bank Liaison support (CSP-level)"
+                    ].map((service) => (
+                      <label key={service} className="flex items-center gap-2 p-3 rounded-lg border border-border hover:bg-muted/50 cursor-pointer">
+                        <input type="checkbox" className="w-4 h-4 rounded" />
+                        <span className="text-sm text-brand-body">{service}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button variant="outline" onClick={() => setOpenForm(null)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button onClick={() => setOpenForm(null)} className="flex-1 bg-primary-color-new text-white">
+                  Save
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
+    </>
   );
 }
