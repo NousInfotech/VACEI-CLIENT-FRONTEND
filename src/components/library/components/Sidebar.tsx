@@ -4,19 +4,11 @@ import React from 'react';
 import { FolderIcon } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { LibraryItem } from '@/data/libraryData';
+import { useLibrary } from '../../../app/context/LibraryContext';
 
-interface SidebarProps {
-  rootFolders: LibraryItem[];
-  currentFolderId: string | null;
-  handleFolderClick: (id: string | null) => void;
-}
+export const Sidebar: React.FC = () => {
+  const { rootFolders, currentFolderId, handleFolderClick } = useLibrary();
 
-export const Sidebar: React.FC<SidebarProps> = ({
-  rootFolders,
-  currentFolderId,
-  handleFolderClick
-}) => {
   return (
     <div className="w-64 border-r border-gray-200 flex flex-col bg-gray-50/20">
       <ScrollArea className="flex-1">

@@ -2,38 +2,36 @@
 
 import React from 'react';
 import { Download, Eye } from 'lucide-react';
-import { LibraryItem } from '@/data/libraryData';
+import { useLibrary } from '../../../app/context/LibraryContext';
 
-interface ContextMenuProps {
-  x: number;
-  y: number;
-  itemId: string;
-  items: LibraryItem[];
-}
+export const ContextMenu: React.FC = () => {
+  const { contextMenu, closeContextMenu, currentItems } = useLibrary();
+  
+  if (!contextMenu) return null;
 
-export const ContextMenu: React.FC<ContextMenuProps> = ({
-  x,
-  y,
-  itemId,
-  items
-}) => {
-  const item = items.find(i => i.id === itemId);
+  const item = currentItems.find(i => i.id === contextMenu.itemId);
   if (!item) return null;
 
   return (
     <div 
-      className="fixed z-50 bg-white border border-gray-200 rounded-xl shadow-xl p-1 min-w-[160px] animate-in fade-in zoom-in duration-100"
-      style={{ top: y, left: x }}
+      className="fixed z-50 bg-white border border-gray-200 rounded-xl shadow-2xl py-1.5 w-48 animate-in fade-in zoom-in duration-100"
+      style={{ left: contextMenu.x, top: contextMenu.y }}
       onClick={(e) => e.stopPropagation()}
     >
-      <button className="flex items-center w-full gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
-        <Download className="w-4 h-4 text-gray-500" />
-        Download
+      <button 
+        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-primary transition-colors text-left"
+        onClick={() => { console.log('Download', item.name); closeContextMenu(); }}
+      >
+        <Download className="w-4 h-4" />
+        Download {item.type === 'folder' ? 'Folder' : ''}
       </button>
       {item.type === 'file' && (
-        <button className="flex items-center w-full gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left">
-          <Eye className="w-4 h-4 text-gray-500" />
-          View File
+        <button 
+          className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-primary transition-colors text-left"
+          onClick={() => { console.log('View', item.name); closeContextMenu(); }}
+        >
+          <Eye className="w-4 h-4" />
+          Quick View
         </button>
       )}
     </div>
