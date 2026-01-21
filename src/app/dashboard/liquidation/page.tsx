@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import DashboardCard from "@/components/DashboardCard";
 import DashboardActionButton from "@/components/DashboardActionButton";
 import PageHeader from "@/components/shared/PageHeader";
@@ -36,6 +37,8 @@ const steps = [
 ];
 
 export default function LiquidationPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeLiquidation, setActiveLiquidation] = useState(false);
   const [liquidationType, setLiquidationType] = useState<string | null>(null);
   const [initiatedAt, setInitiatedAt] = useState<Date | null>(null);
@@ -69,11 +72,11 @@ export default function LiquidationPage() {
   const [liquidationDocs, setLiquidationDocs] = useState<
     { key: string; label: string; status: "Uploaded" | "Approved" | "Filed" | "Missing" }[]
   >([
-    { key: "board-resolutions", label: "Board resolutions", status: "Approved" },
-    { key: "shareholder-resolutions", label: "Shareholder resolutions", status: "Uploaded" },
-    { key: "liquidator-appointment", label: "Liquidator appointment", status: "Filed" },
+    { key: "board-resolutions", label: "Board resolutions", status: "Missing" },
+    { key: "shareholder-resolutions", label: "Shareholder resolutions", status: "Missing" },
+    { key: "liquidator-appointment", label: "Liquidator appointment", status: "Missing" },
     { key: "final-accounts", label: "Final accounts", status: "Missing" },
-    { key: "filing-confirmations", label: "Filing confirmations", status: "Filed" },
+    { key: "filing-confirmations", label: "Filing confirmations", status: "Missing" },
   ]);
   const [messages, setMessages] = useState<
     { id: string; author: "System" | "You"; text: string; timestamp: string }[]
@@ -159,6 +162,20 @@ export default function LiquidationPage() {
     };
     load();
   }, []);
+
+  // Check for uploaded document from URL params
+  useEffect(() => {
+    const uploadedDoc = searchParams.get("uploaded");
+    if (uploadedDoc) {
+      setLiquidationDocs((prev) =>
+        prev.map((doc) =>
+          doc.key === uploadedDoc ? { ...doc, status: "Uploaded" } : doc
+        )
+      );
+      // Clean up URL parameter
+      router.replace("/dashboard/liquidation", { scroll: false });
+    }
+  }, [searchParams, router]);
 
   return (
     <section className="flex flex-col gap-6 px-4 py-4 md:px-6 md:py-6 pt-2 md:pt-4">
@@ -546,7 +563,7 @@ export default function LiquidationPage() {
 
       <DashboardCard className="p-4 md:p-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg md:text-xl font-semibold text-gray-900">Liquidation Documents</h2>
+          <h2 className="text-lg md:text-xl font-semibold text-gray-900">Required Liquidation Documents</h2>
           <FileText className="w-5 h-5 text-brand-primary" />
         </div>
         <div className="space-y-2">
@@ -557,30 +574,32 @@ export default function LiquidationPage() {
             >
               <div className="space-y-0.5">
                 <div className="text-sm md:text-base font-medium text-gray-900">{d.label}</div>
-                <div className="text-xs md:text-sm text-gray-600">
-                  Status: {d.status}
-                </div>
               </div>
               <div className="flex items-center gap-2">
+                {d.status === "Uploaded" && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                    onClick={() => {
+                      // TODO: Open document preview
+                      console.log("View document:", d.key);
+                    }}
+                    title="View"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                )}
                 <Button
-                  variant="outline"
-                  className="border-gray-300 text-gray-700"
-                  onClick={() => {}}
-                >
-                  View
-                </Button>
-                <Button
+                  size="icon"
                   className={`${isCompleted ? "bg-gray-200 text-gray-500 cursor-not-allowed" : "bg-brand-primary hover:bg-brand-active text-white"}`}
                   disabled={isCompleted}
                   onClick={() => {
-                    setLiquidationDocs((prev) =>
-                      prev.map((x) =>
-                        x.key === d.key ? { ...x, status: "Uploaded" } : x
-                      )
-                    );
+                    router.push(`/dashboard/liquidation/upload/${d.key}`);
                   }}
+                  title="Upload"
                 >
-                  Upload
+                  <Upload className="w-4 h-4" />
                 </Button>
               </div>
             </div>
