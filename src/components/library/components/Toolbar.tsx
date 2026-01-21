@@ -5,35 +5,25 @@ import { Search, List, LayoutGrid, Download, ArrowLeft, Filter, ChevronDown } fr
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { useLibrary } from '../../../app/context/LibraryContext';
 
-interface ToolbarProps {
-  currentFolderId: string | null;
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  viewMode: 'list' | 'grid';
-  setViewMode: (mode: 'list' | 'grid') => void;
-  sortConfig: { field: string; order: 'asc' | 'desc' };
-  handleSort: (field: any) => void;
-  handleBack: () => void;
-  selectedItemsCount: number;
-  filterType: string;
-  setFilterType: (type: string) => void;
-}
+export const Toolbar: React.FC = () => {
+  const {
+    currentFolderId,
+    searchQuery,
+    setSearchQuery,
+    viewMode,
+    setViewMode,
+    sortConfig,
+    handleSort,
+    handleBack,
+    selectedItems,
+    filterType,
+    setFilterType
+  } = useLibrary();
 
-export const Toolbar: React.FC<ToolbarProps> = ({
-  currentFolderId,
-  searchQuery,
-  setSearchQuery,
-  viewMode,
-  setViewMode,
-  sortConfig,
-  handleSort,
-  handleBack,
-  selectedItemsCount,
-  filterType,
-  setFilterType
-}) => {
   const [isFilterOpen, setIsFilterOpen] = React.useState(false);
+  const selectedItemsCount = selectedItems.length;
 
   const filterOptions = [
     { id: 'all', label: 'All Files' },
@@ -41,6 +31,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     { id: 'spreadsheet', label: 'Spreadsheets' },
     { id: 'document', label: 'Word Documents' },
   ];
+
   return (
     <div className="flex items-center justify-between p-4 border-b border-gray-200 gap-4">
       <div className="flex items-center gap-3 flex-1">

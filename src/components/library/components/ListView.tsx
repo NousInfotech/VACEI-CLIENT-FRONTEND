@@ -4,23 +4,12 @@ import React from 'react';
 import { FolderIcon, Download, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { LibraryItem, getFileIcon } from '@/data/libraryData';
+import { getFileIcon } from '@/data/libraryData';
+import { useLibrary } from '../../../app/context/LibraryContext';
 
-interface ListViewProps {
-  items: LibraryItem[];
-  selectedItems: string[];
-  handleDoubleClick: (item: LibraryItem) => void;
-  handleSelection: (id: string, e: React.MouseEvent) => void;
-  handleContextMenu: (e: React.MouseEvent, itemId: string) => void;
-}
+export const ListView: React.FC = () => {
+  const { currentItems, selectedItems, handleDoubleClick, handleSelection, handleContextMenu } = useLibrary();
 
-export const ListView: React.FC<ListViewProps> = ({
-  items,
-  selectedItems,
-  handleDoubleClick,
-  handleSelection,
-  handleContextMenu
-}) => {
   return (
     <table className="w-full text-left border-separate border-spacing-y-2">
       <thead>
@@ -32,7 +21,7 @@ export const ListView: React.FC<ListViewProps> = ({
         </tr>
       </thead>
       <tbody>
-        {items.map((item) => {
+        {currentItems.map((item) => {
           const Icon = item.type === 'folder' ? FolderIcon : getFileIcon(item.fileType);
           const isSelected = selectedItems.includes(item.id);
           

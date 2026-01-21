@@ -3,26 +3,15 @@
 import React from 'react';
 import { FolderIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { LibraryItem, getFileIcon } from '@/data/libraryData';
+import { getFileIcon } from '@/data/libraryData';
+import { useLibrary } from '../../../app/context/LibraryContext';
 
-interface GridViewProps {
-  items: LibraryItem[];
-  selectedItems: string[];
-  handleDoubleClick: (item: LibraryItem) => void;
-  handleSelection: (id: string, e: React.MouseEvent) => void;
-  handleContextMenu: (e: React.MouseEvent, itemId: string) => void;
-}
+export const GridView: React.FC = () => {
+  const { currentItems, selectedItems, handleDoubleClick, handleSelection, handleContextMenu } = useLibrary();
 
-export const GridView: React.FC<GridViewProps> = ({
-  items,
-  selectedItems,
-  handleDoubleClick,
-  handleSelection,
-  handleContextMenu
-}) => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-      {items.map((item) => {
+      {currentItems.map((item) => {
         const Icon = item.type === 'folder' ? FolderIcon : getFileIcon(item.fileType);
         const isSelected = selectedItems.includes(item.id);
 
