@@ -78,7 +78,7 @@ const Company = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <BackButton />
+      {/* <BackButton /> */}
       <PageHeader
         title={data?.name || "Company Overview"}
         description="Detailed company profile, including distribution, hierarchy, and KYC status."

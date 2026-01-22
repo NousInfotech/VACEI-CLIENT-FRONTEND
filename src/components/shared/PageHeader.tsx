@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import DashboardCard from "@/components/DashboardCard";
 import { cn } from "@/lib/utils";
 
@@ -67,10 +68,17 @@ export const PageHeader = ({
                 </div>
               )}
               
-              {badge}
+              {badge && (
+                <Link href="/dashboard/compliance" className="cursor-pointer hover:opacity-80 transition-opacity">
+                  {badge}
+                </Link>
+              )}
 
               {riskLevel && (
-                <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 font-bold text-xs uppercase tracking-widest shadow-sm text-white">
+                <Link 
+                  href="/dashboard/compliance" 
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 font-bold text-xs uppercase tracking-widest shadow-sm text-white cursor-pointer hover:opacity-80 transition-opacity"
+                >
                   <span className={cn(
                     "w-2 h-2 rounded-full",
                     riskLevel.level === "High" ? "bg-destructive" : 
@@ -80,7 +88,7 @@ export const PageHeader = ({
                     riskLevel.level === "High" ? "text-red-300" : 
                     riskLevel.level === "Medium" ? "text-yellow-300" : "text-green-300"
                   )}>{riskLevel.level}</span>
-                </div>
+                </Link>
               )}
             </div>
           )}
