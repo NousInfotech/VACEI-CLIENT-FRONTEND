@@ -605,6 +605,17 @@ export default function LiquidationPage() {
             </div>
           ))}
         </div>
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <Button
+            className="w-full bg-brand-primary hover:bg-brand-active text-white disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed"
+            disabled={liquidationDocs.some((doc) => doc.status === "Missing")}
+            onClick={() => {
+              router.push("/dashboard/liquidation/engagement");
+            }}
+          >
+            Go To Start Liquidation
+          </Button>
+        </div>
       </DashboardCard>
       <DashboardCard className="p-4 md:p-6">
         <div className="flex items-center justify-between mb-3">

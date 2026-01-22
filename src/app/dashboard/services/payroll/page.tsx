@@ -24,6 +24,7 @@ import {
   Calendar,
 } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
+import PayrollRequestForm, { PayrollFormData } from "@/components/payroll/PayrollRequestForm";
 
 // ------------------------------------------------------------------
 // PART 7 — DATA MODEL (MINIMUM) & EXTENSIONS
@@ -286,6 +287,7 @@ export default function PayrollWorkspacePage() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
   const [isSimulating, setIsSimulating] = useState(false);
   const [showUploadHelp, setShowUploadHelp] = useState(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const billingSectionRef = useRef<HTMLDivElement>(null);
 
@@ -342,11 +344,9 @@ export default function PayrollWorkspacePage() {
     }
   }, [payrollData.status, isSimulating]);
 
-  // Handler: Trigger file input dialog
+  // Handler: Open payroll request form
   const handleUpload = () => {
-    // Part 5: "Clients upload one thing only"
-    // Part 4: Step 3: Client uploads changes
-    fileInputRef.current?.click();
+    setIsFormOpen(true);
   };
 
   // Handler: Process selected file (Part 5: What Client Uploads)
@@ -831,6 +831,18 @@ export default function PayrollWorkspacePage() {
           </div>
         </div>
       </section>
+
+      {/* Payroll Request Form Modal */}
+      <PayrollRequestForm
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSubmit={(data: PayrollFormData) => {
+          console.log("Payroll request submitted:", data);
+          // TODO: Handle form submission (API call, etc.)
+          // You can add API call here to submit the form data
+          // After submission, you might want to trigger the file upload flow if needed
+        }}
+      />
     </>
   );
 }

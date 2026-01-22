@@ -7,9 +7,11 @@ import PillTabs from "@/components/shared/PillTabs";
 import { useTabQuery } from "@/hooks/useTabQuery";
 import { LayoutDashboard, LineChart } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
+import BookkeepingRequestForm, { BookkeepingFormData } from "@/components/bookkeeping/BookkeepingRequestForm";
 
 function BookkeepingWorkspaceContent() {
   const [activeTab, setActiveTab] = useTabQuery("overview");
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   return (
     <section className="mx-auto max-w-[1200px] w-full pt-5 space-y-6">
@@ -18,9 +20,13 @@ function BookkeepingWorkspaceContent() {
         subtitle="Overview of status, missing items, uploads, and monthly summaries."
         actions={
           <div className="flex gap-2">
-            <Link href="/dashboard/document-organizer/document-upload">
-              <Button variant="outline" className="bg-light text-primary-color-new">Upload documents</Button>
-            </Link>
+            <Button 
+              variant="outline" 
+              className="bg-light text-primary-color-new"
+              onClick={() => setIsFormOpen(true)}
+            >
+              Upload documents
+            </Button>
             <Link href="/dashboard/todo-list">
               <Button variant="outline" className="bg-light text-primary-color-new">View requests</Button>
             </Link>
@@ -63,11 +69,14 @@ function BookkeepingWorkspaceContent() {
                     className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3 shadow-sm"
                   >
                     <span className="text-brand-body font-medium">{item}</span>
-                    <Link href="/dashboard/document-organizer/document-upload">
-                      <Button size="sm" variant="ghost" className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                        Upload
-                      </Button>
-                    </Link>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                      onClick={() => setIsFormOpen(true)}
+                    >
+                      Upload
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -161,6 +170,17 @@ function BookkeepingWorkspaceContent() {
           </div>
         </div>
       )}
+
+      {/* Bookkeeping Request Form Modal */}
+      <BookkeepingRequestForm
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSubmit={(data: BookkeepingFormData) => {
+          console.log("Bookkeeping request submitted:", data);
+          // TODO: Handle form submission (API call, etc.)
+          // You can add API call here to submit the form data
+        }}
+      />
     </section>
   );
 }
