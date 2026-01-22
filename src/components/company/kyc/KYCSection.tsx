@@ -119,9 +119,6 @@ const KYCSection = () => {
   }
 
   const renderWorkflowList = (workflowType: string) => {
-    // KYC data is an array of workflows, filter by workflowType
-    const filteredWorkflows = (kyc || []).filter((w: any) => w.workflowType === workflowType)
-
     if (loading) {
       return <ListSkeleton count={3} />;
     }
@@ -136,122 +133,183 @@ const KYCSection = () => {
       )
     }
 
-    if (filteredWorkflows.length === 0) {
+    // Get all persons from company data based on workflow type
+    let allPersons: any[] = []
+    if (workflowType === 'Shareholder' && company?.shareHolders) {
+      allPersons = company.shareHolders.map((sh: any) => ({
+        _id: sh.personId?._id || sh._id,
+        name: sh.personId?.name || 'Unknown',
+        address: sh.personId?.address,
+        nationality: sh.personId?.nationality,
+        sharePercentage: sh.sharePercentage,
+        type: 'Shareholder'
+      }))
+    } else if (workflowType === 'Representative' && company?.representationalSchema) {
+      allPersons = company.representationalSchema.map((rep: any) => ({
+        _id: rep.personId?._id || rep._id,
+        name: rep.personId?.name || 'Unknown',
+        address: rep.personId?.address,
+        nationality: rep.personId?.nationality,
+        roles: rep.role || [],
+        type: 'Representative'
+      }))
+    }
+
+    // Create a map of person IDs to their KYC workflow items
+    const kycMap = new Map<string, any>()
+    const filteredWorkflows = (kyc || []).filter((w: any) => w.workflowType === workflowType)
+    
+    filteredWorkflows.forEach((workflow: any) => {
+      (workflow.documentRequests || []).forEach((item: any) => {
+        const personId = item.person?._id || item.person?.id
+        if (personId) {
+          kycMap.set(personId, item)
+        }
+      })
+    })
+
+    if (allPersons.length === 0) {
       return (
         <EmptyState
           icon={Shield}
-          title="No KYC Workflows"
-          description={`No ${workflowType} KYC workflows are currently available in the system. Please check later or start a new verification process.`}
+          title={`No ${workflowType}s Found`}
+          description={`No ${workflowType.toLowerCase()}s are currently associated with this company.`}
         />
       )
     }
 
     return (
       <div className="space-y-4">
-        {filteredWorkflows.map((workflow: any, workflowIndex: number) => (
-          <div key={workflow._id || workflowIndex} className="space-y-4">
-            {(workflow.documentRequests || []).map((item: any) => {
-              const person = item.person
-              const request = item.documentRequest
-              const isExpanded = expandedRequests.has(request._id)
+        {allPersons.map((person: any) => {
+          const kycItem = kycMap.get(person._id)
+          const hasKycWorkflow = !!kycItem
+          const request = kycItem?.documentRequest
+          const isExpanded = request ? expandedRequests.has(request._id) : false
 
-              const singleDocs = (request.documents || []) as any[]
-              const multipleGroups = (request.multipleDocuments || []) as any[]
+          // If there's a KYC workflow, get document counts
+          let totalDocs = 0
+          let uploadedDocsCount = 0
+          let singleDocs: any[] = []
+          let multipleGroups: any[] = []
 
-              const totalDocs = singleDocs.length + multipleGroups.reduce((acc, md) => acc + (md.multiple?.length || 0), 0)
-              const uploadedDocsCount = singleDocs.filter(d => d.url).length +
-                multipleGroups.reduce((acc, md) => acc + (md.multiple?.filter((m: any) => m.url).length || 0), 0)
+          if (request) {
+            singleDocs = (request.documents || []) as any[]
+            multipleGroups = (request.multipleDocuments || []) as any[]
+            totalDocs = singleDocs.length + multipleGroups.reduce((acc, md) => acc + (md.multiple?.length || 0), 0)
+            uploadedDocsCount = singleDocs.filter(d => d.url).length +
+              multipleGroups.reduce((acc, md) => acc + (md.multiple?.filter((m: any) => m.url).length || 0), 0)
+          }
 
-              return (
-                <Card
-                  key={request._id}
-                  className="bg-white/80 border border-gray-300 rounded-xl shadow-sm hover:bg-white/70 transition-all mb-4 overflow-hidden"
-                >
-                  <CardContent className="p-0">
-                    <div className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">
-                              {person.name.charAt(0)}
-                            </div>
-                            <div>
-                              <h4 className="text-lg font-semibold text-gray-900">
-                                {person.name}
-                              </h4>
-                            </div>
-                          </div>
+          return (
+            <Card
+              key={person._id}
+              className="bg-white/80 border border-gray-300 rounded-xl shadow-sm hover:bg-white/70 transition-all mb-4 overflow-hidden"
+            >
+              <CardContent className="p-0">
+                <div className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">
+                          {person.name.charAt(0)}
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-semibold text-gray-900">
+                            {person.name}
+                          </h4>
+                        </div>
+                      </div>
 
-                          <div className="mb-4 flex flex-wrap gap-2">
+                      <div className="mb-4 flex flex-wrap gap-2">
+                        {hasKycWorkflow ? (
+                          <>
                             <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-100 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
-                              {request.category.toUpperCase()}
+                              {request.category?.toUpperCase() || 'KYC'}
                             </Badge>
                             <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
                               {uploadedDocsCount}/{totalDocs} DOCUMENTS
                             </Badge>
                             {getStatusBadge(request.status)}
-                          </div>
+                          </>
+                        ) : (
+                          <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-200 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
+                            NO KYC WORKFLOW
+                          </Badge>
+                        )}
+                      </div>
 
-                          <div className="space-y-2">
-                            {person.address && (
-                              <div className="flex items-start gap-2 text-sm text-gray-600">
-                                <MapPin className="h-4 w-4 mt-0.5 text-gray-400 shrink-0" />
-                                <span className="text-xs leading-relaxed">{person.address}</span>
-                              </div>
-                            )}
-                            {person.nationality && (
-                              <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <Globe className="h-4 w-4 text-gray-400 shrink-0" />
-                                <span className="text-xs">{person.nationality}</span>
-                              </div>
-                            )}
+                      <div className="space-y-2">
+                        {person.address && (
+                          <div className="flex items-start gap-2 text-sm text-gray-600">
+                            <MapPin className="h-4 w-4 mt-0.5 text-gray-400 shrink-0" />
+                            <span className="text-xs leading-relaxed">{person.address}</span>
                           </div>
-                        </div>
-
-                        <div className="flex flex-col items-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleExpand(request._id)}
-                            className="rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50 h-9 px-3"
-                          >
-                            {isExpanded ? <ChevronUp size={16} className="mr-2" /> : <ChevronDown size={16} className="mr-2" />}
-                            {isExpanded ? 'Hide Documents' : 'View Documents'}
-                          </Button>
-                        </div>
+                        )}
+                        {person.nationality && (
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Globe className="h-4 w-4 text-gray-400 shrink-0" />
+                            <span className="text-xs">{person.nationality}</span>
+                          </div>
+                        )}
+                        {workflowType === 'Shareholder' && person.sharePercentage !== undefined && (
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <User className="h-4 w-4 text-gray-400 shrink-0" />
+                            <span className="text-xs">Share Percentage: {person.sharePercentage.toFixed(2)}%</span>
+                          </div>
+                        )}
+                        {workflowType === 'Representative' && person.roles && person.roles.length > 0 && (
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Shield className="h-4 w-4 text-gray-400 shrink-0" />
+                            <span className="text-xs">Roles: {person.roles.join(', ')}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {isExpanded && (
-                      <div className="bg-gray-50/50 border-t border-gray-100 p-6 animate-in slide-in-from-top-2 duration-300 space-y-4">
-                        <div className="mb-2 flex items-center justify-between">
-                          <h5 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Requested Documents</h5>
-                          <span className="text-[10px] text-gray-400 italic">Manage your compliance documents here</span>
-                        </div>
-
-                        <DocumentRequestSingle
-                          requestId={request._id}
-                          documents={singleDocs}
-                          onUpload={handleUpload}
-                          onClearDocument={handleClear}
-                        />
-
-                        <DocumentRequestDouble
-                          requestId={request._id}
-                          multipleDocuments={multipleGroups}
-                          onUploadMultiple={handleUploadMultiple}
-                          onClearMultipleItem={handleClearMultipleItem}
-                          onClearMultipleGroup={handleClearMultipleGroup}
-                          onDownloadMultipleGroup={handleDownloadMultipleGroup}
-                        />
+                    {hasKycWorkflow && (
+                      <div className="flex flex-col items-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => toggleExpand(request._id)}
+                          className="rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50 h-9 px-3"
+                        >
+                          {isExpanded ? <ChevronUp size={16} className="mr-2" /> : <ChevronDown size={16} className="mr-2" />}
+                          {isExpanded ? 'Hide Documents' : 'View Documents'}
+                        </Button>
                       </div>
                     )}
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        ))}
+                  </div>
+                </div>
+
+                {hasKycWorkflow && isExpanded && (
+                  <div className="bg-gray-50/50 border-t border-gray-100 p-6 animate-in slide-in-from-top-2 duration-300 space-y-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h5 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Requested Documents</h5>
+                      <span className="text-[10px] text-gray-400 italic">Manage your compliance documents here</span>
+                    </div>
+
+                    <DocumentRequestSingle
+                      requestId={request._id}
+                      documents={singleDocs}
+                      onUpload={handleUpload}
+                      onClearDocument={handleClear}
+                    />
+
+                    <DocumentRequestDouble
+                      requestId={request._id}
+                      multipleDocuments={multipleGroups}
+                      onUploadMultiple={handleUploadMultiple}
+                      onClearMultipleItem={handleClearMultipleItem}
+                      onClearMultipleGroup={handleClearMultipleGroup}
+                      onDownloadMultipleGroup={handleDownloadMultipleGroup}
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
     )
   }

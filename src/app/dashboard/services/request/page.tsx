@@ -7,6 +7,7 @@ import { ChevronDown, Upload, FileText, X } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import DashboardCard from "@/components/DashboardCard";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 // Form components
 import BookkeepingRequestFormInline from "@/components/bookkeeping/BookkeepingRequestFormInline";
@@ -45,7 +46,8 @@ type ServiceCode =
   | "company_structure"
   | "liquidation"
   | "advisory"
-  | "one_off";
+  | "one_off"
+  | "other";
 
 const STORAGE_KEY = "vacei-service-request-draft";
 
@@ -59,6 +61,7 @@ const serviceLabels: Record<ServiceCode, string> = {
   liquidation: "Liquidation & Wind-down",
   advisory: "Advisory & Compliance — Special Matters",
   one_off: "One-off / Special Project",
+  other: "Other",
 };
 
 export default function ServiceRequestPage() {
@@ -104,6 +107,13 @@ export default function ServiceRequestPage() {
     briefDescription: "",
     uploadedFiles: [],
   });
+  const [otherData, setOtherData] = useState<{
+    description: string;
+    uploadedFiles: File[];
+  }>({
+    description: "",
+    uploadedFiles: [],
+  });
 
   // Hydrate from localStorage
   useEffect(() => {
@@ -141,6 +151,9 @@ export default function ServiceRequestPage() {
               break;
             case "one_off":
               setOneOffData(saved.formData);
+              break;
+            case "other":
+              setOtherData(saved.formData);
               break;
           }
         }
@@ -182,6 +195,9 @@ export default function ServiceRequestPage() {
       case "one_off":
         formData = oneOffData;
         break;
+      case "other":
+        formData = otherData;
+        break;
     }
     localStorage.setItem(
       STORAGE_KEY,
@@ -198,6 +214,7 @@ export default function ServiceRequestPage() {
     liquidationData,
     advisoryData,
     oneOffData,
+    otherData,
   ]);
 
   const resetForm = () => {
@@ -211,6 +228,7 @@ export default function ServiceRequestPage() {
     setLiquidationData({ whatDoYouNeed: "", uploadedFiles: [] });
     setAdvisoryData({ whatDoYouNeed: "", uploadedFiles: [] });
     setOneOffData({ briefDescription: "", uploadedFiles: [] });
+    setOtherData({ description: "", uploadedFiles: [] });
     if (typeof window !== "undefined") {
       localStorage.removeItem(STORAGE_KEY);
     }
@@ -236,6 +254,8 @@ export default function ServiceRequestPage() {
         return advisoryData;
       case "one_off":
         return oneOffData;
+      case "other":
+        return otherData;
       default:
         return null;
     }
@@ -271,6 +291,8 @@ export default function ServiceRequestPage() {
         return !!(formData as AdvisoryComplianceFormData).whatDoYouNeed;
       case "one_off":
         return !!(formData as OneOffProjectFormData).briefDescription.trim();
+      case "other":
+        return !!(formData as { description: string; uploadedFiles: File[] }).description.trim();
       default:
         return false;
     }
@@ -374,9 +396,114 @@ export default function ServiceRequestPage() {
             onChange={setOneOffData}
           />
         );
+      case "other":
+        return renderOtherForm();
       default:
         return null;
     }
+  };
+
+  const renderOtherForm = () => {
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files || []);
+      setOtherData({ ...otherData, uploadedFiles: [...otherData.uploadedFiles, ...files] });
+    };
+
+    const removeFile = (index: number) => {
+      setOtherData({
+        ...otherData,
+        uploadedFiles: otherData.uploadedFiles.filter((_, i) => i !== index),
+      });
+    };
+
+    return (
+      <div className="space-y-6">
+        {/* Purpose Section */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-gray-900">Purpose</h3>
+          <p className="text-sm text-gray-600">
+            Please describe your service request. This option is for services that don't fit into the standard categories.
+          </p>
+        </div>
+
+        {/* Required Fields */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-gray-900">Required fields</h3>
+
+          {/* Describe what you need */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Describe what you need <span className="text-red-500">*</span>
+            </label>
+            <p className="text-xs text-gray-500 mb-2">
+              Please provide a detailed description of the service you require.
+            </p>
+            <Textarea
+              value={otherData.description}
+              onChange={(e) => setOtherData({ ...otherData, description: e.target.value })}
+              rows={5}
+              className="w-full"
+              placeholder="Describe your service request..."
+            />
+          </div>
+        </div>
+
+        {/* Attachments */}
+        <div className="space-y-2 border-t pt-4">
+          <label className="text-sm font-medium text-gray-700">
+            Attachments (optional)
+          </label>
+          <p className="text-xs text-gray-500 mb-2">
+            Upload any relevant documents that may help us understand your request.
+          </p>
+          <div className="space-y-3">
+            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                <p className="mb-2 text-sm text-gray-500">
+                  <span className="font-semibold">Click to upload</span> or drag and drop
+                </p>
+                <p className="text-xs text-gray-500">PDF, DOC, DOCX, XLS, XLSX, JPG, PNG</p>
+              </div>
+              <input
+                type="file"
+                className="hidden"
+                multiple
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                onChange={handleFileUpload}
+              />
+            </label>
+
+            {/* Uploaded files list */}
+            {otherData.uploadedFiles.length > 0 && (
+              <div className="space-y-2">
+                {otherData.uploadedFiles.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-200"
+                  >
+                    <div className="flex items-center space-x-2 flex-1 min-w-0">
+                      <FileText className="w-4 h-4 text-gray-400 shrink-0" />
+                      <span className="text-sm text-gray-700 truncate">{file.name}</span>
+                      <span className="text-xs text-gray-500">
+                        ({(file.size / 1024).toFixed(1)} KB)
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className="text-red-500 hover:text-red-700 p-1"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (

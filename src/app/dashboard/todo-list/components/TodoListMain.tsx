@@ -15,7 +15,8 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { Button } from "@/components/ui/button";
 import Dropdown from "@/components/Dropdown";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { ChevronDown, Clock } from "lucide-react";
+import { ChevronDown, Clock, ArrowRight } from "lucide-react";
+import DashboardCard from "@/components/DashboardCard";
 // Custom hook for debouncing a value
 function useDebounce<T>(value: T, delay: number): T {
     const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -64,12 +65,14 @@ export default function TodoList() {
     const [alertVariant, setAlertVariant] = useState<AlertVariant | undefined>(undefined);
 
     const categoryParam = searchParams.get("category");
-
-    if (categoryParam == null) {
-        router.push(`/dashboard/todo-list?category=MQ==`);
-    }
-
     const categoryFilterId = categoryParam ? parseInt(atob(categoryParam)) : null;
+
+    // Redirect to default category if no category is provided
+    useEffect(() => {
+        if (categoryParam == null) {
+            router.push(`/dashboard/todo-list?category=MQ==`);
+        }
+    }, [categoryParam, router]);
 
     const [existingAttachments, setExistingAttachments] = useState<TaskAttachment[]>([]);
     const [searchText, setSearchText] = useState<string>("");
@@ -78,6 +81,15 @@ export default function TodoList() {
     const [dueDateFilter, SetdueDateFilter] = useState<string | null>(null);
     const [statusFilterId, setStatusFilterId] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(true); // Default to true for initial load
+    const [pendingTasks, setPendingTasks] = useState<Task[]>([]);
+    const [topPriorityActions, setTopPriorityActions] = useState<Array<{
+        id: string | number;
+        title: string;
+        service: string;
+        reason: string;
+        action: string;
+        href: string;
+    }>>([]);
 
     // Debounce filter values
     const debouncedSearchText = useDebounce(searchText, 500);
@@ -97,6 +109,55 @@ export default function TodoList() {
                 console.error("Failed to decode user_id from localStorage:", err);
             }
         }
+    }, []);
+
+    // Fetch pending tasks and top priority actions
+    useEffect(() => {
+        const loadPendingTasks = async () => {
+            try {
+                const taskResponse = await fetchTasks({ page: 1 });
+                const allTasks = taskResponse.data || [];
+                setPendingTasks(allTasks.slice(0, 5));
+            } catch (e) {
+                console.error("Failed to load pending tasks", e);
+            }
+        };
+        loadPendingTasks();
+
+        // Mock CSP renewals for top priority actions
+        const mockCspRenewals = [
+            {
+                id: "csp-renewal-1",
+                title: "Renew Company Secretary",
+                service: "Corporate Services",
+                reason: "Expires 31 Dec 2025",
+                action: "Renew now",
+                href: "/dashboard/services/csp-mbr/services/csp-2/renew"
+            },
+            {
+                id: "csp-renewal-2",
+                title: "Renew Director Services",
+                service: "Corporate Services",
+                reason: "Expires 30 Jun 2025",
+                action: "Renew now",
+                href: "/dashboard/services/csp-mbr/services/csp-3/renew"
+            }
+        ];
+
+        const mockTopPriorityActions = [
+            { id: 1, title: "Upload March bank statement", service: "Accounting", reason: "Due now", action: "Upload", href: "/dashboard/document-organizer/document-upload" },
+            { id: 2, title: "Reply to Audit Query #12", service: "Audit", reason: "Waiting on you", action: "Reply", href: "/dashboard/messages" },
+            { id: 3, title: "VAT Q2 – Missing 1 sales invoice", service: "VAT", reason: "Required for submission", action: "Upload", href: "/dashboard/document-organizer/document-upload" },
+            ...mockCspRenewals.map(renewal => ({
+                id: renewal.id,
+                title: renewal.title,
+                service: renewal.service,
+                reason: renewal.reason,
+                action: renewal.action,
+                href: renewal.href
+            }))
+        ];
+        setTopPriorityActions(mockTopPriorityActions);
     }, []);
 
     // Consolidated loadData function. Removed page parameter from here
@@ -339,6 +400,87 @@ export default function TodoList() {
                 title="To-Do List"
                 subtitle="Manage your tasks, track progress, and collaborate with your team."
             />
+
+            {/* Top Priority Actions */}
+            <DashboardCard animate className="overflow-hidden group">
+                <div className="flex items-center justify-between px-8 py-6 border-b border-gray-300">
+                    <div className="flex items-center gap-4">
+                        <div className="w-1 h-7 bg-gray-900 rounded-full" />
+                        <div className="flex flex-col">
+                            <h3 className="text-xl font-semibold text-gray-900">Top Priority Actions</h3>
+                        </div>
+                    </div>
+                    <Link href="/dashboard/compliance/list">
+                        <Button variant="default">View all</Button>
+                    </Link>
+                </div>
+                <div className="p-6 space-y-2">
+                    {topPriorityActions.map((action) => (
+                        <div key={action.id} className="flex items-center justify-between gap-4 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors group/action">
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                                <div className="w-2 h-2 rounded-full bg-gray-900 shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-base font-semibold text-gray-900 truncate">{action.title}</p>
+                                    <p className="text-xs text-gray-500 mt-0.5">{action.service} · {action.reason}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <Link href={action.href}>
+                                    <Button size="sm" variant="default" className="whitespace-nowrap">
+                                        {action.action}
+                                    </Button>
+                                </Link>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </DashboardCard>
+
+            {/* Pending Actions */}
+            {pendingTasks.length > 0 && (
+                <DashboardCard className="overflow-hidden group">
+                    <div className="flex items-center justify-between px-8 py-6 border-b border-gray-300">
+                        <div className="flex items-center gap-4">
+                            <div className="w-1 h-7 bg-gray-900 rounded-full" />
+                            <div className="flex flex-col">
+                                <h3 className="text-xl font-medium text-gray-900">Pending Actions</h3>
+                                <p className="text-sm text-gray-600">Tasks awaiting your attention</p>
+                            </div>
+                        </div>
+                        <Link href="/dashboard/compliance/list">
+                            <Button variant="default">View all</Button>
+                        </Link>
+                    </div>
+                    <div className="p-4 space-y-4">
+                        {pendingTasks.map((task) => (
+                            <Link
+                                key={task.id}
+                                href={`/dashboard/compliance/detail?taskId=${btoa(task.id.toString())}`}
+                                className="group/task flex items-center justify-between rounded-xl border border-gray-50 bg-gray-50/50 px-6 py-5 text-sm hover:bg-white hover:shadow-md transition-all duration-300 gap-4"
+                            >
+                                <div className="space-y-1 min-w-0">
+                                    <p className="font-semibold text-gray-900 text-base truncate">{task.title}</p>
+                                    {task.dueDate && (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] uppercase font-medium text-gray-400 tracking-widest shrink-0">Deadline:</span>
+                                            <span className="text-xs font-medium text-destructive whitespace-nowrap">{new Date(task.dueDate).toLocaleDateString()}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-4 shrink-0">
+                                    <span className="text-[10px] font-medium uppercase tracking-widest rounded-lg bg-white border border-gray-200 px-3 py-1.5 text-gray-900 shadow-sm whitespace-nowrap">
+                                        {task.status || "Open"}
+                                    </span>
+                                    <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center shrink-0">
+                                        <ArrowRight className="h-4 w-4" />
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </DashboardCard>
+            )}
+
             <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
                 {message && <AlertMessage message={message} variant={alertVariant} onClose={() => setMessage("")} duration={6000} />}
                 <TodoListTabs categories={categories} onCategoryClick={handleCategoryClick} />

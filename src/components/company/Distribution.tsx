@@ -478,7 +478,7 @@ const SharePieChart: React.FC<SharePieChartProps> = ({
                   <Tooltip
                     formatter={(val: any, name: any, props: any) => [
                       `${Number(val).toFixed(2)}%`,
-                      `${props.payload?.type || ""} ${name}`.trim(),
+                      name,
                     ]}
                   />
                   <Legend
