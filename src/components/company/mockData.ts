@@ -198,7 +198,7 @@ export const MOCK_COMPANY_DATA: CompanyResponse = {
         "address": "55, Triq ix-Xatt, Marsa MRS 1907, Malta",
         "supportingDocuments": [],
         "authorizedShares": 10000,
-        "issuedShares": 5000,
+        "issuedShares": 15000,
         "totalShares": [
             {
                 "totalShares": 2000,
@@ -256,11 +256,53 @@ export const MOCK_COMPANY_DATA: CompanyResponse = {
             {
                 "personId": {
                     "_id": "6948dc4e75095ca2be980dbb",
+                    "name": "Godwin Cauchi",
+                    "nationality": "Maltese",
+                    "address": "SUNRISE FARMALLEY LAURENTI, BUSKETT L/O RABAT Malta",
+                    "supportingDocuments": [],
+                    "id": "6948dc4e75095ca2be980dbb"
+                },
+                "sharePercentage": 99.67,
+                "paidUpSharesPercentage": 100,
+                "sharesData": [
+                    {
+                        "totalShares": 14950,
+                        "class": "Ordinary",
+                        "type": "Ordinary"
+                    }
+                ],
+                "_id": "6948dc4f75095ca2be980dbf",
+                "id": "6948dc4f75095ca2be980dbf"
+            },
+            {
+                "personId": {
+                    "_id": "6948dc5375095ca2be980dc6",
+                    "name": "Wallace Cauchi",
+                    "nationality": "Maltese",
+                    "address": "2, Angela Flats, Triq IL-GIFEN, San Pawl IL-BAHAR Malta",
+                    "supportingDocuments": [],
+                    "id": "6948dc5375095ca2be980dc6"
+                },
+                "sharePercentage": 0.33,
+                "paidUpSharesPercentage": 100,
+                "sharesData": [
+                    {
+                        "totalShares": 50,
+                        "class": "Ordinary",
+                        "type": "Ordinary"
+                    }
+                ],
+                "_id": "6948dc5475095ca2be980dce",
+                "id": "6948dc5475095ca2be980dce"
+            },
+            {
+                "personId": {
+                    "_id": "6948dc4e75095ca2be980dbb_alt",
                     "name": "Krishna",
                     "nationality": "Maltese",
                     "address": "55, Triq ix-Xatt, Marsa MRS 1907, Malta",
                     "supportingDocuments": [],
-                    "id": "6948dc4e75095ca2be980dbb"
+                    "id": "6948dc4e75095ca2be980dbb_alt"
                 },
                 "sharePercentage": 22,
                 "paidUpSharesPercentage": 54,
@@ -286,17 +328,17 @@ export const MOCK_COMPANY_DATA: CompanyResponse = {
                         "type": "Ordinary"
                     }
                 ],
-                "_id": "6948dc4f75095ca2be980dbf",
-                "id": "6948dc4f75095ca2be980dbf"
+                "_id": "6948dc4f75095ca2be980dbf_alt",
+                "id": "6948dc4f75095ca2be980dbf_alt"
             },
             {
                 "personId": {
-                    "_id": "6948dc5375095ca2be980dc6",
+                    "_id": "6948dc5375095ca2be980dc6_alt",
                     "name": "Tony",
                     "nationality": "Maltese",
                     "address": "55, Triq ix-Xatt, Marsa MRS 1907, Malta",
                     "supportingDocuments": [],
-                    "id": "6948dc5375095ca2be980dc6"
+                    "id": "6948dc5375095ca2be980dc6_alt"
                 },
                 "sharePercentage": 28.000000000000004,
                 "paidUpSharesPercentage": 84,
@@ -322,17 +364,17 @@ export const MOCK_COMPANY_DATA: CompanyResponse = {
                         "type": "Ordinary"
                     }
                 ],
-                "_id": "6948dc5475095ca2be980dce",
-                "id": "6948dc5475095ca2be980dce"
+                "_id": "6948dc5475095ca2be980dce_alt",
+                "id": "6948dc5475095ca2be980dce_alt"
             }
         ],
         "representationalSchema": [
             {
                 "personId": {
                     "_id": "6948dc4e75095ca2be980dbb",
-                    "name": "Krishna",
+                    "name": "Godwin Cauchi",
                     "nationality": "Maltese",
-                    "address": "55, Triq ix-Xatt, Marsa MRS 1907, Malta",
+                    "address": "SUNRISE FARMALLEY LAURENTI, BUSKETT L/O RABAT Malta",
                     "supportingDocuments": [],
                     "id": "6948dc4e75095ca2be980dbb"
                 },
@@ -349,9 +391,9 @@ export const MOCK_COMPANY_DATA: CompanyResponse = {
             {
                 "personId": {
                     "_id": "6948dc5375095ca2be980dc6",
-                    "name": "Tony",
+                    "name": "Wallace Cauchi",
                     "nationality": "Maltese",
-                    "address": "55, Triq ix-Xatt, Marsa MRS 1907, Malta",
+                    "address": "2, Angela Flats, Triq IL-GIFEN, San Pawl IL-BAHAR Malta",
                     "supportingDocuments": [],
                     "id": "6948dc5375095ca2be980dc6"
                 },
@@ -364,6 +406,44 @@ export const MOCK_COMPANY_DATA: CompanyResponse = {
                 ],
                 "_id": "6948dc5475095ca2be980dcf",
                 "id": "6948dc5475095ca2be980dcf"
+            },
+            {
+                "personId": {
+                    "_id": "6948dc4e75095ca2be980dbb_alt",
+                    "name": "Krishna",
+                    "nationality": "Maltese",
+                    "address": "55, Triq ix-Xatt, Marsa MRS 1907, Malta",
+                    "supportingDocuments": [],
+                    "id": "6948dc4e75095ca2be980dbb_alt"
+                },
+                "role": [
+                    "Shareholder",
+                    "Legal Representative",
+                    "Director",
+                    "Secretary",
+                    "Judicial Representative"
+                ],
+                "_id": "6948dc4f75095ca2be980dc0_alt",
+                "id": "6948dc4f75095ca2be980dc0_alt"
+            },
+            {
+                "personId": {
+                    "_id": "6948dc5375095ca2be980dc6_alt",
+                    "name": "Tony",
+                    "nationality": "Maltese",
+                    "address": "55, Triq ix-Xatt, Marsa MRS 1907, Malta",
+                    "supportingDocuments": [],
+                    "id": "6948dc5375095ca2be980dc6_alt"
+                },
+                "role": [
+                    "Shareholder",
+                    "Director",
+                    "Legal Representative",
+                    "Secretary",
+                    "Judicial Representative"
+                ],
+                "_id": "6948dc5475095ca2be980dcf_alt",
+                "id": "6948dc5475095ca2be980dcf_alt"
             },
             {
                 "personId": {

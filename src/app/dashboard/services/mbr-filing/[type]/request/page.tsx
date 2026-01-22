@@ -21,8 +21,10 @@ import {
   Globe,
   Building2,
   CheckCircle2,
-  X
+  X,
+  Users
 } from "lucide-react";
+import { getCompanyById, type Company, type Shareholder, type RepresentationalSchema } from "@/api/auditService";
 
 type MBRFilingType = "share_transfer" | "director_change" | "share_capital" | "cross_border_merger" | "company_name_change";
 
@@ -66,6 +68,17 @@ const filingTypeConfigs: Record<MBRFilingType, FilingTypeInfo> = {
   }
 };
 
+interface PersonOption {
+  id: string;
+  name: string;
+  nationality: string;
+  address: string;
+  shares?: number;
+  sharePercentage?: number;
+  shareClass?: string;
+  roles?: string[];
+}
+
 export default function MBRFilingRequestPage() {
   const router = useRouter();
   const params = useParams();
@@ -81,14 +94,85 @@ export default function MBRFilingRequestPage() {
     type: "success" as "success" | "error" | "info"
   });
 
+  // Person selection state
+  const [persons, setPersons] = useState<PersonOption[]>([]);
+  const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>([]);
+  const [loadingPersons, setLoadingPersons] = useState(false);
+  const [company, setCompany] = useState<Company | null>(null);
+
   const filingConfig = filingType ? filingTypeConfigs[filingType] : null;
   const Icon = filingConfig?.icon || FileText;
+  const showPersonSelection = filingType === "share_transfer" || filingType === "director_change";
 
   useEffect(() => {
     if (!filingType || !filingTypeConfigs[filingType]) {
       router.push("/dashboard/services/mbr-filing");
     }
   }, [filingType, router]);
+
+  // Load company data and persons
+  useEffect(() => {
+    const loadCompanyData = async () => {
+      if (!showPersonSelection) return;
+
+      setLoadingPersons(true);
+      try {
+        const companyId = localStorage.getItem("vacei-active-company");
+        if (!companyId) {
+          setLoadingPersons(false);
+          return;
+        }
+
+        const companyData = await getCompanyById(companyId);
+        setCompany(companyData);
+
+        const personsList: PersonOption[] = [];
+
+        if (filingType === "share_transfer") {
+          // Get shareholders
+          if (companyData.shareHolders && companyData.shareHolders.length > 0) {
+            companyData.shareHolders.forEach((shareholder: Shareholder) => {
+              if (shareholder.personId) {
+                const totalShares = shareholder.sharesData?.reduce((sum, share) => sum + share.totalShares, 0) || 0;
+                personsList.push({
+                  id: shareholder.personId.id || shareholder.personId._id,
+                  name: shareholder.personId.name,
+                  nationality: shareholder.personId.nationality,
+                  address: shareholder.personId.address,
+                  shares: totalShares,
+                  sharePercentage: shareholder.sharePercentage,
+                  shareClass: shareholder.sharesData?.[0]?.class || "Ordinary",
+                });
+              }
+            });
+          }
+        } else if (filingType === "director_change") {
+          // Get directors from representationalSchema
+          if (companyData.representationalSchema && companyData.representationalSchema.length > 0) {
+            companyData.representationalSchema.forEach((rep: RepresentationalSchema) => {
+              if (rep.personId && rep.role && rep.role.some(role => role.toLowerCase().includes("director"))) {
+                personsList.push({
+                  id: rep.personId.id || rep.personId._id,
+                  name: rep.personId.name,
+                  nationality: rep.personId.nationality,
+                  address: rep.personId.address,
+                  roles: rep.role,
+                });
+              }
+            });
+          }
+        }
+
+        setPersons(personsList);
+      } catch (error) {
+        console.error("Error loading company data:", error);
+      } finally {
+        setLoadingPersons(false);
+      }
+    };
+
+    loadCompanyData();
+  }, [filingType, showPersonSelection]);
 
   if (!filingConfig) {
     return null;
@@ -103,12 +187,38 @@ export default function MBRFilingRequestPage() {
     setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
   };
 
+  const handlePersonToggle = (personId: string) => {
+    setSelectedPersonIds((prev) =>
+      prev.includes(personId)
+        ? prev.filter((id) => id !== personId)
+        : [...prev, personId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedPersonIds.length === persons.length) {
+      setSelectedPersonIds([]);
+    } else {
+      setSelectedPersonIds(persons.map((p) => p.id));
+    }
+  };
+
   const handleSubmit = async () => {
     if (uploadedFiles.length === 0) {
       setShowAlertModal(true);
       setAlertModalContent({
         title: "Validation Error",
         message: "Please upload at least one file related to this service.",
+        type: "error"
+      });
+      return;
+    }
+
+    if (showPersonSelection && selectedPersonIds.length === 0) {
+      setShowAlertModal(true);
+      setAlertModalContent({
+        title: "Validation Error",
+        message: `Please select at least one ${filingType === "share_transfer" ? "shareholder" : "director"}.`,
         type: "error"
       });
       return;
@@ -131,7 +241,24 @@ export default function MBRFilingRequestPage() {
         submissionDate: new Date().toISOString(),
         uploadedFiles: uploadedFiles.map(f => f.name),
         notes: notes,
-        reference: `MBR-${filingType.toUpperCase().slice(0, 3)}-${Date.now().toString().slice(-6)}`
+        reference: `MBR-${filingType.toUpperCase().slice(0, 3)}-${Date.now().toString().slice(-6)}`,
+        selectedPersons: showPersonSelection ? selectedPersonIds.map(id => {
+          const person = persons.find(p => p.id === id);
+          return person ? {
+            id: person.id,
+            name: person.name,
+            nationality: person.nationality,
+            address: person.address,
+            ...(filingType === "share_transfer" && {
+              shares: person.shares,
+              sharePercentage: person.sharePercentage,
+              shareClass: person.shareClass,
+            }),
+            ...(filingType === "director_change" && {
+              roles: person.roles,
+            }),
+          } : null;
+        }).filter(Boolean) : []
       };
 
       // Save to localStorage
@@ -178,7 +305,116 @@ export default function MBRFilingRequestPage() {
       <DashboardCard className="p-6">
         <h2 className="text-xl font-semibold text-brand-body mb-6">Request Service</h2>
         
-        <div className="space-y-6">
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
+          {/* Select Persons Section - Only for Share Transfer and Director Change */}
+          {showPersonSelection && (
+            <div className="space-y-4 border-b pb-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-brand-body mb-1">
+                    Select Persons ({persons.length})
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {filingType === "share_transfer" 
+                      ? "Select shareholders involved in this share transfer."
+                      : "Select directors involved in this director change."}
+                  </p>
+                </div>
+                {persons.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSelectAll}
+                    className="text-xs"
+                  >
+                    {selectedPersonIds.length === persons.length ? "Deselect All" : "Select All"}
+                  </Button>
+                )}
+              </div>
+
+              {loadingPersons ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Loading persons...
+                </div>
+              ) : persons.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No {filingType === "share_transfer" ? "shareholders" : "directors"} found for this company.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Section Header */}
+                  <div className="flex items-center justify-between px-2">
+                    <h4 className="text-sm font-semibold text-brand-body uppercase tracking-wide">
+                      {filingType === "share_transfer" ? "Shareholders" : "Directors"}
+                    </h4>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSelectAll}
+                      className="text-xs h-7"
+                    >
+                      Select All
+                    </Button>
+                  </div>
+
+                  {/* Persons List */}
+                  <div className="space-y-2 max-h-[400px] overflow-y-auto border border-border rounded-lg p-3 bg-muted/20">
+                    {persons.map((person) => {
+                      // Calculate total shares for display
+                      const totalShares = filingType === "share_transfer" && person.shares 
+                        ? person.shares 
+                        : 0;
+                      const issuedShares = company?.issuedShares || 0;
+                      const sharePercentage = issuedShares > 0 && totalShares > 0
+                        ? ((totalShares / issuedShares) * 100).toFixed(2)
+                        : person.sharePercentage?.toFixed(2) || "0.00";
+
+                      return (
+                        <label
+                          key={person.id}
+                          className="flex items-start gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/30 cursor-pointer transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedPersonIds.includes(person.id)}
+                            onChange={() => handlePersonToggle(person.id)}
+                            className="mt-1 w-4 h-4 text-brand-primary focus:ring-brand-primary rounded"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold text-brand-body">{person.name}</span>
+                            </div>
+                            <div className="space-y-0.5 text-xs text-muted-foreground">
+                              <div>
+                                <span className="font-medium">Nationality:</span> {person.nationality}
+                              </div>
+                              <div>
+                                <span className="font-medium">Address:</span> {person.address}
+                              </div>
+                              {filingType === "share_transfer" && totalShares > 0 && (
+                                <div>
+                                  <span className="font-medium">Shares:</span> {totalShares.toLocaleString()} {person.shareClass || "ordinary"} shares
+                                  <span className="ml-1">({sharePercentage}%)</span>
+                                </div>
+                              )}
+                              {filingType === "director_change" && person.roles && person.roles.length > 0 && (
+                                <div>
+                                  <span className="font-medium">Roles:</span> {person.roles.join(", ")}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* File Upload Section */}
           <div>
             <label className="block text-sm font-medium text-brand-body mb-2">
@@ -239,33 +475,33 @@ export default function MBRFilingRequestPage() {
               You can add any additional information or context if needed.
             </p>
           </div>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center justify-between mt-8 pt-6 border-t">
-          <Link href="/dashboard/services/mbr-filing">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Cancel
+          {/* Action Buttons */}
+          <div className="flex items-center justify-between pt-6 border-t">
+            <Link href="/dashboard/services/mbr-filing">
+              <Button type="button" variant="outline" size="sm">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Cancel
+              </Button>
+            </Link>
+            <Button
+              type="submit"
+              variant="default"
+              size="sm"
+              disabled={uploadedFiles.length === 0 || submitting || (showPersonSelection && selectedPersonIds.length === 0)}
+              className="min-w-[140px]"
+            >
+              {submitting ? (
+                "Submitting..."
+              ) : (
+                <>
+                  Submit Request
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </>
+              )}
             </Button>
-          </Link>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={handleSubmit}
-            disabled={uploadedFiles.length === 0 || submitting}
-            className="min-w-[140px]"
-          >
-            {submitting ? (
-              "Submitting..."
-            ) : (
-              <>
-                Submit Request
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </>
-            )}
-          </Button>
-        </div>
+          </div>
+        </form>
       </DashboardCard>
 
       {/* Alert Modal */}
