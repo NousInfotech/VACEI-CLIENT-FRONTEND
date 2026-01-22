@@ -32,7 +32,7 @@ export function OnboardingLayout({
   const showBackButton = currentStep > 1 && onBack;
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-8">
-      <Card className={cn("w-full max-w-[720px] shadow-lg", className)}>
+      <Card className={cn("w-full max-w-[840px] shadow-lg", className)}>
         <CardContent className="p-8">
           {/* Logo */}
           <div className="mb-6">
