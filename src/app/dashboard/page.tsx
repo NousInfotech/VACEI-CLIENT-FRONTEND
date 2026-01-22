@@ -445,7 +445,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Right Column - Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-6 flex flex-col justify-between">
           {/* Recently Completed */}
           <DashboardCard className="overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
@@ -595,7 +595,7 @@ export default function DashboardPage() {
           </DashboardCard>
 
           {/* Upload Status */}
-          <DashboardCard className="overflow-hidden">
+          {/* <DashboardCard className="overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-300 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-1 h-6 bg-gray-900 rounded-full" />
@@ -652,10 +652,10 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
-          </DashboardCard>
+          </DashboardCard> */}
 
           {/* Yearly Progress */}
-          {netIncomeYTD && (
+          {/* {netIncomeYTD && (
             <DashboardCard className="overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-300 flex items-center gap-4">
                 <div className="w-1 h-6 bg-gray-900 rounded-full" />
@@ -683,7 +683,7 @@ export default function DashboardPage() {
                 </DashboardCard>
               </div>
             </DashboardCard>
-          )}
+          )} */}
         </div>
       </div>
 
