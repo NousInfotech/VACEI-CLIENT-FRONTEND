@@ -6,10 +6,7 @@ import StatCard from "@/components/StatCard";
 import DashboardCard from "@/components/DashboardCard";
 import DashboardActionButton from "@/components/DashboardActionButton";
 import PageHeader from "@/components/shared/PageHeader";
-import CashFlowChart from "@/components/CashFlowChart";
-import PLSummaryChart from "@/components/PLSummaryChart";
 import { getDecodedUsername } from "@/utils/authUtils";
-import { fetchDashboardSummary, ProcessedDashboardStat } from "@/api/financialReportsApi";
 import NoticeBoard from "@/components/dashboard/NoticeBoard";
 import { fetchUploadStatusSummary } from "@/api/documentApi";
 import { fetchTasks } from "@/api/taskService";
@@ -31,12 +28,9 @@ interface UploadStatusSummary {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [stats, setStats] = useState<ProcessedDashboardStat[]>([]);
   const [uploadSummary, setUploadSummary] = useState<UploadStatusSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploadLoading, setUploadLoading] = useState(true);
-  const [revenueYTD, setRevenueYTD] = useState<{ amount: string; change: string } | null>(null);
-  const [netIncomeYTD, setNetIncomeYTD] = useState<{ amount: string; change: string } | null>(null);
   const [username, setUsername] = useState<string>(''); // State for username to avoid hydration error
   const [complianceCounts, setComplianceCounts] = useState({ overdue: 0, dueSoon: 0, waiting: 0, done: 0 });
   const [activeCompany, setActiveCompany] = useState<string>("ACME LTD");
@@ -84,54 +78,6 @@ export default function DashboardPage() {
     }
   }, []);
 
-  useEffect(() => {
-    const loadDashboardData = async () => {
-      setLoading(true);
-      try {
-        const fetchedStats = await fetchDashboardSummary();
-        console.log(fetchedStats);
-
-        if (fetchedStats.netIncomeYTD) {
-          setNetIncomeYTD({
-            amount: new Intl.NumberFormat("en-US", {
-              style: "currency",
-              currency: "EUR",
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }).format(fetchedStats.netIncomeYTD.value),
-            change: fetchedStats.netIncomeYTD.change,
-          });
-        } else {
-          setNetIncomeYTD(null);
-        }
-        // Extract YTD data for Yearly Progress BEFORE filtering for StatCards
-        /*  const revenueYTDStat = fetchedStats.find((stat: { title: string; }) => stat.title === "Revenue YTD");
-         const netIncomeYTDStat = fetchedStats.find((stat: { title: string; }) => stat.title === "Net income YTD");
- 
-         if (revenueYTDStat) {
-           setRevenueYTD({ amount: revenueYTDStat.amount, change: revenueYTDStat.change });
-         }
-         if (netIncomeYTDStat) {
-           setNetIncomeYTD({ amount: netIncomeYTDStat.amount, change: netIncomeYTDStat.change });
-         } */
-
-        // Filter out YTD stats from the array to be displayed as cards
-        const filteredStats = fetchedStats.stats.filter(
-          (stat: { title: string; }) => stat.title !== "Revenue YTD" && stat.title !== "Net income YTD"
-        );
-        setStats(filteredStats);
-
-      } catch (error) {
-        // console.error("Failed to load dashboard summary:", error);
-        setStats([]);
-        setRevenueYTD(null);
-        setNetIncomeYTD(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadDashboardData();
-  }, []);
 
   useEffect(() => {
     const loadUploadSummary = async () => {
@@ -251,7 +197,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-brand-body p-6">
+    <div className="min-h-screen bg-brand-body p-4">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Premium Dashboard Header */}
         <PageHeader 
@@ -341,351 +287,217 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left Column - Priority Actions & Services */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Modern Active Services */}
-          <DashboardCard className="overflow-hidden">
-            <div className="px-8 py-6 border-b border-gray-100 flex items-center gap-4">
-              <div className="w-1 h-7 bg-gray-900 rounded-full" />
-              <div className="flex flex-col">
-              <h3 className="text-xl font-semibold text-gray-900">Active Services</h3>
-              <p className="text-sm text-gray-600">Manage your ongoing accounting and tax services</p>
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Left Column - Priority Actions & Services */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Modern Active Services */}
+            <DashboardCard className="overflow-hidden">
+              <div className="px-8 py-6 border-b border-gray-100 flex items-center gap-4">
+                <div className="w-1 h-7 bg-gray-900 rounded-full" />
+                <div className="flex flex-col">
+                  <h3 className="text-xl font-semibold text-gray-900">Active Services</h3>
+                  <p className="text-sm text-gray-600">Manage your ongoing accounting and tax services</p>
+                </div>
               </div>
-            </div>
-            <div className="p-6">
-              <div className="grid sm:grid-cols-2 gap-4">
-                {activeServices.map((service, idx) => (
-                  <DashboardCard key={idx} className="group/service relative rounded-xl border bg-white/50 p-5 transition-all duration-300">
-                    <div className="flex items-start justify-between mb-4 gap-3">
-                      <div className="space-y-1 min-w-0">
-                        <h4 className="font-semibold text-xl truncate">{service.name}</h4>
-                        <div className="flex items-center gap-1.5 overflow-hidden">
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                            service.status.includes('Done') ? 'bg-success' : 
-                            service.status.includes('soon') ? 'bg-warning' : 
-                            service.status.includes('Waiting') ? 'bg-destructive' : 'bg-gray-400'
-                          }`} />
-                          <p className="text-xs font-medium uppercase truncate">{service.status}</p>
+              <div className="p-6">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {activeServices.map((service, idx) => (
+                    <DashboardCard key={idx} className="group/service relative rounded-xl border bg-white/50 p-5 transition-all duration-300">
+                      <div className="flex items-start justify-between mb-4 gap-3">
+                        <div className="space-y-1 min-w-0">
+                          <h4 className="font-semibold text-xl truncate">{service.name}</h4>
+                          <div className="flex items-center gap-1.5 overflow-hidden">
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                              service.status.includes('Done') ? 'bg-success' : 
+                              service.status.includes('soon') ? 'bg-warning' : 
+                              service.status.includes('Waiting') ? 'bg-destructive' : 'bg-gray-400'
+                            }`} />
+                            <p className="text-xs font-medium uppercase truncate">{service.status}</p>
+                          </div>
                         </div>
+                        <Link href={service.href} className="shrink-0">
+                          <Button size="sm" className="whitespace-nowrap">
+                            Details
+                          </Button>
+                        </Link>
                       </div>
-                      <Link href={service.href} className="shrink-0">
-                        <Button size="sm" className="whitespace-nowrap">
-                          Details
-                        </Button>
-                      </Link>
-                    </div>
-                    <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-[10px] font-medium gap-2">
-                      <div className="flex items-center gap-2 shrink-0">
-                        {service.nextStepType === "client" ? (
-                          <>
-                            <User className="w-3 h-3 text-gray-600" />
-                            <span>Next step required from you:</span>
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle className="w-3 h-3 text-success" />
-                            <span>Next step (we're working on it):</span>
-                          </>
-                        )}
+                      <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-[10px] font-medium gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
+                          {service.nextStepType === "client" ? (
+                            <>
+                              <User className="w-3 h-3 text-gray-600" />
+                              <span>Next step required from you:</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="w-3 h-3 text-success" />
+                              <span>Next step (we're working on it):</span>
+                            </>
+                          )}
+                        </div>
+                        <span className="uppercase tracking-widest truncate font-semibold">{service.next}</span>
                       </div>
-                      <span className="uppercase tracking-widest truncate font-semibold">{service.next}</span>
+                    </DashboardCard>
+                  ))}
+                </div>
+              </div>
+            </DashboardCard>
+
+            {/* Recently Completed */}
+            <DashboardCard className="overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                  <h3 className="text-xl font-semibold text-gray-900">Recently Completed</h3>
+                </div>
+                <span className="text-[10px] uppercase bg-black text-white px-2 py-1 rounded-full font-medium">3 New</span>
+              </div>
+              <div className="p-4 space-y-3">
+                {recentlyCompleted.map((item, idx) => (
+                  <DashboardCard key={idx} className="group/completed flex items-center justify-between rounded-xl border border-gray-50 bg-gray-50/50 px-4 py-3 transition-all duration-300 gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 shrink-0 flex items-center justify-center">
+                        <CheckCircle className="h-4 w-4 text-gray-600" />
+                      </div>
+                      <span className="text-base font-medium truncate">{item.text}</span>
                     </div>
+                    <Link href={item.href} className="shrink-0">
+                      <Button size="sm" className="whitespace-nowrap">
+                        {item.action}
+                      </Button>
+                    </Link>
                   </DashboardCard>
                 ))}
               </div>
-            </div>
-          </DashboardCard>
+            </DashboardCard>
+          </div>
 
-          {/* Financial Statistics */}
-          <DashboardCard className="px-5 py-6">
+          {/* Right Column - Sidebar */}
           <div className="space-y-6">
-            <div className="flex items-center justify-between px-2">
-              <div className="flex items-center gap-3">
-                <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                <h3 className="text-xl font-medium tracking-tight">Financial Statistics</h3>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                <p className="text-[10px] font-medium uppercase tracking-[0.2em]">Real-time Updates</p>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {loading ? (
-                Array(3).fill(null).map((_, idx) => (
-                  <DashboardCard key={idx} hover={false} className="h-48 bg-white/50 animate-pulse border-white/30" />
-                ))
-              ) : stats.length > 0 ? (
-                stats.map((stat) => <StatCard key={stat.title} {...stat} />)
-              ) : (
-                <DashboardCard hover={false} className="col-span-full bg-white/40 border border-dashed border-gray-200 py-16 flex flex-col items-center justify-center text-center relative overflow-hidden backdrop-blur-sm">
-                  <div className="absolute inset-0 to-gray-50/50 pointer-events-none" />
-                  <div className="relative z-10">
-                    <div className="w-20 h-20 rounded-3xl bg-white shadow-xl flex items-center justify-center mb-6 mx-auto transform -rotate-6 group-hover:rotate-0 transition-transform duration-500">
-                      <HugeiconsIcon icon={Alert02Icon} className="w-10 h-10 text-gray-300" />
-                    </div>
-                    <h4 className="text-xl font-bold text-gray-900 mb-2">Awaiting Analytic Data</h4>
-                    <p className="text-sm text-gray-500 max-w-sm mx-auto font-medium leading-relaxed">
-                      Your financial insights are currently being synchronized. Detailed statistics will appear here once your reports are processed.
-                    </p>
-                  </div>
-                </DashboardCard>
-              )}
-            </div>
-          </div>
-          </DashboardCard>
-
-          {/* Charts */}
-          <div className="space-y-5">
-            <CashFlowChart />
-            <PLSummaryChart />
-          </div>
-        </div>
-
-        {/* Right Column - Sidebar */}
-        <div className="space-y-6 flex flex-col justify-between">
-          {/* Recently Completed */}
-          <DashboardCard className="overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                <h3 className="text-lg font-semibold text-gray-900">Recently Completed</h3>
-              </div>
-              <span className="text-[10px] uppercase bg-black text-white px-2 py-1 rounded-full font-medium">3 New</span>
-            </div>
-            <div className="p-4 space-y-3">
-              {recentlyCompleted.map((item, idx) => (
-                
-                <DashboardCard key={idx} className="group/completed flex items-center justify-between rounded-xl border border-gray-50 bg-gray-50/50 px-4 py-3 transition-all duration-300 gap-2">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-gray-100 shrink-0 flex items-center justify-center">
-                      <CheckCircle className="h-4 w-4 text-gray-600" />
-                    </div>
-                    <span className="text-sm font-medium truncate">{item.text}</span>
-                  </div>
-                  <Link href={item.href} className="shrink-0">
-                    <Button size="sm" className="whitespace-nowrap">
-                      {item.action}
-                    </Button>
-                  </Link>
-                </DashboardCard>
-              ))}
-            </div>
-          </DashboardCard>
-
-          {/* Activity Feed */}
-          <DashboardCard className="overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-4">
-              <div className="w-1 h-6 bg-gray-900 rounded-full" />
-              <h3 className="text-lg font-semibold text-gray-900">Activity Feed</h3>
-            </div>
-            <div className="p-5 space-y-6">
-              <div>
-                <p className="text-[15px] font-semibold uppercase tracking-widest mb-3">Live Updates</p>
-                <div className="flex flex-col gap-3">
-                  {recentActivity.map((activity, idx) => (
-                    <Link key={idx} href={activity.href}>
-                      <DashboardCard className="p-4 border-none shadow-sm bg-gray-50/50 hover:bg-white transition-all transform hover:-translate-x-1 cursor-pointer">
-                      <div className="flex gap-4 items-start">
-                        <div className="mt-1.5 shrink-0">
-                          <div className="w-2 h-2 rounded-full bg-gray-900" />
-                        </div>
-                          <div className="space-y-1 flex-1 min-w-0">
-                          <p className="text-sm font-medium leading-tight text-gray-700">{activity.text}</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-primary/10 text-primary uppercase tracking-widest">
-                                {activity.service}
-                              </span>
-                              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">{activity.time}</p>
-                            </div>
-                        </div>
-                      </div>
-                    </DashboardCard>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="pt-5 border-t border-gray-100">
-                <p className="text-[15px] font-semibold uppercase tracking-widest mb-3">Client Alerts</p>
-                <div className="space-y-3">
-                  {messagesUpdates.map((msg, idx) => (
-                    <DashboardCard key={idx} className="p-4 border-none shadow-sm bg-gray-50/50 hover:bg-white transition-all transform hover:-translate-x-1">
-                      <p className="text-sm font-medium text-gray-700 italic leading-relaxed">"{msg.text}"</p>
-                      <div className="mt-2 flex justify-between items-center text-[10px] font-medium tracking-widest text-gray-700">
-                        <span>{msg.sender}</span>
-                        <span>{msg.time}</span>
-                      </div>
-                    </DashboardCard>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </DashboardCard>
-
-          {/* Quick Actions */}
-          <DashboardCard className="overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-300 flex items-center gap-4">
-              <div className="w-1 h-6 bg-gray-900 rounded-full" />
-              <h3 className="text-lg font-medium text-gray-900">Quick Actions</h3>
-            </div>
-            <div className="flex flex-col gap-2 p-3">
-              <Link href="/dashboard/document-organizer/document-upload">
-                <Button variant="outline" className="w-full justify-start gap-3 h-11">
-                  <Upload className="w-4 h-4" />
-                  <span>Upload document</span>
-                </Button>
-              </Link>
-              <Link href="/dashboard/services/request">
-                <Button variant="outline" className="w-full justify-start gap-3 h-11">
-                  <Plus className="w-4 h-4" />
-                  <span>Request a service</span>
-                </Button>
-              </Link>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start gap-3 h-11"
-                onClick={handleContactAccountantClick}
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span>Message accountant</span>
-              </Button>
-              <Link href="/dashboard/compliance">
-                <Button variant="outline" className="w-full justify-start gap-3 h-11">
-                  <Calendar className="w-4 h-4" />
-                  <span>View compliance calendar</span>
-                </Button>
-              </Link>
-              <Link href="/dashboard/todo-list">
-                <Button variant="outline" className="w-full justify-start gap-3 h-11">
-                  <CheckSquare className="w-4 h-4" />
-                  <span>To do list</span>
-                </Button>
-              </Link>
-            </div>
-          </DashboardCard>
-
-          {/* Compliance Snapshot */}
-          <DashboardCard className="overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-300 flex items-center gap-4">
-              <div className="w-1 h-6 bg-gray-900 rounded-full" />
-              <h3 className="text-lg font-medium text-gray-900">Compliance Snapshot</h3>
-            </div>
-            <div className="p-4">
-              {/* Next Statutory Deadline */}
-              <div className="mb-4 p-3 rounded-lg bg-warning/5 border border-warning/20">
-                <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest mb-1">Next Deadline:</p>
-                <p className="text-sm font-semibold text-gray-900">VAT Return – 30 June</p>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <Kpi label="Overdue" value={complianceCounts.overdue} tone="danger" />
-                <Kpi label="Due soon" value={complianceCounts.dueSoon} tone="warning" />
-                <Kpi label="Waiting" value={complianceCounts.waiting} tone="info" />
-                <Kpi label="Done" value={complianceCounts.done} tone="success" />
-              </div>
-              <Link href="/dashboard/compliance/list">
-                <Button variant="default" className="w-full">
-                  View full list
-                </Button>
-              </Link>
-            </div>
-          </DashboardCard>
-
-          {/* Upload Status */}
-          {/* <DashboardCard className="overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-300 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                <h3 className="text-lg font-medium text-gray-900">Upload Status</h3>
-              </div>
-              <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-            </div>
-            <div className="p-4 space-y-3">
-              {uploadLoading ? (
-                Array(4).fill(null).map((_, idx) => (
-                  <DashboardCard key={`upload-skeleton-${idx}`} className="p-4 space-y-2 border-none shadow-sm bg-gray-50/50">
-                    <div className="h-4 w-1/2 bg-gray-100 animate-pulse rounded" />
-                    <div className="h-1.5 w-full bg-gray-50 animate-pulse rounded-full" />
-                  </DashboardCard>
-                ))
-              ) : uploadSummary ? (
-                <>
-                  <UploadProgress 
-                    label="Uploaded" 
-                    value={uploadSummary.documentsUploaded} 
-                    total={uploadSummary.documentsUploaded}
-                    color="bg-gray-900"
-                    icon="/document-upload.svg"
-                    link="/dashboard/document-organizer/document-listing"
-                  />
-                  <UploadProgress 
-                    label="Processed" 
-                    value={uploadSummary.documentsProcessed} 
-                    total={uploadSummary.documentsUploaded}
-                    color="bg-warning"
-                    icon="/document-pending.svg"
-                    link={`/dashboard/document-organizer/document-listing?status=${encodedProcessedStatus}`}
-                  />
-                  <UploadProgress 
-                    label="Pending" 
-                    value={uploadSummary.documentsPending} 
-                    total={uploadSummary.documentsUploaded}
-                    color="bg-destructive"
-                    icon="/document-pending.svg"
-                    link={`/dashboard/document-organizer/document-listing?status=${encodedPendingStatus}`}
-                  />
-                  <UploadProgress 
-                    label="Correction" 
-                    value={uploadSummary.documentsNeedsCorrection} 
-                    total={uploadSummary.documentsUploaded}
-                    color="bg-destructive"
-                    icon="/document-pending.svg"
-                    link={`/dashboard/document-organizer/document-listing?status=${encodedNeedCorrectionStatus}`}
-                  />
-                </>
-              ) : (
-                <div className="py-4 text-center">
-                  <p className="text-sm text-gray-500 font-medium uppercase tracking-widest">No data</p>
-                </div>
-              )}
-            </div>
-          </DashboardCard> */}
-
-          {/* Yearly Progress */}
-          {/* {netIncomeYTD && (
+            {/* Quick Actions */}
             <DashboardCard className="overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-300 flex items-center gap-4">
                 <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                <h3 className="text-lg font-medium text-gray-900">Yearly Progress</h3>
+                <h3 className="text-lg font-medium text-gray-900">Quick Actions</h3>
               </div>
-              <div className="p-4">
-                <DashboardCard className="p-5">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="font-medium text-[10px] uppercase tracking-widest">Net Income</p>
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                      netIncomeYTD.change.includes('+') ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'
-                    }`}>
-                      YTD Performance
-                    </span>
-                  </div>
-                  <div className="flex items-end justify-between">
-                    <p className="font-semibold text-2xl text-gray-900 tracking-tight">{netIncomeYTD.amount}</p>
-                    <div className={`flex items-center gap-1 font-medium text-sm ${
-                      netIncomeYTD.change.includes('+') ? 'text-success' : 'text-destructive'
-                    }`}>
-                      <span>{netIncomeYTD.change}</span>
-                      <i className={`${getArrowIcon(netIncomeYTD.change)} text-xs`} />
-                    </div>
-                  </div>
-                </DashboardCard>
+              <div className="flex flex-col gap-2 p-3">
+                <Link href="/dashboard/document-organizer/document-upload">
+                  <Button variant="outline" className="w-full justify-start gap-3 h-11">
+                    <Upload className="w-4 h-4" />
+                    <span>Upload document</span>
+                  </Button>
+                </Link>
+                <Link href="/dashboard/services/request">
+                  <Button variant="outline" className="w-full justify-start gap-3 h-11">
+                    <Plus className="w-4 h-4" />
+                    <span>Request a service</span>
+                  </Button>
+                </Link>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start gap-3 h-11"
+                  onClick={handleContactAccountantClick}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>Message accountant</span>
+                </Button>
+                <Link href="/dashboard/compliance">
+                  <Button variant="outline" className="w-full justify-start gap-3 h-11">
+                    <Calendar className="w-4 h-4" />
+                    <span>View compliance calendar</span>
+                  </Button>
+                </Link>
+                <Link href="/dashboard/todo-list">
+                  <Button variant="outline" className="w-full justify-start gap-3 h-11">
+                    <CheckSquare className="w-4 h-4" />
+                    <span>To do list</span>
+                  </Button>
+                </Link>
               </div>
             </DashboardCard>
-          )} */}
+
+            {/* Compliance Snapshot */}
+            <DashboardCard className="overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-300 flex items-center gap-4">
+                <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                <h3 className="text-lg font-medium text-gray-900">Compliance Snapshot</h3>
+              </div>
+              <div className="p-4">
+                {/* Next Statutory Deadline */}
+                <div className="mb-4 p-3 rounded-lg bg-warning/5 border border-warning/20">
+                  <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest mb-1">Next Deadline:</p>
+                  <p className="text-sm font-semibold text-gray-900">VAT Return – 30 June</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <Kpi label="Overdue" value={complianceCounts.overdue} tone="danger" />
+                  <Kpi label="Due soon" value={complianceCounts.dueSoon} tone="warning" />
+                  <Kpi label="Waiting" value={complianceCounts.waiting} tone="info" />
+                  <Kpi label="Done" value={complianceCounts.done} tone="success" />
+                </div>
+                <Link href="/dashboard/compliance/list">
+                  <Button variant="default" className="w-full">
+                    View full list
+                  </Button>
+                </Link>
+              </div>
+            </DashboardCard>
+          </div>
+
+          {/* Activity Feed - Full Width */}
+          <div className="lg:col-span-3">
+            <DashboardCard className="overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-4">
+                <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                <h3 className="text-xl font-semibold text-gray-900">Activity Feed</h3>
+              </div>
+              <div className="p-5 space-y-6">
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div>
+                    <p className="text-[12px] font-bold uppercase tracking-widest mb-3 text-gray-400">Live Updates</p>
+                    <div className="flex flex-col gap-3">
+                      {recentActivity.map((activity, idx) => (
+                        <Link key={idx} href={activity.href}>
+                          <DashboardCard className="p-4 border-none shadow-sm bg-gray-50/50 hover:bg-white transition-all transform hover:-translate-x-1 cursor-pointer">
+                            <div className="flex gap-4 items-start">
+                              <div className="mt-1.5 shrink-0">
+                                <div className="w-2 h-2 rounded-full bg-gray-900" />
+                              </div>
+                              <div className="space-y-1 flex-1 min-w-0">
+                                <p className="text-base font-medium leading-tight text-gray-700">{activity.text}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-primary/10 text-primary uppercase tracking-widest">
+                                    {activity.service}
+                                  </span>
+                                  <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">{activity.time}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </DashboardCard>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="pt-5 md:pt-0 md:border-l md:border-gray-100 md:pl-8">
+                    <p className="text-[12px] font-bold uppercase tracking-widest mb-3 text-gray-400">Client Alerts</p>
+                    <div className="space-y-3">
+                      {messagesUpdates.map((msg, idx) => (
+                        <DashboardCard key={idx} className="p-4 border-none shadow-sm bg-gray-50/50 hover:bg-white transition-all transform hover:-translate-x-1">
+                          <p className="text-sm font-medium text-gray-700 italic leading-relaxed">"{msg.text}"</p>
+                          <div className="mt-2 flex justify-between items-center text-[10px] font-medium tracking-widest text-gray-700">
+                            <span>{msg.sender}</span>
+                            <span>{msg.time}</span>
+                          </div>
+                        </DashboardCard>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </DashboardCard>
+          </div>
         </div>
-      </div>
 
       </div>
     </div>

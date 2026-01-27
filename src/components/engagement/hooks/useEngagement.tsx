@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { getEngagementById, Engagement } from '@/api/auditService'
+import { ENGAGEMENT_CONFIG } from '@/config/engagementConfig'
+import { MOCK_ENGAGEMENT_DATA } from '../mockEngagementData'
 
 interface EngagementContextType {
   engagement: Engagement | null
@@ -31,8 +33,19 @@ export const EngagementProvider: React.FC<EngagementProviderProps> = ({ engageme
     setLoading(true)
     setError(null)
     try {
-      const data = await getEngagementById(engagementId)
-      setEngagement(data)
+      if (ENGAGEMENT_CONFIG.USE_MOCK_DATA) {
+        // Mock loading delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setEngagement({
+          ...MOCK_ENGAGEMENT_DATA.engagement,
+          _id: engagementId,
+          clientId: 'mock-client',
+          companyId: 'mock-company'
+        } as any);
+      } else {
+        const data = await getEngagementById(engagementId)
+        setEngagement(data)
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch engagement')
       setEngagement(null)

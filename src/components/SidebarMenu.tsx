@@ -199,19 +199,27 @@ export default function SidebarMenu({
             const linkContent = (
                 <Link
                     key={item.slug}
-                    href={item.href || "#"}
-                    onClick={(e) => handleMenuClick(e, item, hasChildren)}
+                    href={item.disabled ? "#" : (item.href || "#")}
+                    onClick={(e) => {
+                        if (item.disabled) {
+                            e.preventDefault();
+                            return;
+                        }
+                        handleMenuClick(e, item, hasChildren);
+                    }}
                     className={cn(
                         'group relative flex items-center transition-all duration-300 ease-out',
                         isCollapsed 
                             ? 'justify-center px-2 py-3 rounded-2xl' 
                             : 'gap-4 px-4 py-3 rounded-2xl',
-                        'hover:scale-[1.02] hover:shadow-lg border'
+                        'hover:scale-[1.02] hover:shadow-lg border',
+                        item.disabled && "opacity-50 cursor-not-allowed grayscale"
                     )}
                     style={{
                         backgroundColor: isActive ? `hsl(var(--sidebar-active))` : 'transparent',
                         color: isActive ? `hsl(var(--sidebar-foreground))` : `hsl(var(--sidebar-foreground) / 0.8)`,
-                        borderColor: isActive ? `hsl(var(--sidebar-border))` : 'transparent'
+                        borderColor: isActive ? `hsl(var(--sidebar-border))` : 'transparent',
+                        pointerEvents: item.disabled ? 'auto' : undefined // Keep auto so cursor-not-allowed shows
                     }}
                 >
                     {/* Active indicator */}
@@ -242,7 +250,7 @@ export default function SidebarMenu({
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between w-full gap-2">
                                 <span className="font-semibold text-sm truncate">{item.label}</span>
-                                {hasChildren && (
+                                {hasChildren && !item.disabled && (
                                     isItemOpen ? <ChevronUp className="h-4 w-4 opacity-50" /> : <ChevronDown className="h-4 w-4 opacity-50" />
                                 )}
                             </div>
@@ -255,12 +263,14 @@ export default function SidebarMenu({
                     )}
 
                     {/* Hover effect */}
-                    <div className={cn(
-                        'absolute inset-0 transition-opacity duration-300 rounded-2xl pointer-events-none',
-                        isActive ? 'opacity-0' : 'opacity-0 group-hover:opacity-10'
+                    {!item.disabled && (
+                        <div className={cn(
+                            'absolute inset-0 transition-opacity duration-300 rounded-2xl pointer-events-none',
+                            isActive ? 'opacity-0' : 'opacity-0 group-hover:opacity-10'
+                        )}
+                        style={{ backgroundColor: `hsl(var(--sidebar-foreground))` }}
+                        ></div>
                     )}
-                    style={{ backgroundColor: `hsl(var(--sidebar-foreground))` }}
-                    ></div>
                 </Link>
             );
 
@@ -296,8 +306,12 @@ export default function SidebarMenu({
         return (
             <li key={item.slug} className="space-y-1">
                 <Link
-                    href={serviceHref}
+                    href={item.disabled ? "#" : serviceHref}
                     onClick={(e) => {
+                        if (item.disabled) {
+                            e.preventDefault();
+                            return;
+                        }
                         if (hasChildren) {
                             toggleItem(item.slug);
                             // Allow service headers to navigate while being a dropdown
@@ -323,23 +337,28 @@ export default function SidebarMenu({
                     }}
                     className={cn(
                         "flex items-center justify-between px-3 py-2 rounded-xl transition-all",
-                        isServiceActive 
-                            ? "hover:bg-white/5" 
-                            : "opacity-50 cursor-not-allowed hover:bg-white/5",
+                        item.disabled 
+                            ? "opacity-50 cursor-not-allowed grayscale hover:bg-white/5" 
+                            : isServiceActive 
+                                ? "hover:bg-white/5" 
+                                : "opacity-50 cursor-not-allowed hover:bg-white/5",
                         isActive ? "text-white font-semibold bg-white/10 shadow-sm" : "text-white/60",
                         level >= 3 ? "text-md" : "text-sm"
                     )}
+                    style={{ 
+                        pointerEvents: item.disabled ? 'auto' : undefined 
+                    }}
                 >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <HugeiconsIcon icon={item.icon} className={cn(level >= 3 ? "h-3 w-3" : "h-4 w-4", !isServiceActive && "opacity-50")} />
+                        <HugeiconsIcon icon={item.icon} className={cn(level >= 3 ? "h-3 w-3" : "h-4 w-4", (!isServiceActive || item.disabled) && "opacity-50")} />
                         <span className="truncate">{item.label}</span>
                     </div>
-                    {!isServiceActive && !hasChildren && (
+                    {!isServiceActive && !hasChildren && !item.disabled && (
                         <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider ml-2 shrink-0">
                             Request service
                         </span>
                     )}
-                    {hasChildren && (
+                    {hasChildren && !item.disabled && (
                         isItemOpen ? <ChevronUp className="h-3 w-3 opacity-50 shrink-0" /> : <ChevronDown className="h-3 w-3 opacity-50 shrink-0" />
                     )}
                 </Link>

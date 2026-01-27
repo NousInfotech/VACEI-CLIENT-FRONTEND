@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { getCompanyHierarchy, HierarchyData } from '@/api/auditService'
+import { HierarchyData } from '@/api/auditService'
 import { HierarchyTreeNode } from '../CompanyHierarchy'
 
 interface UseCompanyHierarchyReturn {
@@ -53,7 +53,9 @@ export const useCompanyHierarchy = (companyId: string | null): UseCompanyHierarc
     setLoading(true)
     setError(null)
     try {
-      const response: HierarchyData = await getCompanyHierarchy(companyId)
+      const { MOCK_HIERARCHY_DATA, MOCK_HIERARCHY_DATA_OPAL } = await import('../mockData')
+      const mockData = companyId === '69429ddc9c2f087b6331078f' ? MOCK_HIERARCHY_DATA_OPAL : MOCK_HIERARCHY_DATA
+      const response = mockData.data as any
       if (response) {
         const transformed = transformHierarchyData(response)
         setHierarchyData(transformed)

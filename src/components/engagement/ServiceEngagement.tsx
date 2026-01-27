@@ -3,6 +3,7 @@
 import React from 'react'
 import EngagementSummary, { EngagementAction, EngagementStatus, WorkflowStatus } from './EngagementSummary'
 import BackButton from '../shared/BackButton'
+import { EngagementProvider } from './hooks/useEngagement'
 
 interface ServiceEngagementProps {
   serviceSlug: string
@@ -130,17 +131,22 @@ const ServiceEngagement: React.FC<ServiceEngagementProps> = ({ serviceSlug }) =>
     actions: []
   }
 
+  // Generate a stable mock ID for the provider if no real ID is available
+  const mockId = `mock-engagement-${serviceSlug}`
+
   return (
     <div className="p-8 max-w-[1600px] mx-auto min-h-screen bg-white">
-      <EngagementSummary 
-        serviceName={data.name}
-        description={data.description}
-        status={data.status}
-        cycle={data.cycle}
-        workflowStatus={data.workflowStatus}
-        neededFromUser={data.neededFromUser}
-        actions={data.actions}
-      />
+      <EngagementProvider engagementId={mockId}>
+        <EngagementSummary 
+          serviceName={data.name}
+          description={data.description}
+          status={data.status}
+          cycle={data.cycle}
+          workflowStatus={data.workflowStatus}
+          neededFromUser={data.neededFromUser}
+          actions={data.actions}
+        />
+      </EngagementProvider>
     </div>
   )
 }

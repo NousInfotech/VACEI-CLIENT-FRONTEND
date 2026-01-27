@@ -1,11 +1,11 @@
 "use client"
 
 import React from 'react';
-import { Search, List, LayoutGrid, Download, ArrowLeft, Filter, ChevronDown } from 'lucide-react';
+import { Search, List, LayoutGrid, Download, ArrowLeft, Filter, ChevronDown, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { useLibrary } from '../../../app/context/LibraryContext';
+import { useLibrary } from '@/app/context/LibraryContext';
 
 export const Toolbar: React.FC = () => {
   const {
@@ -17,13 +17,14 @@ export const Toolbar: React.FC = () => {
     sortConfig,
     handleSort,
     handleBack,
-    selectedItems,
     filterType,
-    setFilterType
+    setFilterType,
+    handleDownload,
+    isMobileSidebarOpen,
+    setIsMobileSidebarOpen
   } = useLibrary();
 
   const [isFilterOpen, setIsFilterOpen] = React.useState(false);
-  const selectedItemsCount = selectedItems.length;
 
   const filterOptions = [
     { id: 'all', label: 'All Files' },
@@ -33,42 +34,53 @@ export const Toolbar: React.FC = () => {
   ];
 
   return (
-    <div className="flex items-center justify-between p-4 border-b border-gray-200 gap-4">
-      <div className="flex items-center gap-3 flex-1">
+    <div className="relative z-20 flex items-center justify-between p-2 md:p-3 border-b border-gray-200 gap-2 bg-white/50 backdrop-blur-sm">
+      <div className="flex items-center gap-1.5 md:gap-3 flex-1 min-w-0">
+        {/* Mobile Menu Toggle */}
+        <button 
+          onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+          className={cn(
+            "h-9 w-9 p-0 border border-gray-200 rounded-lg lg:hidden shrink-0 flex items-center justify-center",
+            isMobileSidebarOpen && "bg-primary text-white border-primary"
+          )}
+        >
+          <Menu className="w-4 h-4" />
+        </button>
+
         {currentFolderId && (
           <Button 
             variant="outline" 
             size="sm" 
             onClick={handleBack}
-            className="h-10 w-10 p-0 border-gray-200 rounded-xl"
+            className="h-9 w-9 p-0 border-gray-200 rounded-lg shrink-0 flex items-center justify-center"
           >
-            <ArrowLeft className="w-4 h-4 text-gray-600" />
+            <ArrowLeft className="w-5 h-5" />
           </Button>
         )}
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <div className="relative flex-1 min-w-0 max-w-md shrink">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
           <Input 
-            placeholder="Search files and folders..." 
+            placeholder="Search..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-10 border-gray-200 bg-gray-50/50 rounded-xl focus-visible:ring-primary/20"
+            className="pl-8 h-9 border-gray-200 bg-white/50 md:bg-gray-50/50 rounded-lg focus-visible:ring-primary/20 text-sm"
           />
         </div>
 
         {/* Filter Dropdown */}
-        <div className="relative">
+        <div className="relative shrink-0">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsFilterOpen(!isFilterOpen)}
             className={cn(
-              "h-10 border-gray-200 rounded-xl gap-2 font-medium transition-all px-4",
+              "h-9 border-gray-200 rounded-lg gap-1.5 font-medium transition-all px-2 md:px-3 flex items-center justify-center",
               filterType !== 'all' ? "bg-primary/5 border-primary/20 text-primary" : "text-gray-600 bg-white"
             )}
           >
-            <Filter className="w-4 h-4" />
-            {filterOptions.find(opt => opt.id === filterType)?.label || 'Filter'}
-            <ChevronDown className={cn("w-4 h-4 transition-transform", isFilterOpen && "rotate-180")} />
+            <Filter className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline text-xs">{filterOptions.find(opt => opt.id === filterType)?.label || 'Filter'}</span>
+            <ChevronDown className={cn("w-3.5 h-3.5 transition-transform hidden sm:inline", isFilterOpen && "rotate-180")} />
           </Button>
 
           {isFilterOpen && (
@@ -77,7 +89,7 @@ export const Toolbar: React.FC = () => {
                 className="fixed inset-0 z-40" 
                 onClick={() => setIsFilterOpen(false)} 
               />
-              <div className="absolute top-full left-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl p-1 z-50 animate-in fade-in zoom-in duration-100">
+              <div className="absolute top-full right-0 lg:left-0 mt-2 w-48 md:w-56 bg-white border border-gray-200 rounded-xl shadow-xl p-1 z-50 animate-in fade-in zoom-in duration-100">
                 {filterOptions.map((opt) => (
                   <button
                     key={opt.id}
@@ -86,7 +98,7 @@ export const Toolbar: React.FC = () => {
                       setIsFilterOpen(false);
                     }}
                     className={cn(
-                      "flex items-center w-full px-3 py-2 text-sm rounded-lg transition-colors text-left",
+                      "flex items-center w-full px-3 py-2 text-xs md:text-sm rounded-lg transition-colors text-left",
                       filterType === opt.id 
                         ? "bg-primary/10 text-primary font-medium" 
                         : "text-gray-600 hover:bg-gray-50"
@@ -99,58 +111,54 @@ export const Toolbar: React.FC = () => {
             </>
           )}
         </div>
-        
-        {/* Sort Options */}
-        <div className="flex items-center bg-gray-50/50 p-1 rounded-xl border border-gray-200">
+      </div>
+
+      <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
+        <div className="hidden md:flex items-center bg-gray-50/50 p-1 rounded-lg border border-gray-200 shrink-0">
           {(['name', 'type', 'size'] as const).map((field) => (
-            <Button
+            <button
               key={field}
-              variant="ghost"
-              size="sm"
               onClick={() => handleSort(field)}
               className={cn(
-                "h-8 px-3 rounded-lg text-xs gap-1",
-                sortConfig.field === field ? "bg-white shadow-sm" : "text-gray-500",
+                "h-7 px-2 rounded-md text-[10px] gap-1 transition-all flex items-center justify-center",
+                sortConfig.field === field ? "bg-primary text-white shadow-sm" : "text-gray-500 hover:bg-white",
                 field !== 'name' && "border-l border-gray-100"
               )}
             >
-              {field.charAt(0).toUpperCase() + field.slice(1)} 
+              <span>{field.charAt(0).toUpperCase() + field.slice(1)}</span>
               {sortConfig.field === field && (sortConfig.order === 'asc' ? '↑' : '↓')}
-            </Button>
+            </button>
           ))}
         </div>
 
-        {/* View Mode Toggles */}
-        <div className="flex items-center bg-gray-50/50 p-1 rounded-xl border border-gray-200">
-          <Button
-            variant="ghost"
-            size="sm"
+        <div className="flex items-center bg-gray-50/50 p-1 rounded-lg border border-gray-200 gap-1 shrink-0">
+          <button
             onClick={() => setViewMode('list')}
-            className={cn("h-8 w-8 p-0 rounded-lg", viewMode === 'list' && "bg-white shadow-sm")}
+            className={cn(
+              "h-7 px-2 rounded-lg transition-all flex items-center justify-center", 
+              viewMode === 'list' ? "bg-primary shadow-sm border-0" : "bg-white/50"
+            )}
           >
-            <List className="w-4 h-4 text-gray-600" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
+            <List className={cn("w-4 h-4 transition-colors", viewMode === 'list' ? "text-white" : "text-gray-600")} />
+          </button>
+          <button
             onClick={() => setViewMode('grid')}
-            className={cn("h-8 w-8 p-0 rounded-lg", viewMode === 'grid' && "bg-white shadow-sm")}
+            className={cn(
+              "h-7 px-2 rounded-lg transition-all flex items-center justify-center",
+              viewMode === 'grid' ? "bg-primary shadow-sm border-0" : "bg-white/50"
+            )}
           >
-            <LayoutGrid className="w-4 h-4 text-gray-600" />
-          </Button>
+            <LayoutGrid className={cn("w-4 h-4 transition-colors", viewMode === 'grid' ? "text-white" : "text-gray-600")} />
+          </button>
         </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        {selectedItemsCount > 1 && (
-          <Button variant="outline" className="h-10 border-gray-200 text-gray-600 rounded-xl gap-2 transition-all">
-            <Download className="w-4 h-4" />
-            Download Zip ({selectedItemsCount})
-          </Button>
-        )}
-        <Button variant="default" className="h-10 bg-primary hover:bg-primary/90 text-white font-medium border-0 rounded-xl gap-2 shadow-none px-6">
-          <Download className="w-4 h-4" />
-          Download All
+        
+        <Button 
+          variant="default" 
+          onClick={() => handleDownload()}
+          className="h-9 bg-primary hover:bg-primary/90 text-white font-medium border-0 rounded-lg gap-2 shadow-none px-3 md:px-5 flex items-center justify-center shrink-0"
+        >
+          <Download className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline text-xs">Download</span>
         </Button>
       </div>
     </div>

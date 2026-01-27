@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { Download, Eye } from 'lucide-react';
-import { useLibrary } from '../../../app/context/LibraryContext';
+import { useLibrary } from '@/app/context/LibraryContext';
 
 export const ContextMenu: React.FC = () => {
-  const { contextMenu, closeContextMenu, currentItems } = useLibrary();
+  const { contextMenu, closeContextMenu, currentItems, handleDownload, handleDoubleClick } = useLibrary();
   
   if (!contextMenu) return null;
 
@@ -20,15 +20,15 @@ export const ContextMenu: React.FC = () => {
     >
       <button 
         className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-primary transition-colors text-left"
-        onClick={() => { console.log('Download', item.name); closeContextMenu(); }}
+        onClick={() => { handleDownload(item); closeContextMenu(); }}
       >
         <Download className="w-4 h-4" />
         Download {item.type === 'folder' ? 'Folder' : ''}
       </button>
-      {item.type === 'file' && (
+      {item.type === 'file' && (item.fileType === 'PDF' || ['PNG', 'JPG', 'JPEG'].includes(item.fileType || '')) && (
         <button 
           className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-primary transition-colors text-left"
-          onClick={() => { console.log('View', item.name); closeContextMenu(); }}
+          onClick={() => { handleDoubleClick(item); closeContextMenu(); }}
         >
           <Eye className="w-4 h-4" />
           Quick View

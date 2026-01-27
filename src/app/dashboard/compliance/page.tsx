@@ -387,6 +387,16 @@ export default function ComplianceCalendarPage() {
               <Download className="w-4 h-4 mr-2" />
               Download (.ics)
             </Button>
+
+            <Link href="/dashboard/compliance/setup">
+              <Button
+                variant="outline"
+                className="bg-light text-primary-color-new"
+              >
+                <ArrowRight className="w-4 h-4 mr-2" />
+                Setup
+              </Button>
+            </Link>
           </div>
         }
       />

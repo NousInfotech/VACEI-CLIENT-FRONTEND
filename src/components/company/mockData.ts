@@ -1773,7 +1773,165 @@ export const MOCK_HIERARCHY_DATA: HierarchyResponse = {
             }
         ]
     }
-}
+};
+
+export const MOCK_COMPANY_DATA_OPAL: CompanyResponse = {
+    "data": {
+        "perShareValue": {
+            "value": 50,
+            "currency": "EUR"
+        },
+        "_id": "69429ddc9c2f087b6331078f",
+        "clientId": "faa2d0c7-9d90-446e-82de-c56977af5a9d",
+        "organizationId": "6914e26ebbb06e696s21eebf4",
+        "name": "OpalGate Consulting Ltd",
+        "registrationNumber": "EF-020398611",
+        "address": "12, Triq San Gwann, Valletta VLT 1165, Malta",
+        "supportingDocuments": [],
+        "authorizedShares": 5000,
+        "issuedShares": 4000,
+        "totalShares": [
+            {
+                "totalShares": 3000,
+                "class": "A",
+                "type": "Ordinary"
+            },
+            {
+                "totalShares": 1000,
+                "class": "B",
+                "type": "Ordinary"
+            }
+        ],
+        "shareHoldingCompanies": [],
+        "shareHolders": [
+            {
+                "personId": {
+                    "_id": "rep_person_1",
+                    "name": "Sarah Vella",
+                    "nationality": "Maltese",
+                    "address": "7, Triq il-Kbira, Sliema SLM 1541, Malta",
+                    "supportingDocuments": [],
+                    "id": "rep_person_1"
+                },
+                "sharePercentage": 75,
+                "paidUpSharesPercentage": 100,
+                "sharesData": [
+                    {
+                        "totalShares": 3000,
+                        "class": "A",
+                        "type": "Ordinary"
+                    }
+                ],
+                "_id": "sh_1",
+                "id": "sh_1"
+            },
+            {
+                "personId": {
+                    "_id": "rep_person_2",
+                    "name": "Robert Zammit",
+                    "nationality": "Maltese",
+                    "address": "15, Triq l-Imdina, Zebbug ZBG 1650, Malta",
+                    "supportingDocuments": [],
+                    "id": "rep_person_2"
+                },
+                "sharePercentage": 25,
+                "paidUpSharesPercentage": 100,
+                "sharesData": [
+                    {
+                        "totalShares": 1000,
+                        "class": "B",
+                        "type": "Ordinary"
+                    }
+                ],
+                "_id": "sh_2",
+                "id": "sh_2"
+            }
+        ],
+        "representationalSchema": [
+            {
+                "personId": {
+                    "_id": "rep_person_1",
+                    "name": "Sarah Vella",
+                    "nationality": "Maltese",
+                    "address": "7, Triq il-Kbira, Sliema SLM 1541, Malta",
+                    "supportingDocuments": [],
+                    "id": "rep_person_1"
+                },
+                "role": [
+                    "Director",
+                    "Legal Representative",
+                    "Judicial Representative"
+                ],
+                "_id": "rep_1",
+                "id": "rep_1"
+            }
+        ],
+        "representationalCompany": [],
+        "createdAt": "2025-11-15T09:00:00.000Z",
+        "updatedAt": "2026-01-10T14:30:00.000Z",
+        "__v": 1,
+        "companyStartedAt": "2025-11-15T00:00:00.000Z",
+        "description": "OpalGate Consulting Ltd specializes in providing high-end business consulting and advisory services in Malta. Our experts help organizations navigate complex regulatory environments and optimize their operational strategies.",
+        "industry": "Consulting",
+        "id": "69429ddc9c2f087b6331078f"
+    }
+};
+
+export const MOCK_HIERARCHY_DATA_OPAL: HierarchyResponse = {
+    "success": true,
+    "data": {
+        "id": "69429ddc9c2f087b6331078f",
+        "name": "OpalGate Consulting Ltd",
+        "totalShares": [
+            {
+                "totalShares": 3000,
+                "class": "A",
+                "type": "Ordinary"
+            },
+            {
+                "totalShares": 1000,
+                "class": "B",
+                "type": "Ordinary"
+            }
+        ],
+        "type": "company",
+        "address": "12, Triq San Gwann, Valletta VLT 1165, Malta",
+        "shareholders": [
+            {
+                "id": "rep_person_1",
+                "name": "Sarah Vella",
+                "type": "person",
+                "address": "7, Triq il-Kbira, Sliema SLM 1541, Malta",
+                "sharesData": [
+                    {
+                        "totalShares": 3000,
+                        "class": "A",
+                        "type": "Ordinary"
+                    }
+                ],
+                "totalShares": 3000,
+                "roles": ["Director", "Legal Representative"],
+                "nationality": "Maltese"
+            },
+            {
+                "id": "rep_person_2",
+                "name": "Robert Zammit",
+                "type": "person",
+                "address": "15, Triq l-Imdina, Zebbug ZBG 1650, Malta",
+                "sharesData": [
+                    {
+                        "totalShares": 1000,
+                        "class": "B",
+                        "type": "Ordinary"
+                    }
+                ],
+                "totalShares": 1000,
+                "roles": [],
+                "nationality": "Maltese"
+            }
+        ]
+    }
+};
 
 export const MOCK_KYC_WORKFLOWS_DATA: KycWorkflow[] = [
     {
@@ -2200,4 +2358,56 @@ export const MOCK_KYC_WORKFLOWS_DATA: KycWorkflow[] = [
         "updatedAt": "2025-12-22T16:47:01.706Z",
         "__v": 0
     }
-]
+];
+
+export const MOCK_COMPANIES = [
+  {
+    _id: "69452a00891fd4a4ff48c059",
+    name: "GoldenWave Logistics Limited",
+    registrationNumber: "EF-0203332"
+  },
+  {
+    _id: "69429ddc9c2f087b6331078f",
+    name: "OpalGate Consulting Ltd",
+    registrationNumber: "EF-020398611"
+  }
+];
+
+export const MOCK_KYC_DATA = [
+  {
+    _id: "69497605abccee8f95adbd14",
+    company: {
+      _id: "69452a00891fd4a4ff48c059",
+      name: "GoldenWave Logistics Limited",
+      registrationNumber: "EF-0203332",
+      id: "69452a00891fd4a4ff48c059"
+    },
+    clientId: "a9eef95d-fd72-42ed-89e9-23974d2f3c51",
+    auditorId: "auditor_123",
+    workflowType: "standard",
+    documentRequests: [],
+    status: "active",
+    discussions: [],
+    createdAt: "2025-12-22T16:47:01.706Z",
+    updatedAt: "2025-12-22T16:47:01.706Z",
+    __v: 0
+  },
+  {
+    _id: "kyc_opal_001",
+    company: {
+      _id: "69429ddc9c2f087b6331078f",
+      name: "OpalGate Consulting Ltd",
+      registrationNumber: "EF-020398611",
+      id: "69429ddc9c2f087b6331078f"
+    },
+    clientId: "faa2d0c7-9d90-446e-82de-c56977af5a9d",
+    auditorId: "auditor_456",
+    workflowType: "standard",
+    documentRequests: [],
+    status: "active",
+    discussions: [],
+    createdAt: "2026-01-10T09:00:00.706Z",
+    updatedAt: "2026-01-10T09:00:00.706Z",
+    __v: 0
+  }
+];

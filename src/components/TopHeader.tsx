@@ -18,6 +18,7 @@ import {
     fetchUnreadCountAPI,
     markNotificationAsReadAPI,
 } from '@/api/notificationService';
+import { MOCK_COMPANIES } from "./company/mockData";
 
 // NotificationItem component
 interface HeaderNotificationItemProps {
@@ -146,14 +147,15 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             if (storedCompanies) {
                 try {
                     const parsed = JSON.parse(storedCompanies);
-                    setCompanies(parsed);
-                    finalCompanies = parsed;
-                } catch { /* ignore */ }
+                    // Merge or replace with MOCK_COMPANIES to ensure we have the latest
+                    setCompanies(MOCK_COMPANIES.map(c => ({ id: c._id, name: c.name })));
+                    finalCompanies = MOCK_COMPANIES.map(c => ({ id: c._id, name: c.name }));
+                } catch { 
+                    setCompanies(MOCK_COMPANIES.map(c => ({ id: c._id, name: c.name })));
+                    finalCompanies = MOCK_COMPANIES.map(c => ({ id: c._id, name: c.name }));
+                }
             } else {
-                const defaults = [
-                    { id: "c1", name: "Acme Ltd" },
-                    { id: "c2", name: "Beta Holdings" },
-                ];
+                const defaults = MOCK_COMPANIES.map(c => ({ id: c._id, name: c.name }));
                 setCompanies(defaults);
                 finalCompanies = defaults;
                 localStorage.setItem("vacei-companies", JSON.stringify(defaults));
@@ -162,7 +164,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             if (storedActiveCompany) {
                 setActiveCompany(storedActiveCompany);
             } else {
-                const first = finalCompanies?.[0]?.id || "c1";
+                const first = finalCompanies?.[0]?.id || (MOCK_COMPANIES[0]?._id);
                 setActiveCompany(first);
                 localStorage.setItem("vacei-active-company", first);
             }
@@ -211,6 +213,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             onClick: () => {
                 setActiveCompany(c.id);
                 if (typeof window !== "undefined") localStorage.setItem("vacei-active-company", c.id);
+                router.push(`/dashboard/company/${c.id}`);
             }
         };
     });

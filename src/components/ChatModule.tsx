@@ -9,6 +9,8 @@ import {
     SquareArrowShrink01Icon,
     BubbleChatAddIcon,
 } from '@hugeicons/core-free-icons';
+import { ENGAGEMENT_CONFIG } from '@/config/engagementConfig';
+import { MOCK_CHAT_DATA } from './chat/mockChatData';
 
 const backendUrl =
     process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001/api/';
@@ -35,7 +37,11 @@ type Assignment = {
 
 type MessagesByAssignment = Record<number, Message[]>;
 
-export default function CollapsibleFacebookChat() {
+interface ChatModuleProps {
+    isEmbedded?: boolean;
+}
+
+export default function CollapsibleFacebookChat({ isEmbedded = false }: ChatModuleProps) {
     const latestTimestampsRef = useRef<Record<string, number>>({});
     const earliestTimestampsRef = useRef<Record<string, number>>({});
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -125,6 +131,22 @@ export default function CollapsibleFacebookChat() {
             }
 
             try {
+                if (ENGAGEMENT_CONFIG.USE_MOCK_CHAT) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    const mockMsgs = MOCK_CHAT_DATA.messages[assignment.assignmentId as keyof typeof MOCK_CHAT_DATA.messages] || [];
+                    const mappedMsgs = mockMsgs.map(msg => ({
+                        ...msg,
+                        sender: {
+                            id: msg.senderId === 'current_user' ? (userId ?? 0) : msg.senderId,
+                            first_name: msg.senderId === 'current_user' ? 'You' : assignment.accountant.first_name,
+                            username: msg.senderId === 'current_user' ? username : assignment.accountant.name,
+                        },
+                        createdAt: new Date(msg.createdAt)
+                    }));
+                    mappedMsgs.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+                    return { messages: mappedMsgs as any[], hasMore: false };
+                }
+
                 const url = new URL(`${backendUrl}chat/getMessages`);
                 url.searchParams.append('userId', String(assignment.accountant.id));
 
@@ -208,10 +230,21 @@ export default function CollapsibleFacebookChat() {
 
     // Effect to fetch chat assignments on initial load
     useEffect(() => {
-        if (isLoadingInitialData || !token) return;
+        if (isLoadingInitialData) return;
+        if (!token && !ENGAGEMENT_CONFIG.USE_MOCK_CHAT) return;
 
         const loadAssignments = async () => {
             try {
+                if (ENGAGEMENT_CONFIG.USE_MOCK_CHAT) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    const mapped: Assignment[] = MOCK_CHAT_DATA.assignments;
+                    setAssignments(mapped);
+                    if (mapped.length > 0) {
+                        setSelectedAssignment(mapped[0]);
+                    }
+                    return;
+                }
+
                 const res = await fetch(`${backendUrl}chat/getChatUsers`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
@@ -249,7 +282,8 @@ export default function CollapsibleFacebookChat() {
 
     // Effect to load messages when selectedAssignment changes or chat is opened
     useEffect(() => {
-        if ( !selectedAssignment || isLoadingInitialData || !token) return;
+        if (!selectedAssignment || isLoadingInitialData) return;
+        if (!token && !ENGAGEMENT_CONFIG.USE_MOCK_CHAT) return;
         loadChatMessages(selectedAssignment);
     }, [isOpen, selectedAssignment, isLoadingInitialData, token, loadChatMessages]);
 
@@ -260,7 +294,7 @@ export default function CollapsibleFacebookChat() {
             pollTimeoutRef.current = null;
         }
 
-        if (!selectedAssignment || !token) return; // Removed `!isOpen` here to allow polling when closed
+        if (!selectedAssignment || !token || ENGAGEMENT_CONFIG.USE_MOCK_CHAT) return; // Disable polling in mock mode
 
         let isMounted = true;
 
@@ -470,6 +504,12 @@ export default function CollapsibleFacebookChat() {
         setInput('');
 
         try {
+            if (ENGAGEMENT_CONFIG.USE_MOCK_CHAT) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                // In mock mode, we just keep the optimistic message
+                return;
+            }
+
             await fetch(`${backendUrl}chat/send`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -507,7 +547,7 @@ export default function CollapsibleFacebookChat() {
 
     return (
         <>
-            {!isOpen && (
+            {!isOpen && !isEmbedded && (
                 <button
                     id="openChatBubble"
                     onClick={() => {
@@ -525,10 +565,11 @@ export default function CollapsibleFacebookChat() {
                 </button>
             )}
 
-            {isOpen && (
+            {(isOpen || isEmbedded) && (
                 <div
-                    className={`fixed bottom-6 right-6 rounded-xl shadow-2xl bg-card flex flex-col font-sans z-50 transition-all duration-300
-            ${isMaximized ? 'w-[90vw] h-[80vh] sm:w-[90vw] sm:h-[90vh]' : 'w-[400px] h-[500px]'}`}
+                    className={`${isEmbedded ? 'relative w-full h-[600px]' : 'fixed bottom-6 right-6 rounded-xl shadow-2xl z-50 transition-all duration-300'} 
+                    bg-card flex flex-col font-sans
+                    ${!isEmbedded && (isMaximized ? 'w-[90vw] h-[80vh] sm:w-[90vw] sm:h-[90vh]' : 'w-[400px] h-[500px]')}`}
                 >
                     {/* Header */}
                     <div className="p-4 border-b border-border flex justify-between items-center font-semibold text-lg text-primary">
@@ -539,28 +580,32 @@ export default function CollapsibleFacebookChat() {
                         </div>
 
                         <div className="flex gap-3 items-center">
-                            <button
-                                disabled={assignments.length === 0}
-                                onClick={() => setIsMaximized(!isMaximized)}
-                                aria-label={isMaximized ? 'Restore window' : 'Maximize window'}
-                                className={`text-muted-foreground ${buttonCommonClasses} focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1`}
-                            >
-                                {isMaximized ? (
-                                    <HugeiconsIcon icon={SquareArrowShrink01Icon} className="h-6 w-6" />
-                                ) : (
-                                    <HugeiconsIcon icon={Maximize01Icon} className="h-6 w-6" />
-                                )}
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setIsOpen(false);
-                                    setIsMaximized(false);
-                                }}
-                                aria-label="Close chat"
-                                className={`text-muted-foreground ${buttonCommonClasses} focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1`}
-                            >
-                                <HugeiconsIcon icon={Cancel01Icon} className="h-6 w-6" />
-                            </button>
+                            {!isEmbedded && (
+                                <button
+                                    disabled={assignments.length === 0}
+                                    onClick={() => setIsMaximized(!isMaximized)}
+                                    aria-label={isMaximized ? 'Restore window' : 'Maximize window'}
+                                    className={`text-muted-foreground ${buttonCommonClasses} focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1`}
+                                >
+                                    {isMaximized ? (
+                                        <HugeiconsIcon icon={SquareArrowShrink01Icon} className="h-6 w-6" />
+                                    ) : (
+                                        <HugeiconsIcon icon={Maximize01Icon} className="h-6 w-6" />
+                                    )}
+                                </button>
+                            )}
+                            {!isEmbedded && (
+                                <button
+                                    onClick={() => {
+                                        setIsOpen(false);
+                                        setIsMaximized(false);
+                                    }}
+                                    aria-label="Close chat"
+                                    className={`text-muted-foreground ${buttonCommonClasses} focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1`}
+                                >
+                                    <HugeiconsIcon icon={Cancel01Icon} className="h-6 w-6" />
+                                </button>
+                            )}
                         </div>
                     </div>
 

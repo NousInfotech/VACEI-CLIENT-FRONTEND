@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { getKycByCompanyId, KYC } from '@/api/auditService'
+import { KYC } from '@/api/auditService'
 
 interface UseKycReturn {
   kyc: KYC[] | null // API returns an array of KYC workflows
@@ -24,9 +24,10 @@ export const useKyc = (companyId: string | null): UseKycReturn => {
     setLoading(true)
     setError(null)
     try {
-      const data = await getKycByCompanyId(companyId)
+      const { MOCK_KYC_DATA } = await import('../mockData')
+      const data = MOCK_KYC_DATA.filter(k => k.company?._id === companyId || k.company?.id === companyId)
       // API returns an array of KYC workflows
-      setKyc(Array.isArray(data) ? data : [data])
+      setKyc(Array.isArray(data) ? data as any : [data] as any)
     } catch (err: any) {
       setError(err.message || 'Failed to fetch KYC')
       setKyc(null)

@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { FolderIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { LibraryProvider, useLibrary } from '../../app/context/LibraryContext';
+import { useLibrary, LibraryProvider } from '@/app/context/LibraryContext';
 
 // Modular Components
 import { Toolbar } from './components/Toolbar';
@@ -27,8 +27,8 @@ const LibraryContent: React.FC = () => {
     currentItems, 
     setSelectedItems, 
     closeContextMenu,
-    currentFolderId,
-    searchQuery
+    isMobileSidebarOpen,
+    setIsMobileSidebarOpen,
   } = useLibrary();
 
   // Keyboard Shortcuts (Ctrl + A)
@@ -48,19 +48,32 @@ const LibraryContent: React.FC = () => {
       <Toolbar />
       <Breadcrumbs />
 
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Mobile Sidebar Overlay */}
+        {isMobileSidebarOpen && (
+          <div 
+            className="lg:hidden absolute inset-0 bg-black/20 backdrop-blur-[2px] z-30 animate-in fade-in duration-200"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+        )}
+
+        <div className={cn(
+          "absolute lg:relative z-40 h-full transition-transform duration-300 transform lg:translate-x-0 border-r border-gray-200",
+          isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        )}>
+          <Sidebar />
+        </div>
 
         {/* Content Area */}
         <div className="flex-1 flex flex-col min-w-0" onClick={() => { setSelectedItems([]); closeContextMenu(); }}>
           <ScrollArea className="flex-1">
-            <div className="p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 md:p-6" onClick={(e) => e.stopPropagation()}>
               {isLoading ? (
                 viewMode === 'list' ? <ListViewSkeleton /> : <GridViewSkeleton />
               ) : currentItems.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-[400px] text-gray-400">
+                <div className="flex flex-col items-center justify-center min-h-[400px] text-gray-400">
                   <FolderIcon className="w-16 h-16 opacity-10 mb-4" />
-                  <p className="text-sm">No items found</p>
+                  <p className="text-sm font-medium">No items found</p>
                 </div>
               ) : viewMode === 'list' ? (
                 <ListView />
@@ -79,7 +92,7 @@ const LibraryContent: React.FC = () => {
 
 export const LibraryExplorer: React.FC<LibraryExplorerProps> = ({ className }) => {
   return (
-    <div className={cn("flex flex-col h-[700px] bg-white border border-gray-200 rounded-2xl overflow-hidden", className)}>
+    <div className={cn("flex flex-col h-[600px] md:h-[700px] lg:h-[800px] bg-white border border-gray-200 rounded-2xl overflow-hidden", className)}>
       <LibraryProvider>
         <LibraryContent />
       </LibraryProvider>

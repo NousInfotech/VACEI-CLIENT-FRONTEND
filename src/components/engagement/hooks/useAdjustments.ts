@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { getAdjustments, Adjustment } from '@/api/auditService'
+import { ENGAGEMENT_CONFIG } from '@/config/engagementConfig'
+import { MOCK_ENGAGEMENT_DATA } from '../mockEngagementData'
 
 interface UseAdjustmentsReturn {
   adjustments: Adjustment[]
@@ -24,8 +26,14 @@ export const useAdjustments = (etbId: string | null): UseAdjustmentsReturn => {
     setLoading(true)
     setError(null)
     try {
-      const data = await getAdjustments(etbId)
-      setAdjustments(data)
+      if (ENGAGEMENT_CONFIG.USE_MOCK_DATA) {
+        // Mock loading delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setAdjustments(MOCK_ENGAGEMENT_DATA.adjustments as any[]);
+      } else {
+        const data = await getAdjustments(etbId)
+        setAdjustments(data)
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch adjustments')
       setAdjustments([])

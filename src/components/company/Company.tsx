@@ -43,7 +43,7 @@ const Company = () => {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <div className="p-4 max-w-7xl mx-auto space-y-6">
         <BackButton />
         <DetailsSkeleton />
       </div>
@@ -52,7 +52,7 @@ const Company = () => {
 
   if (error) {
     return (
-      <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <div className="p-4 max-w-7xl mx-auto space-y-6">
         <BackButton />
         <EmptyState 
           icon={AlertCircle}
@@ -65,7 +65,7 @@ const Company = () => {
 
   if (!data) {
     return (
-      <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <div className="p-4 max-w-7xl mx-auto space-y-6">
         <BackButton />
         <EmptyState 
           icon={AlertCircle}
@@ -77,7 +77,7 @@ const Company = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 max-w-7xl mx-auto space-y-6">
       {/* <BackButton /> */}
       <PageHeader
         title={data?.name || "Company Overview"}
