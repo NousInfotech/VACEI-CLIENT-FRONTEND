@@ -181,6 +181,11 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           Payroll: "payroll",
           "Statutory Audit": "audit",
           "Corporate Services": "corporate",
+          "CFO Services": "cfo",
+          "MBR Filing": "mbr-filing",
+          Incorporation: "incorporation",
+          "Business Plans": "business-plans",
+          Liquidation: "liquidation",
         };
 
         const category = serviceCategoryMap[serviceName] || "";
@@ -848,6 +853,491 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                 </div>
               </div>
             </DashboardCard>
+          )}
+
+          {/* CFO: Overview, Engagements, Activity */}
+          {serviceName === "CFO Services" && (
+            <>
+              <DashboardCard className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                    <h3 className="text-lg font-medium tracking-tight">
+                      Service Overview Summary
+                    </h3>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Strategic finance support, reporting insights, and leadership
+                    guidance — tailored to your current priorities.
+                  </p>
+                </div>
+              </DashboardCard>
+
+              <DashboardCard className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                    <h3 className="text-lg font-medium tracking-tight">
+                      Active CFO Engagements
+                    </h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                            Engagement
+                          </th>
+                          <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                            Start date
+                          </th>
+                          <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                            Status
+                          </th>
+                          <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                            End / renewal
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          {
+                            name: "Monthly performance & KPI pack",
+                            start: "Jan 05, 2026",
+                            status: "In progress",
+                            end: "Monthly",
+                          },
+                          {
+                            name: "Budgeting & forecasting",
+                            start: "Jan 12, 2026",
+                            status: "Waiting on you",
+                            end: "Feb 2026",
+                          },
+                        ].map((row, idx) => (
+                          <tr
+                            key={idx}
+                            className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                          >
+                            <td className="py-3 px-4 font-medium text-gray-900">
+                              {row.name}
+                            </td>
+                            <td className="py-3 px-4 text-gray-600">
+                              {row.start}
+                            </td>
+                            <td className="py-3 px-4">
+                              <Badge className="rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-gray-700 border-gray-200">
+                                {row.status}
+                              </Badge>
+                            </td>
+                            <td className="py-3 px-4 text-gray-600">
+                              {row.end}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </DashboardCard>
+
+              <DashboardCard className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                    <h3 className="text-lg font-medium tracking-tight">
+                      Recent Activity Feed
+                    </h3>
+                  </div>
+                  <div className="space-y-3">
+                    {[
+                      {
+                        action: "Draft forecast shared for review",
+                        date: "Jan 23",
+                      },
+                      {
+                        action: "KPI pack prepared",
+                        date: "Jan 18",
+                      },
+                      {
+                        action: "Strategy call scheduled",
+                        date: "Jan 10",
+                      },
+                    ].map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 rounded-full bg-primary" />
+                          <span className="text-sm text-gray-900">
+                            {item.action}
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-500">{item.date}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </DashboardCard>
+            </>
+          )}
+
+          {/* MBR Filing: period, status, requirements, filings table */}
+          {serviceName === "MBR Filing" && (
+            <>
+              <DashboardCard className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                    <h3 className="text-lg font-medium tracking-tight">
+                      Current Filing Period
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 rounded-lg border border-gray-100 bg-white">
+                      <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                        Period
+                      </p>
+                      <p className="text-sm font-semibold text-gray-900 mt-2">
+                        {cycle}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg border border-gray-100 bg-white">
+                      <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                        Filing Status
+                      </p>
+                      <Badge className="mt-2 rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-blue-600 border-blue-200">
+                        In progress
+                      </Badge>
+                    </div>
+                    <div className="p-4 rounded-lg border border-gray-100 bg-white">
+                      <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                        What is required
+                      </p>
+                      <p className="text-sm text-gray-600 mt-2">
+                        Upload or confirm required documents.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </DashboardCard>
+
+              <DashboardCard className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                    <h3 className="text-lg font-medium tracking-tight">
+                      Filings Summary
+                    </h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                            Year
+                          </th>
+                          <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                            Filing type
+                          </th>
+                          <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                            Status
+                          </th>
+                          <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                            Submission date
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          {
+                            year: "2026",
+                            type: "Annual Return",
+                            status: "In progress",
+                            date: "—",
+                          },
+                          {
+                            year: "2025",
+                            type: "Annual Return",
+                            status: "Submitted",
+                            date: "Dec 20, 2025",
+                          },
+                        ].map((row, idx) => (
+                          <tr
+                            key={idx}
+                            className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                          >
+                            <td className="py-3 px-4 font-medium text-gray-900">
+                              {row.year}
+                            </td>
+                            <td className="py-3 px-4 text-gray-600">{row.type}</td>
+                            <td className="py-3 px-4">
+                              <Badge className="rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-gray-700 border-gray-200">
+                                {row.status}
+                              </Badge>
+                            </td>
+                            <td className="py-3 px-4 text-gray-600">{row.date}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </DashboardCard>
+            </>
+          )}
+
+          {/* Incorporation: progress, uploaded docs, company details */}
+          {serviceName === "Incorporation" && (
+            <>
+              <DashboardCard className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                    <h3 className="text-lg font-medium tracking-tight">
+                      Incorporation Progress
+                    </h3>
+                  </div>
+                  <div className="space-y-4">
+                    {[
+                      { step: "Name approval", status: "completed" as const },
+                      { step: "Documentation", status: "in_progress" as const },
+                      { step: "Registration", status: "pending" as const },
+                      { step: "Completion", status: "pending" as const },
+                    ].map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-4">
+                        <div className="shrink-0">
+                          {item.status === "completed" ? (
+                            <CheckCircle className="w-5 h-5 text-emerald-500" />
+                          ) : item.status === "in_progress" ? (
+                            <Clock className="w-5 h-5 text-blue-500" />
+                          ) : (
+                            <Circle className="w-5 h-5 text-gray-300" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">
+                            {item.step}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {item.status === "completed"
+                              ? "Completed"
+                              : item.status === "in_progress"
+                                ? "In progress"
+                                : "Pending"}
+                          </p>
+                        </div>
+                        <Badge
+                          className={cn(
+                            "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
+                            item.status === "completed"
+                              ? "text-emerald-500 border-emerald-500/20"
+                              : item.status === "in_progress"
+                                ? "text-blue-500 border-blue-500/20"
+                                : "text-gray-400 border-gray-200",
+                          )}
+                        >
+                          {item.status === "completed"
+                            ? "✓"
+                            : item.status === "in_progress"
+                              ? "⏳"
+                              : "○"}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </DashboardCard>
+
+              <DashboardCard className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                    <h3 className="text-lg font-medium tracking-tight">
+                      Uploaded Documents
+                    </h3>
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      { name: "ID document(s)", status: "Received" },
+                      { name: "Proof of address", status: "Pending" },
+                      { name: "Draft memorandum & articles", status: "Pending" },
+                    ].map((doc, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <FileText className="w-4 h-4 text-gray-400" />
+                          <p className="text-sm font-medium text-gray-900">
+                            {doc.name}
+                          </p>
+                        </div>
+                        <Badge className="rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-gray-700 border-gray-200">
+                          {doc.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </DashboardCard>
+
+              <DashboardCard className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                    <h3 className="text-lg font-medium tracking-tight">
+                      Company Details (Read only)
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[
+                      { label: "Company name", value: "—" },
+                      { label: "Registration number", value: "—" },
+                      { label: "Incorporation date", value: "—" },
+                    ].map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="p-4 rounded-lg border border-gray-100 bg-white"
+                      >
+                        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                          {item.label}
+                        </p>
+                        <p className="text-sm font-semibold text-gray-900 mt-2">
+                          {item.value}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </DashboardCard>
+            </>
+          )}
+
+          {/* Business Plans: status, milestones, latest docs */}
+          {serviceName === "Business Plans" && (
+            <>
+              <DashboardCard className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                    <h3 className="text-lg font-medium tracking-tight">
+                      Project Status
+                    </h3>
+                  </div>
+                  <Badge className="rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-orange-600 border-orange-200 w-fit">
+                    Draft
+                  </Badge>
+                </div>
+              </DashboardCard>
+
+              <DashboardCard className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                    <h3 className="text-lg font-medium tracking-tight">
+                      Milestones
+                    </h3>
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      { label: "Research", status: "Completed" },
+                      { label: "Draft", status: "In progress" },
+                      { label: "Review", status: "Pending" },
+                      { label: "Final submission", status: "Pending" },
+                    ].map((m, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50"
+                      >
+                        <p className="text-sm font-medium text-gray-900">
+                          {m.label}
+                        </p>
+                        <Badge className="rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-gray-700 border-gray-200">
+                          {m.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </DashboardCard>
+
+              <DashboardCard className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                    <h3 className="text-lg font-medium tracking-tight">
+                      Latest Version Documents
+                    </h3>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Documents will appear here once uploaded.
+                  </div>
+                </div>
+              </DashboardCard>
+            </>
+          )}
+
+          {/* Liquidation: steps, status, actions log */}
+          {serviceName === "Liquidation" && (
+            <>
+              <DashboardCard className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                    <h3 className="text-lg font-medium tracking-tight">
+                      Liquidation Process
+                    </h3>
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      "Appointment of liquidator",
+                      "Asset review",
+                      "Creditor notifications",
+                      "Closure",
+                    ].map((step, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50"
+                      >
+                        <p className="text-sm font-medium text-gray-900">
+                          {step}
+                        </p>
+                        <Badge className="rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-gray-700 border-gray-200">
+                          Pending
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </DashboardCard>
+
+              <DashboardCard className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                    <h3 className="text-lg font-medium tracking-tight">
+                      Current Status
+                    </h3>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    {workflowInfo.label}
+                  </p>
+                </div>
+              </DashboardCard>
+
+              <DashboardCard className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                    <h3 className="text-lg font-medium tracking-tight">
+                      Recent Actions
+                    </h3>
+                  </div>
+                  <div className="text-sm text-gray-500">No activity yet</div>
+                </div>
+              </DashboardCard>
+            </>
           )}
 
           {/* Financial Statistics Section - Only for Accounting & Bookkeeping */}
