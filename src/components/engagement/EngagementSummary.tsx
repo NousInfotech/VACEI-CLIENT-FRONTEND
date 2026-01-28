@@ -516,7 +516,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                     </div>
                     <p className="text-2xl font-bold text-gray-900">
                       €
-                      {stats.find((s) => s.title?.includes("Revenue"))?.value ||
+                      {stats.find((s) => s.title?.includes("Revenue"))?.amount ||
                         "—"}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">Current period</p>
@@ -530,7 +530,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                     </div>
                     <p className="text-2xl font-bold text-gray-900">
                       €
-                      {stats.find((s) => s.title?.includes("Expense"))?.value ||
+                      {stats.find((s) => s.title?.includes("Expense"))?.amount ||
                         "—"}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">Current period</p>
@@ -543,7 +543,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                     </div>
                     <p className="text-2xl font-bold text-gray-900">
                       €
-                      {stats.find((s) => s.title?.includes("Net"))?.value ||
+                      {stats.find((s) => s.title?.includes("Net"))?.amount ||
                         "—"}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">Current period</p>
