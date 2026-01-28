@@ -162,7 +162,8 @@ export default function DashboardPage() {
 
   const activeServices = [
     { name: "Bookkeeping", status: "In progress", next: "Review March", nextStepType: "client", href: "/dashboard/services/bookkeeping" },
-    { name: "VAT & Tax", status: "Due soon (30 Jun)", next: "Missing docs", nextStepType: "client", href: "/dashboard/services/vat" },
+    { name: "VAT", status: "Due soon (30 Jun)", next: "Missing docs", nextStepType: "client", href: "/dashboard/services/vat" },
+    { name: "Tax", status: "In progress", next: "Review documents", nextStepType: "client", href: "/dashboard/services/tax" },
     { name: "Payroll", status: "Done", next: "Next run 28th", nextStepType: "vacei", href: "/dashboard/services/payroll" },
     { name: "Audit", status: "Waiting on you", next: "Reply Q#12", nextStepType: "client", href: "/dashboard/services/audit" },
   ];
@@ -173,7 +174,7 @@ export default function DashboardPage() {
   ];
   const recentActivity = [
     { text: "9 docs uploaded today", time: "2 hours ago", service: "Documents", href: "/dashboard/documents" },
-    { text: "VAT checks completed", time: "5 hours ago", service: "VAT & Tax", href: "/dashboard/services/vat" },
+    { text: "VAT checks completed", time: "5 hours ago", service: "VAT", href: "/dashboard/services/vat" },
   ];
   const messagesUpdates = [
     { text: "Need 1 more invoice", sender: "John (Accountant)", time: "1 hour ago" },

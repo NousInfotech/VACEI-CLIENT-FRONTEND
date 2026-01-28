@@ -138,7 +138,8 @@ export default function SidebarMenu({
         "settings",
         "payroll",
         "accounting-bookkeeping",
-        "vat-tax",
+        "vat",
+        "tax",
         "cfo",
         "audit",
         "csp",
@@ -351,7 +352,8 @@ export default function SidebarMenu({
               // Allow service headers to navigate while being a dropdown
               const isNavigableHeader = [
                 "audit",
-                "vat-tax",
+                "vat",
+                "tax",
                 "payroll",
                 "accounting-bookkeeping",
                 "client-facing-content",

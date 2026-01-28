@@ -153,7 +153,7 @@ const MOCK_COMPLIANCE_DATA: Record<string, ComplianceItem[]> = {
       description: 'Review and sign-off on the tax computations based on audited figures.'
     }
   ],
-  'VAT & Tax': [
+  VAT: [
     {
       id: 'vat-1',
       title: 'VAT Return Q4 2025',
@@ -171,6 +171,17 @@ const MOCK_COMPLIANCE_DATA: Record<string, ComplianceItem[]> = {
       status: 'filed',
       authority: 'VAT Department',
       description: 'Declaration of intra-community supplies and acquisitions for the month of December.'
+    }
+  ],
+  Tax: [
+    {
+      id: 'tax-1',
+      title: 'Corporate Tax Return 2025',
+      type: 'Annual Filing',
+      dueDate: '2026-09-30',
+      status: 'upcoming',
+      authority: 'Commissioner for Revenue',
+      description: 'Annual corporate tax return and computation for FY 2025.'
     }
   ],
   'Corporate Services (CSP)': [

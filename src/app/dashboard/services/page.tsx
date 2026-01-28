@@ -53,12 +53,22 @@ const serviceCategories = [
       },
       {
         slug: "vat",
-        title: "VAT & Tax",
+        title: "VAT",
         status: "Draft",
         statusTone: "info",
         href: "/dashboard/services/vat",
         icon: TaxesIcon,
-        description: "VAT periods, submissions and tax review.",
+        description: "VAT periods, submissions and returns.",
+        color: "green",
+      },
+      {
+        slug: "tax",
+        title: "Tax",
+        status: "Open",
+        statusTone: "info",
+        href: "/dashboard/services/tax",
+        icon: TaxesIcon,
+        description: "Corporate and personal tax compliance.",
         color: "green",
       },
       {
@@ -166,7 +176,7 @@ const serviceCategories = [
       active: true,
       status: "Active",
       cta: "View services",
-      services: ["Bookkeeping", "VAT & Tax", "Payroll"], // Demo services
+      services: ["Bookkeeping", "VAT", "Tax", "Payroll"], // Demo services
     },
     {
       label: "Pending Actions",

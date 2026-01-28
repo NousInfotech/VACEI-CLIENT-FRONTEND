@@ -145,7 +145,8 @@ export function GlobalUploadDrawer({ open, onClose }: GlobalUploadDrawerProps) {
                     items={[
                       { id: "auto", label: "Auto", onClick: () => setService("auto") },
                       { id: "bookkeeping", label: "Bookkeeping", onClick: () => setService("bookkeeping") },
-                      { id: "vat", label: "VAT & Tax", onClick: () => setService("vat") },
+                      { id: "vat", label: "VAT", onClick: () => setService("vat") },
+                      { id: "tax", label: "Tax", onClick: () => setService("tax") },
                       { id: "payroll", label: "Payroll", onClick: () => setService("payroll") },
                       { id: "audit", label: "Audit", onClick: () => setService("audit") },
                       { id: "csp", label: "CSP / MBR", onClick: () => setService("csp") },

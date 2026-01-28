@@ -25,7 +25,22 @@ import {
   Users,
   Building2,
   ArrowRight,
+  ChevronDown,
+  ChevronUp,
+  Receipt,
+  FileCheck,
 } from "lucide-react";
+import {
+  MBR_FILINGS_MOCK,
+  getActiveMBRFiling,
+  getMBRServiceStatusFromFilings,
+  type MBRFiling,
+} from "@/lib/mbrFilingsData";
+import {
+  VAT_PERIODS_MOCK,
+  getActiveVATPeriod,
+  type VATPeriod,
+} from "@/lib/vatPeriodsData";
 import { cn } from "@/lib/utils";
 import DashboardCard from "../DashboardCard";
 import PillTabs from "../shared/PillTabs";
@@ -134,8 +149,32 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
   const [loading, setLoading] = useState(false);
   const [recentDocuments, setRecentDocuments] = useState<any[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
+  const [mbrCurrentFilingId, setMbrCurrentFilingId] = useState<string | null>(
+    null,
+  );
+  const [mbrReferenceExpanded, setMbrReferenceExpanded] = useState(false);
 
-  const statusInfo = statusConfig[status] || statusConfig.on_track;
+  const [activeVatPeriodId, setActiveVatPeriodId] = useState<string | null>(
+    null,
+  );
+
+  const isMBRFilings = serviceName === "MBR Filings";
+  const isVAT = serviceName === "VAT";
+  const isTax = serviceName === "Tax";
+  const mbrFilings = MBR_FILINGS_MOCK;
+  const mbrActiveFiling = isMBRFilings
+    ? getActiveMBRFiling(mbrFilings, mbrCurrentFilingId)
+    : undefined;
+  const mbrStatus = isMBRFilings
+    ? getMBRServiceStatusFromFilings(mbrFilings)
+    : status;
+  const vatPeriods = VAT_PERIODS_MOCK;
+  const vatActivePeriod = isVAT
+    ? getActiveVATPeriod(vatPeriods, activeVatPeriodId)
+    : undefined;
+
+  const statusInfo =
+    statusConfig[isMBRFilings ? mbrStatus : status] || statusConfig.on_track;
   const workflowInfo =
     workflowStatusConfig[workflowStatus] || workflowStatusConfig.in_progress;
 
@@ -146,6 +185,13 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
       setActiveTab(tab);
     }
   }, [searchParams]);
+
+  // MBR Filings: treat "dashboard" as "overview"
+  useEffect(() => {
+    if (isMBRFilings && activeTab === "dashboard") {
+      setActiveTab("overview");
+    }
+  }, [isMBRFilings, activeTab]);
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -177,12 +223,14 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
       try {
         const serviceCategoryMap: Record<string, string> = {
           "Accounting & Bookkeeping": "accounting",
-          "VAT & Tax": "vat",
+          VAT: "vat",
+          Tax: "tax",
           Payroll: "payroll",
           "Statutory Audit": "audit",
           "Corporate Services": "corporate",
           "CFO Services": "cfo",
           "MBR Filing": "mbr-filing",
+          "MBR Filings": "mbr-filing",
           Incorporation: "incorporation",
           "Business Plans": "business-plans",
           Liquidation: "liquidation",
@@ -206,19 +254,45 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
     loadRecentDocuments();
   }, [serviceName]);
 
-  const tabs = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    {
-      id: "document_requests",
-      label: "Document Requests",
-      icon: ClipboardList,
-    },
-    { id: "milestones", label: "Milestones", icon: Flag },
-    { id: "library", label: "Library", icon: Library },
-    { id: "compliance_calendar", label: "Compliance Calendar", icon: Calendar },
-    // { id: 'service_history', label: 'Service History', icon: History },
-    { id: "messages", label: "Message", icon: MessageSquare },
-  ];
+  const tabs = isMBRFilings
+    ? [
+        { id: "overview", label: "Overview", icon: LayoutDashboard },
+        { id: "filings", label: "Filings", icon: FileCheck },
+      ]
+    : isVAT
+      ? [
+          { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+          { id: "vat_periods", label: "VAT Periods", icon: FileCheck },
+          {
+            id: "document_requests",
+            label: "Document Requests",
+            icon: ClipboardList,
+          },
+          { id: "milestones", label: "Milestones", icon: Flag },
+          { id: "library", label: "Library", icon: Library },
+          {
+            id: "compliance_calendar",
+            label: "Compliance Calendar",
+            icon: Calendar,
+          },
+          { id: "messages", label: "Message", icon: MessageSquare },
+        ]
+      : [
+          { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+          {
+            id: "document_requests",
+            label: "Document Requests",
+            icon: ClipboardList,
+          },
+          { id: "milestones", label: "Milestones", icon: Flag },
+          { id: "library", label: "Library", icon: Library },
+          {
+            id: "compliance_calendar",
+            label: "Compliance Calendar",
+            icon: Calendar,
+          },
+          { id: "messages", label: "Message", icon: MessageSquare },
+        ];
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -250,6 +324,573 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
       </DashboardCard>
 
       <PillTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {/* MBR Filings: Overview tab */}
+      {isMBRFilings && activeTab === "overview" && mbrActiveFiling && (
+        <div className="space-y-8">
+          {/* Compliance & Actions */}
+          <DashboardCard className="grid grid-cols-1 md:grid-cols-2 rounded-0 overflow-hidden p-0">
+            <div className="p-8 border-r border-gray-100/50 flex flex-col justify-center space-y-6">
+              <div className="space-y-2">
+                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                  Next Filing
+                </p>
+                <div className="flex items-center gap-3 text-gray-900">
+                  <div className="w-10 h-10 rounded-0 bg-primary/5 flex items-center justify-center border border-primary/10">
+                    <Calendar className="w-5 h-5 text-primary" />
+                  </div>
+                  <span className="text-lg font-medium">
+                    {mbrActiveFiling.filing_type}{" "}
+                    {mbrActiveFiling.reference_period}
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                  Current Status
+                </p>
+                <Badge
+                  className={cn(
+                    "rounded-0 border px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit block",
+                    mbrActiveFiling.filing_status === "waiting_on_you" &&
+                      "text-orange-500 border-orange-500/20",
+                    mbrActiveFiling.filing_status === "in_progress" &&
+                      "text-blue-500 border-blue-500/20",
+                    mbrActiveFiling.filing_status === "submitted" &&
+                      "text-purple-500 border-purple-500/20",
+                    mbrActiveFiling.filing_status === "completed" &&
+                      "text-green-500 border-green-500/20",
+                  )}
+                >
+                  {mbrActiveFiling.filing_status === "waiting_on_you" &&
+                    "Waiting on you"}
+                  {mbrActiveFiling.filing_status === "in_progress" &&
+                    "In progress"}
+                  {mbrActiveFiling.filing_status === "submitted" && "Submitted"}
+                  {mbrActiveFiling.filing_status === "completed" && "Completed"}
+                </Badge>
+              </div>
+            </div>
+            <div className="p-8 bg-gray-50/30 flex flex-col justify-between">
+              {mbrActiveFiling.filing_status === "waiting_on_you" && (
+                <>
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      What we need from you
+                    </p>
+                    <ul className="space-y-2 text-sm text-gray-900">
+                      <li className="flex items-center gap-2">
+                        <Circle className="w-4 h-4 text-primary shrink-0" />
+                        Confirm company details
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Circle className="w-4 h-4 text-primary shrink-0" />
+                        Approve directors/shareholders list
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Circle className="w-4 h-4 text-primary shrink-0" />
+                        Upload signed documents (if required)
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="flex flex-wrap gap-3 mt-6">
+                    <Button className="h-12 px-6 rounded-0 font-medium uppercase tracking-widest text-xs gap-3">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Confirm details
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-12 px-6 rounded-0 font-medium uppercase tracking-widest text-xs gap-3"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Upload documents
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-12 px-6 rounded-0 font-medium uppercase tracking-widest text-xs gap-3"
+                    >
+                      <Phone className="w-4 h-4" />
+                      Schedule call
+                    </Button>
+                  </div>
+                </>
+              )}
+              {mbrActiveFiling.filing_status === "in_progress" && (
+                <p className="text-gray-700 font-medium">
+                  We&apos;re preparing your filing.
+                </p>
+              )}
+              {(mbrActiveFiling.filing_status === "submitted" ||
+                mbrActiveFiling.filing_status === "completed") && (
+                <>
+                  <p className="text-gray-700 font-medium">
+                    Filing submitted on{" "}
+                    {mbrActiveFiling.submitted_at
+                      ? new Date(
+                          mbrActiveFiling.submitted_at,
+                        ).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "—"}
+                  </p>
+                  {mbrActiveFiling.documents?.length > 0 && (
+                    <Button variant="outline" className="mt-4 gap-2">
+                      <Receipt className="w-4 h-4" />
+                      View receipt
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
+          </DashboardCard>
+
+          {/* Current Filing section */}
+          <DashboardCard className="p-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                <h3 className="text-lg font-medium tracking-tight">
+                  Current Filing
+                </h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                    Filing Name
+                  </p>
+                  <p className="text-sm font-semibold text-gray-900 mt-1">
+                    {mbrActiveFiling.filing_type}{" "}
+                    {mbrActiveFiling.reference_period}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                    Due Date
+                  </p>
+                  <p className="text-sm font-semibold text-gray-900 mt-1">
+                    {new Date(mbrActiveFiling.due_date).toLocaleDateString(
+                      "en-GB",
+                      { day: "numeric", month: "short", year: "numeric" },
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                    Status
+                  </p>
+                  <p className="text-sm font-semibold text-gray-900 mt-1">
+                    {mbrActiveFiling.filing_status === "waiting_on_you" &&
+                      "Waiting for confirmation"}
+                    {mbrActiveFiling.filing_status === "in_progress" &&
+                      "Filing in preparation"}
+                    {mbrActiveFiling.filing_status === "submitted" &&
+                      "Submitted"}
+                    {mbrActiveFiling.filing_status === "completed" &&
+                      "Completed"}
+                  </p>
+                </div>
+              </div>
+              {(mbrActiveFiling.filing_status === "waiting_on_you" ||
+                mbrActiveFiling.filing_status === "in_progress") && (
+                <div className="flex flex-wrap gap-3">
+                  <Button size="sm" className="gap-2">
+                    <Upload className="w-3 h-3" />
+                    Upload
+                  </Button>
+                  <Button size="sm" variant="outline" className="gap-2">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Confirm details
+                  </Button>
+                </div>
+              )}
+              <p className="text-xs text-gray-500 pt-2">
+                We prepare and submit statutory filings on your behalf.
+              </p>
+            </div>
+          </DashboardCard>
+
+          {/* Reference list (collapsed by default) */}
+          <DashboardCard className="p-6">
+            <button
+              type="button"
+              onClick={() => setMbrReferenceExpanded(!mbrReferenceExpanded)}
+              className="flex items-center justify-between w-full text-left"
+            >
+              <h3 className="text-lg font-medium tracking-tight">
+                Filing Details — {mbrActiveFiling.filing_type}{" "}
+                {mbrActiveFiling.reference_period}
+              </h3>
+              {mbrReferenceExpanded ? (
+                <ChevronUp className="w-5 h-5 text-gray-400" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-gray-400" />
+              )}
+            </button>
+            {mbrReferenceExpanded && (
+              <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                    Filing type
+                  </p>
+                  <p className="font-medium text-gray-900">
+                    {mbrActiveFiling.filing_type}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                    Reference year / period
+                  </p>
+                  <p className="font-medium text-gray-900">
+                    {mbrActiveFiling.reference_period}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                    Submitted date
+                  </p>
+                  <p className="font-medium text-gray-900">
+                    {mbrActiveFiling.submitted_at
+                      ? new Date(
+                          mbrActiveFiling.submitted_at,
+                        ).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                    Receipt / acknowledgement
+                  </p>
+                  <p className="font-medium text-gray-900">
+                    {mbrActiveFiling.documents?.length ? "Available" : "—"}
+                  </p>
+                </div>
+              </div>
+            )}
+          </DashboardCard>
+
+          {/* Service Library */}
+          <DashboardCard className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-1 h-6 bg-gray-900 rounded-full" />
+              <h3 className="text-lg font-medium tracking-tight">
+                Service Library
+              </h3>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Filed returns, receipts, resolutions, and supporting docs for MBR
+              Filings.
+            </p>
+            <LibraryExplorer />
+          </DashboardCard>
+
+          {/* Service Messages */}
+          <DashboardCard className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <MessageSquare className="w-5 h-5 text-gray-500" />
+              <h3 className="text-lg font-medium tracking-tight">Messages</h3>
+            </div>
+            <ServiceMessages serviceName={serviceName} messages={messages} />
+          </DashboardCard>
+        </div>
+      )}
+
+      {/* MBR Filings: Filings tab (table) */}
+      {isMBRFilings && activeTab === "filings" && (
+        <DashboardCard className="p-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-1 h-6 bg-gray-900 rounded-full" />
+              <h3 className="text-lg font-medium tracking-tight">Filings</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Filing Type
+                    </th>
+                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Reference / Period
+                    </th>
+                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Due Date
+                    </th>
+                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Filing Status
+                    </th>
+                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Service Status
+                    </th>
+                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Submitted On
+                    </th>
+                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Documents
+                    </th>
+                    <th className="text-right py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Open
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mbrFilings.map((f) => (
+                    <tr
+                      key={f.id}
+                      className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="py-3 px-4 font-medium text-gray-900">
+                        {f.filing_type}
+                      </td>
+                      <td className="py-3 px-4 text-gray-600">
+                        {f.reference_period}
+                      </td>
+                      <td className="py-3 px-4 text-gray-600">
+                        {new Date(f.due_date).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge
+                          className={cn(
+                            "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
+                            f.filing_status === "waiting_on_you" &&
+                              "text-orange-500 border-orange-500/20",
+                            f.filing_status === "in_progress" &&
+                              "text-blue-500 border-blue-500/20",
+                            f.filing_status === "submitted" &&
+                              "text-purple-500 border-purple-500/20",
+                            f.filing_status === "completed" &&
+                              "text-green-500 border-green-500/20",
+                          )}
+                        >
+                          {f.filing_status === "waiting_on_you" &&
+                            "Waiting on you"}
+                          {f.filing_status === "in_progress" && "In progress"}
+                          {f.filing_status === "submitted" && "Submitted"}
+                          {f.filing_status === "completed" && "Completed"}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge
+                          variant="outline"
+                          className="text-xs font-medium"
+                        >
+                          {f.service_status === "on_track" && "On track"}
+                          {f.service_status === "due_soon" && "Due soon"}
+                          {f.service_status === "action_required" &&
+                            "Action required"}
+                          {f.service_status === "overdue" && "Overdue"}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-gray-600">
+                        {f.submitted_at
+                          ? new Date(f.submitted_at).toLocaleDateString(
+                              "en-GB",
+                              {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )
+                          : "—"}
+                      </td>
+                      <td className="py-3 px-4">
+                        {(f.filing_status === "submitted" ||
+                          f.filing_status === "completed") &&
+                        f.documents?.length > 0 ? (
+                          <span className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs p-0"
+                            >
+                              View
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs p-0"
+                            >
+                              Download
+                            </Button>
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => {
+                            setMbrCurrentFilingId(f.id);
+                            setActiveTab("overview");
+                          }}
+                        >
+                          Open
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </DashboardCard>
+      )}
+
+      {/* VAT: VAT Periods tab (table of all periods; Open loads period into Overview) */}
+      {isVAT && activeTab === "vat_periods" && (
+        <DashboardCard className="p-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-1 h-6 bg-gray-900 rounded-full" />
+              <h3 className="text-lg font-medium tracking-tight">
+                VAT Periods
+              </h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Period
+                    </th>
+                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Due Date
+                    </th>
+                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Filing Status
+                    </th>
+                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Service Status
+                    </th>
+                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Submitted On
+                    </th>
+                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Documents
+                    </th>
+                    <th className="text-right py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Open
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {vatPeriods.map((p) => (
+                    <tr
+                      key={p.id}
+                      className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="py-3 px-4 font-medium text-gray-900">
+                        {p.period}
+                      </td>
+                      <td className="py-3 px-4 text-gray-600">
+                        {new Date(p.due_date).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge
+                          className={cn(
+                            "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
+                            p.filing_status === "waiting_on_you" &&
+                              "text-orange-500 border-orange-500/20",
+                            p.filing_status === "in_progress" &&
+                              "text-blue-500 border-blue-500/20",
+                            p.filing_status === "submitted" &&
+                              "text-purple-500 border-purple-500/20",
+                            p.filing_status === "completed" &&
+                              "text-green-500 border-green-500/20",
+                          )}
+                        >
+                          {p.filing_status === "waiting_on_you" &&
+                            "Waiting on you"}
+                          {p.filing_status === "in_progress" && "In progress"}
+                          {p.filing_status === "submitted" && "Submitted"}
+                          {p.filing_status === "completed" && "Completed"}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge
+                          variant="outline"
+                          className="text-xs font-medium"
+                        >
+                          {p.service_status === "on_track" && "On track"}
+                          {p.service_status === "due_soon" && "Due soon"}
+                          {p.service_status === "action_required" &&
+                            "Action required"}
+                          {p.service_status === "overdue" && "Overdue"}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-gray-600">
+                        {p.submitted_at
+                          ? new Date(p.submitted_at).toLocaleDateString(
+                              "en-GB",
+                              {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )
+                          : "—"}
+                      </td>
+                      <td className="py-3 px-4">
+                        {(p.filing_status === "submitted" ||
+                          p.filing_status === "completed") &&
+                        p.documents?.length > 0 ? (
+                          <span className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs p-0"
+                            >
+                              View
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs p-0"
+                            >
+                              Download
+                            </Button>
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => {
+                            setActiveVatPeriodId(p.id);
+                            setActiveTab("dashboard");
+                          }}
+                        >
+                          Open
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </DashboardCard>
+      )}
 
       {activeTab === "dashboard" && (
         <div className="space-y-8">
@@ -521,8 +1162,8 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                     </div>
                     <p className="text-2xl font-bold text-gray-900">
                       €
-                      {stats.find((s) => s.title?.includes("Revenue"))?.amount ||
-                        "—"}
+                      {stats.find((s) => s.title?.includes("Revenue"))
+                        ?.amount || "—"}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">Current period</p>
                   </div>
@@ -535,8 +1176,8 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                     </div>
                     <p className="text-2xl font-bold text-gray-900">
                       €
-                      {stats.find((s) => s.title?.includes("Expense"))?.amount ||
-                        "—"}
+                      {stats.find((s) => s.title?.includes("Expense"))
+                        ?.amount || "—"}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">Current period</p>
                   </div>
@@ -620,77 +1261,93 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
             </DashboardCard>
           )}
 
-          {/* VAT & Tax: VAT Period Summary */}
-          {serviceName === "VAT & Tax" && (
+          {/* VAT: Current Cycle (period name, status, Upload/Confirm) */}
+          {isVAT && vatActivePeriod && (
             <DashboardCard className="p-6">
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-1 h-6 bg-gray-900 rounded-full" />
                   <h3 className="text-lg font-medium tracking-tight">
-                    VAT Period Summary
+                    Current Cycle
                   </h3>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                          Period
-                        </th>
-                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                          Status
-                        </th>
-                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                          Submission Date
-                        </th>
-                        <th className="text-right py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                          Amount
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[
-                        {
-                          period: "Q1 2026",
-                          status: "Submitted",
-                          date: "Jan 20, 2026",
-                          amount: "€2,450.00",
-                        },
-                        {
-                          period: "Q4 2025",
-                          status: "Submitted",
-                          date: "Oct 15, 2025",
-                          amount: "€1,890.00",
-                        },
-                        {
-                          period: "Q3 2025",
-                          status: "Submitted",
-                          date: "Jul 12, 2025",
-                          amount: "€2,100.00",
-                        },
-                      ].map((row, idx) => (
-                        <tr
-                          key={idx}
-                          className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
-                        >
-                          <td className="py-3 px-4 font-medium text-gray-900">
-                            {row.period}
-                          </td>
-                          <td className="py-3 px-4">
-                            <Badge className="rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-emerald-500 border-emerald-500/20">
-                              {row.status}
-                            </Badge>
-                          </td>
-                          <td className="py-3 px-4 text-gray-600">
-                            {row.date}
-                          </td>
-                          <td className="py-3 px-4 text-right font-medium text-gray-900">
-                            {row.amount}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      VAT Period
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900 mt-1">
+                      {vatActivePeriod.period}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Status
+                    </p>
+                    <Badge className="mt-1 rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-gray-700 border-gray-200">
+                      {vatActivePeriod.filing_status === "waiting_on_you" &&
+                        "Waiting on you"}
+                      {vatActivePeriod.filing_status === "in_progress" &&
+                        "In progress"}
+                      {vatActivePeriod.filing_status === "submitted" &&
+                        "Submitted"}
+                      {vatActivePeriod.filing_status === "completed" &&
+                        "Completed"}
+                    </Badge>
+                  </div>
+                </div>
+                {(vatActivePeriod.filing_status === "waiting_on_you" ||
+                  vatActivePeriod.filing_status === "in_progress") && (
+                  <div className="flex flex-wrap gap-3">
+                    <Button size="sm" className="gap-2">
+                      <Upload className="w-3 h-3" />
+                      Upload
+                    </Button>
+                    <Button size="sm" variant="outline" className="gap-2">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Confirm no changes
+                    </Button>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500">
+                  View all periods in the VAT Periods tab.
+                </p>
+              </div>
+            </DashboardCard>
+          )}
+
+          {/* Tax: Current Cycle (tax period) */}
+          {isTax && (
+            <DashboardCard className="p-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                  <h3 className="text-lg font-medium tracking-tight">
+                    Current Cycle
+                  </h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Tax Period
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900 mt-1">
+                      {cycle}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Status
+                    </p>
+                    <Badge
+                      className={cn(
+                        "mt-1 rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit",
+                        workflowInfo.color,
+                      )}
+                    >
+                      {workflowInfo.label}
+                    </Badge>
+                  </div>
                 </div>
               </div>
             </DashboardCard>
@@ -867,8 +1524,8 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                     </h3>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Strategic finance support, reporting insights, and leadership
-                    guidance — tailored to your current priorities.
+                    Strategic finance support, reporting insights, and
+                    leadership guidance — tailored to your current priorities.
                   </p>
                 </div>
               </DashboardCard>
@@ -973,7 +1630,9 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                             {item.action}
                           </span>
                         </div>
-                        <span className="text-xs text-gray-500">{item.date}</span>
+                        <span className="text-xs text-gray-500">
+                          {item.date}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -1070,13 +1729,17 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                             <td className="py-3 px-4 font-medium text-gray-900">
                               {row.year}
                             </td>
-                            <td className="py-3 px-4 text-gray-600">{row.type}</td>
+                            <td className="py-3 px-4 text-gray-600">
+                              {row.type}
+                            </td>
                             <td className="py-3 px-4">
                               <Badge className="rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-gray-700 border-gray-200">
                                 {row.status}
                               </Badge>
                             </td>
-                            <td className="py-3 px-4 text-gray-600">{row.date}</td>
+                            <td className="py-3 px-4 text-gray-600">
+                              {row.date}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -1161,7 +1824,10 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                     {[
                       { name: "ID document(s)", status: "Received" },
                       { name: "Proof of address", status: "Pending" },
-                      { name: "Draft memorandum & articles", status: "Pending" },
+                      {
+                        name: "Draft memorandum & articles",
+                        status: "Pending",
+                      },
                     ].map((doc, idx) => (
                       <div
                         key={idx}
@@ -1320,9 +1986,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       Current Status
                     </h3>
                   </div>
-                  <p className="text-sm text-gray-600">
-                    {workflowInfo.label}
-                  </p>
+                  <p className="text-sm text-gray-600">{workflowInfo.label}</p>
                 </div>
               </DashboardCard>
 

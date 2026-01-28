@@ -16,7 +16,7 @@ import { fetchPayrollData, transformPayrollSubmissionsToComplianceItems } from "
 type ComplianceStatus = "Waiting on you" | "In progress" | "Due soon" | "Completed" | "Overdue";
 
 // Service types
-type ServiceType = "VAT & Tax" | "Payroll" | "Corporate Services" | "Audit" | "Tax" | "Other" | "All";
+type ServiceType = "VAT" | "Tax" | "Payroll" | "Corporate Services" | "Audit" | "Other" | "All";
 
 // Period filter types
 type PeriodFilter = "This month" | "Next 3 months" | "This year" | "All";
@@ -184,7 +184,8 @@ export default function ComplianceCalendarPage() {
           // Map category to service
           const category = (task.category || "").toLowerCase();
           let service: ServiceType = "Other";
-          if (category.includes("vat") || category.includes("tax")) service = "VAT & Tax";
+          if (category.includes("vat")) service = "VAT";
+          else if (category.includes("tax")) service = "Tax";
           else if (category.includes("payroll")) service = "Payroll";
           else if (category.includes("csp") || category.includes("mbr") || category.includes("corporate")) service = "Corporate Services";
           else if (category.includes("audit")) service = "Audit";
@@ -475,7 +476,7 @@ export default function ComplianceCalendarPage() {
               }
               items={[
                 { id: "All", label: "All", onClick: () => setServiceFilter("All") },
-                { id: "VAT & Tax", label: "VAT & Tax", onClick: () => setServiceFilter("VAT & Tax") },
+                { id: "VAT", label: "VAT", onClick: () => setServiceFilter("VAT") },
                 { id: "Payroll", label: "Payroll", onClick: () => setServiceFilter("Payroll") },
                 { id: "Audit", label: "Audit", onClick: () => setServiceFilter("Audit") },
                 { id: "Corporate Services", label: "Corporate Services", onClick: () => setServiceFilter("Corporate Services") },
