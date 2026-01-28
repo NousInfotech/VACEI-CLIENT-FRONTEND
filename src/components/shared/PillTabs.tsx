@@ -1,10 +1,10 @@
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
 
-interface Tab {
+export interface Tab {
   id: string;
   label: string;
-  icon?: LucideIcon;
+  icon?: React.ElementType;
 }
 
 interface PillTabsProps {

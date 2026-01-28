@@ -22,6 +22,21 @@ interface SidebarMenuProps {
   onExpand?: () => void;
 }
 
+const serviceStatusConfig: Record<string, { label: string; color: string; dotColor: string }> = {
+  "accounting-bookkeeping": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
+  "audit": { label: "Your input required", color: "text-orange-500", dotColor: "bg-orange-500" },
+  "vat": { label: "Overdue", color: "text-red-500", dotColor: "bg-red-500" },
+  "tax": { label: "Due soon", color: "text-yellow-500", dotColor: "bg-yellow-500" },
+  "payroll": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
+  "mbr-filing": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
+  "csp": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
+  "incorporation": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
+  "business-plans": { label: "In progress", color: "text-blue-500", dotColor: "bg-blue-500" },
+  "liquidation": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
+  "cfo": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
+  // "grants-incentives": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
+};
+
 export default function SidebarMenu({
   menu,
   isCollapsed = false,
@@ -398,6 +413,20 @@ export default function SidebarMenu({
             />
             <span className="truncate">{item.label}</span>
           </div>
+          {level === 2 && serviceStatusConfig[item.slug] && (
+            <div className="flex items-center gap-1.5 opacity-90 scale-[0.85] origin-right ml-2 shrink-0">
+              <div className={cn(
+                "w-1.5 h-1.5 rounded-full animate-pulse",
+                serviceStatusConfig[item.slug].dotColor
+              )} />
+              <span className={cn(
+                "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
+                serviceStatusConfig[item.slug].color
+              )}>
+                {serviceStatusConfig[item.slug].label}
+              </span>
+            </div>
+          )}
           {!isServiceActive && !hasChildren && !item.disabled && (
             <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider ml-2 shrink-0">
               Request service

@@ -117,7 +117,7 @@ const serviceData: Record<
     actions: [{ type: "upload", label: "Upload Reports" }],
   },
   "mbr-filing": {
-    name: "MBR Filings",
+    name: "Filings",
     description:
       "Preparation and submission of statutory filings with the Malta Business Registry.",
     status: "action_required",

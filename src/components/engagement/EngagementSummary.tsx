@@ -10,7 +10,6 @@ import {
   Calendar,
   LayoutDashboard,
   Library,
-  MessageSquare,
   ClipboardList,
   Flag,
   History,
@@ -29,6 +28,7 @@ import {
   ChevronUp,
   Receipt,
   FileCheck,
+  Info,
 } from "lucide-react";
 import {
   MBR_FILINGS_MOCK,
@@ -43,7 +43,7 @@ import {
 } from "@/lib/vatPeriodsData";
 import { cn } from "@/lib/utils";
 import DashboardCard from "../DashboardCard";
-import PillTabs from "../shared/PillTabs";
+import PillTabs, { Tab } from "../shared/PillTabs";
 import ServiceMessages from "./ServiceMessages";
 import { LibraryExplorer } from "../library/LibraryExplorer";
 import DocumentRequestsTab from "./DocumentRequestsTab";
@@ -57,9 +57,15 @@ import {
   ProcessedDashboardStat,
 } from "@/api/financialReportsApi";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Alert02Icon } from "@hugeicons/core-free-icons";
+import { Alert02Icon, Message01Icon } from "@hugeicons/core-free-icons";
 import { useSearchParams } from "next/navigation";
 import { fetchDocuments } from "@/api/documentApi";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export type EngagementStatus =
   | "on_track"
@@ -93,7 +99,7 @@ interface EngagementSummaryProps {
 const statusConfig: Record<EngagementStatus, { label: string; color: string }> =
   {
     on_track: {
-      label: "On track",
+      label: "On track (handled by us)",
       color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
     },
     due_soon: {
@@ -101,7 +107,7 @@ const statusConfig: Record<EngagementStatus, { label: string; color: string }> =
       color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
     },
     action_required: {
-      label: "Action required",
+      label: "Your input required",
       color: "bg-orange-500/10 text-orange-500 border-orange-500/20",
     },
     overdue: {
@@ -115,11 +121,11 @@ const workflowStatusConfig: Record<
   { label: string; color: string }
 > = {
   waiting: {
-    label: "Waiting on you",
+    label: "Action needed from you",
     color: "text-orange-500 border-orange-500/20",
   },
   in_progress: {
-    label: "In progress",
+    label: "We are working on this",
     color: "text-blue-500 border-blue-500/20",
   },
   submitted: {
@@ -127,7 +133,7 @@ const workflowStatusConfig: Record<
     color: "text-purple-500 border-purple-500/20",
   },
   completed: {
-    label: "Completed",
+    label: "Filed & completed",
     color: "text-green-500 border-green-500/20",
   },
 };
@@ -158,7 +164,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
     null,
   );
 
-  const isMBRFilings = serviceName === "MBR Filings";
+  const isMBRFilings = serviceName === "MBR Filings" || serviceName === "Filings";
   const isVAT = serviceName === "VAT";
   const isTax = serviceName === "Tax";
   const mbrFilings = MBR_FILINGS_MOCK;
@@ -172,6 +178,38 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
   const vatActivePeriod = isVAT
     ? getActiveVATPeriod(vatPeriods, activeVatPeriodId)
     : undefined;
+
+  const mbrStats = React.useMemo(() => {
+    if (!isMBRFilings) return null;
+    const now = new Date();
+    const thirtyDaysFromNow = new Date(
+      now.getTime() + 30 * 24 * 60 * 60 * 1000,
+    );
+    const thisYear = now.getFullYear().toString();
+
+    return {
+      overdue: mbrFilings.filter(
+        (f) =>
+          !f.submitted_at &&
+          new Date(f.due_date) < now &&
+          (f.filing_status === "waiting_on_you" ||
+            f.filing_status === "in_progress"),
+      ).length,
+      dueSoon: mbrFilings.filter(
+        (f) =>
+          !f.submitted_at &&
+          new Date(f.due_date) >= now &&
+          new Date(f.due_date) <= thirtyDaysFromNow,
+      ).length,
+      inProgress: mbrFilings.filter((f) => f.filing_status === "in_progress")
+        .length,
+      completedThisYear: mbrFilings.filter(
+        (f) =>
+          f.filing_status === "completed" &&
+          f.submitted_at?.startsWith(thisYear),
+      ).length,
+    };
+  }, [isMBRFilings, mbrFilings]);
 
   const statusInfo =
     statusConfig[isMBRFilings ? mbrStatus : status] || statusConfig.on_track;
@@ -254,7 +292,11 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
     loadRecentDocuments();
   }, [serviceName]);
 
-  const tabs = isMBRFilings
+  const MessageIcon = React.useMemo(() => (props: any) => (
+    <HugeiconsIcon icon={Message01Icon} {...props} />
+  ), []);
+
+  const tabs: Tab[] = isMBRFilings
     ? [
         { id: "overview", label: "Overview", icon: LayoutDashboard },
         { id: "filings", label: "Filings", icon: FileCheck },
@@ -275,7 +317,8 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
             label: "Compliance Calendar",
             icon: Calendar,
           },
-          { id: "messages", label: "Message", icon: MessageSquare },
+          { id: "messages", label: "Message", icon: MessageIcon },
+          { id: "mbr_filings", label: "Filings", icon: FileCheck },
         ]
       : [
           { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -291,11 +334,24 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
             label: "Compliance Calendar",
             icon: Calendar,
           },
-          { id: "messages", label: "Message", icon: MessageSquare },
+          { id: "messages", label: "Message", icon: MessageIcon },
+          ...(serviceName === "Tax" ||
+          serviceName === "Statutory Audit" ||
+          serviceName === "Payroll" ||
+          serviceName === "Accounting & Bookkeeping"
+            ? [
+                {
+                  id: "mbr_filings",
+                  label: "Filings",
+                  icon: FileCheck as React.ElementType,
+                },
+              ]
+            : []),
         ];
 
   return (
-    <div className={cn("space-y-6", className)}>
+    <TooltipProvider>
+      <div className={cn("space-y-6", className)}>
       {/* Service Header */}
       <DashboardCard className="p-8 bg-[#0f1729] border-white/10 overflow-hidden relative rounded-0">
         {/* Subtle Decorative Gradient */}
@@ -319,6 +375,11 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
             <p className="text-white/60 text-sm max-w-2xl leading-relaxed">
               {description}
             </p>
+            {isMBRFilings && (
+              <p className="text-white/40 text-xs mt-2 italic">
+                We prepare and submit all MBR filings for you. You’ll only be asked for input when required.
+              </p>
+            )}
           </div>
         </div>
       </DashboardCard>
@@ -328,6 +389,42 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
       {/* MBR Filings: Overview tab */}
       {isMBRFilings && activeTab === "overview" && mbrActiveFiling && (
         <div className="space-y-8">
+          {/* Compliance Status Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <DashboardCard className="p-4 border-l-4 border-red-500 rounded-0">
+              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">
+                Overdue items
+              </p>
+              <p className="text-2xl font-bold text-gray-900">
+                {mbrStats?.overdue}
+              </p>
+            </DashboardCard>
+            <DashboardCard className="p-4 border-l-4 border-yellow-500 rounded-0">
+              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">
+                Due soon (30 days)
+              </p>
+              <p className="text-2xl font-bold text-gray-900">
+                {mbrStats?.dueSoon}
+              </p>
+            </DashboardCard>
+            <DashboardCard className="p-4 border-l-4 border-blue-500 rounded-0">
+              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">
+                In progress
+              </p>
+              <p className="text-2xl font-bold text-gray-900">
+                {mbrStats?.inProgress}
+              </p>
+            </DashboardCard>
+            <DashboardCard className="p-4 border-l-4 border-green-500 rounded-0">
+              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">
+                Completed this year
+              </p>
+              <p className="text-2xl font-bold text-gray-900">
+                {mbrStats?.completedThisYear}
+              </p>
+            </DashboardCard>
+          </div>
+
           {/* Compliance & Actions */}
           <DashboardCard className="grid grid-cols-1 md:grid-cols-2 rounded-0 overflow-hidden p-0">
             <div className="p-8 border-r border-gray-100/50 flex flex-col justify-center space-y-6">
@@ -363,11 +460,13 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                   )}
                 >
                   {mbrActiveFiling.filing_status === "waiting_on_you" &&
-                    "Waiting on you"}
+                    "Action needed from you"}
                   {mbrActiveFiling.filing_status === "in_progress" &&
-                    "In progress"}
-                  {mbrActiveFiling.filing_status === "submitted" && "Submitted"}
-                  {mbrActiveFiling.filing_status === "completed" && "Completed"}
+                    "We are working on this"}
+                  {mbrActiveFiling.filing_status === "submitted" &&
+                    "Submitted to MBR"}
+                  {mbrActiveFiling.filing_status === "completed" &&
+                    "Filed & completed"}
                 </Badge>
               </div>
             </div>
@@ -482,13 +581,13 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                   </p>
                   <p className="text-sm font-semibold text-gray-900 mt-1">
                     {mbrActiveFiling.filing_status === "waiting_on_you" &&
-                      "Waiting for confirmation"}
+                      "Action needed from you"}
                     {mbrActiveFiling.filing_status === "in_progress" &&
-                      "Filing in preparation"}
+                      "We are working on this"}
                     {mbrActiveFiling.filing_status === "submitted" &&
-                      "Submitted"}
+                      "Submitted to MBR"}
                     {mbrActiveFiling.filing_status === "completed" &&
-                      "Completed"}
+                      "Filed & completed"}
                   </p>
                 </div>
               </div>
@@ -592,7 +691,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           {/* Service Messages */}
           <DashboardCard className="p-6">
             <div className="flex items-center gap-3 mb-4">
-              <MessageSquare className="w-5 h-5 text-gray-500" />
+              <HugeiconsIcon icon={Message01Icon} className="w-5 h-5 text-gray-500" />
               <h3 className="text-lg font-medium tracking-tight">Messages</h3>
             </div>
             <ServiceMessages serviceName={serviceName} messages={messages} />
@@ -601,7 +700,8 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
       )}
 
       {/* MBR Filings: Filings tab (table) */}
-      {isMBRFilings && activeTab === "filings" && (
+      {((isMBRFilings && activeTab === "filings") ||
+        activeTab === "mbr_filings") && (
         <DashboardCard className="p-6">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
@@ -625,7 +725,17 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       Filing Status
                     </th>
                     <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                      Service Status
+                      <div className="flex items-center gap-1">
+                        Service Status
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="w-3 h-3 cursor-help text-gray-400" />
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-900 text-white border-gray-800 text-[10px] py-1 px-2 rounded-0">
+                            Shows whether we are on track or if your input is required.
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                     </th>
                     <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
                       Submitted On
@@ -672,10 +782,13 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                           )}
                         >
                           {f.filing_status === "waiting_on_you" &&
-                            "Waiting on you"}
-                          {f.filing_status === "in_progress" && "In progress"}
-                          {f.filing_status === "submitted" && "Submitted"}
-                          {f.filing_status === "completed" && "Completed"}
+                            "Action needed from you"}
+                          {f.filing_status === "in_progress" &&
+                            "We are working on this"}
+                          {f.filing_status === "submitted" &&
+                            "Submitted to MBR"}
+                          {f.filing_status === "completed" &&
+                            "Filed & completed"}
                         </Badge>
                       </td>
                       <td className="py-3 px-4">
@@ -683,10 +796,11 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                           variant="outline"
                           className="text-xs font-medium"
                         >
-                          {f.service_status === "on_track" && "On track"}
+                          {f.service_status === "on_track" &&
+                            "On track (handled by us)"}
                           {f.service_status === "due_soon" && "Due soon"}
                           {f.service_status === "action_required" &&
-                            "Action required"}
+                            "Your input required"}
                           {f.service_status === "overdue" && "Overdue"}
                         </Badge>
                       </td>
@@ -723,21 +837,63 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                             </Button>
                           </span>
                         ) : (
-                          <span className="text-gray-400 text-xs">—</span>
+                          <span className="text-gray-400 text-xs italic">
+                            Available after submission
+                          </span>
                         )}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-xs"
-                          onClick={() => {
-                            setMbrCurrentFilingId(f.id);
-                            setActiveTab("overview");
-                          }}
-                        >
-                          Open
-                        </Button>
+                        {f.filing_status === "waiting_on_you" ? (
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="text-xs h-8 px-4"
+                              onClick={() => {
+                                setMbrCurrentFilingId(f.id);
+                                setActiveTab("overview");
+                              }}
+                            >
+                              Upload / Respond
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs h-8 px-4"
+                              onClick={() => {
+                                setMbrCurrentFilingId(f.id);
+                                setActiveTab("overview");
+                              }}
+                            >
+                              View details
+                            </Button>
+                          </div>
+                        ) : f.filing_status === "completed" ||
+                          f.filing_status === "submitted" ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-8 px-4"
+                            onClick={() => {
+                              setMbrCurrentFilingId(f.id);
+                              setActiveTab("overview");
+                            }}
+                          >
+                            View filing
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-8 px-4"
+                            onClick={() => {
+                              setMbrCurrentFilingId(f.id);
+                              setActiveTab("overview");
+                            }}
+                          >
+                            Open
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -772,7 +928,17 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       Filing Status
                     </th>
                     <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                      Service Status
+                      <div className="flex items-center gap-1">
+                        Service Status
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="w-3 h-3 cursor-help text-gray-400" />
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-gray-900 text-white border-gray-800 text-[10px] py-1 px-2 rounded-0">
+                            Shows whether we are on track or if your input is required.
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                     </th>
                     <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
                       Submitted On
@@ -816,10 +982,10 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                           )}
                         >
                           {p.filing_status === "waiting_on_you" &&
-                            "Waiting on you"}
-                          {p.filing_status === "in_progress" && "In progress"}
+                            "Action needed from you"}
+                          {p.filing_status === "in_progress" && "We are working on this"}
                           {p.filing_status === "submitted" && "Submitted"}
-                          {p.filing_status === "completed" && "Completed"}
+                          {p.filing_status === "completed" && "Filed & completed"}
                         </Badge>
                       </td>
                       <td className="py-3 px-4">
@@ -827,10 +993,10 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                           variant="outline"
                           className="text-xs font-medium"
                         >
-                          {p.service_status === "on_track" && "On track"}
+                          {p.service_status === "on_track" && "On track (handled by us)"}
                           {p.service_status === "due_soon" && "Due soon"}
                           {p.service_status === "action_required" &&
-                            "Action required"}
+                            "Your input required"}
                           {p.service_status === "overdue" && "Overdue"}
                         </Badge>
                       </td>
@@ -1019,7 +1185,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                 </p>
                 <p className="text-sm font-semibold text-gray-900">
                   {workflowStatus === "waiting"
-                    ? "Awaiting client confirmation"
+                    ? "Action needed from you"
                     : workflowStatus === "in_progress"
                       ? `Processing ${cycle} records`
                       : workflowStatus === "submitted"
@@ -2162,6 +2328,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
         <ServiceMessages serviceName={serviceName} messages={messages} />
       )}
     </div>
+    </TooltipProvider>
   );
 };
 

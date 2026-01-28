@@ -120,6 +120,12 @@ export const menuData: MenuItem[] = [
             href: "/dashboard/services/bookkeeping?tab=messages",
           },
           {
+            slug: "ab-mbr-filings",
+            icon: TaskDaily01Icon,
+            label: "Filings",
+            href: "/dashboard/services/bookkeeping?tab=mbr_filings",
+          },
+          {
             slug: "invoices",
             icon: InvoiceIcon,
             label: "Invoices",
@@ -249,6 +255,12 @@ export const menuData: MenuItem[] = [
             href: "/dashboard/services/audit?tab=messages",
           },
           {
+            slug: "audit-mbr-filings",
+            icon: TaskDaily01Icon,
+            label: "Filings",
+            href: "/dashboard/services/audit?tab=mbr_filings",
+          },
+          {
             slug: "engagements",
             icon: CashbackPoundIcon,
             label: "Engagements",
@@ -301,6 +313,12 @@ export const menuData: MenuItem[] = [
             href: "/dashboard/services/vat?tab=messages",
           },
           {
+            slug: "vat-mbr-filings",
+            icon: TaskDaily01Icon,
+            label: "Filings",
+            href: "/dashboard/services/vat?tab=mbr_filings",
+          },
+          {
             slug: "vat-malta",
             icon: TaxesIcon,
             label: "VAT — Malta",
@@ -345,6 +363,12 @@ export const menuData: MenuItem[] = [
             icon: Message01Icon,
             label: "Messages",
             href: "/dashboard/services/tax?tab=messages",
+          },
+          {
+            slug: "tax-mbr-filings",
+            icon: TaskDaily01Icon,
+            label: "Filings",
+            href: "/dashboard/services/tax?tab=mbr_filings",
           },
         ],
       },
@@ -423,6 +447,12 @@ export const menuData: MenuItem[] = [
             icon: Message01Icon,
             label: "Messages",
             href: "/dashboard/services/payroll?tab=messages",
+          },
+          {
+            slug: "payroll-mbr-filings",
+            icon: TaskDaily01Icon,
+            label: "Filings",
+            href: "/dashboard/services/payroll?tab=mbr_filings",
           },
           {
             slug: "payroll(malta)",
