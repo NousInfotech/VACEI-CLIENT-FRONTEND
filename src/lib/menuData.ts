@@ -96,7 +96,7 @@ export const menuData: MenuItem[] = [
             icon: DocumentValidationIcon,
             label: "Document Requests",
             href: "/dashboard/services/bookkeeping?tab=document_requests",
-            count: 3,
+            count: 5,
             totalCount: 5,
           },
           {
@@ -122,7 +122,7 @@ export const menuData: MenuItem[] = [
             icon: Message01Icon,
             label: "Messages",
             href: "/dashboard/services/bookkeeping?tab=messages",
-            count: 2,
+            count: 8,
             totalCount: 10,
           },
           {
