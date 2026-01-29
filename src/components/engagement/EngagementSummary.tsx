@@ -224,13 +224,6 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
     }
   }, [searchParams]);
 
-  // MBR Filings: treat "dashboard" as "overview"
-  useEffect(() => {
-    if (isMBRFilings && activeTab === "dashboard") {
-      setActiveTab("overview");
-    }
-  }, [isMBRFilings, activeTab]);
-
   useEffect(() => {
     const loadDashboardData = async () => {
       // Only fetch stats for Accounting & Bookkeeping
@@ -298,7 +291,20 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
 
   const tabs: Tab[] = isMBRFilings
     ? [
-        { id: "overview", label: "Overview", icon: LayoutDashboard },
+        { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+        {
+          id: "document_requests",
+          label: "Document Requests",
+          icon: ClipboardList,
+        },
+        { id: "milestones", label: "Milestones", icon: Flag },
+        { id: "library", label: "Library", icon: Library },
+        {
+          id: "compliance_calendar",
+          label: "Compliance Calendar",
+          icon: Calendar,
+        },
+        { id: "messages", label: "Message", icon: MessageIcon },
         { id: "filings", label: "Filings", icon: FileCheck },
       ]
     : isVAT
@@ -386,318 +392,6 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
 
       <PillTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* MBR Filings: Overview tab */}
-      {isMBRFilings && activeTab === "overview" && mbrActiveFiling && (
-        <div className="space-y-8">
-          {/* Compliance Status Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <DashboardCard className="p-4 border-l-4 border-red-500 rounded-0">
-              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">
-                Overdue items
-              </p>
-              <p className="text-2xl font-bold text-gray-900">
-                {mbrStats?.overdue}
-              </p>
-            </DashboardCard>
-            <DashboardCard className="p-4 border-l-4 border-yellow-500 rounded-0">
-              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">
-                Due soon (30 days)
-              </p>
-              <p className="text-2xl font-bold text-gray-900">
-                {mbrStats?.dueSoon}
-              </p>
-            </DashboardCard>
-            <DashboardCard className="p-4 border-l-4 border-blue-500 rounded-0">
-              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">
-                In progress
-              </p>
-              <p className="text-2xl font-bold text-gray-900">
-                {mbrStats?.inProgress}
-              </p>
-            </DashboardCard>
-            <DashboardCard className="p-4 border-l-4 border-green-500 rounded-0">
-              <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">
-                Completed this year
-              </p>
-              <p className="text-2xl font-bold text-gray-900">
-                {mbrStats?.completedThisYear}
-              </p>
-            </DashboardCard>
-          </div>
-
-          {/* Compliance & Actions */}
-          <DashboardCard className="grid grid-cols-1 md:grid-cols-2 rounded-0 overflow-hidden p-0">
-            <div className="p-8 border-r border-gray-100/50 flex flex-col justify-center space-y-6">
-              <div className="space-y-2">
-                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                  Next Filing
-                </p>
-                <div className="flex items-center gap-3 text-gray-900">
-                  <div className="w-10 h-10 rounded-0 bg-primary/5 flex items-center justify-center border border-primary/10">
-                    <Calendar className="w-5 h-5 text-primary" />
-                  </div>
-                  <span className="text-lg font-medium">
-                    {mbrActiveFiling.filing_type}{" "}
-                    {mbrActiveFiling.reference_period}
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                  Current Status
-                </p>
-                <Badge
-                  className={cn(
-                    "rounded-0 border px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit block",
-                    mbrActiveFiling.filing_status === "waiting_on_you" &&
-                      "text-orange-500 border-orange-500/20",
-                    mbrActiveFiling.filing_status === "in_progress" &&
-                      "text-blue-500 border-blue-500/20",
-                    mbrActiveFiling.filing_status === "submitted" &&
-                      "text-purple-500 border-purple-500/20",
-                    mbrActiveFiling.filing_status === "completed" &&
-                      "text-green-500 border-green-500/20",
-                  )}
-                >
-                  {mbrActiveFiling.filing_status === "waiting_on_you" &&
-                    "Action needed from you"}
-                  {mbrActiveFiling.filing_status === "in_progress" &&
-                    "We are working on this"}
-                  {mbrActiveFiling.filing_status === "submitted" &&
-                    "Submitted to MBR"}
-                  {mbrActiveFiling.filing_status === "completed" &&
-                    "Filed & completed"}
-                </Badge>
-              </div>
-            </div>
-            <div className="p-8 bg-gray-50/30 flex flex-col justify-between">
-              {mbrActiveFiling.filing_status === "waiting_on_you" && (
-                <>
-                  <div className="space-y-3">
-                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                      What we need from you
-                    </p>
-                    <ul className="space-y-2 text-sm text-gray-900">
-                      <li className="flex items-center gap-2">
-                        <Circle className="w-4 h-4 text-primary shrink-0" />
-                        Confirm company details
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Circle className="w-4 h-4 text-primary shrink-0" />
-                        Approve directors/shareholders list
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Circle className="w-4 h-4 text-primary shrink-0" />
-                        Upload signed documents (if required)
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="flex flex-wrap gap-3 mt-6">
-                    <Button className="h-12 px-6 rounded-0 font-medium uppercase tracking-widest text-xs gap-3">
-                      <CheckCircle2 className="w-4 h-4" />
-                      Confirm details
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-12 px-6 rounded-0 font-medium uppercase tracking-widest text-xs gap-3"
-                    >
-                      <Upload className="w-4 h-4" />
-                      Upload documents
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-12 px-6 rounded-0 font-medium uppercase tracking-widest text-xs gap-3"
-                    >
-                      <Phone className="w-4 h-4" />
-                      Schedule call
-                    </Button>
-                  </div>
-                </>
-              )}
-              {mbrActiveFiling.filing_status === "in_progress" && (
-                <p className="text-gray-700 font-medium">
-                  We&apos;re preparing your filing.
-                </p>
-              )}
-              {(mbrActiveFiling.filing_status === "submitted" ||
-                mbrActiveFiling.filing_status === "completed") && (
-                <>
-                  <p className="text-gray-700 font-medium">
-                    Filing submitted on{" "}
-                    {mbrActiveFiling.submitted_at
-                      ? new Date(
-                          mbrActiveFiling.submitted_at,
-                        ).toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })
-                      : "—"}
-                  </p>
-                  {mbrActiveFiling.documents?.length > 0 && (
-                    <Button variant="outline" className="mt-4 gap-2">
-                      <Receipt className="w-4 h-4" />
-                      View receipt
-                    </Button>
-                  )}
-                </>
-              )}
-            </div>
-          </DashboardCard>
-
-          {/* Current Filing section */}
-          <DashboardCard className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                <h3 className="text-lg font-medium tracking-tight">
-                  Current Filing
-                </h3>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                    Filing Name
-                  </p>
-                  <p className="text-sm font-semibold text-gray-900 mt-1">
-                    {mbrActiveFiling.filing_type}{" "}
-                    {mbrActiveFiling.reference_period}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                    Due Date
-                  </p>
-                  <p className="text-sm font-semibold text-gray-900 mt-1">
-                    {new Date(mbrActiveFiling.due_date).toLocaleDateString(
-                      "en-GB",
-                      { day: "numeric", month: "short", year: "numeric" },
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                    Status
-                  </p>
-                  <p className="text-sm font-semibold text-gray-900 mt-1">
-                    {mbrActiveFiling.filing_status === "waiting_on_you" &&
-                      "Action needed from you"}
-                    {mbrActiveFiling.filing_status === "in_progress" &&
-                      "We are working on this"}
-                    {mbrActiveFiling.filing_status === "submitted" &&
-                      "Submitted to MBR"}
-                    {mbrActiveFiling.filing_status === "completed" &&
-                      "Filed & completed"}
-                  </p>
-                </div>
-              </div>
-              {(mbrActiveFiling.filing_status === "waiting_on_you" ||
-                mbrActiveFiling.filing_status === "in_progress") && (
-                <div className="flex flex-wrap gap-3">
-                  <Button size="sm" className="gap-2">
-                    <Upload className="w-3 h-3" />
-                    Upload
-                  </Button>
-                  <Button size="sm" variant="outline" className="gap-2">
-                    <CheckCircle2 className="w-3 h-3" />
-                    Confirm details
-                  </Button>
-                </div>
-              )}
-              <p className="text-xs text-gray-500 pt-2">
-                We prepare and submit statutory filings on your behalf.
-              </p>
-            </div>
-          </DashboardCard>
-
-          {/* Reference list (collapsed by default) */}
-          <DashboardCard className="p-6">
-            <button
-              type="button"
-              onClick={() => setMbrReferenceExpanded(!mbrReferenceExpanded)}
-              className="flex items-center justify-between w-full text-left"
-            >
-              <h3 className="text-lg font-medium tracking-tight">
-                Filing Details — {mbrActiveFiling.filing_type}{" "}
-                {mbrActiveFiling.reference_period}
-              </h3>
-              {mbrReferenceExpanded ? (
-                <ChevronUp className="w-5 h-5 text-gray-400" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-gray-400" />
-              )}
-            </button>
-            {mbrReferenceExpanded && (
-              <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                    Filing type
-                  </p>
-                  <p className="font-medium text-gray-900">
-                    {mbrActiveFiling.filing_type}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                    Reference year / period
-                  </p>
-                  <p className="font-medium text-gray-900">
-                    {mbrActiveFiling.reference_period}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                    Submitted date
-                  </p>
-                  <p className="font-medium text-gray-900">
-                    {mbrActiveFiling.submitted_at
-                      ? new Date(
-                          mbrActiveFiling.submitted_at,
-                        ).toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })
-                      : "—"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                    Receipt / acknowledgement
-                  </p>
-                  <p className="font-medium text-gray-900">
-                    {mbrActiveFiling.documents?.length ? "Available" : "—"}
-                  </p>
-                </div>
-              </div>
-            )}
-          </DashboardCard>
-
-          {/* Service Library */}
-          <DashboardCard className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-1 h-6 bg-gray-900 rounded-full" />
-              <h3 className="text-lg font-medium tracking-tight">
-                Service Library
-              </h3>
-            </div>
-            <p className="text-sm text-gray-500 mb-4">
-              Filed returns, receipts, resolutions, and supporting docs for MBR
-              Filings.
-            </p>
-            <LibraryExplorer />
-          </DashboardCard>
-
-          {/* Service Messages */}
-          <DashboardCard className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <HugeiconsIcon icon={Message01Icon} className="w-5 h-5 text-gray-500" />
-              <h3 className="text-lg font-medium tracking-tight">Messages</h3>
-            </div>
-            <ServiceMessages serviceName={serviceName} messages={messages} />
-          </DashboardCard>
-        </div>
-      )}
 
       {/* MBR Filings: Filings tab (table) */}
       {((isMBRFilings && activeTab === "filings") ||
@@ -851,7 +545,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                               className="text-xs h-8 px-4"
                               onClick={() => {
                                 setMbrCurrentFilingId(f.id);
-                                setActiveTab("overview");
+                                setActiveTab("dashboard");
                               }}
                             >
                               Upload / Respond
@@ -862,7 +556,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                               className="text-xs h-8 px-4"
                               onClick={() => {
                                 setMbrCurrentFilingId(f.id);
-                                setActiveTab("overview");
+                                setActiveTab("dashboard");
                               }}
                             >
                               View details
@@ -876,7 +570,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                             className="text-xs h-8 px-4"
                             onClick={() => {
                               setMbrCurrentFilingId(f.id);
-                              setActiveTab("overview");
+                              setActiveTab("dashboard");
                             }}
                           >
                             View filing
@@ -888,7 +582,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                             className="text-xs h-8 px-4"
                             onClick={() => {
                               setMbrCurrentFilingId(f.id);
-                              setActiveTab("overview");
+                              setActiveTab("dashboard");
                             }}
                           >
                             Open
@@ -1060,251 +754,497 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
 
       {activeTab === "dashboard" && (
         <div className="space-y-8">
-          {/* Compliance & Action Box */}
-          <DashboardCard className="grid grid-cols-1 md:grid-cols-2 rounded-0 overflow-hidden p-0">
-            {/* Left Side: Status Info */}
-            <div className="p-8 border-r border-gray-100/50 flex flex-col justify-center space-y-6">
-              <div className="space-y-2">
-                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                  Current cycle/period
-                </p>
-                <div className="flex items-center gap-3 text-gray-900">
-                  <div className="w-10 h-10 rounded-0 bg-primary/5 flex items-center justify-center border border-primary/10">
-                    <Calendar className="w-5 h-5 text-primary" />
-                  </div>
-                  <span className="text-lg font-medium">{cycle}</span>
-                </div>
+          {isMBRFilings ? (
+            /* MBR FILINGS SPECIFIC DASHBOARD (RESTORED "BEFORE" LOOK) */
+            <>
+              {/* 1. Statistics Cards (top of page for MBR) */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <DashboardCard className="p-4 border-l-4 border-red-500 rounded-0">
+                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">
+                    Overdue items
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {mbrStats?.overdue}
+                  </p>
+                </DashboardCard>
+                <DashboardCard className="p-4 border-l-4 border-yellow-500 rounded-0">
+                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">
+                    Due soon (30 days)
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {mbrStats?.dueSoon}
+                  </p>
+                </DashboardCard>
+                <DashboardCard className="p-4 border-l-4 border-blue-500 rounded-0">
+                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">
+                    In progress
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {mbrStats?.inProgress}
+                  </p>
+                </DashboardCard>
+                <DashboardCard className="p-4 border-l-4 border-green-500 rounded-0">
+                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-1">
+                    Completed this year
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {mbrStats?.completedThisYear}
+                  </p>
+                </DashboardCard>
               </div>
-              <div className="space-y-3">
-                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                  Current status
-                </p>
-                <Badge
-                  className={cn(
-                    "rounded-0 border px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit block",
-                    workflowInfo.color,
-                  )}
-                >
-                  {workflowInfo.label}
-                </Badge>
-              </div>
-            </div>
 
-            {/* Right Side: Action Info */}
-            <div className="p-8 bg-gray-50/30 flex flex-col justify-between">
-              <div className="space-y-3">
-                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                  What we need from you
-                </p>
-                {neededFromUser ? (
-                  <div className="flex gap-3">
-                    <div className="w-1.5 h-auto bg-primary/20 rounded-full" />
-                    <p className="text-gray-900 font-medium leading-tight text-lg">
-                      {neededFromUser}
+              {/* 2. Specialized MBR "Next Filing" & "What we need from you" Box */}
+              <DashboardCard className="grid grid-cols-1 md:grid-cols-2 rounded-0 overflow-hidden p-0">
+                {/* Left Side: Next Filing */}
+                <div className="p-8 border-r border-gray-100/50 flex flex-col justify-center space-y-6">
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Next Filing
                     </p>
+                    <div className="flex items-center gap-3 text-gray-900">
+                      <div className="w-10 h-10 rounded-0 bg-primary/5 flex items-center justify-center border border-primary/10">
+                        <Calendar className="w-5 h-5 text-primary" />
+                      </div>
+                      <span className="text-lg font-medium">
+                        {mbrActiveFiling
+                          ? `${mbrActiveFiling.filing_type} ${mbrActiveFiling.reference_period}`
+                          : "No active filing"}
+                      </span>
+                    </div>
                   </div>
-                ) : (
-                  <div className="flex items-center gap-3 text-emerald-600 bg-emerald-50 p-4 border border-emerald-100/50">
-                    <CheckCircle2 className="w-5 h-5 shrink-0" />
-                    <p className="font-medium">
-                      Nothing required from you right now.
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Current status
                     </p>
+                    {mbrActiveFiling && (
+                      <Badge
+                        className={cn(
+                          "rounded-0 border px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit block",
+                          mbrActiveFiling.filing_status === "waiting_on_you"
+                            ? "text-orange-500 border-orange-500/20"
+                            : mbrActiveFiling.filing_status === "in_progress"
+                              ? "text-blue-500 border-blue-500/20"
+                              : mbrActiveFiling.filing_status === "submitted"
+                                ? "text-purple-500 border-purple-500/20"
+                                : "text-green-500 border-green-500/20",
+                        )}
+                      >
+                        {mbrActiveFiling.filing_status === "waiting_on_you" &&
+                          "Action needed from you"}
+                        {mbrActiveFiling.filing_status === "in_progress" &&
+                          "We are working on this"}
+                        {mbrActiveFiling.filing_status === "submitted" &&
+                          "Submitted to MBR"}
+                        {mbrActiveFiling.filing_status === "completed" &&
+                          "Filed & completed"}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Side: What we need from you */}
+                <div className="p-8 bg-gray-50/30 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      What we need from you
+                    </p>
+                    {mbrActiveFiling?.filing_status === "waiting_on_you" ? (
+                      <ul className="space-y-2 text-sm text-gray-900">
+                        <li className="flex items-center gap-2">
+                          <Circle className="w-4 h-4 text-primary shrink-0" />
+                          Confirm company details
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Circle className="w-4 h-4 text-primary shrink-0" />
+                          Approve directors/shareholders list
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Circle className="w-4 h-4 text-primary shrink-0" />
+                          Upload signed documents (if required)
+                        </li>
+                      </ul>
+                    ) : (
+                      <div className="flex items-center gap-3 text-emerald-600 bg-emerald-50 p-4 border border-emerald-100/50">
+                        <CheckCircle2 className="w-5 h-5 shrink-0" />
+                        <p className="font-medium">
+                          Nothing required from you right now.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {mbrActiveFiling?.filing_status === "waiting_on_you" && (
+                    <div className="flex flex-wrap gap-3 mt-6">
+                      <Button className="h-12 px-6 rounded-0 font-medium uppercase tracking-widest text-xs gap-3">
+                        <CheckCircle2 className="w-4 h-4" />
+                        Confirm details
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="h-12 px-6 rounded-0 font-medium uppercase tracking-widest text-xs gap-3"
+                      >
+                        <Upload className="w-4 h-4" />
+                        Upload documents
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </DashboardCard>
+
+              {/* 3. Current Filing Action Card (New Refined UI) */}
+              <DashboardCard className="p-0 rounded-0 overflow-hidden border-gray-100">
+                <div className="p-8 space-y-8">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-primary rounded-full" />
+                    <h3 className="text-xl font-bold text-gray-900 tracking-tight">
+                      Current Filing
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                        Filing Name
+                      </p>
+                      <p className="text-sm font-bold text-gray-900">
+                        {mbrActiveFiling ? `${mbrActiveFiling.filing_type} ${mbrActiveFiling.reference_period}` : "No active filing"}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                        Due Date
+                      </p>
+                      <p className="text-sm font-bold text-gray-900">
+                        {mbrActiveFiling ? new Date(mbrActiveFiling.due_date).toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' }) : "—"}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                        Status
+                      </p>
+                      <p className="text-sm font-bold text-gray-900">
+                        {mbrActiveFiling?.filing_status === "waiting_on_you" ? "Action needed from you" : 
+                         mbrActiveFiling?.filing_status === "in_progress" ? "We are working on this" :
+                         mbrActiveFiling?.filing_status === "submitted" ? "Submitted to MBR" :
+                         mbrActiveFiling?.filing_status === "completed" ? "Filed & completed" : "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    <Button className="h-10 px-6 rounded-0 font-bold bg-[#0f1729] text-white hover:bg-[#0f1729]/90 text-xs gap-3">
+                      <Upload className="w-4 h-4" />
+                      Upload
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-10 px-6 rounded-0 font-bold border-gray-200 text-gray-700 hover:bg-gray-50 text-xs gap-3 shadow-sm"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      Confirm details
+                    </Button>
+                  </div>
+                </div>
+                <div className="px-8 py-4 bg-gray-50/50 border-t border-gray-100">
+                  <p className="text-xs text-gray-500">
+                    We prepare and submit statutory filings on your behalf.
+                  </p>
+                </div>
+              </DashboardCard>
+
+              {/* 3. Filing Details - Collapsible */}
+              <DashboardCard className="p-0 rounded-0 overflow-hidden border-gray-100">
+                <button 
+                  onClick={() => setMbrReferenceExpanded(!mbrReferenceExpanded)}
+                  className="w-full p-8 flex items-center justify-between text-left hover:bg-gray-50/50 transition-colors"
+                >
+                  <h3 className="text-xl font-bold text-gray-900 tracking-tight">
+                    Filing Details — {mbrActiveFiling?.filing_type} {mbrActiveFiling?.reference_period}
+                  </h3>
+                  {mbrReferenceExpanded ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+                
+                {mbrReferenceExpanded && (
+                  <div className="p-8 pt-0 space-y-8 animate-in slide-in-from-top-2 duration-200 border-t border-gray-50">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                          Filing Type
+                        </p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {mbrActiveFiling?.filing_type || "—"}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                          Reference Year / Period
+                        </p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {mbrActiveFiling?.reference_period || "—"}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                          Submitted Date
+                        </p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {mbrActiveFiling?.submitted_at ? new Date(mbrActiveFiling.submitted_at).toLocaleDateString("en-GB") : "—"}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                          Receipt / Acknowledgement
+                        </p>
+                        <p className="text-sm font-bold text-gray-900">
+                          —
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
-              </div>
-
-              {actions.length > 0 && (
-                <div className="flex flex-wrap gap-3 mt-8">
-                  {actions.map((action, index) => (
-                    <Button
-                      key={index}
-                      variant={action.type === "upload" ? "default" : "outline"}
+              </DashboardCard>
+            </>
+          ) : (
+            /* GENERIC DASHBOARD (FOR ALL OTHER SERVICES) */
+            <>
+              {/* SECTION 1: Service Overview Summary */}
+              <DashboardCard className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Current Period
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {cycle}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Overall Status
+                    </p>
+                    <Badge
                       className={cn(
-                        "h-12 px-6 rounded-0 font-medium uppercase tracking-widest text-xs gap-3 transition-all",
-                        action.type === "upload"
-                          ? "bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20"
-                          : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50",
+                        "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit",
+                        statusInfo.color,
                       )}
-                      onClick={action.onClick}
                     >
-                      {action.type === "upload" && (
-                        <Upload className="w-4 h-4" />
-                      )}
-                      {action.type === "confirm" && (
-                        <CheckCircle2 className="w-4 h-4" />
-                      )}
-                      {action.type === "schedule" && (
-                        <Phone className="w-4 h-4" />
-                      )}
-                      {action.label}
-                    </Button>
-                  ))}
+                      {statusInfo.label}
+                    </Badge>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Last Update
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {new Date().toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Next Step
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {workflowStatus === "waiting"
+                        ? "Action needed from you"
+                        : workflowStatus === "in_progress"
+                          ? `Processing ${cycle} records`
+                          : workflowStatus === "submitted"
+                            ? "Submitted to authority"
+                            : "Completed"}
+                    </p>
+                  </div>
                 </div>
-              )}
-            </div>
-          </DashboardCard>
+              </DashboardCard>
 
-          {/* GLOBAL DASHBOARD SECTIONS - ALL SERVICES */}
+              {/* Compliance & Action Box for non-MBR */}
+              <DashboardCard className="grid grid-cols-1 md:grid-cols-2 rounded-0 overflow-hidden p-0">
+                {/* Left Side: Status Info */}
+                <div className="p-8 border-r border-gray-100/50 flex flex-col justify-center space-y-6">
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Current cycle/period
+                    </p>
+                    <div className="flex items-center gap-3 text-gray-900">
+                      <div className="w-10 h-10 rounded-0 bg-primary/5 flex items-center justify-center border border-primary/10">
+                        <Calendar className="w-5 h-5 text-primary" />
+                      </div>
+                      <span className="text-lg font-medium">{cycle}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      Current status
+                    </p>
+                    <Badge
+                      className={cn(
+                        "rounded-0 border px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit block",
+                        workflowInfo.color,
+                      )}
+                    >
+                      {workflowInfo.label}
+                    </Badge>
+                  </div>
+                </div>
 
-          {/* SECTION 1: Service Overview Summary */}
-          <DashboardCard className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="space-y-1">
-                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                  Current Period
-                </p>
-                <p className="text-sm font-semibold text-gray-900">{cycle}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                  Overall Status
-                </p>
-                <Badge
-                  className={cn(
-                    "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit",
-                    statusInfo.color,
+                {/* Right Side: Action Info */}
+                <div className="p-8 bg-gray-50/30 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                      What we need from you
+                    </p>
+                    {neededFromUser ? (
+                      <div className="flex gap-3">
+                        <div className="w-1.5 h-auto bg-primary/20 rounded-full" />
+                        <p className="text-gray-900 font-medium leading-tight text-lg">
+                          {neededFromUser}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3 text-emerald-600 bg-emerald-50 p-4 border border-emerald-100/50">
+                        <CheckCircle2 className="w-5 h-5 shrink-0" />
+                        <p className="font-medium">
+                          Nothing required from you right now.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {actions.length > 0 && (
+                    <div className="flex flex-wrap gap-3 mt-8">
+                      {actions.map((action, index) => (
+                        <Button
+                          key={index}
+                          variant={action.type === "upload" ? "default" : "outline"}
+                          className={cn(
+                            "h-12 px-6 rounded-0 font-medium uppercase tracking-widest text-xs gap-3 transition-all",
+                            action.type === "upload"
+                              ? "bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20"
+                              : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50",
+                          )}
+                          onClick={action.onClick}
+                        >
+                          {action.type === "upload" && <Upload className="w-4 h-4" />}
+                          {action.type === "confirm" && <CheckCircle2 className="w-4 h-4" />}
+                          {action.type === "schedule" && <Phone className="w-4 h-4" />}
+                          {action.label}
+                        </Button>
+                      ))}
+                    </div>
                   )}
-                >
-                  {statusInfo.label}
-                </Badge>
-              </div>
-              <div className="space-y-1">
-                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                  Last Update
-                </p>
-                <p className="text-sm font-semibold text-gray-900">
-                  {new Date().toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                  Next Step
-                </p>
-                <p className="text-sm font-semibold text-gray-900">
-                  {workflowStatus === "waiting"
-                    ? "Action needed from you"
-                    : workflowStatus === "in_progress"
-                      ? `Processing ${cycle} records`
-                      : workflowStatus === "submitted"
-                        ? "Submitted to authority"
-                        : "Completed"}
-                </p>
-              </div>
-            </div>
-          </DashboardCard>
-
-          {/* SECTION 2: Recent Activity Feed */}
-          <DashboardCard className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                <h3 className="text-lg font-medium tracking-tight">
-                  Recent Activity
-                </h3>
-              </div>
-              <div className="space-y-3">
-                {[
-                  { action: "Bank statements uploaded", date: "Jan 10" },
-                  { action: "VAT return submitted", date: "Jan 20" },
-                  { action: "Payroll processed", date: "Jan 25" },
-                ]
-                  .slice(0, serviceName === "Payroll" ? 5 : 3)
-                  .map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-primary" />
-                        <span className="text-sm text-gray-900">
-                          {item.action}
-                        </span>
-                      </div>
-                      <span className="text-xs text-gray-500">{item.date}</span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </DashboardCard>
-
-          {/* SECTION 3: Quick Access Documents */}
-          <DashboardCard className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                  <h3 className="text-lg font-medium tracking-tight">
-                    Quick Access Documents
-                  </h3>
                 </div>
-              </div>
-              {documentsLoading ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="h-12 bg-gray-50 rounded animate-pulse"
-                    />
-                  ))}
-                </div>
-              ) : recentDocuments.length > 0 ? (
-                <div className="space-y-2">
-                  {recentDocuments.map((doc, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3 flex-1">
-                        <FileText className="w-4 h-4 text-gray-400" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {doc.name || doc.title || "Document"}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {doc.createdAt
-                              ? new Date(doc.createdAt).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  },
-                                )
-                              : doc.date || "Recent"}
-                          </p>
+              </DashboardCard>
+
+              {/* SECTION 2: Recent Activity Feed */}
+              <DashboardCard className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                    <h3 className="text-lg font-medium tracking-tight">
+                      Recent Activity
+                    </h3>
+                  </div>
+                  <div className="space-y-3">
+                    {[
+                      { action: "Bank statements uploaded", date: "Jan 10" },
+                      { action: "VAT return submitted", date: "Jan 20" },
+                      { action: "Payroll processed", date: "Jan 25" },
+                    ]
+                      .slice(0, serviceName === "Payroll" ? 5 : 3)
+                      .map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-primary" />
+                            <span className="text-sm text-gray-900">
+                              {item.action}
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-500">{item.date}</span>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-3 text-xs"
-                        >
-                          <Eye className="w-3 h-3 mr-1" />
-                          View
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-3 text-xs"
-                        >
-                          <Download className="w-3 h-3 mr-1" />
-                          Download
-                        </Button>
-                      </div>
+                      ))}
+                  </div>
+                </div>
+              </DashboardCard>
+
+              {/* SECTION 3: Quick Access Documents */}
+              <DashboardCard className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                      <h3 className="text-lg font-medium tracking-tight">
+                        Quick Access Documents
+                      </h3>
                     </div>
-                  ))}
+                  </div>
+                  {documentsLoading ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="h-12 bg-gray-50 rounded animate-pulse"
+                        />
+                      ))}
+                    </div>
+                  ) : recentDocuments.length > 0 ? (
+                    <div className="space-y-2">
+                      {recentDocuments.map((doc, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3 flex-1">
+                            <FileText className="w-4 h-4 text-gray-400" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {doc.name || doc.title || "Document"}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {doc.createdAt
+                                  ? new Date(doc.createdAt).toLocaleDateString(
+                                      "en-US",
+                                      {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                      },
+                                    )
+                                  : doc.date || "Recent"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">
+                              <Eye className="w-3 h-3 mr-1" />
+                              View
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">
+                              <Download className="w-3 h-3 mr-1" />
+                              Download
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-sm text-gray-500">
+                      No documents available yet
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="text-center py-8 text-sm text-gray-500">
-                  No documents available yet
-                </div>
-              )}
-            </div>
-          </DashboardCard>
+              </DashboardCard>
+            </>
+          )}
+
 
           {/* SERVICE-SPECIFIC SECTIONS */}
 

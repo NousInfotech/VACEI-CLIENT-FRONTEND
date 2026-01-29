@@ -521,13 +521,37 @@ export const menuData: MenuItem[] = [
         isActive: true,
         children: [
           {
-            slug: "mbr-overview",
+            slug: "mbr-docs",
             icon: DocumentValidationIcon,
-            label: "Overview",
-            href: "/dashboard/services/mbr-filing?tab=overview",
+            label: "Document Requests",
+            href: "/dashboard/services/mbr-filing?tab=document_requests",
           },
           {
-            slug: "mbr-filings",
+            slug: "mbr-milestones",
+            icon: TaskDaily01Icon,
+            label: "Milestones",
+            href: "/dashboard/services/mbr-filing?tab=milestones",
+          },
+          {
+            slug: "mbr-lib",
+            icon: Book02Icon,
+            label: "Library",
+            href: "/dashboard/services/mbr-filing?tab=library",
+          },
+          {
+            slug: "mbr-compliance",
+            icon: TaxesIcon,
+            label: "Compliance Calendar",
+            href: "/dashboard/services/mbr-filing?tab=compliance_calendar",
+          },
+          {
+            slug: "mbr-messages",
+            icon: Message01Icon,
+            label: "Messages",
+            href: "/dashboard/services/mbr-filing?tab=messages",
+          },
+          {
+            slug: "mbr-filing-list",
             icon: TaskDaily01Icon,
             label: "Filings",
             href: "/dashboard/services/mbr-filing?tab=filings",
