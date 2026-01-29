@@ -34,6 +34,8 @@ export interface MenuItem {
   description?: string;
   isActive?: boolean;
   disabled?: boolean;
+  count?: number;
+  totalCount?: number;
 }
 
 export const menuData: MenuItem[] = [
@@ -94,6 +96,8 @@ export const menuData: MenuItem[] = [
             icon: DocumentValidationIcon,
             label: "Document Requests",
             href: "/dashboard/services/bookkeeping?tab=document_requests",
+            count: 3,
+            totalCount: 5,
           },
           {
             slug: "ab-lib",
@@ -118,6 +122,8 @@ export const menuData: MenuItem[] = [
             icon: Message01Icon,
             label: "Messages",
             href: "/dashboard/services/bookkeeping?tab=messages",
+            count: 2,
+            totalCount: 10,
           },
           {
             slug: "ab-mbr-filings",
@@ -229,6 +235,8 @@ export const menuData: MenuItem[] = [
             icon: DocumentValidationIcon,
             label: "Document Requests",
             href: "/dashboard/services/audit?tab=document_requests",
+            count: 5,
+            totalCount: 12,
           },
           {
             slug: "audit-lib",
@@ -253,6 +261,8 @@ export const menuData: MenuItem[] = [
             icon: Message01Icon,
             label: "Messages",
             href: "/dashboard/services/audit?tab=messages",
+            count: 1,
+            totalCount: 4,
           },
           {
             slug: "audit-mbr-filings",
@@ -712,6 +722,8 @@ export const menuData: MenuItem[] = [
     children: [],
     section: "primary",
     description: "Chat with your service team",
+    count: 8,
+    totalCount: 15,
   },
   {
     slug: "reseller-analytics",

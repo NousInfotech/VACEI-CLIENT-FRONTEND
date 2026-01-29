@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { TruncatedTooltip } from "@/components/ui/TruncatedTooltip";
 
 interface SidebarMenuProps {
   menu: MenuItem[];
@@ -22,13 +23,13 @@ interface SidebarMenuProps {
   onExpand?: () => void;
 }
 
-const serviceStatusConfig: Record<string, { label: string; color: string; dotColor: string }> = {
+const serviceStatusConfig: Record<string, { label: string; color: string; dotColor: string; description?: string }> = {
   "accounting-bookkeeping": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
   "audit": { label: "Your input required", color: "text-orange-500", dotColor: "bg-orange-500" },
-  "vat": { label: "Overdue", color: "text-red-500", dotColor: "bg-red-500" },
-  "tax": { label: "Due soon", color: "text-yellow-500", dotColor: "bg-yellow-500" },
+  "vat": { label: "Due soon", color: "text-yellow-500", dotColor: "bg-yellow-500", description: "VAT filing deadline is approaching." },
+  "tax": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
   "payroll": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
-  "mbr-filing": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
+  "mbr-filing": { label: "Overdue", color: "text-red-500", dotColor: "bg-red-500", description: "This filing has passed its deadline. Please take action now." },
   "csp": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
   "incorporation": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
   "business-plans": { label: "In progress", color: "text-blue-500", dotColor: "bg-blue-500" },
@@ -232,7 +233,7 @@ export default function SidebarMenu({
             "group relative flex items-center transition-all duration-300 ease-out",
             isCollapsed
               ? "justify-center px-2 py-3 rounded-2xl"
-              : "gap-4 px-4 py-3 rounded-2xl",
+              : "gap-2 px-3 py-3 rounded-2xl",
             "hover:scale-[1.02] hover:shadow-lg border",
             item.disabled && "opacity-50 cursor-not-allowed grayscale",
           )}
@@ -275,7 +276,7 @@ export default function SidebarMenu({
           >
             <HugeiconsIcon
               icon={item.icon}
-              className={cn(isCollapsed ? "h-4 w-4" : "h-5 w-5")}
+              className={cn(isCollapsed ? "h-4 w-4" : "h-5 w-5", "shrink-0")}
             />
           </div>
 
@@ -283,21 +284,28 @@ export default function SidebarMenu({
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between w-full gap-2">
-                <span className="font-semibold text-sm truncate">
+                <TruncatedTooltip className="font-semibold text-sm truncate min-w-0">
                   {item.label}
-                </span>
-                {hasChildren &&
-                  !item.disabled &&
-                  (isItemOpen ? (
-                    <ChevronUp className="h-4 w-4 opacity-50" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 opacity-50" />
-                  ))}
+                </TruncatedTooltip>
+                <div className="flex items-center gap-2">
+                  {item.count !== undefined && item.count > 0 && (
+                    <span className="flex items-center justify-center min-w-5 h-5 px-2 rounded-full bg-accent text-accent-foreground text-[10px] font-bold">
+                      {item.count} Total
+                    </span>
+                  )}
+                  {hasChildren &&
+                    !item.disabled &&
+                    (isItemOpen ? (
+                      <ChevronUp className="h-4 w-4 opacity-50" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    ))}
+                </div>
               </div>
               {item.description && (
-                <p className="text-[11px] leading-tight opacity-50 truncate mt-0.5 font-medium">
+                <TruncatedTooltip className="text-[11px] leading-tight opacity-50 truncate mt-0.5 font-medium min-w-0">
                   {item.description}
-                </p>
+                </TruncatedTooltip>
               )}
             </div>
           )}
@@ -339,7 +347,7 @@ export default function SidebarMenu({
           )}
 
           {hasChildren && isItemOpen && !isCollapsed && (
-            <ul className="ml-5 space-y-1 mt-1 border-l border-white/10 pl-4 py-1">
+            <ul className="ml-4 space-y-1 mt-1 border-l border-white/10 pl-2 py-1">
               {item.children?.map((child) => renderMenuItem(child, level + 1))}
             </ul>
           )}
@@ -388,7 +396,7 @@ export default function SidebarMenu({
             }
           }}
           className={cn(
-            "flex items-center justify-between px-3 py-2 rounded-xl transition-all",
+            "flex items-center justify-between px-2 py-2 rounded-xl transition-all gap-2",
             item.disabled
               ? "opacity-50 cursor-not-allowed grayscale hover:bg-white/5"
               : isServiceActive
@@ -403,29 +411,58 @@ export default function SidebarMenu({
             pointerEvents: item.disabled ? "auto" : undefined,
           }}
         >
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
             <HugeiconsIcon
               icon={item.icon}
               className={cn(
                 level >= 3 ? "h-3 w-3" : "h-4 w-4",
+                "shrink-0",
                 (!isServiceActive || item.disabled) && "opacity-50",
               )}
             />
-            <span className="truncate">{item.label}</span>
+            <TruncatedTooltip className="truncate min-w-0">{item.label}</TruncatedTooltip>
           </div>
-          {level === 2 && serviceStatusConfig[item.slug] && (
-            <div className="flex items-center gap-1.5 opacity-90 scale-[0.85] origin-right ml-2 shrink-0">
-              <div className={cn(
-                "w-1.5 h-1.5 rounded-full animate-pulse",
-                serviceStatusConfig[item.slug].dotColor
-              )} />
-              <span className={cn(
-                "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
-                serviceStatusConfig[item.slug].color
-              )}>
-                {serviceStatusConfig[item.slug].label}
+          <div className="flex items-center gap-2">
+            {item.count !== undefined && item.count > 0 && (
+              <span className="flex items-center justify-center min-w-5 h-5 px-2 rounded-full bg-white/10 text-white text-[10px] font-bold">
+                {item.count} Total
               </span>
-            </div>
+            )} 
+            {level === 2 && serviceStatusConfig[item.slug] && (
+            serviceStatusConfig[item.slug].description ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1.5 opacity-90 scale-[0.85] origin-right ml-2 shrink-0 cursor-help">
+                    <div className={cn(
+                      "w-1.5 h-1.5 rounded-full animate-pulse",
+                      serviceStatusConfig[item.slug].dotColor
+                    )} />
+                    <span className={cn(
+                      "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
+                      serviceStatusConfig[item.slug].color
+                    )}>
+                      {serviceStatusConfig[item.slug].label}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-[200px] text-xs bg-primary text-primary-foreground border-none">
+                  {serviceStatusConfig[item.slug].description}
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <div className="flex items-center gap-1.5 opacity-90 scale-[0.85] origin-right ml-2 shrink-0">
+                <div className={cn(
+                  "w-1.5 h-1.5 rounded-full animate-pulse",
+                  serviceStatusConfig[item.slug].dotColor
+                )} />
+                <span className={cn(
+                  "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
+                  serviceStatusConfig[item.slug].color
+                )}>
+                  {serviceStatusConfig[item.slug].label}
+                </span>
+              </div>
+            )
           )}
           {!isServiceActive && !hasChildren && !item.disabled && (
             <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider ml-2 shrink-0">
@@ -439,10 +476,11 @@ export default function SidebarMenu({
             ) : (
               <ChevronDown className="h-3 w-3 opacity-50 shrink-0" />
             ))}
+          </div>
         </Link>
 
         {hasChildren && isItemOpen && (
-          <ul className="ml-5 space-y-1 mt-1 border-l border-white/10 pl-4 py-1">
+          <ul className="ml-4 space-y-1 mt-1 border-l border-white/10 py-1">
             {item.children?.map((child) => renderMenuItem(child, level + 1))}
           </ul>
         )}
@@ -604,18 +642,18 @@ export default function SidebarMenu({
 
               {!isCollapsed && (
                 <div className="flex-1 min-w-0">
-                  <p
-                    className="text-sm font-semibold truncate"
+                  <TruncatedTooltip
+                    className="text-sm font-semibold truncate min-w-0"
                     style={{ color: `hsl(var(--sidebar-foreground))` }}
                   >
                     {user.name}
-                  </p>
-                  <p
-                    className="text-xs truncate opacity-70"
+                  </TruncatedTooltip>
+                  <TruncatedTooltip
+                    className="text-xs truncate opacity-70 min-w-0"
                     style={{ color: `hsl(var(--sidebar-foreground))` }}
                   >
                     {user.email}
-                  </p>
+                  </TruncatedTooltip>
                   <div className="flex items-center gap-1 mt-1">
                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
                     <span

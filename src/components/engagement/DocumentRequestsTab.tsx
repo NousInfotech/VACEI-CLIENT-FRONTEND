@@ -135,9 +135,9 @@ const DocumentRequestsTab = () => {
           <h2 className="text-3xl font-semibold">Document Requests</h2>
           <p className="text-sm text-gray-500 mt-1 font-medium">Manage document requests and track progress</p>
         </div>
-        <div className="p-4 bg-linear-to-br from-amber-500 to-orange-600 rounded-2xl text-white shadow-lg shadow-orange-200">
+        {/* <div className="p-4 bg-linear-to-br from-amber-500 to-orange-600 rounded-2xl text-white shadow-lg shadow-orange-200">
           <ClipboardList size={32} />
-        </div>
+        </div> */}
       </div>
 
       <div className="space-y-4">
@@ -150,6 +150,7 @@ const DocumentRequestsTab = () => {
           const totalDocs = singleDocs.length + multipleGroups.reduce((acc, md) => acc + (md.multiple?.length || 0), 0)
           const uploadedDocsCount = singleDocs.filter(d => d.url).length + 
             multipleGroups.reduce((acc, md) => acc + (md.multiple?.filter((m: any) => m.url).length || 0), 0)
+          const percentage = totalDocs > 0 ? Math.round((uploadedDocsCount / totalDocs) * 100) : 0
 
           return (
             <Card
@@ -178,9 +179,21 @@ const DocumentRequestsTab = () => {
                           </Badge>
                         )}
                         <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
-                          {uploadedDocsCount}/{totalDocs} DOCUMENTS
+                          {uploadedDocsCount}/{totalDocs} DOCUMENTS ({percentage}%)
                         </Badge>
                         {getStatusBadge(request.status)}
+                      </div>
+
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="w-64 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-[14px] font-medium text-emerald-600 tracking-tight">
+                          {percentage}%
+                        </span>
                       </div>
 
                       {request.description && (
