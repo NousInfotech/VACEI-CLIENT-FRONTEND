@@ -234,36 +234,36 @@ export const NoticeBoard = () => {
   }
 
   return (
-    <div className="relative">
+    <div className="relative pt-2">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-5 px-1">
         <div className="flex items-center gap-2">
           <Bell className="h-5 w-5 text-gray-700" />
           <h2 className="text-lg font-semibold text-gray-900 uppercase tracking-widest">Notice Board</h2>
-          <Badge variant="secondary">
+          <Badge variant="secondary" className="rounded-full px-2 py-0">
             {notices.length}
           </Badge>
         </div>
         {notices.length > 1 && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Button
               variant="outline"
               size="sm"
               onClick={prevNotice}
-              className="h-8 w-8 p-0 rounded-full border-gray-200 bg-primary-color-new hover:bg-white text-white transition-all shadow-sm"
+              className="h-9 w-9 p-0 rounded-full border-gray-200 bg-primary-color-new hover:bg-white text-white transition-all shadow-sm flex items-center justify-center"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-5 w-5" />
             </Button>
-            <span className="text-[10px] font-medium min-w-[40px] text-center uppercase tracking-widest">
+            <span className="text-[15px] font-medium min-w-[45px] text-center uppercase tracking-widest text-gray-500">
               {currentIndex + 1} / {notices.length}
             </span>
             <Button
               variant="outline"
               size="sm"
               onClick={nextNotice}
-              className="h-8 w-8 p-0 rounded-full border-gray-200 bg-primary-color-new hover:bg-white text-white transition-all shadow-sm"
+              className="h-9 w-9 p-0 rounded-full border-gray-200 bg-primary-color-new hover:bg-white text-white transition-all shadow-sm flex items-center justify-center"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-5 w-5" />
             </Button>
           </div>
         )}
@@ -272,7 +272,7 @@ export const NoticeBoard = () => {
       {/* Main Notice Card - VISA Card Style with Parallax Carousel */}
       <div 
         className="relative w-full overflow-hidden rounded-2xl" 
-        style={{ height: '220px' }}
+        style={{ height: '280px' }}
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
@@ -345,57 +345,57 @@ export const NoticeBoard = () => {
                 <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full -mr-40 -mt-40 blur-3xl" />
                 <div className="absolute bottom-0 left-0 w-60 h-60 bg-white/5 rounded-full -ml-30 -mb-30 blur-2xl" />
                 
-                {/* Card Chip Effect (Top Left) */}
-                <div className="absolute top-4 left-4 w-10 h-8 bg-linear-to-br from-white/20 to-white/5 rounded-md backdrop-blur-sm border border-white/10 shadow-md" />
+                {/* Card Chip Effect (Top Left) - Adjusted to not overlap weirdly */}
+                <div className="absolute top-6 left-6 w-12 h-10 bg-linear-to-br from-white/20 to-white/5 rounded-md backdrop-blur-sm border border-white/10 shadow-md opacity-40" />
                 
                 {/* Contactless Symbol (Top Right) */}
-                <div className="absolute top-4 right-4 flex items-center gap-1 opacity-50">
-                  <div className="w-7 h-7 border border-white/30 rounded-full flex items-center justify-center">
-                    <div className="w-3.5 h-3.5 border border-white/30 rounded-full"></div>
+                <div className="absolute top-6 right-6 flex items-center gap-1 opacity-30">
+                  <div className="w-8 h-8 border border-white/30 rounded-full flex items-center justify-center">
+                    <div className="w-4 h-4 border border-white/30 rounded-full"></div>
                   </div>
                 </div>
 
                 {/* Card Content */}
-                <div className="relative z-10 h-full flex flex-col p-6">
+                <div className="relative z-10 h-full flex flex-col px-8 py-7">
                   {/* Top Section - Badge */}
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <div className={cn("p-2 rounded-lg border border-white/10 backdrop-blur-sm", noticeConfig.badgeColor)}>
-                        <NoticeIcon className="h-4 w-4 text-white" />
+                    <div className="flex items-center gap-3">
+                      <div className={cn("p-2.5 rounded-xl border border-white/10 backdrop-blur-md shadow-inner", noticeConfig.badgeColor)}>
+                        <NoticeIcon className="h-5 w-5 text-white" />
                       </div>
-                      <Badge className={cn("text-white border-white/20 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5", noticeConfig.badgeColor)}>
+                      <Badge className={cn("text-white border-white/20 text-[10px] font-bold uppercase tracking-widest px-3 py-1", noticeConfig.badgeColor)}>
                         {noticeConfig.label}
                       </Badge>
                     </div>
                   </div>
 
                   {/* Middle Section - Title and Description */}
-                  <div className="flex-1 flex flex-col justify-center mb-4">
-                    <h3 className="text-lg font-bold mb-2 text-white leading-tight line-clamp-1">
+                  <div className="flex-1 flex flex-col justify-start mt-2 mb-4">
+                    <h3 className="text-xl font-bold mb-2 text-white leading-tight tracking-tight">
                       {notice.title}
                     </h3>
-                    <p className="text-white/70 text-sm leading-relaxed line-clamp-2 font-medium">
+                    <p className="text-white/70 text-sm leading-relaxed line-clamp-3 font-medium">
                       {notice.description}
                     </p>
                   </div>
 
                   {/* Bottom Section - Card Number Style Layout */}
-                  <div className="mt-auto pt-3 border-t border-white/10">
+                  <div className="mt-auto pt-4 border-t border-white/10">
                     <div className="flex items-end justify-between">
                       <div className="flex-1">
-                        <div className="text-[9px] text-white/40 mb-1 uppercase tracking-widest font-medium">Release Date</div>
-                        <div className="flex items-center gap-1.5 text-white/90">
-                          <Clock className="h-4 w-4" />
-                          <span className="font-medium text-[15px] tracking-tight">{noticeFormattedDate} • <span className="text-white/50 text-[12px]">{noticeFormattedTime}</span></span>
+                        <div className="text-[9px] text-white/40 mb-1.5 uppercase tracking-widest font-bold">Release Date</div>
+                        <div className="flex items-center gap-2 text-white/90">
+                          <Clock className="h-4 w-4 text-white/30" />
+                          <span className="font-semibold text-[15px] tracking-tight">{noticeFormattedDate} <span className="text-white/40 mx-1">•</span> <span className="text-white/60 text-[13px]">{noticeFormattedTime}</span></span>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-[9px] text-white/40 mb-1 uppercase tracking-widest font-medium">Privilege</div>
-                        <div className="flex gap-1 justify-end">
-                          {notice.roles?.slice(0, 2).map((role: string) => (
+                        <div className="text-[9px] text-white/40 mb-1.5 uppercase tracking-widest font-bold">Privilege</div>
+                        <div className="flex gap-1.5 justify-end">
+                          {notice.roles?.map((role: string) => (
                             <Badge
                               key={role}
-                              className="bg-white/10 text-white border-white/10 backdrop-blur-sm capitalize text-[10px] font-med px-1.5 py-0"
+                              className="bg-white/10 text-white/80 border-white/10 backdrop-blur-sm capitalize text-[10px] font-semibold px-2 py-0.5"
                             >
                               {role}
                             </Badge>

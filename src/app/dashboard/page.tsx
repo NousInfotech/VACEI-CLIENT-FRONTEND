@@ -17,6 +17,8 @@ import { AddressBookIcon, Alert02Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { User, AlertCircle, CheckCircle, ArrowRight, Clock, MoreVertical, Upload, Plus, MessageCircle, Calendar, CheckSquare } from "lucide-react";
 import { getOnboardingProgress } from "@/api/onboardingService";
+import CurrentFocus, { FocusItem } from "@/components/dashboard/CurrentFocus";
+import NextComplianceDeadline from "@/components/dashboard/NextComplianceDeadline";
 
 interface UploadStatusSummary {
   documentsUploaded: number;
@@ -199,7 +201,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-brand-body p-4">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className=" mx-auto space-y-8">
         {/* Premium Dashboard Header */}
         <PageHeader 
           title={getGreeting()}
@@ -225,68 +227,100 @@ export default function DashboardPage() {
           }
         />
 
-        {/* Notice Board */}
-        <NoticeBoard />
-        {/* Warning Banner */}
-        {!uploadLoading && uploadSummary?.filesUploadedThisMonth === 0 && (
-          <DashboardCard>
-            <div className="px-8 py-5 flex items-center gap-6">
-              <div className="shrink-0">
-                <DashboardCard className="p-3 bg-[#0f1729]">
-                  <AlertCircle className="w-6 h-6" color="white"/>
-                </DashboardCard>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-1">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-warning text-white uppercase tracking-widest">
-                    Warning
-                  </span>
-                </div>
-                <p className="text-lg text-gray-700 font-medium leading-relaxed">
-                No documents uploaded this month.
-                </p>
+        {/* Notice Board and Stats Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+          {/* Notice Board */}
+          <NoticeBoard />
+
+          {/* Performance Indicators / Compliance Overview - Clickable Status Cards */}
+          <div>
+            <div className="flex items-center justify-between mb-5 px-1 pt-2 h-[34px]">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-gray-700" />
+                <h2 className="text-lg font-semibold text-gray-900 uppercase tracking-widest">Compliance Overview</h2>
               </div>
             </div>
-          </DashboardCard>
-        )}
+            
+            <div className="grid grid-cols-2 gap-6" style={{ height: '280px' }}>
+              <Link href="/dashboard/todo-list?filter=overdue" className="h-[128px]">
+                <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Action needed</span>
+                    <span className="text-3xl font-semibold text-destructive tabular-nums">{complianceCounts.overdue}</span>
+                  </div>
+                </DashboardCard>
+              </Link>
+              <Link href="/dashboard/compliance?filter=due-soon" className="h-[128px]">
+                <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Due soon</span>
+                    <span className="text-3xl font-semibold text-warning tabular-nums">{complianceCounts.dueSoon}</span>
+                  </div>
+                </DashboardCard>
+              </Link>
+              <Link href="/dashboard/todo-list?filter=waiting" className="h-[128px]">
+                <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Overdue</span>
+                    <span className="text-3xl font-semibold text-info tabular-nums">{complianceCounts.waiting}</span>
+                  </div>
+                </DashboardCard>
+              </Link>
+              <Link href="/dashboard/compliance?filter=completed" className="h-[128px]">
+                <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Active services</span>
+                    <span className="text-3xl font-semibold text-success tabular-nums">{complianceCounts.done}</span>
+                  </div>
+                </DashboardCard>
+              </Link>
+            </div>
+          </div>
+        </div>
 
+        {/* Your Current Focus */}
+        <CurrentFocus item={(() => {
+          // Priority logic for current focus
+          // 1. Overdue
+          // 2. Due soon
+          // 3. Waiting
+          
+          if (complianceCounts.overdue > 0) {
+            return {
+              serviceName: "Compliance",
+              taskDescription: "You have overdue regulatory filings that require immediate action",
+              status: 'overdue',
+              primaryActionType: 'upload',
+              primaryActionLink: '/dashboard/todo-list?filter=overdue',
+              secondaryActionLink: '/dashboard/compliance'
+            } as FocusItem;
+          } else if (complianceCounts.dueSoon > 0) {
+            return {
+              serviceName: "VAT Return",
+              taskDescription: "Upcoming deadline. Please confirm no changes for the period.",
+              status: 'due_soon',
+              primaryActionType: 'confirm',
+              primaryActionLink: '/dashboard/services/vat',
+              secondaryActionLink: '/dashboard/compliance'
+            } as FocusItem;
+          } else if (complianceCounts.waiting > 0) {
+            // Find a service that is waiting
+            const focusService = activeServices.find(s => s.status.toLowerCase().includes('waiting')) || activeServices[0];
+            return {
+              serviceName: focusService.name,
+              taskDescription: focusService.next,
+              status: 'waiting_on_you',
+              primaryActionType: 'view',
+              primaryActionLink: focusService.href,
+              secondaryActionLink: '/dashboard/todo-list'
+            } as FocusItem;
+          }
+          return null; // All set!
+        })()} />
 
-
-      {/* Performance Indicators / Compliance Overview - Clickable Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Link href="/dashboard/todo-list?filter=overdue">
-          <DashboardCard animate className="p-6 cursor-pointer hover:shadow-lg transition-all">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-gray-700 tracking-widest">Overdue</span>
-            <span className="text-3xl font-semibold text-destructive tabular-nums">{complianceCounts.overdue}</span>
-          </div>
-        </DashboardCard>
-        </Link>
-        <Link href="/dashboard/compliance?filter=due-soon">
-          <DashboardCard animate className="p-6 cursor-pointer hover:shadow-lg transition-all">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-gray-700 tracking-widest">Due soon (7d)</span>
-            <span className="text-3xl font-semibold text-warning tabular-nums">{complianceCounts.dueSoon}</span>
-          </div>
-        </DashboardCard>
-        </Link>
-        <Link href="/dashboard/todo-list?filter=waiting">
-          <DashboardCard animate className="p-6 cursor-pointer hover:shadow-lg transition-all">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-gray-700 tracking-widest">Waiting</span>
-            <span className="text-3xl font-semibold text-info tabular-nums">{complianceCounts.waiting}</span>
-          </div>
-        </DashboardCard>
-        </Link>
-        <Link href="/dashboard/compliance?filter=completed">
-          <DashboardCard animate className="p-6 cursor-pointer hover:shadow-lg transition-all">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-gray-700 tracking-widest">Completed (30d)</span>
-            <span className="text-3xl font-semibold text-success tabular-nums">{complianceCounts.done}</span>
-          </div>
-        </DashboardCard>
-        </Link>
-      </div>
+        <div className="mt-6 mb-8">
+          <NextComplianceDeadline />
+        </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column - Priority Actions & Services */}
@@ -300,8 +334,8 @@ export default function DashboardPage() {
                   <p className="text-sm text-gray-600">Manage your ongoing accounting and tax services</p>
                 </div>
               </div>
-              <div className="p-6">
-                <div className="grid sm:grid-cols-2 gap-4">
+              <div className="p-4">
+                <div className="grid gap-4">
                   {activeServices.map((service, idx) => (
                     <DashboardCard key={idx} className="group/service relative rounded-xl border bg-white/50 p-5 transition-all duration-300">
                       <div className="flex items-start justify-between mb-4 gap-3">
@@ -345,7 +379,7 @@ export default function DashboardPage() {
             </DashboardCard>
 
             {/* Recently Completed */}
-            <DashboardCard className="overflow-hidden">
+            {/* <DashboardCard className="overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-1 h-6 bg-gray-900 rounded-full" />
@@ -370,7 +404,7 @@ export default function DashboardPage() {
                   </DashboardCard>
                 ))}
               </div>
-            </DashboardCard>
+            </DashboardCard> */}
           </div>
 
           {/* Right Column - Sidebar */}
@@ -446,7 +480,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Activity Feed - Full Width */}
-          <div className="lg:col-span-3">
+          {/* <div className="lg:col-span-3">
             <DashboardCard className="overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-4">
                 <div className="w-1 h-6 bg-gray-900 rounded-full" />
@@ -497,7 +531,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             </DashboardCard>
-          </div>
+          </div> */}
         </div>
 
       </div>
