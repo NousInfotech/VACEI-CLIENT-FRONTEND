@@ -256,7 +256,7 @@ export const MOCK_COMPANY_DATA: CompanyResponse = {
             {
                 "personId": {
                     "_id": "6948dc4e75095ca2be980dbb",
-                    "name": "Godwin Cauchi",
+                    "name": "Godwin",
                     "nationality": "Maltese",
                     "address": "SUNRISE FARMALLEY LAURENTI, BUSKETT L/O RABAT Malta",
                     "supportingDocuments": [],
@@ -277,7 +277,7 @@ export const MOCK_COMPANY_DATA: CompanyResponse = {
             {
                 "personId": {
                     "_id": "6948dc5375095ca2be980dc6",
-                    "name": "Wallace Cauchi",
+                    "name": "Wallace",
                     "nationality": "Maltese",
                     "address": "2, Angela Flats, Triq IL-GIFEN, San Pawl IL-BAHAR Malta",
                     "supportingDocuments": [],
@@ -372,7 +372,7 @@ export const MOCK_COMPANY_DATA: CompanyResponse = {
             {
                 "personId": {
                     "_id": "6948dc4e75095ca2be980dbb",
-                    "name": "Godwin Cauchi",
+                    "name": "Godwin",
                     "nationality": "Maltese",
                     "address": "SUNRISE FARMALLEY LAURENTI, BUSKETT L/O RABAT Malta",
                     "supportingDocuments": [],
@@ -391,7 +391,7 @@ export const MOCK_COMPANY_DATA: CompanyResponse = {
             {
                 "personId": {
                     "_id": "6948dc5375095ca2be980dc6",
-                    "name": "Wallace Cauchi",
+                    "name": "Wallace",
                     "nationality": "Maltese",
                     "address": "2, Angela Flats, Triq IL-GIFEN, San Pawl IL-BAHAR Malta",
                     "supportingDocuments": [],

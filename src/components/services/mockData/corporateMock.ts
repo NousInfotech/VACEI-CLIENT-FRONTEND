@@ -69,9 +69,56 @@ export const corporateMock: ServiceMockData = {
     { id: 'cs-f-3', filing_type: 'Director Appointment', reference: 'FORM-10', status: 'completed', due_date: '2025-05-20', filing_status: 'completed' }
   ],
   corporateServicesStatus: [
-    { type: "Director", holder: "John Smith", status: "Active", expiry: "N/A" },
-    { type: "Secretary", holder: "Jane Doe", status: "Active", expiry: "Dec 31, 2026" },
-    { type: "Registered Office", holder: "VACEI Ltd", status: "Active", expiry: "Annual" }
+    { 
+      type: "Director", 
+      holder: "John Smith", 
+      status: "Active", 
+      startDate: "2024-01-01",
+      expiry: "2026-12-31",
+      service_status: "On track",
+      documents: ["View"],
+      open: true
+    },
+    { 
+      type: "Company Secretary", 
+      holder: "CSP Provider", 
+      status: "Active", 
+      startDate: "2024-01-01",
+      expiry: "2026-12-31",
+      service_status: "On track",
+      documents: ["View"],
+      open: true
+    },
+    { 
+      type: "Registered Office", 
+      holder: "CSP Provider", 
+      status: "Active", 
+      startDate: "2024-01-01",
+      expiry: "2026-12-31",
+      service_status: "Due soon",
+      documents: ["View"],
+      open: true
+    },
+    { 
+      type: "Shareholder Register", 
+      holder: "—", 
+      status: "Active", 
+      startDate: null,
+      expiry: null,
+      service_status: "On track",
+      documents: ["View"],
+      open: true
+    },
+    { 
+      type: "Beneficial Owner Register", 
+      holder: "—", 
+      status: "Action required", 
+      startDate: null,
+      expiry: null,
+      service_status: "Action required",
+      documents: ["View"],
+      open: true
+    }
   ],
   recentActivity: [
     { action: "Board meeting minutes drafted", date: "Jan 15" },

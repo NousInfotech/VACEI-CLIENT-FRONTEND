@@ -78,6 +78,48 @@ export const cfoMock: ServiceMockData = {
     { name: "Cash Flow Management", start: "Jan 01, 2026", status: "In progress", end: "Ongoing" },
     { name: "Budget Review Q1", start: "Jan 15, 2026", status: "Waiting on you", end: "Feb 15, 2026" }
   ],
+  cfoFilings: [
+    {
+      service: "Management Accounts",
+      frequency: "Monthly",
+      currentPeriod: "April 2026",
+      status: "In progress",
+      nextDeliverable: "May 2026 accounts",
+      service_status: "On track",
+      documents: ["View"],
+      open: true
+    },
+    {
+      service: "Cashflow Forecast",
+      frequency: "Monthly",
+      currentPeriod: "April 2026",
+      status: "Completed",
+      nextDeliverable: "May 2026 update",
+      service_status: "On track",
+      documents: ["View"],
+      open: true
+    },
+    {
+      service: "Budget vs Actual",
+      frequency: "Quarterly",
+      currentPeriod: "Q2 2026",
+      status: "Waiting on you",
+      nextDeliverable: "Q2 review",
+      service_status: "Action required",
+      documents: ["View"],
+      open: true
+    },
+    {
+      service: "Board Reporting",
+      frequency: "Quarterly",
+      currentPeriod: "Q2 2026",
+      status: "Scheduled",
+      nextDeliverable: "Board pack",
+      service_status: "Due soon",
+      documents: ["View"],
+      open: true
+    }
+  ],
   recentActivity: [
     { action: "Weekly cash flow report shared", date: "Jan 26" },
     { action: "Cost optimization strategy proposed", date: "Jan 20" },

@@ -55,7 +55,16 @@ export interface ServiceMockData {
   auditProgress?: { step: string; status: 'completed' | 'in_progress' | 'pending' }[];
   liquidationProcess?: { step: string; status: 'completed' | 'in_progress' | 'pending' | string }[];
   businessPlanMilestones?: { label: string; status: string }[];
-  corporateServicesStatus?: { type: string; holder: string; status: string; expiry: string }[];
+  corporateServicesStatus?: { 
+    type: string; 
+    holder: string; 
+    status: string; 
+    startDate?: string | null;
+    expiry: string | null;
+    service_status?: string;
+    documents?: string[];
+    open?: boolean;
+  }[];
   payrollOverview?: { 
     totalEmployees: number;
     activeThisPeriod: number;
@@ -63,6 +72,16 @@ export interface ServiceMockData {
     recentEmployees: { name: string; role: string; status: string }[];
   };
   cfoEngagementsList?: { name: string; start: string; status: string; end: string }[];
+  cfoFilings?: {
+    service: string;
+    frequency: string;
+    currentPeriod: string;
+    status: string;
+    nextDeliverable: string;
+    service_status: string;
+    documents: string[];
+    open: boolean;
+  }[];
   libraryItems?: any[]; // For service-specific library
 }
 

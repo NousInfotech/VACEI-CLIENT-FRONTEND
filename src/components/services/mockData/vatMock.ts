@@ -71,27 +71,58 @@ export const vatMock: ServiceMockData = {
   periods: [
     {
       id: "period-1",
-      period: "Jan - Mar 2026",
-      due_date: "2026-05-15",
-      filing_status: "waiting_on_you",
-      service_status: "on_track",
+      period: "Q2 2026 (Apr–Jun)",
+      frequency: "Quarterly",
+      due_date: "2026-07-15",
+      filing_status: "Waiting on you",
+      service_status: "Action required",
       submitted_at: null,
-      net_tax: 1540.50,
-      total_sales: 12000.00,
-      total_purchases: 4500.00,
-      documents: []
+      downloads: [],
+      open: true
     },
     {
       id: "period-2",
-      period: "Oct - Dec 2025",
-      due_date: "2026-02-15",
-      filing_status: "submitted",
-      service_status: "due_soon",
-      submitted_at: "2026-01-20",
-      net_tax: 2100.00,
-      total_sales: 15000.00,
-      total_purchases: 6000.00,
-      documents: []
+      period: "Q1 2026 (Jan–Mar)",
+      frequency: "Quarterly",
+      due_date: "2026-04-15",
+      filing_status: "Submitted",
+      service_status: "On track",
+      submitted_at: "2026-04-14",
+      downloads: ["Return", "Receipt", "WP"],
+      open: true
+    },
+    {
+      id: "period-3",
+      period: "Q4 2025 (Oct–Dec)",
+      frequency: "Quarterly",
+      due_date: "2026-01-15",
+      filing_status: "Completed",
+      service_status: "On track",
+      submitted_at: "2026-01-13",
+      downloads: ["Return", "Receipt", "WP"],
+      open: true
+    },
+    {
+      id: "period-4",
+      period: "Q3 2025 (Jul–Sep)",
+      frequency: "Quarterly",
+      due_date: "2025-10-15",
+      filing_status: "Completed",
+      service_status: "On track",
+      submitted_at: "2025-10-12",
+      downloads: ["Return", "Receipt", "WP"],
+      open: true
+    },
+    {
+      id: "period-5",
+      period: "Annual 2024",
+      frequency: "Annual",
+      due_date: "2025-02-18",
+      filing_status: "Completed",
+      service_status: "On track",
+      submitted_at: "2025-02-17",
+      downloads: ["Return", "Receipt", "WP"],
+      open: true
     }
   ],
   team: MOCK_TEAM,

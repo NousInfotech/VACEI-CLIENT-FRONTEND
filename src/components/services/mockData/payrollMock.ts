@@ -72,10 +72,56 @@ export const payrollMock: ServiceMockData = {
     { id: 'p-l-f3', file_name: 'FSS7_Annual_2025.pdf', type: 'file', file_type: 'PDF', file_size: 890000, url: '#', folderId: 'p-l-statutory', version: 1, tags: ['annual'], uploaderId: 'user-1', isDeleted: false, createdAt: '2026-01-15T10:00:00Z' }
   ],
   filings: [
-    { id: 'p-f-1', filing_type: 'FSS Submission', reference: 'Dec 2025', status: 'completed', due_date: '2026-01-15', filing_status: 'completed' },
-    { id: 'p-f-2', filing_type: 'FSS Submission', reference: 'Nov 2025', status: 'completed', due_date: '2025-12-15', filing_status: 'completed' },
-    { id: 'p-f-3', filing_type: 'FSS Submission', reference: 'Oct 2025', status: 'completed', due_date: '2025-11-15', filing_status: 'completed' },
-    { id: 'p-f-4', filing_type: 'FSS Submission', reference: 'Sep 2025', status: 'completed', due_date: '2025-10-15', filing_status: 'completed' }
+    {
+      id: "p-f-1",
+      month: "April 2026",
+      pay_date: "2026-04-30",
+      filing_status: "Waiting on you",
+      service_status: "Action required",
+      completed_at: null,
+      payroll_outputs: [],
+      open: true
+    },
+    {
+      id: "p-f-2",
+      month: "March 2026",
+      pay_date: "2026-03-31",
+      filing_status: "Completed",
+      service_status: "On track",
+      completed_at: "2026-03-30",
+      payroll_outputs: ["FS5", "Payslips", "FS7"],
+      open: true
+    },
+    {
+      id: "p-f-3",
+      month: "February 2026",
+      pay_date: "2026-02-28",
+      filing_status: "Completed",
+      service_status: "On track",
+      completed_at: "2026-02-27",
+      payroll_outputs: ["FS5", "Payslips", "FS7"],
+      open: true
+    },
+    {
+      id: "p-f-4",
+      month: "January 2026",
+      pay_date: "2026-01-31",
+      filing_status: "Completed",
+      service_status: "On track",
+      completed_at: "2026-01-30",
+      payroll_outputs: ["FS5", "Payslips", "FS7"],
+      open: true
+    },
+    {
+      id: "p-f-5",
+      month: "December 2025",
+      pay_date: "2025-12-31",
+      filing_status: "Completed",
+      service_status: "On track",
+      completed_at: "2025-12-30",
+      payroll_outputs: ["FS5", "Payslips", "FS7", "FS3"],
+      open: true
+    }
   ],
   payrollOverview: {
     totalEmployees: 12,

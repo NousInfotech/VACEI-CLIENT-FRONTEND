@@ -53,25 +53,43 @@ export const mbrMock: ServiceMockData = {
   filings: [
     {
       id: "filing-1",
-      filing_type: "Form 1 - Annual Return",
-      reference_period: "2025",
-      due_date: "2026-01-31",
-      filing_status: "in_progress",
-      service_status: "on_track",
+      filing_type: "Annual Return",
+      reference: "2026",
+      due_date: "2026-05-14",
+      filing_status: "waiting_on_you",
+      service_status: "Action required",
       submitted_at: null,
-      reference: "MBR-2025-AR-001",
       documents: []
     },
     {
       id: "filing-2",
-      filing_type: "Form K - Change in Directors",
-      reference_period: "2026",
-      due_date: "2026-02-15",
-      filing_status: "waiting_on_you",
-      service_status: "due_soon",
-      submitted_at: null,
-      reference: "MBR-2026-FK-002",
-      documents: []
+      filing_type: "Annual Return",
+      reference: "2025",
+      due_date: "2025-05-15",
+      filing_status: "submitted",
+      service_status: "On track",
+      submitted_at: "2025-05-13",
+      documents: ["Receipt", "PDF"]
+    },
+    {
+      id: "filing-3",
+      filing_type: "BO Update",
+      reference: "Change in UBO",
+      due_date: "2025-02-20",
+      filing_status: "completed",
+      service_status: "On track",
+      submitted_at: "2025-02-18",
+      documents: ["Receipt"]
+    },
+    {
+      id: "filing-4",
+      filing_type: "Change Notice",
+      reference: "Director Change",
+      due_date: "2024-10-01",
+      filing_status: "completed",
+      service_status: "On track",
+      submitted_at: "2024-09-30",
+      documents: ["Receipt"]
     }
   ],
   team: MOCK_TEAM,
