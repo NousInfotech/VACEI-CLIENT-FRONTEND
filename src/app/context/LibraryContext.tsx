@@ -53,7 +53,7 @@ interface LibraryContextType {
 
 const LibraryContext = createContext<LibraryContextType | undefined>(undefined);
 
-export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const LibraryProvider: React.FC<{ children: React.ReactNode; initialItems?: any[] }> = ({ children, initialItems }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,6 +63,8 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [filterType, setFilterType] = useState('all');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const libraryData = useMemo(() => initialItems || mockLibraryData, [initialItems]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -83,7 +85,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const path: LibraryItem[] = [];
     let currentId = currentFolderId;
     while (currentId) {
-      const folder = mockLibraryData.find(item => item.id === currentId && item.type === 'folder');
+      const folder = libraryData.find(item => item.id === currentId && item.type === 'folder');
       if (folder && folder.type === 'folder') {
         // Normalize breadcrumb item
         path.unshift({
@@ -99,7 +101,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [currentFolderId]);
 
   const currentItems = useMemo(() => {
-    const filtered = mockLibraryData.filter(item => {
+    const filtered = libraryData.filter(item => {
       const itemParentId = item.type === 'folder' ? item.parentId : item.folderId;
       const itemName = item.type === 'folder' ? item.folder_name : item.file_name;
       
@@ -150,7 +152,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [currentFolderId, searchQuery, sortConfig, filterType]);
 
   const rootFolders = useMemo(() => {
-    return mockLibraryData
+    return libraryData
       .filter(item => item.type === 'folder' && item.parentId === null)
       .map(folder => ({
         ...folder,
@@ -166,7 +168,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const handleBack = () => {
     if (currentFolderId) {
-      const current = mockLibraryData.find(item => item.id === currentFolderId);
+      const current = libraryData.find(item => item.id === currentFolderId);
       setCurrentFolderId(current?.parentId || null);
       setSelectedItems([]);
       setContextMenu(null);
@@ -198,7 +200,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
         zipName = `${item.name}.zip`;
       }
     } else if (selectedItems.length > 0) {
-      itemsToDownload = mockLibraryData.filter(i => selectedItems.includes(i.id));
+      itemsToDownload = libraryData.filter(i => selectedItems.includes(i.id));
       if (itemsToDownload.length > 1 || itemsToDownload.some(i => i.type === 'folder')) {
         isZip = true;
       }
@@ -206,7 +208,7 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
       itemsToDownload = currentItems;
       isZip = true;
       const folderName = currentFolderId 
-        ? mockLibraryData.find(i => i.id === currentFolderId)?.name 
+        ? libraryData.find(i => i.id === currentFolderId)?.name 
         : "Root";
       zipName = `${folderName}_all_files.zip`;
     }

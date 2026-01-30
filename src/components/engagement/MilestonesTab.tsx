@@ -74,7 +74,20 @@ const MilestoneIcon = ({ status }: { status: Milestone['status'] }) => {
   }
 }
 
+import { useEngagement } from './hooks/useEngagement'
+
 export const MilestonesTab = () => {
+  const { engagement } = useEngagement()
+  const displayMilestones = (engagement as any)?.milestones || []
+
+  if (displayMilestones.length === 0) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-gray-400">No milestones defined for this service.</p>
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto py-3">
       <div className="mb-5 text-center">
@@ -83,35 +96,25 @@ export const MilestonesTab = () => {
       </div>
 
       <div className="relative">
-        {/* Central Vertical Line (Visible only on medium screens and up) */}
-        <div className="absolute left-10 md:left-1/2 top-0 bottom-0 w-0.5 bg-gray-200 -translate-x-1/2 z-0" />
+        {/* Vertical Line on the left */}
+        <div className="absolute left-10 top-0 bottom-0 w-0.5 bg-gray-200 -translate-x-1/2 z-0" />
 
         <div className="space-y-12 relative z-10">
-          {milestones.map((milestone, index) => {
-            const isEven = index % 2 === 0;
+          {displayMilestones.map((milestone: any, index: number) => {
             return (
               <div 
                 key={milestone.id} 
-                className={cn(
-                  "flex flex-col md:flex-row items-center w-full",
-                  isEven ? "md:flex-row-reverse" : ""
-                )}
+                className="flex items-center w-full relative"
               >
-                {/* Spacer / Content on one side */}
-                <div className="hidden md:block w-1/2 px-8" />
-
-                {/* Central Icon */}
-                <div className="absolute left-10 md:left-1/2 -translate-x-1/2 flex items-center justify-center">
+                {/* Left aligned Icon */}
+                <div className="absolute left-10 -translate-x-1/2 flex items-center justify-center">
                   <div className="transition-transform duration-300 hover:scale-110">
                     <MilestoneIcon status={milestone.status} />
                   </div>
                 </div>
 
-                {/* Content Card on the other side */}
-                <div className={cn(
-                  "w-full md:w-1/2 pl-20 md:pl-0 px-4 md:px-8",
-                  isEven ? "md:pr-12" : "md:pl-12"
-                )}>
+                {/* Content Card on the right side */}
+                <div className="w-full pl-20 pr-4 md:pr-8">
                   <DashboardCard 
                     className={cn(
                       "p-6 transition-all duration-300 border-l-4",

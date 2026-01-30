@@ -230,20 +230,25 @@ interface ComplianceCalendarTabProps {
   serviceName: string
 }
 
+import { useEngagement } from './hooks/useEngagement'
+
 const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceName }) => {
   const [viewMode, setViewMode] = React.useState<'list' | 'month'>('list')
   const [activeFilter, setActiveFilter] = React.useState<ComplianceStatus | 'all'>('all')
-  const allItems = MOCK_COMPLIANCE_DATA[serviceName] || []
+  const { engagement } = useEngagement()
+  
+  // Use engagement context data if available (comes from service-specific mocks), otherwise fallback to local MOCK_COMPLIANCE_DATA
+  const allItems = (engagement as any)?.complianceItems || MOCK_COMPLIANCE_DATA[serviceName] || []
   
   const filteredItems = activeFilter === 'all' 
     ? allItems 
-    : allItems.filter(item => item.status === activeFilter)
+    : allItems.filter((item: ComplianceItem) => item.status === activeFilter)
 
   const counts = {
-    overdue: allItems.filter(i => i.status === 'overdue').length,
-    due_today: allItems.filter(i => i.status === 'due_today').length,
-    upcoming: allItems.filter(i => i.status === 'upcoming').length,
-    filed: allItems.filter(i => i.status === 'filed').length,
+    overdue: allItems.filter((i: ComplianceItem) => i.status === 'overdue').length,
+    due_today: allItems.filter((i: ComplianceItem) => i.status === 'due_today').length,
+    upcoming: allItems.filter((i: ComplianceItem) => i.status === 'upcoming').length,
+    filed: allItems.filter((i: ComplianceItem) => i.status === 'filed').length,
   }
 
   return (
@@ -315,9 +320,9 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
                 </p>
               </div>
             ) : (
-              filteredItems.map((item) => {
-                const config = statusConfig[item.status]
-                const StatusIcon = config.icon
+              filteredItems.map((item: ComplianceItem) => {
+                const config = statusConfig[item.status] || statusConfig.upcoming
+                const StatusIcon = config.icon || Clock
 
                 return (
                   <div 

@@ -90,12 +90,10 @@ const LibraryContent: React.FC = () => {
   );
 };
 
-export const LibraryExplorer: React.FC<LibraryExplorerProps> = ({ className }) => {
+export const LibraryExplorer: React.FC<LibraryExplorerProps & { items?: any[] }> = ({ className, items }) => {
   return (
     <div className={cn("flex flex-col h-[600px] md:h-[700px] lg:h-[800px] bg-white border border-gray-200 rounded-2xl overflow-hidden", className)}>
-      <LibraryProvider>
-        <LibraryContent />
-      </LibraryProvider>
+      <LibraryProvider initialItems={items} children={<LibraryContent />} />
     </div>
   );
 };

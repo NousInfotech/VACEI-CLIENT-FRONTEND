@@ -6,9 +6,10 @@ import { cn } from '@/lib/utils'
 
 interface Message {
   id: string
-  text: string
+  text?: string
+  content?: string
   timestamp: string
-  type: 'system' | 'user'
+  type: 'system' | 'user' | 'message' | 'notification' | string
 }
 
 interface ServiceMessagesProps {
@@ -72,7 +73,7 @@ const ServiceMessages: React.FC<ServiceMessagesProps> = ({ serviceName, messages
                   : "bg-primary/5 border-primary/20"
               }`}
             >
-              <p className="text-sm text-brand-body">{message.text}</p>
+              <p className="text-sm text-brand-body">{message.content || message.text}</p>
               <p className="text-xs text-muted-foreground mt-1">
                 {formatDate(message.timestamp)}
               </p>

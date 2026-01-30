@@ -18,20 +18,24 @@ interface StatCardProps {
 }
 
 export default function StatCard({
-    title,
+    title = "",
     link,
-    amount,
-    change,
-    note,
-    param1,
-    param2,
-    bgColor,
+    amount = "—",
+    change: changeProp,
+    trend,
+    note = "",
+    param1 = "",
+    param2 = "",
+    bgColor = "gray",
     iconClass,
     className,
-}: StatCardProps) {
+}: any) {
+    // Handle trend as alias for change
+    const change = changeProp || trend || "0%";
+    
     // Convert change string to numeric value for proper comparison
-    const changeValue = parseFloat(change.replace(/[^0-9.-]+/g, ""));
-    const isPositive = changeValue > 0;
+    const changeValue = parseFloat(String(change).replace(/[^0-9.-]+/g, ""));
+    const isPositive = (changeValue || 0) >= 0;
 
     // Use backend-provided icon OR fallback
     const finalIcon = iconClass || "chart-line";

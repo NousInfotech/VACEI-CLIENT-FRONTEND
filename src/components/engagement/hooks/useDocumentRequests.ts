@@ -28,8 +28,22 @@ export const useDocumentRequests = (engagementId: string | null): UseDocumentReq
     try {
       if (ENGAGEMENT_CONFIG.USE_MOCK_DATA) {
         // Mock loading delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setDocumentRequests(MOCK_ENGAGEMENT_DATA.documentRequests as any[]);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // If we have an engagement object from context, it might already have the specific mock documents
+        // However, the hook is usually called with engagementId.
+        // For simplicity in mock mode, we'll try to find the service mock if engagementId looks like our mock format
+        const serviceSlug = engagementId.startsWith('mock-engagement-') 
+          ? engagementId.replace('mock-engagement-', '') 
+          : null;
+        
+        const mockServiceData = serviceSlug ? (require('../../services/mockData').ALL_SERVICE_MOCKS[serviceSlug]) : null;
+        
+        if (mockServiceData?.documentRequests) {
+          setDocumentRequests(mockServiceData.documentRequests);
+        } else {
+          setDocumentRequests(MOCK_ENGAGEMENT_DATA.documentRequests as any[]);
+        }
       } else {
         const data = await getDocumentRequestsByEngagementId(engagementId)
         setDocumentRequests(data)

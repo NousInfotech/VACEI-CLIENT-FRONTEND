@@ -66,6 +66,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useEngagement } from "./hooks/useEngagement";
 
 export type EngagementStatus =
   | "on_track"
@@ -167,14 +168,19 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
   const isMBRFilings = serviceName === "MBR Filings" || serviceName === "Filings";
   const isVAT = serviceName === "VAT";
   const isTax = serviceName === "Tax";
-  const mbrFilings = MBR_FILINGS_MOCK;
+  
+  const { engagement } = useEngagement();
+  const engagementData = engagement as any;
+
+  const mbrFilings = engagementData?.filings || MBR_FILINGS_MOCK;
   const mbrActiveFiling = isMBRFilings
     ? getActiveMBRFiling(mbrFilings, mbrCurrentFilingId)
     : undefined;
   const mbrStatus = isMBRFilings
     ? getMBRServiceStatusFromFilings(mbrFilings)
     : status;
-  const vatPeriods = VAT_PERIODS_MOCK;
+    
+  const vatPeriods = engagementData?.periods || VAT_PERIODS_MOCK;
   const vatActivePeriod = isVAT
     ? getActiveVATPeriod(vatPeriods, activeVatPeriodId)
     : undefined;
@@ -189,22 +195,22 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
 
     return {
       overdue: mbrFilings.filter(
-        (f) =>
+        (f: any) =>
           !f.submitted_at &&
           new Date(f.due_date) < now &&
           (f.filing_status === "waiting_on_you" ||
             f.filing_status === "in_progress"),
       ).length,
       dueSoon: mbrFilings.filter(
-        (f) =>
+        (f: any) =>
           !f.submitted_at &&
           new Date(f.due_date) >= now &&
           new Date(f.due_date) <= thirtyDaysFromNow,
       ).length,
-      inProgress: mbrFilings.filter((f) => f.filing_status === "in_progress")
+      inProgress: mbrFilings.filter((f: any) => f.filing_status === "in_progress")
         .length,
       completedThisYear: mbrFilings.filter(
-        (f) =>
+        (f: any) =>
           f.filing_status === "completed" &&
           f.submitted_at?.startsWith(thisYear),
       ).length,
@@ -244,8 +250,16 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
         setLoading(false);
       }
     };
+
     loadDashboardData();
   }, [serviceName]);
+
+  // Set recent documents from mock data if available
+  useEffect(() => {
+    if (engagementData?.quickAccessDocs) {
+      setRecentDocuments(engagementData.quickAccessDocs);
+    }
+  }, [engagementData?.quickAccessDocs]);
 
   // Load recent documents for Quick Access Documents section
   useEffect(() => {
@@ -344,7 +358,8 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           ...(serviceName === "Tax" ||
           serviceName === "Statutory Audit" ||
           serviceName === "Payroll" ||
-          serviceName === "Accounting & Bookkeeping"
+          serviceName === "Accounting & Bookkeeping" ||
+          engagementData?.filings?.length > 0
             ? [
                 {
                   id: "mbr_filings",
@@ -406,136 +421,168 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                      Filing Type
-                    </th>
-                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                      Reference / Period
-                    </th>
-                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                      Due Date
-                    </th>
-                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                      Filing Status
-                    </th>
-                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                      <div className="flex items-center gap-1">
-                        Service Status
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Info className="w-3 h-3 cursor-help text-gray-400" />
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-gray-900 text-white border-gray-800 text-[10px] py-1 px-2 rounded-0">
-                            Shows whether we are on track or if your input is required.
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </th>
-                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                      Submitted On
-                    </th>
-                    <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                      Documents
-                    </th>
+                    {mbrFilings.some((f: any) => f.filing_type) && (
+                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                        Filing Type
+                      </th>
+                    )}
+                    {mbrFilings.some((f: any) => f.reference_period || f.reference) && (
+                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                        Reference / Period
+                      </th>
+                    )}
+                    {mbrFilings.some((f: any) => f.due_date) && (
+                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                        Due Date
+                      </th>
+                    )}
+                    {mbrFilings.some((f: any) => f.filing_status) && (
+                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                        Filing Status
+                      </th>
+                    )}
+                    {mbrFilings.some((f: any) => f.service_status) && (
+                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                        <div className="flex items-center gap-1">
+                          Service Status
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="w-3 h-3 cursor-help text-gray-400" />
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-gray-900 text-white border-gray-800 text-[10px] py-1 px-2 rounded-0">
+                              Shows whether we are on track or if your input is required.
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </th>
+                    )}
+                    {mbrFilings.some((f: any) => f.submitted_at) && (
+                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                        Submitted On
+                      </th>
+                    )}
+                    {mbrFilings.some((f: any) => f.documents?.length > 0) && (
+                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                        Documents
+                      </th>
+                    )}
                     <th className="text-right py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
                       Open
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {mbrFilings.map((f) => (
+                  {mbrFilings.map((f: any) => (
                     <tr
                       key={f.id}
                       className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                     >
-                      <td className="py-3 px-4 font-medium text-gray-900">
-                        {f.filing_type}
-                      </td>
-                      <td className="py-3 px-4 text-gray-600">
-                        {f.reference_period}
-                      </td>
-                      <td className="py-3 px-4 text-gray-600">
-                        {new Date(f.due_date).toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge
-                          className={cn(
-                            "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
-                            f.filing_status === "waiting_on_you" &&
-                              "text-orange-500 border-orange-500/20",
-                            f.filing_status === "in_progress" &&
-                              "text-blue-500 border-blue-500/20",
-                            f.filing_status === "submitted" &&
-                              "text-purple-500 border-purple-500/20",
-                            f.filing_status === "completed" &&
-                              "text-green-500 border-green-500/20",
+                      {mbrFilings.some((x: any) => x.filing_type) && (
+                        <td className="py-3 px-4 font-medium text-gray-900">
+                          {f.filing_type}
+                        </td>
+                      )}
+                      {mbrFilings.some((x: any) => x.reference_period || x.reference) && (
+                        <td className="py-3 px-4 text-gray-600">
+                          {f.reference_period || f.reference}
+                        </td>
+                      )}
+                      {mbrFilings.some((x: any) => x.due_date) && (
+                        <td className="py-3 px-4 text-gray-600">
+                          {f.due_date ? new Date(f.due_date).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          }) : "—"}
+                        </td>
+                      )}
+                      {mbrFilings.some((x: any) => x.filing_status) && (
+                        <td className="py-3 px-4">
+                          <Badge
+                            className={cn(
+                              "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
+                              f.filing_status === "waiting_on_you" &&
+                                "text-orange-500 border-orange-500/20",
+                              f.filing_status === "in_progress" &&
+                                "text-blue-500 border-blue-500/20",
+                              f.filing_status === "submitted" &&
+                                "text-purple-500 border-purple-500/20",
+                              f.filing_status === "completed" &&
+                                "text-green-500 border-green-500/20",
+                            )}
+                          >
+                            {f.filing_status === "waiting_on_you" &&
+                              "Action needed from you"}
+                            {f.filing_status === "in_progress" &&
+                              "We are working on this"}
+                            {f.filing_status === "submitted" &&
+                              "Submitted to MBR"}
+                            {f.filing_status === "completed" &&
+                              "Filed & completed"}
+                            {(!["waiting_on_you", "in_progress", "submitted", "completed"].includes(f.filing_status)) && (
+                                typeof f.filing_status === 'object' ? f.filing_status.label : f.filing_status
+                            )}
+                          </Badge>
+                        </td>
+                      )}
+                      {mbrFilings.some((x: any) => x.service_status) && (
+                        <td className="py-3 px-4">
+                          <Badge
+                            variant="outline"
+                            className="text-xs font-medium"
+                          >
+                            {f.service_status === "on_track" &&
+                              "On track (handled by us)"}
+                            {f.service_status === "due_soon" && "Due soon"}
+                            {f.service_status === "action_required" &&
+                              "Your input required"}
+                            {f.service_status === "overdue" && "Overdue"}
+                            {(!["on_track", "due_soon", "action_required", "overdue"].includes(f.service_status)) && f.service_status}
+                          </Badge>
+                        </td>
+                      )}
+                      {mbrFilings.some((x: any) => x.submitted_at) && (
+                        <td className="py-3 px-4 text-gray-600">
+                          {f.submitted_at
+                            ? new Date(f.submitted_at).toLocaleDateString(
+                                "en-GB",
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                },
+                              )
+                            : "—"}
+                        </td>
+                      )}
+                      {mbrFilings.some((x: any) => x.documents?.length > 0) && (
+                        <td className="py-3 px-4">
+                          {(f.filing_status === "submitted" ||
+                            f.filing_status === "completed") &&
+                          f.documents?.length > 0 ? (
+                            <span className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs p-0"
+                              >
+                                View
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs p-0"
+                              >
+                                Download
+                              </Button>
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs italic">
+                              Available after submission
+                            </span>
                           )}
-                        >
-                          {f.filing_status === "waiting_on_you" &&
-                            "Action needed from you"}
-                          {f.filing_status === "in_progress" &&
-                            "We are working on this"}
-                          {f.filing_status === "submitted" &&
-                            "Submitted to MBR"}
-                          {f.filing_status === "completed" &&
-                            "Filed & completed"}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge
-                          variant="outline"
-                          className="text-xs font-medium"
-                        >
-                          {f.service_status === "on_track" &&
-                            "On track (handled by us)"}
-                          {f.service_status === "due_soon" && "Due soon"}
-                          {f.service_status === "action_required" &&
-                            "Your input required"}
-                          {f.service_status === "overdue" && "Overdue"}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4 text-gray-600">
-                        {f.submitted_at
-                          ? new Date(f.submitted_at).toLocaleDateString(
-                              "en-GB",
-                              {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              },
-                            )
-                          : "—"}
-                      </td>
-                      <td className="py-3 px-4">
-                        {(f.filing_status === "submitted" ||
-                          f.filing_status === "completed") &&
-                        f.documents?.length > 0 ? (
-                          <span className="flex gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 text-xs p-0"
-                            >
-                              View
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 text-xs p-0"
-                            >
-                              Download
-                            </Button>
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 text-xs italic">
-                            Available after submission
-                          </span>
-                        )}
-                      </td>
+                        </td>
+                      )}
                       <td className="py-3 px-4 text-right">
                         {f.filing_status === "waiting_on_you" ? (
                           <div className="flex justify-end gap-2">
@@ -646,7 +693,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {vatPeriods.map((p) => (
+                  {vatPeriods.map((p: any) => (
                     <tr
                       key={p.id}
                       className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
@@ -1151,13 +1198,13 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                     </h3>
                   </div>
                   <div className="space-y-3">
-                    {[
+                    {(engagementData?.recentActivity || [
                       { action: "Bank statements uploaded", date: "Jan 10" },
                       { action: "VAT return submitted", date: "Jan 20" },
                       { action: "Payroll processed", date: "Jan 25" },
-                    ]
+                    ])
                       .slice(0, serviceName === "Payroll" ? 5 : 3)
-                      .map((item, idx) => (
+                      .map((item: any, idx: number) => (
                         <div
                           key={idx}
                           className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
@@ -1195,9 +1242,9 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                         />
                       ))}
                     </div>
-                  ) : recentDocuments.length > 0 ? (
+                  ) : (engagementData?.quickAccessDocs?.length > 0 || recentDocuments.length > 0) ? (
                     <div className="space-y-2">
-                      {recentDocuments.map((doc, idx) => (
+                      {(engagementData?.quickAccessDocs?.length > 0 ? engagementData.quickAccessDocs : recentDocuments).map((doc: any, idx: number) => (
                         <div
                           key={idx}
                           className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors"
@@ -1269,7 +1316,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                     <p className="text-2xl font-bold text-gray-900">
                       €
                       {stats.find((s) => s.title?.includes("Revenue"))
-                        ?.amount || "—"}
+                        ?.amount || engagementData?.financialStatements?.revenue || "—"}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">Current period</p>
                   </div>
@@ -1282,8 +1329,8 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                     </div>
                     <p className="text-2xl font-bold text-gray-900">
                       €
-                      {stats.find((s) => s.title?.includes("Expense"))
-                        ?.amount || "—"}
+                      {(stats.find((s) => s.title?.includes("Expense"))
+                        ?.amount || engagementData?.financialStatements?.expenses || "—")}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">Current period</p>
                   </div>
@@ -1296,7 +1343,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                     <p className="text-2xl font-bold text-gray-900">
                       €
                       {stats.find((s) => s.title?.includes("Net"))?.amount ||
-                        "—"}
+                        engagementData?.financialStatements?.netIncome || "—"}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">Current period</p>
                   </div>
@@ -1316,12 +1363,12 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                   </h3>
                 </div>
                 <div className="space-y-4">
-                  {[
+                  {(engagementData?.auditProgress || [
                     { step: "Planning", status: "completed" },
                     { step: "Fieldwork", status: "in_progress" },
                     { step: "Review", status: "pending" },
                     { step: "Final Report", status: "pending" },
-                  ].map((item, idx) => (
+                  ]).map((item: any, idx: number) => (
                     <div key={idx} className="flex items-center gap-4">
                       <div className="shrink-0">
                         {item.status === "completed" ? (
@@ -1488,7 +1535,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       </tr>
                     </thead>
                     <tbody>
-                      {[
+                      {(engagementData?.corporateServicesStatus || [
                         {
                           type: "Director",
                           holder: "John Smith",
@@ -1507,7 +1554,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                           status: "Active",
                           expiry: "Annual",
                         },
-                      ].map((row, idx) => (
+                      ]).map((row: any, idx: number) => (
                         <tr
                           key={idx}
                           className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
@@ -1559,7 +1606,9 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                         Total Employees
                       </p>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900">12</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {engagementData?.payrollOverview?.totalEmployees || 12}
+                    </p>
                   </div>
                   <div className="p-4 rounded-lg border border-gray-100 bg-white">
                     <div className="flex items-center gap-3 mb-2">
@@ -1568,7 +1617,9 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                         Active This Period
                       </p>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900">12</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {engagementData?.payrollOverview?.activeThisPeriod || 12}
+                    </p>
                   </div>
                   <div className="p-4 rounded-lg border border-gray-100 bg-white">
                     <div className="flex items-center gap-3 mb-2">
@@ -1577,14 +1628,16 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                         Pending Changes
                       </p>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900">0</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {engagementData?.payrollOverview?.pendingChanges || 0}
+                    </p>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-gray-400 uppercase tracking-[0.2em] mb-2">
                     Recent Employees
                   </p>
-                  {[
+                  {(engagementData?.payrollOverview?.recentEmployees || [
                     { name: "John Smith", role: "Manager", status: "Active" },
                     { name: "Jane Doe", role: "Developer", status: "Active" },
                     {
@@ -1592,7 +1645,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       role: "Designer",
                       status: "Active",
                     },
-                  ].map((emp, idx) => (
+                  ]).map((emp: any, idx: number) => (
                     <div
                       key={idx}
                       className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50"
@@ -1663,7 +1716,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {[
+                        {(engagementData?.cfoEngagementsList || [
                           {
                             name: "Monthly performance & KPI pack",
                             start: "Jan 05, 2026",
@@ -1676,7 +1729,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                             status: "Waiting on you",
                             end: "Feb 2026",
                           },
-                        ].map((row, idx) => (
+                        ]).map((row: any, idx: number) => (
                           <tr
                             key={idx}
                             className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
@@ -1712,7 +1765,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                     </h3>
                   </div>
                   <div className="space-y-3">
-                    {[
+                    {(engagementData?.recentActivity || [
                       {
                         action: "Draft forecast shared for review",
                         date: "Jan 23",
@@ -1725,7 +1778,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                         action: "Strategy call scheduled",
                         date: "Jan 10",
                       },
-                    ].map((item, idx) => (
+                    ]).map((item: any, idx: number) => (
                       <div
                         key={idx}
                         className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
@@ -1787,72 +1840,79 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                 </div>
               </DashboardCard>
 
-              <DashboardCard className="p-6">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                    <h3 className="text-lg font-medium tracking-tight">
-                      Filings Summary
-                    </h3>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                            Year
-                          </th>
-                          <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                            Filing type
-                          </th>
-                          <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                            Status
-                          </th>
-                          <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                            Submission date
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[
-                          {
-                            year: "2026",
-                            type: "Annual Return",
-                            status: "In progress",
-                            date: "—",
-                          },
-                          {
-                            year: "2025",
-                            type: "Annual Return",
-                            status: "Submitted",
-                            date: "Dec 20, 2025",
-                          },
-                        ].map((row, idx) => (
-                          <tr
-                            key={idx}
-                            className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
-                          >
-                            <td className="py-3 px-4 font-medium text-gray-900">
-                              {row.year}
-                            </td>
-                            <td className="py-3 px-4 text-gray-600">
-                              {row.type}
-                            </td>
-                            <td className="py-3 px-4">
-                              <Badge className="rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-gray-700 border-gray-200">
-                                {row.status}
-                              </Badge>
-                            </td>
-                            <td className="py-3 px-4 text-gray-600">
-                              {row.date}
-                            </td>
+              {engagementData?.filings?.length > 0 && (
+                <DashboardCard className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                      <h3 className="text-lg font-medium tracking-tight">
+                        Filings Summary
+                      </h3>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            {engagementData.filings.some((f: any) => f.reference || f.year) && (
+                              <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                                Year/Reference
+                              </th>
+                            )}
+                            {engagementData.filings.some((f: any) => f.filing_type || f.type) && (
+                              <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                                Filing type
+                              </th>
+                            )}
+                            {engagementData.filings.some((f: any) => f.filing_status || f.status) && (
+                              <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                                Status
+                              </th>
+                            )}
+                            {engagementData.filings.some((f: any) => f.submitted_at || f.date || f.due_date) && (
+                              <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                                Submission date
+                              </th>
+                            )}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {engagementData.filings.map((row: any, idx: number) => (
+                            <tr
+                              key={idx}
+                              className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                            >
+                              {engagementData.filings.some((f: any) => f.reference || f.year) && (
+                                <td className="py-3 px-4 font-medium text-gray-900">
+                                  {row.reference || row.year}
+                                </td>
+                              )}
+                              {engagementData.filings.some((f: any) => f.filing_type || f.type) && (
+                                <td className="py-3 px-4 text-gray-600">
+                                  {row.filing_type || row.type}
+                                </td>
+                              )}
+                              {engagementData.filings.some((f: any) => f.filing_status || f.status) && (
+                                <td className="py-3 px-4">
+                                  <Badge className="rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-gray-700 border-gray-200">
+                                    {row.filing_status || row.status}
+                                  </Badge>
+                                </td>
+                              )}
+                                {engagementData.filings.some((f: any) => f.submitted_at || f.date || f.due_date) && (
+                                  <td className="py-3 px-4 text-gray-600">
+                                    {typeof (row.submitted_at || row.date || row.due_date) === 'object' 
+                                      ? (row.submitted_at?.date || row.due_date?.date || "—")
+                                      : (row.submitted_at || row.date || row.due_date || "—")}
+                                  </td>
+                                )}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
-              </DashboardCard>
+                </DashboardCard>
+              )}
             </>
           )}
 
@@ -1868,12 +1928,12 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                     </h3>
                   </div>
                   <div className="space-y-4">
-                    {[
+                    {(engagementData?.incorporationProgress || [
                       { step: "Name approval", status: "completed" as const },
                       { step: "Documentation", status: "in_progress" as const },
                       { step: "Registration", status: "pending" as const },
                       { step: "Completion", status: "pending" as const },
-                    ].map((item, idx) => (
+                    ]).map((item: any, idx: number) => (
                       <div key={idx} className="flex items-center gap-4">
                         <div className="shrink-0">
                           {item.status === "completed" ? (
@@ -1927,14 +1987,14 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                     </h3>
                   </div>
                   <div className="space-y-2">
-                    {[
-                      { name: "ID document(s)", status: "Received" },
-                      { name: "Proof of address", status: "Pending" },
+                    {(engagementData?.documentRequests?.slice(0, 3) || [
+                      { title: "ID document(s)", status: "Received" },
+                      { title: "Proof of address", status: "Pending" },
                       {
-                        name: "Draft memorandum & articles",
+                        title: "Draft memorandum & articles",
                         status: "Pending",
                       },
-                    ].map((doc, idx) => (
+                    ]).map((doc: any, idx: number) => (
                       <div
                         key={idx}
                         className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50"
@@ -1942,7 +2002,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                         <div className="flex items-center gap-3">
                           <FileText className="w-4 h-4 text-gray-400" />
                           <p className="text-sm font-medium text-gray-900">
-                            {doc.name}
+                            {doc.title || doc.name}
                           </p>
                         </div>
                         <Badge className="rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-gray-700 border-gray-200">
@@ -1964,9 +2024,9 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {[
-                      { label: "Company name", value: "—" },
-                      { label: "Registration number", value: "—" },
-                      { label: "Incorporation date", value: "—" },
+                      { label: "Company name", value: engagementData?.summaryData?.companyName || "—" },
+                      { label: "Registration number", value: engagementData?.summaryData?.registrationNumber || "—" },
+                      { label: "Incorporation date", value: engagementData?.summaryData?.incorporationDate || "—" },
                     ].map((item, idx) => (
                       <div
                         key={idx}
@@ -1997,8 +2057,11 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       Project Status
                     </h3>
                   </div>
-                  <Badge className="rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-orange-600 border-orange-200 w-fit">
-                    Draft
+                  <Badge className={cn(
+                    "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit",
+                    workflowStatus === 'completed' ? "text-emerald-600 border-emerald-200" : "text-orange-600 border-orange-200"
+                  )}>
+                    {workflowStatus === 'completed' ? 'Finalized' : 'Draft'}
                   </Badge>
                 </div>
               </DashboardCard>
@@ -2012,12 +2075,12 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                     </h3>
                   </div>
                   <div className="space-y-2">
-                    {[
+                    {(engagementData?.businessPlanMilestones || [
                       { label: "Research", status: "Completed" },
                       { label: "Draft", status: "In progress" },
                       { label: "Review", status: "Pending" },
                       { label: "Final submission", status: "Pending" },
-                    ].map((m, idx) => (
+                    ]).map((m: any, idx: number) => (
                       <div
                         key={idx}
                         className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50"
@@ -2042,9 +2105,30 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       Latest Version Documents
                     </h3>
                   </div>
-                  <div className="text-sm text-gray-500">
-                    Documents will appear here once uploaded.
-                  </div>
+                  {recentDocuments.length > 0 ? (
+                    <div className="space-y-2">
+                       {recentDocuments.map((doc, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <FileText className="w-4 h-4 text-gray-400" />
+                            <p className="text-sm font-medium text-gray-900">
+                              {doc.name || doc.title}
+                            </p>
+                          </div>
+                          <Badge className="rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-gray-700 border-gray-200">
+                            View
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500">
+                      Documents will appear here once uploaded.
+                    </div>
+                  )}
                 </div>
               </DashboardCard>
             </>
@@ -2061,22 +2145,50 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       Liquidation Process
                     </h3>
                   </div>
-                  <div className="space-y-2">
-                    {[
-                      "Appointment of liquidator",
-                      "Asset review",
-                      "Creditor notifications",
-                      "Closure",
-                    ].map((step, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50"
-                      >
-                        <p className="text-sm font-medium text-gray-900">
-                          {step}
-                        </p>
-                        <Badge className="rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-gray-700 border-gray-200">
-                          Pending
+                  <div className="space-y-4">
+                    {(engagementData?.liquidationProcess || [
+                      { step: "Appointment of liquidator", status: "pending" },
+                      { step: "Asset review", status: "pending" },
+                      { step: "Creditor notifications", status: "pending" },
+                      { step: "Closure", status: "pending" },
+                    ]).map((item: any, idx: number) => (
+                      <div key={idx} className="flex items-center gap-4">
+                        <div className="shrink-0">
+                          {item.status === "completed" ? (
+                            <CheckCircle className="w-5 h-5 text-emerald-500" />
+                          ) : item.status === "in_progress" ? (
+                            <Clock className="w-5 h-5 text-blue-500" />
+                          ) : (
+                            <Circle className="w-5 h-5 text-gray-300" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">
+                            {item.step}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {item.status === "completed"
+                              ? "Completed"
+                              : item.status === "in_progress"
+                                ? "In progress"
+                                : "Pending"}
+                          </p>
+                        </div>
+                        <Badge
+                          className={cn(
+                            "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
+                            item.status === "completed"
+                              ? "text-emerald-500 border-emerald-500/20"
+                              : item.status === "in_progress"
+                                ? "text-blue-500 border-blue-500/20"
+                                : "text-gray-400 border-gray-200",
+                          )}
+                        >
+                          {item.status === "completed"
+                            ? "✓"
+                            : item.status === "in_progress"
+                              ? "⏳"
+                              : "○"}
                         </Badge>
                       </div>
                     ))}
@@ -2104,7 +2216,18 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       Recent Actions
                     </h3>
                   </div>
-                  <div className="text-sm text-gray-500">No activity yet</div>
+                  <div className="space-y-3">
+                    {engagementData?.recentActivity?.length > 0 ? (
+                      engagementData.recentActivity.map((activity: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between text-sm">
+                          <span className="text-gray-900 font-medium">{activity.action}</span>
+                          <span className="text-gray-400 text-xs">{activity.date}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-gray-500">No activity yet</div>
+                    )}
+                  </div>
                 </div>
               </DashboardCard>
             </>
@@ -2142,8 +2265,8 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                             className="h-48 bg-white/50 animate-pulse border-white/30"
                           />
                         ))
-                    ) : stats.length > 0 ? (
-                      stats.map((stat) => (
+                    ) : (stats.length > 0 || engagementData?.dashboardStats?.length > 0) ? (
+                      (stats.length > 0 ? stats : engagementData.dashboardStats).map((stat: any) => (
                         <StatCard key={stat.title} {...stat} />
                       ))
                     ) : (
@@ -2183,15 +2306,92 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
         </div>
       )}
 
-      {activeTab === "library" && <LibraryExplorer />}
+      {activeTab === "library" && (
+        <LibraryExplorer items={engagementData?.libraryItems} />
+      )}
 
-      {activeTab === "document_requests" && <DocumentRequestsTab />}
+      {(activeTab === "document_requests" || activeTab === "requests") && <DocumentRequestsTab />}
 
       {activeTab === "milestones" && <MilestonesTab />}
 
       {activeTab === "compliance_calendar" && (
         <ComplianceCalendarTab serviceName={serviceName} />
       )}
+
+      {activeTab === "filings" && isMBRFilings && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-gray-900 tracking-tight">Registry Filings</h3>
+          </div>
+          <div className="grid gap-4">
+            {mbrFilings.map((filing: any) => (
+              <DashboardCard key={filing.id} className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <h4 className="text-lg font-bold text-gray-900">{filing.filing_type}</h4>
+                    {(filing.reference || filing.reference_period) && (
+                      <p className="text-sm text-gray-500">Reference: {filing.reference || filing.reference_period}</p>
+                    )}
+                  </div>
+                  <Badge className="rounded-0 border px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-transparent">
+                    {typeof filing.filing_status === 'object' ? filing.filing_status.label : filing.filing_status}
+                  </Badge>
+                </div>
+              </DashboardCard>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === "periods" && isVAT && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-gray-900 tracking-tight">VAT Periods</h3>
+          </div>
+          <div className="grid gap-4">
+            {vatPeriods.map((period: any) => (
+              <DashboardCard key={period.id} className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <h4 className="text-lg font-bold text-gray-900">{period.period}</h4>
+                    <p className="text-sm text-gray-500">Due Date: {new Date(period.due_date).toLocaleDateString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-gray-900">Net Tax: €{period.net_tax?.toFixed(2) || '0.00'}</p>
+                    <Badge className="rounded-0 border px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-transparent mt-1">
+                      {period.filing_status || period.status}
+                    </Badge>
+                  </div>
+                </div>
+              </DashboardCard>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(activeTab === "team" || activeTab === "Team") && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-gray-900 tracking-tight">Engagement Team</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {(engagementData?.team || []).map((member: any) => (
+              <DashboardCard key={member.id} className="p-6">
+                <div className="flex items-center gap-4">
+                  <img src={member.image} alt={member.name} className="w-12 h-12 rounded-full border-2 border-primary/20" />
+                  <div>
+                    <h4 className="font-bold text-gray-900">{member.name}</h4>
+                    <p className="text-xs text-gray-500">{member.role}</p>
+                    <p className="text-[10px] text-primary hover:underline cursor-pointer">{member.email}</p>
+                  </div>
+                </div>
+              </DashboardCard>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === "timeline" && <MilestonesTab />}
 
       {activeTab === "service_history" && (
         <div className="space-y-6">
@@ -2233,7 +2433,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                   user: "VACEI System",
                   status: "Automated",
                 },
-              ].map((log, i) => (
+              ].map((log: any, i: number) => (
                 <div
                   key={i}
                   className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
@@ -2265,7 +2465,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
       )}
 
       {activeTab === "messages" && (
-        <ServiceMessages serviceName={serviceName} messages={messages} />
+        <ServiceMessages serviceName={serviceName} messages={engagementData?.messages || messages} />
       )}
     </div>
     </TooltipProvider>

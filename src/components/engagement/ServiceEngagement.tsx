@@ -178,7 +178,7 @@ const ServiceEngagement: React.FC<ServiceEngagementProps> = ({
 
   return (
     <div className="p-8 max-w-[1600px] mx-auto min-h-screen bg-white">
-      <EngagementProvider engagementId={mockId}>
+      <EngagementProvider engagementId={mockId} serviceSlug={serviceSlug}>
         <EngagementSummary
           serviceName={data.name}
           description={data.description}
