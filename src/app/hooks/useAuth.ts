@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export function useAuth() {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+  // Use VACEI backend URL (same as login, onboarding, and authUtils)
+  const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
 
@@ -15,8 +16,12 @@ export function useAuth() {
 
   const logout = async () => {
     try {
-      await fetch(backendUrl + 'auth/logout', {
+      await fetch(`${backendUrl}auth/logout`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+          'Content-Type': 'application/json',
+        },
         credentials: 'include', // important to send cookies
       });
 

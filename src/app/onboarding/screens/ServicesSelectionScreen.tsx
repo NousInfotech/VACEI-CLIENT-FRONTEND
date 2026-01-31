@@ -32,12 +32,32 @@ export default function ServicesSelectionScreen({ onComplete, onSaveExit, onBack
   const [showPricing, setShowPricing] = useState(false);
   const [monthlyTransactions, setMonthlyTransactions] = useState('');
   const [employeeCount, setEmployeeCount] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isNewCompanyProfile, setIsNewCompanyProfile] = useState(false);
 
   useEffect(() => {
     // Load saved data
     const saved = localStorage.getItem('onboarding-data');
     if (saved) {
       const data = JSON.parse(saved);
+      
+      // Check if this is PATH B: New Company Profile (incorporationStatus: true)
+      // According to new workflow: PATH B cannot send incorporation service requests
+      const incorporationStatus = data.incorporationStatus;
+      const companyType = data.companyType;
+      
+      if (incorporationStatus === true || (companyType === 'new' && incorporationStatus !== false)) {
+        // PATH B: New Company Profile - services not available
+        setIsNewCompanyProfile(true);
+        // Set empty services array for PATH B
+        localStorage.setItem('onboarding-data', JSON.stringify({
+          ...data,
+          selectedServices: [], // No services for PATH B
+        }));
+        return;
+      }
+      
+      // PATH A: Existing Company → Incorporation Service - services available
       if (data.selectedServices) {
         setServices(prev => prev.map(s => ({
           ...s,
@@ -61,51 +81,117 @@ export default function ServicesSelectionScreen({ onComplete, onSaveExit, onBack
   };
 
   const handleContinue = async () => {
+    setLoading(true);
+    try {
+      const saved = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
+      
+      // PATH B: New Company Profile - services not available, proceed without services
+      if (isNewCompanyProfile) {
+        // Save empty services array for PATH B
+        localStorage.setItem('onboarding-data', JSON.stringify({
+          ...saved,
+          selectedServices: [], // No services for PATH B
+        }));
+        
+        // Try to save step progress
+        try {
+          await saveOnboardingStep(4, {
+            selectedServices: [],
+          });
+        } catch (stepError: any) {
+          console.warn('Step progress save failed:', stepError.message);
+        }
+        
+        onComplete();
+        return;
+      }
+      
+      // PATH A: Existing Company → Incorporation Service - services required
     const selectedServiceIds = services.filter(s => s.selected).map(s => s.id);
     
     if (selectedServiceIds.length === 0) {
       alert('Please select at least one service.');
+        setLoading(false);
       return;
     }
 
-    try {
       const pricingInfo = showPricing && (monthlyTransactions || employeeCount) ? {
         monthlyTransactions,
         employeeCount,
       } : undefined;
 
-      await saveOnboardingStep(3, {
-        selectedServices: selectedServiceIds,
-        pricingInfo,
-      });
-
-      // Save to localStorage
-      const saved = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
+      // Save to localStorage first (critical data)
       localStorage.setItem('onboarding-data', JSON.stringify({
         ...saved,
         selectedServices: selectedServiceIds,
         pricingInfo,
       }));
 
+      // Try to save step progress (404 is expected if endpoint doesn't exist, but don't block)
+      try {
+        await saveOnboardingStep(4, {
+          selectedServices: selectedServiceIds,
+          pricingInfo,
+        });
+      } catch (stepError: any) {
+        // 404 is expected - endpoint might not exist, just log it
+        if (stepError.message?.includes('404') || stepError.message?.includes('BACKEND_NOT_AVAILABLE')) {
+          console.warn('Step progress save failed (expected if endpoint not implemented):', stepError.message);
+        } else {
+          console.error('Step progress save failed:', stepError);
+        }
+      }
+
       onComplete();
     } catch (error) {
+      // This should not happen since we save to localStorage first, but handle it anyway
       console.error('Failed to save step:', error);
       alert('Failed to save. Please try again.');
+      setLoading(false);
+      // Don't proceed if there's an unexpected error
     }
   };
 
+  // PATH B: New Company Profile - services not available
+  if (isNewCompanyProfile) {
+    return (
+      <OnboardingLayout
+        currentStep={4}
+        totalSteps={7}
+        onContinue={handleContinue}
+        onSaveExit={onSaveExit}
+        onBack={onBack}
+        continueLabel={loading ? 'Saving...' : 'Continue'}
+        disabled={loading}
+      >
+        <div className="space-y-6">
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">
+              Now Your company is incorporated. You can proceed with KYC verification.
+            </p>
+          </div>
+        </div>
+      </OnboardingLayout>
+    );
+  }
+
+  // PATH A: Existing Company → Incorporation Service - services available
   return (
     <OnboardingLayout
-      currentStep={3}
+      currentStep={4}
       totalSteps={7}
       onContinue={handleContinue}
       onSaveExit={onSaveExit}
       onBack={onBack}
-      continueLabel="Continue"
+      continueLabel={loading ? 'Saving...' : 'Continue'}
+      disabled={loading}
     >
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-semibold mb-2">Select the services you need</h1>
+          <p className="text-sm text-muted-foreground">
+            Select the incorporation services you require (Accounting & Bookkeeping, VAT Returns, Audit, Payroll, Tax Advisory, Directorship service, Company Secretary, Registered Address, etc.)
+          </p>
         </div>
 
         {/* Services Grid */}

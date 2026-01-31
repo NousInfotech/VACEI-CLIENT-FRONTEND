@@ -1,61 +1,84 @@
-// src/utils/authUtils.ts
-
 /**
- * Retrieves the client ID from localStorage.
- * The client ID is expected to be stored as a Base64-encoded string.
- *
- * @returns {string | null} The Base64-encoded client ID string, or null if not found.
+ * Get decoded username from localStorage
  */
-export const getClientIdFromLocalStorage = (): string | null => {
-  // Get the Base64-encoded client ID directly from localStorage
-  const encodedClientId = localStorage.getItem("client_id");
-  return encodedClientId; // Return it as is, without decoding
-};
-
-/**
- * Retrieves the user ID from localStorage.
- * The user ID is expected to be stored as a Base64-encoded string.
- *
- * @returns {string | null} The Base64-encoded user ID string, or null if not found.
- */
-export const getUserIdFromLocalStorage = (): string | null => {
-  // Get the Base64-encoded user ID directly from localStorage
-  const encodedUserId = localStorage.getItem("user_id"); // Assuming key is "user_id"
-  return encodedUserId; // Return it as is, without decoding
-};
-
-/**
- * Retrieves the user email from localStorage.
- *
- * @returns {string | null} The user email string, or null if not found.
- */
-export const getUserEmailFromLocalStorage = (): string | null => {
-  return localStorage.getItem("email"); // Assuming key is "email"
-};
-
-/**
- * Retrieves the client email from localStorage.
- *
- * @returns {string | null} The client email string, or null if not found.
- */
-export const getClientEmailFromLocalStorage = (): string | null => {
-  return localStorage.getItem("client_email"); // Assuming key is "client_email"
-};
-
-export const getEncodedUsername = (): string | null => {
-  return localStorage.getItem("username"); // Assuming key is "client_email"
-};
-export const getDecodedUsername = (): string | null => {
-  if (typeof window !== 'undefined') { // Ensure this runs only on the client-side
-    const encodedUsername = localStorage.getItem("username");
-    if (encodedUsername) {
-      try {
-        return atob(encodedUsername);
-      } catch (e) {
-        console.error("Error decoding username:", e);
-        return null; // Return null or a default value if decoding fails
-      }
-    }
+export function getDecodedUsername(): string | null {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const encoded = localStorage.getItem('username');
+    if (!encoded) return null;
+    return atob(encoded);
+  } catch (error) {
+    console.error('Error decoding username:', error);
+    return null;
   }
-  return null; // Return null if not found or not in a browser environment
-};
+}
+
+/**
+ * Utility function to handle authentication errors and redirect to login
+ * This prevents page flash by handling 401 errors consistently
+ */
+export function handleAuthError(error: any, router: any): void {
+  // Check if error is a 401/403 authentication error
+  const isAuthError = 
+    error?.message?.toLowerCase().includes('authentication') ||
+    error?.message?.toLowerCase().includes('unauthorized') ||
+    error?.message?.toLowerCase().includes('token expired') ||
+    error?.status === 401 ||
+    error?.status === 403;
+
+  if (isAuthError) {
+    // Clear auth data
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('email');
+      localStorage.removeItem('user_id');
+      localStorage.removeItem('username');
+      
+      // Clear cookie
+      document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax';
+      document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=None; Secure';
+    }
+    
+    // Redirect to login
+    router.push('/login?message=' + encodeURIComponent('Session expired. Please login again.'));
+  }
+}
+
+/**
+ * Verify authentication by calling a lightweight backend endpoint
+ * Returns true if authenticated, false otherwise
+ */
+export async function verifyAuthentication(): Promise<boolean> {
+  // Use VACEI backend URL (same as onboarding flow)
+  const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    console.warn('No token found in localStorage');
+    return false;
+  }
+
+  try {
+    // Call /auth/me endpoint to verify token
+    // This endpoint is protected and requires valid authentication
+    const response = await fetch(`${backendUrl}auth/me`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      console.warn('Authentication verification failed:', response.status, response.statusText);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Authentication verification error:', error);
+    return false;
+  }
+}

@@ -35,6 +35,142 @@ type Assignment = {
 
 type MessagesByAssignment = Record<number, Message[]>;
 
+// Mock data for chat
+const mockChatUsers = [
+    {
+        id: 1,
+        name: 'John Smith',
+        email: 'john.smith@example.com',
+    },
+    {
+        id: 2,
+        name: 'Sarah Johnson',
+        email: 'sarah.johnson@example.com',
+    },
+    {
+        id: 3,
+        name: 'Michael Brown',
+        email: 'michael.brown@example.com',
+    },
+];
+
+// Mock messages stored in memory (keyed by userId)
+const mockMessages: Record<number, Array<{ id: number; senderId: number; message: string; createdAt: string }>> = {
+    1: [
+        {
+            id: 1,
+            senderId: 1,
+            message: 'Hello! How can I help you today?',
+            createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+        },
+        {
+            id: 2,
+            senderId: 0, // Assuming 0 is the current user
+            message: 'Hi, I have a question about my tax return.',
+            createdAt: new Date(Date.now() - 1.5 * 60 * 60 * 1000).toISOString(), // 1.5 hours ago
+        },
+        {
+            id: 3,
+            senderId: 1,
+            message: 'Sure, I can help with that. What specific question do you have?',
+            createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
+        },
+    ],
+    2: [
+        {
+            id: 4,
+            senderId: 2,
+            message: 'Good morning! I wanted to discuss the quarterly report.',
+            createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
+        },
+    ],
+    3: [
+        {
+            id: 5,
+            senderId: 3,
+            message: 'The financial statements are ready for review.',
+            createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+        },
+        {
+            id: 6,
+            senderId: 0,
+            message: 'Thank you! I will review them shortly.',
+            createdAt: new Date(Date.now() - 4.5 * 60 * 60 * 1000).toISOString(), // 4.5 hours ago
+        },
+    ],
+};
+
+// Helper function to get mock chat users
+function getMockChatUsers() {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve(mockChatUsers);
+        }, 100);
+    });
+}
+
+// Helper function to get mock messages
+// Note: accountantId is the accountant/receiver ID, not the current user's ID
+function getMockMessages(accountantId: number, limit: number = 10, beforeTimestamp?: number, sinceTimestamp?: number, currentUserId?: number | null) {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            let messages = [...(mockMessages[accountantId] || [])];
+            
+            // Replace placeholder senderId (0 or 999) with actual currentUserId for user messages
+            if (currentUserId !== null && currentUserId !== undefined) {
+                messages = messages.map(msg => ({
+                    ...msg,
+                    senderId: (msg.senderId === 0 || msg.senderId === 999) ? currentUserId : msg.senderId
+                }));
+            }
+            
+            // Filter by timestamp if provided
+            if (sinceTimestamp) {
+                const sinceDate = new Date(sinceTimestamp);
+                messages = messages.filter(msg => new Date(msg.createdAt) > sinceDate);
+            } else if (beforeTimestamp) {
+                const beforeDate = new Date(beforeTimestamp);
+                messages = messages.filter(msg => new Date(msg.createdAt) < beforeDate);
+            }
+            
+            // Sort by createdAt (oldest first)
+            messages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+            
+            // Apply limit
+            const limitedMessages = messages.slice(-limit);
+            const hasMore = messages.length > limit;
+            
+            resolve({
+                data: limitedMessages,
+                hasMore,
+            });
+        }, 100);
+    });
+}
+
+// Helper function to send mock message
+function sendMockMessage(senderId: number, receiverId: number, message: string) {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            // Add message to mock data (store by receiverId, which is the accountant's ID)
+            if (!mockMessages[receiverId]) {
+                mockMessages[receiverId] = [];
+            }
+            
+            const newMessage = {
+                id: Date.now(),
+                senderId, // This is the current user's ID
+                message,
+                createdAt: new Date().toISOString(),
+            };
+            
+            mockMessages[receiverId].push(newMessage);
+            
+            resolve({ success: true, message: newMessage });
+        }, 100);
+    });
+}
+
 export default function CollapsibleFacebookChat() {
     const latestTimestampsRef = useRef<Record<string, number>>({});
     const earliestTimestampsRef = useRef<Record<string, number>>({});
@@ -125,33 +261,15 @@ export default function CollapsibleFacebookChat() {
             }
 
             try {
-                const url = new URL(`${backendUrl}chat/getMessages`);
-                url.searchParams.append('userId', String(assignment.accountant.id));
+                // Use mock data instead of API call
+                const responseData = await getMockMessages(
+                    assignment.accountant.id,
+                    limit,
+                    beforeTimestamp,
+                    sinceTimestamp,
+                    userId
+                ) as any;
 
-                if (sinceTimestamp) {
-                    url.searchParams.append('since', String(sinceTimestamp));
-                    if (isInitialEmptyPoll) {
-                        url.searchParams.append('limit', String(limit));
-                    } else if (limit !== 0) {
-                        url.searchParams.append('limit', String(limit));
-                    }
-                } else {
-                    url.searchParams.append('limit', String(limit));
-                    if (beforeTimestamp) {
-                        url.searchParams.append('before', String(beforeTimestamp));
-                    }
-                }
-
-                const res = await fetch(url.toString(), {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-
-                if (!res.ok) {
-                    const errorData = await res.json().catch(() => ({ message: 'Unknown error' }));
-                    throw new Error(errorData.message || `Failed to load messages: ${res.status}`);
-                }
-
-                const responseData = await res.json();
                 const rawMsgs = Array.isArray(responseData) ? responseData : responseData.data || [];
                 const mappedMsgs = mapMessages(rawMsgs, assignment);
 
@@ -165,7 +283,7 @@ export default function CollapsibleFacebookChat() {
                 return { messages: [], hasMore: false };
             }
         },
-        [mapMessages, token]
+        [mapMessages, token, userId]
     );
 
     const loadChatMessages = useCallback(
@@ -212,12 +330,8 @@ export default function CollapsibleFacebookChat() {
 
         const loadAssignments = async () => {
             try {
-                const res = await fetch(`${backendUrl}chat/getChatUsers`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                if (!res.ok) throw new Error('Failed to load chat users');
-
-                const data = await res.json();
+                // Use mock data instead of API call
+                const data = await getMockChatUsers() as any[];
 
                 if (Array.isArray(data)) {
                     const mapped: Assignment[] = data.map((item: any) => {
@@ -470,15 +584,11 @@ export default function CollapsibleFacebookChat() {
         setInput('');
 
         try {
-            await fetch(`${backendUrl}chat/send`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({
-                    senderId: userId,
-                    receiverId: selectedAssignment.accountant.id,
-                    message: messageToSend,
-                }),
-            });
+            // Use mock data instead of API call
+            await sendMockMessage(userId!, selectedAssignment.accountant.id, messageToSend);
+            
+            // The message was already added optimistically, so we don't need to do anything
+            // The mock function adds it to the mockMessages store for future fetches
         } catch (e) {
             console.error('Failed to send message', e);
             setMessages((prev) => {

@@ -2,6 +2,65 @@
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/?$/, "") || "";
 
+// Mock notification data stored in memory
+let mockNotifications: Notification[] = [
+  {
+    id: 1,
+    userId: 1,
+    message: "New task assigned: Review quarterly financial statements",
+    type: "task_assigned",
+    entityType: "Task",
+    entityId: 101,
+    read: false,
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+    link: "/dashboard/task/101",
+  },
+  {
+    id: 2,
+    userId: 1,
+    message: "Meeting scheduled: Client consultation on Friday at 2:00 PM",
+    type: "meeting_scheduled",
+    entityType: "Meeting",
+    entityId: 202,
+    read: false,
+    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+    link: "/dashboard/schedule",
+  },
+  {
+    id: 3,
+    userId: 1,
+    message: "New chat message from your accountant",
+    type: "chat_message",
+    entityType: "Chat",
+    entityId: 303,
+    read: true,
+    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    link: "/dashboard/messages",
+  },
+  {
+    id: 4,
+    userId: 1,
+    message: "Document upload completed: Tax return 2024",
+    type: "general",
+    entityType: "Document",
+    entityId: 404,
+    read: true,
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+    link: "/dashboard/documents/404",
+  },
+  {
+    id: 5,
+    userId: 1,
+    message: "Company incorporation status updated",
+    type: "general",
+    entityType: "Company",
+    entityId: 505,
+    read: false,
+    createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
+    link: "/dashboard/company",
+  },
+];
+
 // Auth header utility (copied from your example)
 function getAuthHeaders(): Record<string, string> {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
@@ -69,31 +128,43 @@ export interface FetchUnreadCountResponse {
 export async function fetchNotificationsAPI(
   filters?: {
     page?: number;
-    limit?: number; // <--- CHANGED THIS LINE
+    limit?: number;
     read?: boolean; // true for read, false for unread
   }
 ): Promise<FetchNotificationsResponse> {
+  // Return mock data instead of making API call
   try {
-    const { page = 1, limit = 10, read } = filters || {}; // <--- CHANGED THIS LINE (destructured 'limit' instead of 'itemsPerPage')
+    const { page = 1, limit = 10, read } = filters || {};
 
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString(), // This is now correct because 'limit' is destructured from filters
-    });
-
+    // Filter notifications based on read status
+    let filteredNotifications = [...mockNotifications];
     if (read !== undefined) {
-      params.append('read', read.toString()); // 'true' or 'false'
+      filteredNotifications = filteredNotifications.filter(n => n.read === read);
     }
 
-    const url: string = `${backendUrl}/notifications?${params.toString()}`; // Added / after backendUrl
+    // Sort by createdAt (newest first)
+    filteredNotifications.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 
-    const res: Response = await fetch(url, {
-      headers: getAuthHeaders(),
-      // cache: 'no-store', // Consider adding cache control for fresh data
-    });
+    // Paginate
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedNotifications = filteredNotifications.slice(startIndex, endIndex);
+    const totalItems = filteredNotifications.length;
+    const totalPages = Math.ceil(totalItems / limit);
 
-    const data = await handleResponse<FetchNotificationsResponse>(res);
-    return data;
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    return {
+      notifications: paginatedNotifications,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+      },
+    };
   } catch (error) {
     console.error('Error fetching notifications:', error);
     throw error;
@@ -105,16 +176,17 @@ export async function fetchNotificationsAPI(
  * @returns {Promise<FetchUnreadCountResponse>} A promise that resolves to the unread count.
  */
 export async function fetchUnreadCountAPI(): Promise<FetchUnreadCountResponse> {
+  // Return mock data instead of making API call
   try {
-    const url: string = `${backendUrl}/notifications/unread-count`; // Added / after backendUrl
+    // Count unread notifications
+    const unreadCount = mockNotifications.filter(n => !n.read).length;
 
-    const res: Response = await fetch(url, {
-      headers: getAuthHeaders(),
-      // cache: 'no-store', // Consider adding cache control for fresh data
-    });
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 50));
 
-    const data = await handleResponse<FetchUnreadCountResponse>(res);
-    return data;
+    return {
+      unreadCount,
+    };
   } catch (error) {
     console.error('Error fetching unread count:', error);
     throw error;
@@ -129,19 +201,15 @@ export async function fetchUnreadCountAPI(): Promise<FetchUnreadCountResponse> {
 export async function markNotificationAsReadAPI(
   notificationId: number
 ): Promise<void> {
+  // Update mock data instead of making API call
   try {
-    const url: string = `${backendUrl}/notifications/${notificationId}/read`; // Added / after backendUrl
+    const notification = mockNotifications.find(n => n.id === notificationId);
+    if (notification) {
+      notification.read = true;
+    }
 
-    const res: Response = await fetch(url, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeaders(), // Use the utility function
-      },
-    });
-
-    // handleResponse for void return type (no data expected back, just check ok status)
-    await handleResponse<any>(res); // Expects no specific data, just checks for res.ok
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 50));
   } catch (error) {
     console.error('Error marking notification as read:', error);
     throw error;
@@ -153,18 +221,14 @@ export async function markNotificationAsReadAPI(
  * @returns {Promise<void>} A promise that resolves if the operation is successful.
  */
 export async function markAllNotificationsAsReadAPI(): Promise<void> {
+  // Update mock data instead of making API call
   try {
-    const url: string = `${backendUrl}/notifications/mark-all-read`; // Added / after backendUrl
-
-    const res: Response = await fetch(url, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeaders(), // Use the utility function
-      },
+    mockNotifications.forEach(notification => {
+      notification.read = true;
     });
 
-    await handleResponse<any>(res); // Expects no specific data, just checks for res.ok
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 50));
   } catch (error) {
     console.error('Error marking all notifications as read:', error);
     throw error;
@@ -179,15 +243,12 @@ export async function markAllNotificationsAsReadAPI(): Promise<void> {
 export async function deleteNotificationAPI(
   notificationId: number
 ): Promise<void> {
+  // Update mock data instead of making API call
   try {
-    const url: string = `${backendUrl}/notifications/${notificationId}`; // Added / after backendUrl
+    mockNotifications = mockNotifications.filter(n => n.id !== notificationId);
 
-    const res: Response = await fetch(url, {
-      method: 'DELETE',
-      headers: getAuthHeaders(), // Use the utility function
-    });
-
-    await handleResponse<any>(res); // Expects no specific data, just checks for res.ok
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 50));
   } catch (error) {
     console.error('Error deleting notification:', error);
     throw error;

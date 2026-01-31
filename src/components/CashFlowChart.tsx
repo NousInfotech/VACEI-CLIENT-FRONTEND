@@ -88,18 +88,52 @@ export default function CashFlowChart() {
           endParam = formatDate(today);
         }
 
-        const url = `${backendUrl?.replace(/\/?$/, "/")}financial-reports/cash-flow-summary?reportType=${reportType}&startDate=${startParam}&endDate=${endParam}`;
-        const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const result = await response.json();
+        // Mock data - simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 300));
 
-        if (!result || result.length === 0) {
+        // Generate mock cash flow data based on view
+        let mockResult: any[] = [];
+        
+        if (view === 'Monthly') {
+          // Last 6 months
+          mockResult = Array.from({ length: 6 }, (_, i) => {
+            const date = new Date();
+            date.setMonth(date.getMonth() - (5 - i));
+            const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            return {
+              month: month,
+              netCashIncrease: Math.floor(Math.random() * 50000) + 10000,
+            };
+          });
+        } else if (view === 'YTD') {
+          // Quarters for current year
+          const currentYear = new Date().getFullYear();
+          mockResult = [
+            { name: `${currentYear}-Q1`, netCashIncrease: 45000 },
+            { name: `${currentYear}-Q2`, netCashIncrease: 52000 },
+            { name: `${currentYear}-Q3`, netCashIncrease: 48000 },
+            { name: `${currentYear}-Q4`, netCashIncrease: 55000 },
+          ];
+        } else {
+          // 12-Month view
+          mockResult = Array.from({ length: 12 }, (_, i) => {
+            const date = new Date();
+            date.setMonth(date.getMonth() - (11 - i));
+            const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            return {
+              month: month,
+              netCashIncrease: Math.floor(Math.random() * 50000) + 10000,
+            };
+          });
+        }
+
+        if (!mockResult || mockResult.length === 0) {
           setDataError(true);
         }
 
         setChartData(prev => ({
           ...prev,
-          [view]: result,
+          [view]: mockResult,
         }));
       } catch (error) {
         console.error("Error fetching financial reports:", error);

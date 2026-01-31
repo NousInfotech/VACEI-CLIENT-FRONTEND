@@ -69,7 +69,7 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
   const { company } = useCompany();
   const companyId = company?._id || null;
   
-  // Fetch hierarchy data using the hook
+  // Fetch hierarchy data using the hook (fetches from backend API)
   const { hierarchyData: fetchedRootData, loading: hierarchyLoading, error: hierarchyError } = useCompanyHierarchy(companyId);
   
   // Use fetched data if available, otherwise fall back to prop (for backward compatibility)

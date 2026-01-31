@@ -14,13 +14,19 @@ interface UseCompanyHierarchyReturn {
 // Transform API response to match HierarchyTreeNode format
 const transformHierarchyData = (apiData: HierarchyData): HierarchyTreeNode => {
   const transformNode = (node: any): HierarchyTreeNode => {
+    // For shareholders, totalShares is a number (sum of all shares)
+    // For companies, totalShares can be an array (share classes breakdown)
+    const totalShares = Array.isArray(node.totalShares) 
+      ? node.totalShares 
+      : (typeof node.totalShares === 'number' ? node.totalShares : 0);
+
     return {
       id: node.id,
       name: node.name,
       type: node.type,
       address: node.address || '',
       nationality: node.nationality,
-      totalShares: typeof node.totalShares === 'number' ? node.totalShares : 0,
+      totalShares: totalShares,
       sharesData: node.sharesData || [],
       roles: node.roles || [],
       children: node.children ? node.children.map(transformNode) : undefined,
@@ -28,12 +34,13 @@ const transformHierarchyData = (apiData: HierarchyData): HierarchyTreeNode => {
     }
   }
 
+  // For the root company, totalShares is an array of share classes
   return {
     id: apiData.id,
     name: apiData.name,
-    type: apiData.type,
+    type: apiData.type || 'company',
     address: apiData.address || '',
-    totalShares: apiData.totalShares, // This is an array of ShareDataItem
+    totalShares: Array.isArray(apiData.totalShares) ? apiData.totalShares : [],
     shareholders: apiData.shareholders ? apiData.shareholders.map(transformNode) : undefined,
     children: apiData.shareholders ? apiData.shareholders.map(transformNode) : undefined,
   }

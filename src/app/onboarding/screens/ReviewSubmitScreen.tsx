@@ -30,6 +30,24 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
   const handleSubmit = async () => {
     if (!onboardingData) return;
 
+    // PATH B: New Company Profile - no service request needed, can proceed directly
+    const incorporationStatus = onboardingData.incorporationStatus;
+    if (incorporationStatus === true) {
+      // PATH B: Skip service request submission, proceed directly
+      setSubmitted(true);
+      setTimeout(() => {
+        onComplete();
+      }, 1000);
+      return;
+    }
+
+    // PATH A: Existing Company → Incorporation Service - validate services selected
+    const selectedServices = onboardingData.selectedServices || [];
+    if (selectedServices.length === 0) {
+      alert('Please select at least one service. Go back to Step 4 to select services.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const result = await submitOnboardingRequest(onboardingData);
@@ -44,18 +62,37 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
       setTimeout(() => {
         onComplete();
       }, 2000);
-    } catch (error) {
+    } catch (error: any) {
+      // CRITICAL: If submission fails, DO NOT allow continuation
       console.error('Failed to submit:', error);
-      alert('Failed to submit request. Please try again.');
-    } finally {
+      const errorMessage = error.message || 'Failed to submit request. Please try again.';
+      alert(`Failed to submit request: ${errorMessage}\n\nPlease check your connection and try again.`);
       setIsSubmitting(false);
+      // Block navigation - don't call onComplete()
+      return;
     }
   };
 
   if (submitted) {
+    // Check incorporation status from localStorage (created in Step 3)
+    // NEW WORKFLOW:
+    // PATH A: Existing Company (incorporationStatus: false) → Service request submitted → Quotation will be sent
+    // PATH B: New Company Profile (incorporationStatus: true) → No service request → Proceed to KYC
+    const savedData = localStorage.getItem('onboarding-data');
+    let incorporationStatus: boolean | null = null;
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        incorporationStatus = parsed.incorporationStatus;
+      } catch (e) {
+        // Fallback: new companies have incorporationStatus: true
+        incorporationStatus = onboardingData?.companyType === 'new' ? true : false;
+      }
+    }
+    
     return (
       <OnboardingLayout
-        currentStep={4}
+        currentStep={5}
         totalSteps={7}
         onContinue={() => {}}
         onSaveExit={onSaveExit}
@@ -66,7 +103,9 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
           <div className="text-4xl mb-4">✓</div>
           <h1 className="text-2xl font-semibold">Thank you</h1>
           <p className="text-muted-foreground">
-            Your quotation will be sent within 24 hours.
+            {incorporationStatus === true 
+              ? 'Your company profile has been created. You can proceed to KYC verification.'
+              : 'Your incorporation service request has been submitted. Your quotation will be sent within 24 hours.'}
           </p>
         </div>
       </OnboardingLayout>
@@ -76,7 +115,7 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
   if (!onboardingData) {
     return (
         <OnboardingLayout 
-          currentStep={4} 
+          currentStep={5} 
           totalSteps={7} 
           onContinue={onBack} 
           onSaveExit={onSaveExit}
@@ -99,14 +138,22 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
     tax: 'Tax Advisory',
   };
 
+  // Check if PATH B (New Company Profile - no services)
+  const isPathB = onboardingData.incorporationStatus === true;
+
   return (
     <OnboardingLayout
-      currentStep={4}
+      currentStep={5}
       totalSteps={7}
       onContinue={handleSubmit}
       onSaveExit={onSaveExit}
       onBack={onBack}
-      continueLabel={isSubmitting ? 'Submitting...' : 'Submit request'}
+      continueLabel={
+        isPathB 
+          ? 'Continue' 
+          : (isSubmitting ? 'Submitting...' : 'Submit request')
+      }
+      disabled={isSubmitting}
     >
       <div className="space-y-6">
         <div>
@@ -155,15 +202,34 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
           <CardContent className="p-4">
             <div className="flex justify-between items-start mb-3">
               <h2 className="font-semibold">Selected services</h2>
+              {onboardingData.incorporationStatus !== true && (
               <Button variant="link" size="sm" onClick={onBack} asChild>
                 <Link href="#edit">Edit</Link>
               </Button>
+              )}
             </div>
+            {onboardingData.incorporationStatus === true ? (
+              // PATH B: New Company Profile - services not available
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  Services are not available for new company profiles. Your company is already incorporated and can proceed directly to KYC verification.
+                </p>
+              </div>
+            ) : onboardingData.selectedServices && onboardingData.selectedServices.length > 0 ? (
+              // PATH A: Existing Company → Incorporation Service - show selected services
             <div className="space-y-1">
               {onboardingData.selectedServices.map(serviceId => (
                 <p key={serviceId} className="text-sm">• {serviceNames[serviceId] || serviceId}</p>
               ))}
             </div>
+            ) : (
+              // PATH A: No services selected (should not happen, but handle gracefully)
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  No services selected. Please go back and select at least one service.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

@@ -36,7 +36,12 @@ const Involvements = ({data}: {data: Company}) => {
       <div className="mt-4">
         {activeSubTab === 'shareholders' ? (
           <div className="grid grid-cols-1 gap-4">
-            {data.shareHolders.map((sh, idx) => {
+            {(!data.shareHolders || data.shareHolders.length === 0) ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>No shareholders found.</p>
+              </div>
+            ) : (
+              data.shareHolders.map((sh, idx) => {
                const totalShares = sh.sharesData.reduce((acc, sd) => acc + sd.totalShares, 0)
                return (
                 <Card
@@ -57,7 +62,8 @@ const Involvements = ({data}: {data: Company}) => {
                         
                         <div className="mb-4 space-y-3">
                           <div className="flex flex-wrap gap-2">
-                          {sh.sharesData.map((sd, sIdx) => (
+                          {sh.sharesData && sh.sharesData.length > 0 ? (
+                            sh.sharesData.map((sd, sIdx) => (
                             <Badge
                               key={sIdx}
                               variant="outline"
@@ -65,7 +71,15 @@ const Involvements = ({data}: {data: Company}) => {
                             >
                               {sd.class.length === 1 ? `Class ${sd.class}` : sd.class}: {sd.totalShares.toLocaleString()}
                             </Badge>
-                          ))}
+                            ))
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="bg-gray-50 text-gray-600 border-gray-200 rounded-0 px-3 py-1 text-sm font-medium"
+                            >
+                              No shares assigned
+                            </Badge>
+                          )}
                           </div>
 
                           <div className="flex flex-wrap gap-2">
@@ -109,7 +123,7 @@ const Involvements = ({data}: {data: Company}) => {
                   </CardContent>
                 </Card>
                )
-            })}
+            }))}
 
             {/* Corporate Shareholders */}
             {data.shareHoldingCompanies?.map((corp, idx) => {

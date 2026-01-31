@@ -1,6 +1,5 @@
 "use client";
 import React, { useMemo, useState, useEffect } from "react";
-import { MOCK_COMPANY_DATA } from "./mockData";
 import {
   PieChart,
   Pie,
@@ -19,6 +18,7 @@ import {
 import PillTabs from "../shared/PillTabs";
 import EmptyState from "../shared/EmptyState";
 import { Company } from "@/api/auditService";
+import { useCompany } from "./hooks/useCompany";
 
 type Person = {
   _id: string;
@@ -691,36 +691,59 @@ const SharePieChart: React.FC<SharePieChartProps> = ({
 };
 
 const Distribution = ({data}: {data: Company}) => {
-
+  // Get real company data from context (fetched from backend)
+  const { company: realCompany } = useCompany();
+  
+  // Use real company data if available, otherwise fall back to prop data
+  const companyData = realCompany || data;
 
   const persons = useMemo(() => {
-    return data.shareHolders.map((sh, idx) => ({
+    if (!companyData?.shareHolders || !Array.isArray(companyData.shareHolders)) {
+      return [];
+    }
+    return companyData.shareHolders.map((sh, idx) => ({
       _id: sh._id,
-      name: sh.personId.name,
-      sharePercentage: sh.sharePercentage,
-      sharesData: sh.sharesData,
+      name: sh.personId?.name || 'Unknown',
+      sharePercentage: sh.sharePercentage || 0,
+      sharesData: sh.sharesData || [],
     }));
-  }, [data]);
+  }, [companyData]);
 
   const companies = useMemo(() => {
-    return (data.shareHoldingCompanies || []).map((corp, idx) => ({
+    if (!companyData?.shareHoldingCompanies || !Array.isArray(companyData.shareHoldingCompanies)) {
+      return [];
+    }
+    return companyData.shareHoldingCompanies.map((corp, idx) => ({
       companyId: corp._id || `corp-${idx}`,
-      companyName: corp.companyId.name,
-      sharePercentage: corp.sharePercentage,
-      sharesData: corp.sharesData,
+      companyName: corp.companyId?.name || 'Unknown Company',
+      sharePercentage: corp.sharePercentage || 0,
+      sharesData: corp.sharesData || [],
     }));
-  }, [data]);
+  }, [companyData]);
+
+  // Show empty state if no data
+  if (!companyData) {
+    return (
+      <div className="animate-in fade-in duration-700">
+        <EmptyState
+          icon={AlertCircle}
+          title="No Company Data"
+          description="Unable to load company distribution data. Please try refreshing the page."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="animate-in fade-in duration-700">
       <SharePieChart
         persons={persons}
         companies={companies}
-        title={data.name}
-        companyTotalShares={data.issuedShares}
-        companyTotalSharesArray={data.totalShares}
-        authorizedShares={data.authorizedShares}
-        issuedShares={data.issuedShares}
+        title={companyData.name || 'Company'}
+        companyTotalShares={companyData.issuedShares || 0}
+        companyTotalSharesArray={companyData.totalShares || []}
+        authorizedShares={companyData.authorizedShares || 0}
+        issuedShares={companyData.issuedShares || 0}
       />
     </div>
   );

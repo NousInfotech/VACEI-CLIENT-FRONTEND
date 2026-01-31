@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 export default function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    // Use VACEI backend URL (same as onboarding flow and authUtils)
+    const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -59,23 +60,40 @@ export default function LoginForm() {
         setLoading(true);
 
         try {
-            const response = await fetch(backendUrl + "auth/login", {
+            console.log('Attempting login to:', `${backendUrl}auth/login`);
+            const response = await fetch(`${backendUrl}auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password }),
                 credentials: "include",
             });
 
+            console.log('Login response status:', response.status, response.statusText);
+
             if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.message || "Failed to login");
+                const errorData = await response.json().catch(() => ({ message: "Failed to login" }));
+                console.error('Login error response:', errorData);
+                throw new Error(errorData.message || errorData.error || `Login failed: ${response.status} ${response.statusText}`);
             }
 
-            const { token, username, user_id } = await response.json();
+            const responseData = await response.json();
+            console.log('Login success response:', responseData);
+            
+            // Backend response structure: { success: true, data: { user, token, client }, message: "..." }
+            const loginData = responseData.data || responseData;
+            const token = loginData.token;
+            const user = loginData.user;
+            
+            if (!token) {
+                console.warn('No token in response:', responseData);
+                throw new Error("No authentication token received. Please contact support.");
+            }
+            
+            // Store auth token and user info
             localStorage.setItem("token", token);
-            localStorage.setItem("username", btoa(username));
+            localStorage.setItem("username", btoa(`${user?.firstName || ''} ${user?.lastName || ''}`));
             localStorage.setItem("email", btoa(email));
-            localStorage.setItem("user_id", btoa(user_id));
+            localStorage.setItem("user_id", btoa(user?.id || ''));
 
             // Set cookie for middleware access (works in production)
             // Middleware runs on server and can only access cookies, not localStorage
@@ -88,7 +106,26 @@ export default function LoginForm() {
                 document.cookie = `client-token=${encodeURIComponent(token)}; ${cookieOptions}`;
             }
 
-            router.push("/onboarding");
+            // Check if onboarding is incomplete before redirecting
+            const onboardingProgress = localStorage.getItem('onboarding-progress');
+            if (onboardingProgress) {
+              try {
+                const progress = JSON.parse(onboardingProgress);
+                // If onboarding is not completed, redirect to onboarding page
+                if (progress.onboardingStatus !== 'completed' && 
+                    progress.currentStep <= 8 && 
+                    (!progress.completedSteps || progress.completedSteps.length < 8)) {
+                  router.push("/onboarding");
+                  return;
+                }
+              } catch (error) {
+                // If parsing fails, continue to dashboard
+                console.warn('Failed to parse onboarding progress:', error);
+              }
+            }
+            
+            // Redirect to dashboard after successful login (onboarding completed or no progress found)
+            router.push("/dashboard");
         } catch (err) {
             const errorMessage = (err as Error)?.message || "An unknown error occurred";
             setErrors({ email: errorMessage, password: "" });
@@ -332,7 +369,7 @@ export default function LoginForm() {
                                 type="submit"
                                 variant="default"
                                 size="lg"
-                                className="w-full h-12 mt-2 rounded-lg font-semibold text-base bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary-hover))]"
+                                className="w-full h-12 mt-2 rounded-lg font-semibold text-base bg-primary text-primary-foreground hover:opacity-90"
                                 disabled={loading}
                             >
                                 {loading ? (
@@ -350,6 +387,24 @@ export default function LoginForm() {
                                     </span>
                                 )}
                             </Button>
+
+                            <div className="mt-4 text-center">
+                                <p className="text-sm text-muted-foreground mb-3">
+                                    Don't have an account?
+                                </p>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="lg"
+                                    className="w-full h-12 rounded-lg font-semibold text-base"
+                                    onClick={() => router.push("/onboarding")}
+                                >
+                                    <span className="flex items-center justify-center">
+                                        <i className="fi fi-rr-user-add mr-2 h-5 w-5"></i>
+                                        Sign Up
+                                    </span>
+                                </Button>
+                            </div>
                         </form>
                     </div>
                 </div>

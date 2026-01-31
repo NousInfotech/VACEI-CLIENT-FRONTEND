@@ -18,6 +18,7 @@ import {
     fetchUnreadCountAPI,
     markNotificationAsReadAPI,
 } from '@/api/notificationService';
+import { getCompanies } from '@/api/auditService';
 
 // NotificationItem component
 interface HeaderNotificationItemProps {
@@ -128,11 +129,46 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
         }
     }, []);
 
+    // Fetch companies from backend API
+    const fetchCompaniesFromAPI = useCallback(async () => {
+        try {
+            const companiesData = await getCompanies();
+            if (Array.isArray(companiesData) && companiesData.length > 0) {
+                // Map backend companies to header format
+                const mappedCompanies = companiesData.map((company: any) => ({
+                    id: company._id || company.id,
+                    name: company.name || 'Unnamed Company'
+                }));
+                setCompanies(mappedCompanies);
+                localStorage.setItem("vacei-companies", JSON.stringify(mappedCompanies));
+                
+                // Set active company if not already set or if current active company doesn't exist
+                const storedActiveCompany = localStorage.getItem("vacei-active-company");
+                if (storedActiveCompany && mappedCompanies.some(c => c.id === storedActiveCompany)) {
+                    setActiveCompany(storedActiveCompany);
+                } else if (mappedCompanies.length > 0) {
+                    const firstCompanyId = mappedCompanies[0].id;
+                    setActiveCompany(firstCompanyId);
+                    localStorage.setItem("vacei-active-company", firstCompanyId);
+                }
+            }
+        } catch (error) {
+            console.error("Failed to fetch companies from API:", error);
+            // Fallback to localStorage if API fails
+            const storedCompanies = localStorage.getItem("vacei-companies");
+            if (storedCompanies) {
+                try {
+                    const parsed = JSON.parse(storedCompanies);
+                    setCompanies(parsed);
+                } catch { /* ignore */ }
+            }
+        }
+    }, []);
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const storedUsername = localStorage.getItem("username");
             const storedRole = localStorage.getItem("role");
-            const storedCompanies = localStorage.getItem("vacei-companies");
             const storedActiveCompany = localStorage.getItem("vacei-active-company");
 
             if (storedUsername) {
@@ -142,32 +178,15 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                 try { setRole(atob(storedRole)); } catch { setRole(storedRole); }
             }
 
-            let finalCompanies = companies;
-            if (storedCompanies) {
-                try {
-                    const parsed = JSON.parse(storedCompanies);
-                    setCompanies(parsed);
-                    finalCompanies = parsed;
-                } catch { /* ignore */ }
-            } else {
-                const defaults = [
-                    { id: "c1", name: "Acme Ltd" },
-                    { id: "c2", name: "Beta Holdings" },
-                ];
-                setCompanies(defaults);
-                finalCompanies = defaults;
-                localStorage.setItem("vacei-companies", JSON.stringify(defaults));
-            }
+            // Fetch companies from API immediately after login
+            fetchCompaniesFromAPI();
 
+            // Set active company from localStorage if available
             if (storedActiveCompany) {
                 setActiveCompany(storedActiveCompany);
-            } else {
-                const first = finalCompanies?.[0]?.id || "c1";
-                setActiveCompany(first);
-                localStorage.setItem("vacei-active-company", first);
             }
         }
-    }, []);
+    }, [fetchCompaniesFromAPI]);
 
     useEffect(() => {
         getUnreadCount();
@@ -177,6 +196,65 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
         }, REFRESH_INTERVAL);
         return () => clearInterval(intervalId);
     }, [pathname]);
+
+    // Refresh companies when navigating to dashboard (after login or signup)
+    useEffect(() => {
+        if (pathname?.startsWith('/dashboard')) {
+            // Check if token exists (user is logged in)
+            const token = localStorage.getItem('token');
+            if (token) {
+                // Fetch companies from API to ensure latest data
+                fetchCompaniesFromAPI();
+            }
+        }
+    }, [pathname, fetchCompaniesFromAPI]);
+
+    // Listen for signup completion event or storage changes
+    useEffect(() => {
+        const handleStorageChange = (e: StorageEvent) => {
+            // If onboarding data is cleared or company data changes, refresh companies
+            if (e.key === 'onboarding-data' || e.key === 'vacei-companies') {
+                const token = localStorage.getItem('token');
+                if (token && pathname?.startsWith('/dashboard')) {
+                    fetchCompaniesFromAPI();
+                }
+            }
+        };
+
+        // Listen for storage events (from other tabs/windows)
+        window.addEventListener('storage', handleStorageChange);
+
+        // Also check for signup completion flag
+        const checkSignupCompletion = () => {
+            const signupCompleted = sessionStorage.getItem('signup-completed');
+            if (signupCompleted === 'true') {
+                const token = localStorage.getItem('token');
+                if (token) {
+                    fetchCompaniesFromAPI();
+                    // Clear the flag
+                    sessionStorage.removeItem('signup-completed');
+                }
+            }
+        };
+
+        // Check immediately
+        checkSignupCompletion();
+
+        // Check periodically for a short time after mount (in case signup just completed)
+        const checkInterval = setInterval(() => {
+            checkSignupCompletion();
+        }, 1000);
+
+        // Stop checking after 10 seconds
+        setTimeout(() => {
+            clearInterval(checkInterval);
+        }, 10000);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            clearInterval(checkInterval);
+        };
+    }, [pathname, fetchCompaniesFromAPI]);
 
     const handleMarkAsReadFromDropdown = async (id: number) => {
         try {

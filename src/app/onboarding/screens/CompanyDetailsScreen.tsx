@@ -15,7 +15,7 @@ import {
   AddressOption,
   ServiceToggleOption
 } from '@/interfaces';
-import { saveOnboardingStep } from '@/api/onboardingService';
+import { saveOnboardingStep, createCompany } from '@/api/onboardingService';
 
 interface CompanyDetailsScreenProps {
   onComplete: () => void;
@@ -26,13 +26,37 @@ interface CompanyDetailsScreenProps {
 export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }: CompanyDetailsScreenProps) {
   const [companyType, setCompanyType] = useState<CompanyType | undefined>(undefined);
   const [directorError, setDirectorError] = useState<string>('');
-  const [existingDetails, setExistingDetails] = useState<ExistingCompanyDetails>({
+  const [shareholderError, setShareholderError] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [existingDetails, setExistingDetails] = useState<ExistingCompanyDetails & {
+    directors: { option: ServiceToggleOption; persons?: Person[] };
+    shareholders: Person[];
+    companySecretary: { option: ServiceToggleOption; person?: Person };
+    judicialRepresentative: { option: ServiceToggleOption; person?: Person };
+  }>({
     companyName: '',
     registrationNumber: '',
     countryOfIncorporation: '',
     vatNumber: '',
     businessActivity: '',
     registeredAddress: '',
+    legalType: 'LTD',
+    authorizedShares: 1000,
+    issuedShares: 1000,
+    companyStartDate: new Date().toISOString().split('T')[0], // Today's date as default
+    industry: [],
+    summary: '',
+    directors: {
+      option: 'own' as ServiceToggleOption,
+      persons: [],
+    },
+    shareholders: [],
+    companySecretary: {
+      option: 'own' as ServiceToggleOption,
+    },
+    judicialRepresentative: {
+      option: 'own' as ServiceToggleOption,
+    },
   });
 
   const [newDetails, setNewDetails] = useState<NewCompanyDetails>({
@@ -41,10 +65,16 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
       name2: '',
       name3: '',
     },
+    registrationNumber: '',
     registeredAddress: {
       option: 'have' as AddressOption,
       address: '',
     },
+    legalType: 'LTD',
+    authorizedShares: 1000,
+    industry: [],
+    summary: '',
+    expectedStartDate: '',
     directors: {
       option: 'own' as ServiceToggleOption,
       persons: [],
@@ -95,31 +125,366 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
       return;
     }
 
-    // Validate directors if option is 'own'
-    if (companyType === 'new' && newDetails.directors.option === 'own') {
-      const directors = newDetails.directors.persons || [];
-      const validDirectors = directors.filter(
-        (person) => person && (person.fullName?.trim() || person.email?.trim())
-      );
-      
-      if (validDirectors.length === 0) {
-        setDirectorError('Please add at least one director with a name or email before continuing.');
+    // Validate existing company required fields
+    if (companyType === 'existing') {
+      if (!existingDetails.companyName.trim()) {
+        alert('Company name is required.');
         return;
       }
+      if (!existingDetails.registrationNumber.trim()) {
+        alert('Registration number is required.');
+        return;
+      }
+      if (!existingDetails.registeredAddress.trim()) {
+        alert('Registered address is required.');
+        return;
+      }
+      if (!existingDetails.companyStartDate) {
+        alert('Company start date is required.');
+        return;
+      }
+      if (existingDetails.authorizedShares <= 0) {
+        alert('Authorized shares must be greater than 0.');
+        return;
+      }
+      if (existingDetails.issuedShares < 0) {
+        alert('Issued shares cannot be negative.');
+        return;
+      }
+      if (existingDetails.issuedShares > existingDetails.authorizedShares) {
+        alert('Issued shares cannot exceed authorized shares.');
+        return;
+      }
+      
+      // Validate directors if option is 'own'
+      if (existingDetails.directors.option === 'own') {
+        // Ensure persons array exists
+        if (!existingDetails.directors.persons) {
+          existingDetails.directors.persons = [];
+        }
+        // Validate at least one director is required
+        if (existingDetails.directors.persons.length === 0) {
+          setDirectorError('At least one director is required.');
+          return;
+        }
+        // Validate that all directors have required fields
+        const invalidDirectors = existingDetails.directors.persons.filter(
+          p => !p.fullName?.trim() || !p.address?.trim() || !p.nationality?.trim()
+        );
+        if (invalidDirectors.length > 0) {
+          setDirectorError('All directors must have full name, address, and nationality.');
+          return;
+        }
+        setDirectorError('');
+      }
+      
+      // Validate at least one shareholder is required
+      if (!existingDetails.shareholders || existingDetails.shareholders.length === 0) {
+        setShareholderError('At least one shareholder is required.');
+        return;
+      }
+      
+      // Validate shareholders have required fields
+      const invalidShareholders = existingDetails.shareholders.filter(
+        p => !p.fullName?.trim() || !p.address?.trim() || !p.nationality?.trim()
+      );
+      if (invalidShareholders.length > 0) {
+        setShareholderError('All shareholders must have full name, address, and nationality.');
+        return;
+      }
+      
+      // Clear shareholder error if validation passes
+      setShareholderError('');
+    }
+
+    // Validate new company required fields
+    if (companyType === 'new') {
+      if (!newDetails.proposedNames.name1.trim()) {
+        alert('At least one proposed company name is required.');
+        return;
+      }
+      // Address is always required (even if service is needed, we need a temporary address)
+      if (!newDetails.registeredAddress.address?.trim()) {
+        alert('Address is required. If you need an address service, please provide a temporary address for now.');
+        return;
+      }
+      if (newDetails.authorizedShares <= 0) {
+        alert('Authorized shares must be greater than 0.');
+        return;
+      }
+      
+      // Validate directors if option is 'own'
+      if (newDetails.directors.option === 'own') {
+        // Ensure persons array exists
+        if (!newDetails.directors.persons) {
+          newDetails.directors.persons = [];
+        }
+        // Validate at least one director is required
+        if (newDetails.directors.persons.length === 0) {
+          setDirectorError('At least one director is required.');
+          return;
+        }
+        // Validate that all directors have required fields
+        const invalidDirectors = newDetails.directors.persons.filter(
+          p => !p.fullName?.trim() || !p.address?.trim() || !p.nationality?.trim()
+        );
+        if (invalidDirectors.length > 0) {
+          setDirectorError('All directors must have full name, address, and nationality.');
+          return;
+        }
+        setDirectorError('');
+      }
+      
+      // Validate at least one shareholder is required
+      if (!newDetails.shareholders || newDetails.shareholders.length === 0) {
+        setShareholderError('At least one shareholder is required.');
+        return;
+      }
+      
+      // Validate shareholders have required fields
+      const invalidShareholders = newDetails.shareholders.filter(
+        p => !p.fullName?.trim() || !p.address?.trim() || !p.nationality?.trim()
+      );
+      if (invalidShareholders.length > 0) {
+        setShareholderError('All shareholders must have full name, address, and nationality.');
+        return;
+      }
+      
+      // Clear shareholder error if validation passes
+      setShareholderError('');
     }
     
     // Clear any previous errors if validation passes
     setDirectorError('');
+    setShareholderError('');
 
+    setLoading(true);
     try {
+      // Get clientId from localStorage (created in Step 1)
+      const onboardingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
+      const clientId = onboardingData.clientId;
+
+      // Prepare company data for backend
+      let companyPayload: any = {};
+
+      if (companyType === 'existing') {
+        // Map existing company details to backend schema
+        // PATH A: Existing Company → Came for Incorporation Service
+        // According to new workflow: incorporationStatus = false (needs incorporation service)
+        const startDate = new Date(existingDetails.companyStartDate);
+        
+        // Map directors, shareholders, etc. to involvementDetails
+        const involvementDetails: any[] = [];
+
+        // Add directors if option is 'own'
+        if (existingDetails.directors.option === 'own' && existingDetails.directors.persons) {
+          existingDetails.directors.persons.forEach((person) => {
+            if (person.fullName.trim() && person.address?.trim() && person.nationality?.trim()) {
+              involvementDetails.push({
+                personName: person.fullName.trim(),
+                personAddress: person.address.trim(),
+                personNationality: person.nationality.trim(),
+                role: ['DIRECTOR'] as const,
+                ordinary: 0,
+              });
+            }
+          });
+        }
+
+        // Add shareholders
+        if (existingDetails.shareholders && existingDetails.shareholders.length > 0) {
+          existingDetails.shareholders.forEach((person) => {
+            if (person.fullName.trim() && person.address?.trim() && person.nationality?.trim()) {
+              involvementDetails.push({
+                personName: person.fullName.trim(),
+                personAddress: person.address.trim(),
+                personNationality: person.nationality.trim(),
+                role: ['SHAREHOLDER'] as const,
+                ordinary: 0,
+              });
+            }
+          });
+        }
+
+        // Add company secretary if option is 'own'
+        if (existingDetails.companySecretary.option === 'own' && existingDetails.companySecretary.person) {
+          const secretary = existingDetails.companySecretary.person;
+          if (secretary.fullName?.trim() && secretary.address?.trim() && secretary.nationality?.trim()) {
+            involvementDetails.push({
+              personName: secretary.fullName.trim(),
+              personAddress: secretary.address.trim(),
+              personNationality: secretary.nationality.trim(),
+              role: ['SECRETARY'] as const,
+              ordinary: 0,
+            });
+          }
+        }
+
+        // Add judicial representative if option is 'own'
+        if (existingDetails.judicialRepresentative.option === 'own' && existingDetails.judicialRepresentative.person) {
+          const rep = existingDetails.judicialRepresentative.person;
+          if (rep.fullName?.trim() && rep.address?.trim() && rep.nationality?.trim()) {
+            involvementDetails.push({
+              personName: rep.fullName.trim(),
+              personAddress: rep.address.trim(),
+              personNationality: rep.nationality.trim(),
+              role: ['JUDICIAL_REPRESENTATIVE'] as const,
+              ordinary: 0,
+            });
+          }
+        }
+
+        companyPayload = {
+          name: existingDetails.companyName,
+          registrationNumber: existingDetails.registrationNumber || `TEMP-${Date.now()}`, // Temporary if not provided
+          address: existingDetails.registeredAddress,
+          companyType: 'PRIMARY' as const,
+          legalType: existingDetails.legalType,
+          summary: existingDetails.summary || existingDetails.businessActivity || undefined,
+          industry: existingDetails.industry || [],
+          authorizedShares: existingDetails.authorizedShares,
+          issuedShares: existingDetails.issuedShares || 0, // May start at 0 for incorporation service
+          companyStartDate: startDate.toISOString(),
+          clientId: clientId || undefined,
+          incorporationStatus: false, // PATH A: Needs incorporation service (intentional)
+          involvementDetails: involvementDetails.length > 0 ? involvementDetails : undefined,
+        };
+      } else {
+        // Map new company details to backend schema
+        // Use first proposed name as the company name
+        const companyName = newDetails.proposedNames.name1.trim();
+        // PATH B: New Company Profile - no registration number needed (will be assigned during incorporation)
+        const registrationNumber = `TEMP-${Date.now()}`; // Temporary number assigned
+        const startDate = newDetails.expectedStartDate 
+          ? new Date(newDetails.expectedStartDate)
+          : new Date(); // Use expected date or current date
+
+        // Map directors, shareholders, etc. to involvementDetails
+        const involvementDetails: any[] = [];
+
+        // Add directors if option is 'own'
+        // According to API spec: role should be an array
+        if (newDetails.directors.option === 'own' && newDetails.directors.persons) {
+          newDetails.directors.persons.forEach((person) => {
+            if (person.fullName.trim() && person.address?.trim() && person.nationality?.trim()) {
+              involvementDetails.push({
+                personName: person.fullName.trim(),
+                personAddress: person.address.trim(),
+                personNationality: person.nationality.trim(),
+                role: ['DIRECTOR'] as const, // Array of roles as per API spec
+                ordinary: 0, // Default to 0, can be calculated from shares if needed
+              });
+            }
+          });
+        }
+
+        // Add shareholders
+        // According to API spec: role should be an array
+        if (newDetails.shareholders && newDetails.shareholders.length > 0) {
+          newDetails.shareholders.forEach((person) => {
+            if (person.fullName.trim() && person.address?.trim() && person.nationality?.trim()) {
+              involvementDetails.push({
+                personName: person.fullName.trim(),
+                personAddress: person.address.trim(),
+                personNationality: person.nationality.trim(),
+                role: ['SHAREHOLDER'] as const, // Array of roles as per API spec
+                ordinary: 0, // Can be calculated from ownershipPercent if needed
+              });
+            }
+          });
+        }
+
+        // Add company secretary if option is 'own'
+        // According to API spec: role should be an array
+        if (newDetails.companySecretary.option === 'own' && newDetails.companySecretary.person) {
+          const secretary = newDetails.companySecretary.person;
+          if (secretary.fullName?.trim() && secretary.address?.trim() && secretary.nationality?.trim()) {
+            involvementDetails.push({
+              personName: secretary.fullName.trim(),
+              personAddress: secretary.address.trim(),
+              personNationality: secretary.nationality.trim(),
+              role: ['SECRETARY'] as const, // Array of roles as per API spec
+              ordinary: 0,
+            });
+          }
+        }
+
+        // Add judicial representative if option is 'own'
+        // According to API spec: role should be an array
+        if (newDetails.judicialRepresentative.option === 'own' && newDetails.judicialRepresentative.person) {
+          const rep = newDetails.judicialRepresentative.person;
+          if (rep.fullName?.trim() && rep.address?.trim() && rep.nationality?.trim()) {
+            involvementDetails.push({
+              personName: rep.fullName.trim(),
+              personAddress: rep.address.trim(),
+              personNationality: rep.nationality.trim(),
+              role: ['JUDICIAL_REPRESENTATIVE'] as const, // Array of roles as per API spec
+              ordinary: 0,
+            });
+          }
+        }
+
+        companyPayload = {
+          name: companyName,
+          registrationNumber: registrationNumber,
+          address: newDetails.registeredAddress.address,
+          companyType: 'PRIMARY' as const,
+          legalType: newDetails.legalType,
+          summary: newDetails.summary || undefined,
+          industry: newDetails.industry || [],
+          authorizedShares: newDetails.authorizedShares,
+          issuedShares: 0, // For new companies, issued shares start at 0
+          companyStartDate: startDate.toISOString(),
+          clientId: clientId || undefined,
+          incorporationStatus: true, // PATH B: New Company Profile - already incorporated (intentional)
+          involvementDetails: involvementDetails.length > 0 ? involvementDetails : undefined,
+        };
+      }
+
+      // Create Company record at backend (Step 3) - REQUIRED, don't proceed on error
+      try {
+        const companyResult = await createCompany(companyPayload);
+        
+        // Save company ID and incorporationStatus to localStorage
+        const existingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
+        localStorage.setItem('onboarding-data', JSON.stringify({
+          ...existingData,
+          companyType,
+          companyId: companyResult.id,
+          incorporationStatus: companyResult.incorporationStatus, // true if already incorporated, false if needs incorporation
+          kycStatus: companyResult.kycStatus, // false initially
+          existingCompanyDetails: companyType === 'existing' ? existingDetails : undefined,
+          newCompanyDetails: companyType === 'new' ? newDetails : undefined,
+        }));
+      } catch (error: any) {
+        // CRITICAL: If backend creation fails, DO NOT allow continuation
+        console.error('Failed to create company at backend:', error);
+        const errorMessage = error.message || 'Failed to create company. Please try again.';
+        
+        // Show error and block navigation
+        alert(`Failed to create company: ${errorMessage}\n\nPlease check your connection and try again.`);
+        setLoading(false);
+        return; // Block navigation - user must fix the error
+      }
+
+      // Save step progress (404 is expected if endpoint doesn't exist, but don't block)
       const data = companyType === 'existing' 
         ? { existingCompanyDetails: existingDetails }
         : { newCompanyDetails: newDetails };
       
-      await saveOnboardingStep(2, {
-        companyType: companyType, // Now TypeScript knows it's not null/undefined
+      try {
+      await saveOnboardingStep(3, {
+          companyType: companyType,
         ...data,
       });
+      } catch (stepError: any) {
+        // 404 is expected - endpoint might not exist, just log it
+        if (stepError.message?.includes('404') || stepError.message?.includes('BACKEND_NOT_AVAILABLE')) {
+          console.warn('Step progress save failed (expected if endpoint not implemented):', stepError.message);
+        } else {
+          console.error('Step progress save failed:', stepError);
+        }
+      }
       
       // Save to localStorage as backup - preserve existing data
       const existingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
@@ -134,6 +499,7 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
     } catch (error) {
       console.error('Failed to save step:', error);
       alert('Failed to save. Please try again.');
+      setLoading(false);
     }
   };
 
@@ -143,7 +509,7 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
       ...prev,
       directors: {
         ...prev.directors,
-        persons: [...(prev.directors.persons || []), { fullName: '', email: '' }],
+        persons: [...(prev.directors.persons || []), { fullName: '', email: '', address: '', nationality: '' }],
       },
     }));
   };
@@ -172,13 +538,15 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
   };
 
   const addShareholder = () => {
+    setShareholderError(''); // Clear error when adding a shareholder
     setNewDetails(prev => ({
       ...prev,
-      shareholders: [...prev.shareholders, { fullName: '', email: '', ownershipPercent: 0 }],
+      shareholders: [...prev.shareholders, { fullName: '', email: '', address: '', nationality: '', ownershipPercent: 0 }],
     }));
   };
 
   const updateShareholder = (index: number, field: keyof Person, value: string | number) => {
+    setShareholderError(''); // Clear error when updating a shareholder
     setNewDetails(prev => ({
       ...prev,
       shareholders: prev.shareholders.map((p, i) => 
@@ -194,14 +562,75 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
     }));
   };
 
+  // Helper functions for existing company people/roles
+  const addExistingDirector = () => {
+    setDirectorError(''); // Clear error when adding a director
+    setExistingDetails(prev => ({
+      ...prev,
+      directors: {
+        ...prev.directors,
+        persons: [...(prev.directors.persons || []), { fullName: '', email: '', address: '', nationality: '' }],
+      },
+    }));
+  };
+
+  const updateExistingDirector = (index: number, field: keyof Person, value: string | number) => {
+    setDirectorError(''); // Clear error when updating a director
+    setExistingDetails(prev => ({
+      ...prev,
+      directors: {
+        ...prev.directors,
+        persons: prev.directors.persons?.map((p, i) => 
+          i === index ? { ...p, [field]: value } : p
+        ) || [],
+      },
+    }));
+  };
+
+  const removeExistingDirector = (index: number) => {
+    setExistingDetails(prev => ({
+      ...prev,
+      directors: {
+        ...prev.directors,
+        persons: prev.directors.persons?.filter((_, i) => i !== index) || [],
+      },
+    }));
+  };
+
+  const addExistingShareholder = () => {
+    setShareholderError(''); // Clear error when adding a shareholder
+    setExistingDetails(prev => ({
+      ...prev,
+      shareholders: [...prev.shareholders, { fullName: '', email: '', address: '', nationality: '', ownershipPercent: 0 }],
+    }));
+  };
+
+  const updateExistingShareholder = (index: number, field: keyof Person, value: string | number) => {
+    setShareholderError(''); // Clear error when updating a shareholder
+    setExistingDetails(prev => ({
+      ...prev,
+      shareholders: prev.shareholders.map((p, i) => 
+        i === index ? { ...p, [field]: value } : p
+      ),
+    }));
+  };
+
+  const removeExistingShareholder = (index: number) => {
+    setExistingDetails(prev => ({
+      ...prev,
+      shareholders: prev.shareholders.filter((_, i) => i !== index),
+    }));
+  };
+
   return (
     <OnboardingLayout
-      currentStep={2}
+      currentStep={3}
       totalSteps={7}
       onContinue={handleContinue}
       onSaveExit={onSaveExit}
       onBack={onBack}
-      continueLabel="Continue"
+      continueLabel={loading ? 'Creating company...' : 'Continue'}
+      disabled={loading}
     >
       {!companyType ? (
         <div>Loading...</div>
@@ -262,13 +691,286 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-2 block">Registered address</label>
+                <label className="text-sm font-medium mb-2 block">Registered address *</label>
                 <Textarea
                   value={existingDetails.registeredAddress}
                   onChange={(e) => setExistingDetails(prev => ({ ...prev, registeredAddress: e.target.value }))}
                   placeholder="Enter registered address"
                   rows={3}
                 />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Legal entity type *</label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={existingDetails.legalType === 'LTD' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setExistingDetails(prev => ({ ...prev, legalType: 'LTD' }))}
+                  >
+                    LTD
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={existingDetails.legalType === 'PLC' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setExistingDetails(prev => ({ ...prev, legalType: 'PLC' }))}
+                  >
+                    PLC
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Authorized shares *</label>
+                  <Input
+                    type="number"
+                    value={existingDetails.authorizedShares}
+                    onChange={(e) => setExistingDetails(prev => ({ ...prev, authorizedShares: parseInt(e.target.value) || 0 }))}
+                    placeholder="1000"
+                    min="0"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Issued shares *</label>
+                  <Input
+                    type="number"
+                    value={existingDetails.issuedShares}
+                    onChange={(e) => setExistingDetails(prev => ({ ...prev, issuedShares: parseInt(e.target.value) || 0 }))}
+                    placeholder="1000"
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Company start date (incorporation date) *</label>
+                <Input
+                  type="date"
+                  value={existingDetails.companyStartDate}
+                  onChange={(e) => setExistingDetails(prev => ({ ...prev, companyStartDate: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Industry / Business sectors (optional)</label>
+                <Input
+                  value={existingDetails.industry?.join(', ') || ''}
+                  onChange={(e) => {
+                    const industries = e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                    setExistingDetails(prev => ({ ...prev, industry: industries }));
+                  }}
+                  placeholder="e.g., Technology, Finance, Retail (comma-separated)"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Enter industry categories separated by commas</p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Company summary (optional)</label>
+                <Textarea
+                  value={existingDetails.summary || ''}
+                  onChange={(e) => setExistingDetails(prev => ({ ...prev, summary: e.target.value }))}
+                  placeholder="Brief summary of the company"
+                  rows={3}
+                />
+              </div>
+
+              {/* Directors */}
+              <div>
+                <h2 className="text-lg font-medium mb-3">
+                  Directors <span className="text-red-500">*</span>
+                </h2>
+                <div className="flex gap-2 mb-3">
+                  <Button
+                    type="button"
+                    variant={existingDetails.directors.option === 'own' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setExistingDetails(prev => ({
+                      ...prev,
+                      directors: { option: 'own', persons: prev.directors.persons || [] }
+                    }))}
+                  >
+                    ⭕ I will appoint my own director(s)
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={existingDetails.directors.option === 'service' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setExistingDetails(prev => ({
+                      ...prev,
+                      directors: { option: 'service' }
+                    }))}
+                  >
+                    ⭕ Provide directorship service
+                  </Button>
+                </div>
+                {existingDetails.directors.option === 'own' ? (
+                  <div className="space-y-3">
+                    {existingDetails.directors.persons?.map((director, index) => (
+                      <PersonCard
+                        key={index}
+                        person={director}
+                        index={index}
+                        onChange={updateExistingDirector}
+                        onRemove={removeExistingDirector}
+                        canRemove={true}
+                      />
+                    ))}
+                    <div className="space-y-2">
+                      <Button type="button" variant="outline" size="sm" onClick={addExistingDirector}>
+                        {(!existingDetails.directors.persons || existingDetails.directors.persons.length === 0) 
+                          ? 'Add director' 
+                          : 'Add another director'}
+                      </Button>
+                      {directorError && (
+                        <p className="text-sm text-red-500">{directorError}</p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <InfoBox>
+                    A director will be provided by us. No details required at this stage.
+                  </InfoBox>
+                )}
+              </div>
+
+              {/* Shareholders */}
+              <div>
+                <h2 className="text-lg font-medium mb-3">
+                  Shareholders <span className="text-red-500">*</span>
+                </h2>
+                <div className="space-y-3">
+                  {existingDetails.shareholders.map((shareholder, index) => (
+                    <PersonCard
+                      key={index}
+                      person={shareholder}
+                      index={index}
+                      showOwnership={true}
+                      onChange={updateExistingShareholder}
+                      onRemove={removeExistingShareholder}
+                      canRemove={true}
+                    />
+                  ))}
+                  <div className="space-y-2">
+                    <Button type="button" variant="outline" size="sm" onClick={addExistingShareholder}>
+                      {(!existingDetails.shareholders || existingDetails.shareholders.length === 0) 
+                        ? 'Add shareholder' 
+                        : 'Add another shareholder'}
+                    </Button>
+                    {shareholderError && (
+                      <p className="text-sm text-red-500">{shareholderError}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Company Secretary */}
+              <div>
+                <h2 className="text-lg font-medium mb-3">Company Secretary</h2>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={existingDetails.companySecretary.option === 'own' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setExistingDetails(prev => ({
+                      ...prev,
+                      companySecretary: { option: 'own' }
+                    }))}
+                  >
+                    ⭕ I will appoint my own
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={existingDetails.companySecretary.option === 'service' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setExistingDetails(prev => ({
+                      ...prev,
+                      companySecretary: { option: 'service' }
+                    }))}
+                  >
+                    ⭕ Provide secretarial service
+                  </Button>
+                </div>
+                {existingDetails.companySecretary.option === 'own' && (
+                  <div className="mt-3">
+                    <PersonCard
+                      person={existingDetails.companySecretary.person || { fullName: '', email: '', address: '', nationality: '' }}
+                      index={0}
+                      onChange={(index, field, value) => {
+                        setExistingDetails(prev => ({
+                          ...prev,
+                          companySecretary: {
+                            ...prev.companySecretary,
+                            person: { ...(prev.companySecretary.person || { fullName: '', email: '', address: '', nationality: '' }), [field]: value }
+                          }
+                        }));
+                      }}
+                      onRemove={() => {
+                        setExistingDetails(prev => ({
+                          ...prev,
+                          companySecretary: { ...prev.companySecretary, person: undefined }
+                        }));
+                      }}
+                      canRemove={false}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Judicial Representative */}
+              <div>
+                <h2 className="text-lg font-medium mb-3">Judicial Representative</h2>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={existingDetails.judicialRepresentative.option === 'own' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setExistingDetails(prev => ({
+                      ...prev,
+                      judicialRepresentative: { option: 'own' }
+                    }))}
+                  >
+                    ⭕ I will appoint my own
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={existingDetails.judicialRepresentative.option === 'service' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setExistingDetails(prev => ({
+                      ...prev,
+                      judicialRepresentative: { option: 'service' }
+                    }))}
+                  >
+                    ⭕ Provide service
+                  </Button>
+                </div>
+                {existingDetails.judicialRepresentative.option === 'own' && (
+                  <div className="mt-3">
+                    <PersonCard
+                      person={existingDetails.judicialRepresentative.person || { fullName: '', email: '', address: '', nationality: '' }}
+                      index={0}
+                      onChange={(index, field, value) => {
+                        setExistingDetails(prev => ({
+                          ...prev,
+                          judicialRepresentative: {
+                            ...prev.judicialRepresentative,
+                            person: { ...(prev.judicialRepresentative.person || { fullName: '', email: '', address: '', nationality: '' }), [field]: value }
+                          }
+                        }));
+                      }}
+                      onRemove={() => {
+                        setExistingDetails(prev => ({
+                          ...prev,
+                          judicialRepresentative: { ...prev.judicialRepresentative, person: undefined }
+                        }));
+                      }}
+                      canRemove={false}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </>
@@ -311,6 +1013,7 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
                 <p className="text-xs text-muted-foreground mt-2">We&apos;ll check availability in order.</p>
               </div>
 
+
               {/* Registered Address */}
               <div>
                 <h2 className="text-lg font-medium mb-3">Registered address</h2>
@@ -332,7 +1035,10 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
                     size="sm"
                     onClick={() => setNewDetails(prev => ({
                       ...prev,
-                      registeredAddress: { option: 'need_service' }
+                      registeredAddress: { 
+                        option: 'need_service',
+                        address: prev.registeredAddress.address || '' // Preserve existing address or use empty string
+                      }
                     }))}
                   >
                     ⭕ I need an address service
@@ -349,15 +1055,104 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
                     rows={3}
                   />
                 ) : (
-                  <InfoBox>
-                    We will provide a registered address as part of the service.
-                  </InfoBox>
+                  <div className="space-y-2">
+                    <InfoBox>
+                      We will provide a registered address as part of the service. Please provide a temporary address for now (this will be updated after incorporation).
+                    </InfoBox>
+                    <Textarea
+                      value={newDetails.registeredAddress.address || ''}
+                      onChange={(e) => setNewDetails(prev => ({
+                        ...prev,
+                        registeredAddress: { ...prev.registeredAddress, address: e.target.value }
+                      }))}
+                      placeholder="Enter temporary address (will be updated after incorporation)"
+                      rows={3}
+                    />
+                    <p className="text-xs text-muted-foreground">A registered address will be provided as part of the service, but we need a temporary address for now.</p>
+                  </div>
                 )}
+              </div>
+
+              {/* Legal Entity Type */}
+              <div>
+                <h2 className="text-lg font-medium mb-3">Legal entity type *</h2>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={newDetails.legalType === 'LTD' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setNewDetails(prev => ({ ...prev, legalType: 'LTD' }))}
+                  >
+                    LTD
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={newDetails.legalType === 'PLC' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setNewDetails(prev => ({ ...prev, legalType: 'PLC' }))}
+                  >
+                    PLC
+                  </Button>
+                </div>
+              </div>
+
+              {/* Share Capital */}
+              <div>
+                <h2 className="text-lg font-medium mb-3">Share capital</h2>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Authorized shares *</label>
+                  <Input
+                    type="number"
+                    value={newDetails.authorizedShares}
+                    onChange={(e) => setNewDetails(prev => ({ ...prev, authorizedShares: parseInt(e.target.value) || 0 }))}
+                    placeholder="1000"
+                    min="0"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Total number of shares the company is authorized to issue</p>
+                </div>
+              </div>
+
+              {/* Industry */}
+              <div>
+                <h2 className="text-lg font-medium mb-3">Industry / Business sectors (optional)</h2>
+                <Input
+                  value={newDetails.industry?.join(', ') || ''}
+                  onChange={(e) => {
+                    const industries = e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                    setNewDetails(prev => ({ ...prev, industry: industries }));
+                  }}
+                  placeholder="e.g., Technology, Finance, Retail (comma-separated)"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Enter industry categories separated by commas</p>
+              </div>
+
+              {/* Company Summary */}
+              <div>
+                <h2 className="text-lg font-medium mb-3">Company summary (optional)</h2>
+                <Textarea
+                  value={newDetails.summary || ''}
+                  onChange={(e) => setNewDetails(prev => ({ ...prev, summary: e.target.value }))}
+                  placeholder="Brief description of the planned business activities"
+                  rows={3}
+                />
+              </div>
+
+              {/* Expected Start Date */}
+              <div>
+                <h2 className="text-lg font-medium mb-3">Expected incorporation date (optional)</h2>
+                <Input
+                  type="date"
+                  value={newDetails.expectedStartDate || ''}
+                  onChange={(e) => setNewDetails(prev => ({ ...prev, expectedStartDate: e.target.value }))}
+                />
+                <p className="text-xs text-muted-foreground mt-1">When do you expect the company to be incorporated?</p>
               </div>
 
               {/* Directors */}
               <div>
-                <h2 className="text-lg font-medium mb-3">Directors</h2>
+                <h2 className="text-lg font-medium mb-3">
+                  Directors <span className="text-red-500">*</span>
+                </h2>
                 <div className="flex gap-2 mb-3">
                   <Button
                     type="button"
@@ -414,7 +1209,9 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
 
               {/* Shareholders */}
               <div>
-                <h2 className="text-lg font-medium mb-3">Shareholders</h2>
+                <h2 className="text-lg font-medium mb-3">
+                  Shareholders <span className="text-red-500">*</span>
+                </h2>
                 <div className="space-y-3">
                   {newDetails.shareholders.map((shareholder, index) => (
                     <PersonCard
@@ -427,9 +1224,16 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
                       canRemove={true}
                     />
                   ))}
+                  <div className="space-y-2">
                   <Button type="button" variant="outline" size="sm" onClick={addShareholder}>
-                    Add shareholder
+                      {(!newDetails.shareholders || newDetails.shareholders.length === 0) 
+                        ? 'Add shareholder' 
+                        : 'Add another shareholder'}
                   </Button>
+                    {shareholderError && (
+                      <p className="text-sm text-red-500">{shareholderError}</p>
+                    )}
+                  </div>
                 </div>
               </div>
 

@@ -126,53 +126,68 @@ export async function fetchFinancialReports(params: FetchReportParams) {
 }
 
 export async function fetchDashboardSummary(): Promise<any> {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-  const token = localStorage.getItem("token") || "";
+  // Mock data - simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 300));
 
-  if (!backendUrl) {
-    console.error("NEXT_PUBLIC_BACKEND_URL is not defined.");
-    return { stats: [], netIncomeYTD: null };
-  }
+  // Mock dashboard summary data
+  const mockStats: BackendDashboardStat[] = [
+    {
+      link: null,
+      title: "Total Revenue",
+      amount: "€125,450.00",
+      change: "+12.5%",
+      note: "vs last month",
+      param1: "",
+      param2: "",
+    },
+    {
+      link: null,
+      title: "Total Expenses",
+      amount: "€89,230.00",
+      change: "+5.2%",
+      note: "vs last month",
+      param1: "",
+      param2: "",
+    },
+    {
+      link: null,
+      title: "Net Income",
+      amount: "€36,220.00",
+      change: "+28.3%",
+      note: "vs last month",
+      param1: "",
+      param2: "",
+    },
+    {
+      link: null,
+      title: "Cash Flow",
+      amount: "€42,180.00",
+      change: "+15.7%",
+      note: "vs last month",
+      param1: "",
+      param2: "",
+    },
+  ];
 
-  try {
-    const res = await fetch(
-      `${backendUrl.replace(/\/?$/, "/")}financial-reports/financial-dashboard-summary`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+  const stats = mockStats.map((stat) => ({
+    link: stat.link || null,
+    title: stat.title,
+    amount: stat.amount,
+    change: stat.change,
+    param1: stat.param1,
+    param2: stat.param2,
+    note: stat.note,
+    bgColor: "#D9E5FF",
+    iconClass: "wallet",
+  }));
 
-    if (!res.ok) {
-      throw new Error("Failed to fetch financial dashboard summary");
-    }
-
-    const data: {
-      stats: BackendDashboardStat[];
-      netIncomeYTD?: { value: number; change: string };
-    } = await res.json();
-
-    const stats = Array.isArray(data.stats)
-      ? data.stats.map((stat) => ({
-          link: stat.link || null,
-          title: stat.title,
-          amount: stat.amount,
-          change: stat.change,
-          param1: stat.param1,
-          param2: stat.param2,
-          note: stat.note,
-          bgColor: "#D9E5FF", // fallback
-          iconClass: "wallet", // fallback
-        }))
-      : [];
-
-    return {
-      stats,
-      netIncomeYTD: data.netIncomeYTD || null,
-    };
-  } catch (error) {
-    console.error("Error fetching dashboard summary:", error);
-    return { stats: [], netIncomeYTD: null };
-  }
+  return {
+    stats,
+    netIncomeYTD: {
+      value: 36220,
+      change: "+28.3%",
+    },
+  };
 }
 
 

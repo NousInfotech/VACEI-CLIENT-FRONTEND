@@ -271,6 +271,8 @@ export interface Person {
   id?: string;
   fullName: string;
   email: string;
+  address?: string; // Required by backend for Person records
+  nationality?: string; // Required by backend for Person records
   ownershipPercent?: number; // For shareholders only
 }
 
@@ -281,6 +283,12 @@ export interface ExistingCompanyDetails {
   vatNumber?: string;
   businessActivity: string;
   registeredAddress: string;
+  legalType: 'PLC' | 'LTD';
+  authorizedShares: number;
+  issuedShares: number;
+  companyStartDate: string; // ISO date string
+  industry?: string[]; // Array of industry categories
+  summary?: string; // Optional company description
 }
 
 export interface NewCompanyDetails {
@@ -289,10 +297,16 @@ export interface NewCompanyDetails {
     name2: string;
     name3: string;
   };
+  registrationNumber?: string; // Optional - if company is already registered or in process
   registeredAddress: {
     option: AddressOption;
-    address?: string; // If option is 'have'
+    address: string; // Required - even if service is needed, provide temporary address
   };
+  legalType: 'PLC' | 'LTD';
+  authorizedShares: number;
+  industry?: string[]; // Array of industry categories
+  summary?: string; // Optional company description
+  expectedStartDate?: string; // Expected incorporation date (ISO date string)
   directors: {
     option: ServiceToggleOption;
     persons?: Person[]; // If option is 'own'
@@ -342,7 +356,7 @@ export interface Quotation {
 export interface KYCPerson {
   id: string;
   name: string;
-  role: 'director' | 'shareholder';
+  role: 'director' | 'shareholder' | 'secretary' | 'judicial_representative';
   status: 'pending' | 'in_progress' | 'completed' | 'failed';
 }
 

@@ -70,24 +70,74 @@ async function request(
 }
 
 export async function fetchTasks(params: FetchTasksParams = {}) {
-  const safeParams = {
-    ...params,
-    categoryId: nullToUndefined(params.categoryId),
-    statusId: nullToUndefined(params.statusId),
-    priority: nullToUndefined(params.priority),
-    dueDate: nullToUndefined(params.dueDate),
-    assignedToId: nullToUndefined(params.assignedToId), // This is for the single-select filter
-  };
+  // Mock data - simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 300));
 
-  const result = await request("GET", "tasks/list", { params: safeParams });
+  // Mock tasks data
+  const mockTasks: any[] = [
+    {
+      id: 1,
+      title: "Review Q4 Financial Statements",
+      description: "Complete review of Q4 financial statements and prepare summary report",
+      statusId: 1,
+      categoryId: 1,
+      createdById: 1,
+      assignedAccountants: [],
+      assignedToId: [],
+      status: "In Progress",
+      category: "Financial Review",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+      priority: "High",
+    },
+    {
+      id: 2,
+      title: "Tax Filing Preparation",
+      description: "Prepare all necessary documents for annual tax filing",
+      statusId: 2,
+      categoryId: 2,
+      createdById: 1,
+      assignedAccountants: [],
+      assignedToId: [],
+      status: "Pending",
+      category: "Tax",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days from now
+      priority: "Medium",
+    },
+    {
+      id: 3,
+      title: "Audit Documentation",
+      description: "Compile and organize all audit-related documentation",
+      statusId: 3,
+      categoryId: 1,
+      createdById: 1,
+      assignedAccountants: [],
+      assignedToId: [],
+      status: "Completed",
+      category: "Audit",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      dueDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+      priority: "Low",
+    },
+  ];
+
+  const page = params.page || 1;
+  const limit = params.limit || 10;
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  const paginatedData = mockTasks.slice(startIndex, endIndex);
 
   return {
-    data: result.data || [],
-    pagination: result.pagination || {
-      total: 0,
-      page: 1,
-      totalPages: 0,
-      limit: 10,
+    data: paginatedData,
+    pagination: {
+      total: mockTasks.length,
+      page: page,
+      totalPages: Math.ceil(mockTasks.length / limit),
+      limit: limit,
     },
   };
 }

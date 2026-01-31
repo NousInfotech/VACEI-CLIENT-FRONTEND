@@ -2,17 +2,67 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getOnboardingProgress } from '@/api/onboardingService';
+import { getOnboardingProgress, saveOnboardingStep } from '@/api/onboardingService';
+import UserRegistrationScreen from './screens/UserRegistrationScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
 import CompanyDetailsScreen from './screens/CompanyDetailsScreen';
 import ServicesSelectionScreen from './screens/ServicesSelectionScreen';
 import ReviewSubmitScreen from './screens/ReviewSubmitScreen';
-import QuotationScreen from './screens/QuotationScreen';
 import KYCIntroductionScreen from './screens/KYCIntroductionScreen';
 import KYCDashboardScreen from './screens/KYCDashboardScreen';
 import { OnboardingProgress } from '@/interfaces';
 
 const TOTAL_STEPS = 7;
+
+// Helper function to check if it's PATH B (New Company Profile)
+function isNewCompanyProfile(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const saved = localStorage.getItem('onboarding-data');
+    if (saved) {
+      const data = JSON.parse(saved);
+      return data.incorporationStatus === true;
+    }
+  } catch {
+    // Fallback: check companyType
+    try {
+      const saved = localStorage.getItem('onboarding-data');
+      if (saved) {
+        const data = JSON.parse(saved);
+        return data.companyType === 'new' && data.incorporationStatus !== false;
+      }
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
+// Helper function to get the next step, skipping Step 4 for PATH B
+function getNextStep(currentStep: number): number {
+  const isPathB = isNewCompanyProfile();
+  
+  if (isPathB) {
+    // PATH B: Skip Step 4 (Services)
+    if (currentStep === 3) return 5; // Step 3 → Step 5 (skip 4)
+  }
+  
+  // Normal flow or PATH A
+  return currentStep + 1;
+}
+
+// Helper function to get the previous step, skipping Step 4 for PATH B
+function getPreviousStep(currentStep: number): number {
+  const isPathB = isNewCompanyProfile();
+  
+  if (isPathB) {
+    // PATH B: Skip Step 4 (Services)
+    if (currentStep === 5) return 3; // Step 5 → Step 3 (skip 4)
+  }
+  
+  // Normal flow or PATH A
+  return currentStep - 1;
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -22,6 +72,21 @@ export default function OnboardingPage() {
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
+    // Check if user is logged out (no token) - if so, clear stale onboarding data for fresh signup
+    const token = localStorage.getItem('token');
+    if (!token) {
+      // User is not logged in - clear any stale onboarding data to allow fresh signup
+      localStorage.removeItem('onboarding-progress');
+      localStorage.removeItem('onboarding-data');
+      localStorage.removeItem('service-request-id');
+      localStorage.removeItem('quotation-id');
+      localStorage.removeItem('incorporation-cycle-id');
+      // Start fresh onboarding
+      setCurrentStep(1);
+      setLoading(false);
+      return;
+    }
+
     // Immediate check on mount - if completed, redirect right away
     const checkAndRedirect = () => {
       const saved = localStorage.getItem('onboarding-progress');
@@ -66,6 +131,17 @@ export default function OnboardingPage() {
     // Load progress for non-completed onboarding
     loadProgress();
   }, [router]);
+
+  // PATH B: Redirect if user is on Step 4 (should be skipped)
+  // This must be called unconditionally (before any early returns)
+  useEffect(() => {
+    if (!loading) {
+      const isPathB = isNewCompanyProfile();
+      if (isPathB && currentStep === 4) {
+        setCurrentStep(5); // Step 4 → Step 5 (skip 4)
+      }
+    }
+  }, [loading, currentStep]);
 
   const loadProgress = async () => {
     try {
@@ -126,7 +202,8 @@ export default function OnboardingPage() {
 
   const handleStepComplete = (step: number) => {
     if (step < TOTAL_STEPS) {
-      setCurrentStep(step + 1);
+      const nextStep = getNextStep(step);
+      setCurrentStep(nextStep);
     } else {
       // Onboarding complete
       router.push('/dashboard');
@@ -142,12 +219,12 @@ export default function OnboardingPage() {
       onboardingProgress?.onboardingStatus === 'completed' || 
       isAllStepsCompleted) {
     // If all steps are done but status isn't completed, fix it
-    if (isAllStepsCompleted && onboardingProgress?.onboardingStatus !== 'completed') {
-      const completedProgress: OnboardingProgress = {
-        onboardingStatus: 'completed',
-        currentStep: 7,
-        completedSteps: [1, 2, 3, 4, 5, 6, 7],
-      };
+        if (isAllStepsCompleted && onboardingProgress?.onboardingStatus !== 'completed') {
+          const completedProgress: OnboardingProgress = {
+            onboardingStatus: 'completed',
+            currentStep: 7,
+            completedSteps: [1, 2, 3, 4, 5, 6, 7],
+          };
       localStorage.setItem('onboarding-progress', JSON.stringify(completedProgress));
       if (!isRedirecting) {
         setIsRedirecting(true);
@@ -183,61 +260,87 @@ export default function OnboardingPage() {
 
   // Ensure currentStep is valid (1-7)
   const validStep = currentStep >= 1 && currentStep <= 7 ? currentStep : 1;
+  const isPathB = isNewCompanyProfile();
 
   return (
     <>
       {validStep === 1 && (
-        <WelcomeScreen
+        <UserRegistrationScreen
           onComplete={() => handleStepComplete(1)}
           onSaveExit={handleSaveExit}
         />
       )}
       {validStep === 2 && (
-        <CompanyDetailsScreen
+        <WelcomeScreen
           onComplete={() => handleStepComplete(2)}
           onSaveExit={handleSaveExit}
           onBack={() => setCurrentStep(1)}
         />
       )}
       {validStep === 3 && (
-        <ServicesSelectionScreen
+        <CompanyDetailsScreen
           onComplete={() => handleStepComplete(3)}
           onSaveExit={handleSaveExit}
           onBack={() => setCurrentStep(2)}
         />
       )}
-      {validStep === 4 && (
-        <ReviewSubmitScreen
+      {/* Step 4 (Services) - Only show for PATH A (Existing Company) */}
+      {validStep === 4 && !isPathB && (
+        <ServicesSelectionScreen
           onComplete={() => handleStepComplete(4)}
           onSaveExit={handleSaveExit}
           onBack={() => setCurrentStep(3)}
         />
       )}
       {validStep === 5 && (
-        <QuotationScreen
+        <ReviewSubmitScreen
           onComplete={() => handleStepComplete(5)}
           onSaveExit={handleSaveExit}
-          onBack={() => setCurrentStep(4)}
+          onBack={() => setCurrentStep(getPreviousStep(5))}
         />
       )}
+      {/* Step 6 (KYC Introduction) - Previously Step 7 */}
       {validStep === 6 && (
         <KYCIntroductionScreen
           onComplete={() => handleStepComplete(6)}
           onSaveExit={handleSaveExit}
-          onBack={() => setCurrentStep(5)}
+          onBack={() => setCurrentStep(getPreviousStep(6))}
         />
       )}
+      {/* Step 7 (KYC Dashboard) - Previously Step 8 */}
       {validStep === 7 && (
         <KYCDashboardScreen
           onComplete={() => handleStepComplete(7)}
           onSaveExit={handleSaveExit}
+          onBack={() => setCurrentStep(6)}
         />
       )}
     </>
   );
 
-  function handleSaveExit() {
-    // Save progress and redirect to login or home
+  async function handleSaveExit() {
+    try {
+      // Save current step progress before redirecting
+      const currentProgress: OnboardingProgress = {
+        onboardingStatus: 'in_progress',
+        currentStep: currentStep,
+        completedSteps: onboardingProgress?.completedSteps || [],
+      };
+      localStorage.setItem('onboarding-progress', JSON.stringify(currentProgress));
+      
+      // Also save step progress to backend if possible
+      try {
+        await saveOnboardingStep(currentStep, {});
+      } catch (error) {
+        // If backend save fails, localStorage is already saved, so continue
+        console.warn('Backend save failed on exit, using localStorage:', error);
+      }
+    } catch (error) {
+      console.error('Failed to save progress on exit:', error);
+    } finally {
+      // Redirect to login
     router.push('/login');
+    }
   }
 }
+

@@ -16,10 +16,12 @@ interface WelcomeScreenProps {
 
 export default function WelcomeScreen({ onComplete, onSaveExit, onBack }: WelcomeScreenProps) {
   const [selectedType, setSelectedType] = useState<CompanyType | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleContinue = async () => {
     if (!selectedType) return;
 
+    setLoading(true);
     try {
       // Always save to localStorage first
       const existingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
@@ -30,7 +32,7 @@ export default function WelcomeScreen({ onComplete, onSaveExit, onBack }: Welcom
 
       // Try to save to backend (will fallback to localStorage if backend unavailable)
       try {
-        await saveOnboardingStep(1, { companyType: selectedType });
+        await saveOnboardingStep(2, { companyType: selectedType });
       } catch (error: any) {
         // If backend error, localStorage is already saved, so continue
         console.warn('Backend save failed, using localStorage:', error.message);
@@ -39,6 +41,7 @@ export default function WelcomeScreen({ onComplete, onSaveExit, onBack }: Welcom
       onComplete();
     } catch (error) {
       console.error('Failed to save step:', error);
+      setLoading(false);
       // Even if there's an error, proceed if localStorage save worked
       onComplete();
     }
@@ -46,12 +49,13 @@ export default function WelcomeScreen({ onComplete, onSaveExit, onBack }: Welcom
 
   return (
     <OnboardingLayout
-      currentStep={1}
+      currentStep={2}
       totalSteps={7}
       onContinue={handleContinue}
       onSaveExit={onSaveExit}
       onBack={onBack}
-      continueLabel="Continue"
+      continueLabel={loading ? 'Saving...' : 'Continue'}
+      disabled={loading}
     >
       <div className="space-y-6">
         <div>
@@ -74,9 +78,9 @@ export default function WelcomeScreen({ onComplete, onSaveExit, onBack }: Welcom
                 <Building2 className="h-6 w-6 text-primary" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-2">My company is already incorporated</h3>
+                <h3 className="font-semibold text-lg mb-2">Existing Company — Incorporation Service</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  You already have a registered company and need services.
+                  You have an existing company and need incorporation services (Accounting, VAT, Audit, Payroll, Tax Advisory, etc.).
                 </p>
                 <Button
                   variant={selectedType === 'existing' ? 'default' : 'outline'}
@@ -104,9 +108,9 @@ export default function WelcomeScreen({ onComplete, onSaveExit, onBack }: Welcom
                 <FileText className="h-6 w-6 text-primary" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-2">I need to incorporate a company</h3>
+                <h3 className="font-semibold text-lg mb-2">New Company Profile</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  You want us to set up a new company for you.
+                  Create a new company profile. Your company is already incorporated. Services are not available for this path.
                 </p>
                 <Button
                   variant={selectedType === 'new' ? 'default' : 'outline'}

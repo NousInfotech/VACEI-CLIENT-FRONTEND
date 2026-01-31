@@ -122,7 +122,13 @@ export async function deleteDocument(docId: any) {
  * @returns {Promise<{ documentsUploaded: number, documentsProcessed: number, documentsPending: number }>}
  */
 export async function fetchUploadStatusSummary() {
-  const result = await request("GET", "documents/get-document-summary");
-  // Assuming the backend returns an object like { data: { documentsUploaded: N, documentsProcessed: M, documentsPending: P } }
-  return result.data;
+  // Mock data - simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 300));
+
+  // Mock upload status summary
+  return {
+    documentsUploaded: 45,
+    documentsProcessed: 38,
+    documentsPending: 7,
+  };
 }

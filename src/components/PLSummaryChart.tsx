@@ -58,18 +58,59 @@ export default function PnLChart() {
           endParam = formatDate(today);
         }
 
-        const url = `${backendUrl?.replace(/\/?$/, "/")}financial-reports/profit-loss-summary?reportType=${reportType}&startDate=${startParam}&endDate=${endParam}`;
+        // Mock data - simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 300));
 
-        const response = await fetch(url, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        // Generate mock profit & loss data based on view
+        let mockSummaryData: any[] = [];
+        
+        if (view === 'Monthly') {
+          // Last 6 months
+          mockSummaryData = Array.from({ length: 6 }, (_, i) => {
+            const date = new Date();
+            date.setMonth(date.getMonth() - (5 - i));
+            const month = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
+            const income = Math.floor(Math.random() * 50000) + 80000;
+            const expense = Math.floor(Math.random() * 30000) + 40000;
+            return {
+              month: month,
+              income: income,
+              expense: expense,
+              profit: income - expense,
+            };
+          });
+        } else if (view === 'YTD') {
+          // Quarters for current year
+          const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+          mockSummaryData = quarters.map((q, i) => {
+            const income = Math.floor(Math.random() * 150000) + 200000;
+            const expense = Math.floor(Math.random() * 100000) + 120000;
+            return {
+              month: q,
+              income: income,
+              expense: expense,
+              profit: income - expense,
+            };
+          });
+        } else {
+          // 12-Month view
+          mockSummaryData = Array.from({ length: 12 }, (_, i) => {
+            const date = new Date();
+            date.setMonth(date.getMonth() - (11 - i));
+            const month = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
+            const income = Math.floor(Math.random() * 50000) + 80000;
+            const expense = Math.floor(Math.random() * 30000) + 40000;
+            return {
+              month: month,
+              income: income,
+              expense: expense,
+              profit: income - expense,
+            };
+          });
+        }
 
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        const result = await response.json();
-
-        const transformedData: ChartDatum[] = result.summaryData.map((d: any, index: number) => {
-          const prevIncome = index > 0 ? result.summaryData[index - 1].income : 0;
+        const transformedData: ChartDatum[] = mockSummaryData.map((d: any, index: number) => {
+          const prevIncome = index > 0 ? mockSummaryData[index - 1].income : 0;
           const change = prevIncome !== 0 ? (d.income - prevIncome) / prevIncome : 0;
           
           return {

@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { StepIndicator } from './StepIndicator';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card2';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
 interface OnboardingLayoutProps {
@@ -15,6 +16,7 @@ interface OnboardingLayoutProps {
   onBack?: () => void;
   continueLabel?: string;
   hideActions?: boolean;
+  disabled?: boolean; // Disable continue button
   className?: string;
 }
 
@@ -27,6 +29,7 @@ export function OnboardingLayout({
   onBack,
   continueLabel = 'Continue',
   hideActions = false,
+  disabled = false,
   className,
 }: OnboardingLayoutProps) {
   const showBackButton = currentStep > 1 && onBack;
@@ -62,6 +65,7 @@ export function OnboardingLayout({
                     type="button"
                     variant="outline"
                     onClick={onBack}
+                    disabled={disabled}
                   >
                     Back
                   </Button>
@@ -70,6 +74,7 @@ export function OnboardingLayout({
                   type="button"
                   variant="outline"
                   onClick={onSaveExit}
+                  disabled={disabled}
                 >
                   Save & exit
                 </Button>
@@ -77,7 +82,11 @@ export function OnboardingLayout({
               <Button
                 type="button"
                 onClick={onContinue}
+                disabled={disabled}
               >
+                {disabled && (
+                  <Spinner className="text-current" size={16} />
+                )}
                 {continueLabel}
               </Button>
             </div>

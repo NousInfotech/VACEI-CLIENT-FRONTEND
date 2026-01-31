@@ -8,7 +8,7 @@ import DashboardActionButton from "@/components/DashboardActionButton";
 import PageHeader from "@/components/shared/PageHeader";
 import CashFlowChart from "@/components/CashFlowChart";
 import PLSummaryChart from "@/components/PLSummaryChart";
-import { getDecodedUsername } from "@/utils/authUtils";
+import { getDecodedUsername, verifyAuthentication, handleAuthError } from "@/utils/authUtils";
 import { fetchDashboardSummary, ProcessedDashboardStat } from "@/api/financialReportsApi";
 import NoticeBoard from "@/components/dashboard/NoticeBoard";
 import { fetchUploadStatusSummary } from "@/api/documentApi";
@@ -20,6 +20,13 @@ import { AddressBookIcon, Alert02Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { User, AlertCircle, CheckCircle, ArrowRight, Clock, MoreVertical, Upload, Plus, MessageCircle, Calendar, CheckSquare } from "lucide-react";
 import { getOnboardingProgress } from "@/api/onboardingService";
+
+// Company interface
+interface Company {
+  id: string;
+  name: string;
+  registrationNumber?: string;
+}
 
 interface UploadStatusSummary {
   documentsUploaded: number;
@@ -35,35 +42,161 @@ export default function DashboardPage() {
   const [uploadSummary, setUploadSummary] = useState<UploadStatusSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploadLoading, setUploadLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true); // Loading state for auth verification
   const [revenueYTD, setRevenueYTD] = useState<{ amount: string; change: string } | null>(null);
   const [netIncomeYTD, setNetIncomeYTD] = useState<{ amount: string; change: string } | null>(null);
   const [username, setUsername] = useState<string>(''); // State for username to avoid hydration error
   const [complianceCounts, setComplianceCounts] = useState({ overdue: 0, dueSoon: 0, waiting: 0, done: 0 });
   const [activeCompany, setActiveCompany] = useState<string>("ACME LTD");
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(true);
 
-  // Check onboarding status on mount (using localStorage only - no backend)
+  // CRITICAL: Verify authentication on mount (before loading any data)
+  // This prevents page flash by showing loading state while verifying
   useEffect(() => {
-    const checkOnboarding = () => {
-      // Check localStorage directly (no API calls)
-      const saved = localStorage.getItem('onboarding-progress');
-      if (saved) {
-        try {
-          const progress = JSON.parse(saved);
-          if (progress.onboardingStatus !== 'completed') {
-            router.push('/onboarding');
+    const checkAuthentication = async () => {
+      setAuthLoading(true);
+      try {
+        const isAuthenticated = await verifyAuthentication();
+        
+        if (!isAuthenticated) {
+          // Token is invalid or expired - redirect to login immediately
+          // Clear auth data
+          localStorage.removeItem('token');
+          localStorage.removeItem('email');
+          localStorage.removeItem('user_id');
+          localStorage.removeItem('username');
+          
+          // Clear cookie
+          if (typeof document !== 'undefined') {
+            document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax';
+            document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=None; Secure';
           }
-          // If completed, allow access (no redirect needed)
-        } catch {
-          // Invalid saved data - redirect to onboarding
-          router.push('/onboarding');
+          
+          router.push('/login?message=' + encodeURIComponent('Session expired. Please login again.'));
+          return; // Don't proceed with loading data
         }
-      } else {
-        // No saved data - redirect to onboarding
-        router.push('/onboarding');
+        
+        // Authentication verified - proceed with loading dashboard data
+        setAuthLoading(false);
+      } catch (error) {
+        console.error('Authentication check failed:', error);
+        // On error, treat as unauthenticated
+        handleAuthError(error, router);
       }
     };
-    checkOnboarding();
+    
+    checkAuthentication();
   }, [router]);
+
+  // Fetch companies from backend
+  useEffect(() => {
+    if (authLoading) return; // Wait for auth verification
+    
+    const fetchCompanies = async () => {
+      setLoadingCompanies(true);
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          console.warn('No token found, cannot fetch companies');
+          setLoadingCompanies(false);
+          return;
+        }
+
+        const response = await fetch(`${backendUrl}companies`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch companies: ${response.status} ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        const companiesData = result.data || result || [];
+        
+        // Map backend response to Company interface
+        const mappedCompanies: Company[] = companiesData.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          registrationNumber: c.registrationNumber,
+        }));
+
+        setCompanies(mappedCompanies);
+        
+        // Store in localStorage
+        localStorage.setItem("vacei-companies", JSON.stringify(mappedCompanies));
+            
+        // Set active company - prioritize stored companyId, otherwise use first company
+        const storedActiveCompanyId = localStorage.getItem("vacei-active-company");
+        if (mappedCompanies.length > 0) {
+          if (storedActiveCompanyId) {
+            const company = mappedCompanies.find(c => c.id === storedActiveCompanyId);
+            if (company) {
+              setActiveCompany(company.name);
+              console.log('✅ Active company set from stored ID:', company.name);
+            } else {
+              // If stored ID doesn't exist in fetched companies, use first company
+              setActiveCompany(mappedCompanies[0].name);
+              localStorage.setItem("vacei-active-company", mappedCompanies[0].id);
+              console.log('⚠️ Stored company ID not found, using first company:', mappedCompanies[0].name);
+            }
+          } else {
+            // No stored company, use first one
+            setActiveCompany(mappedCompanies[0].name);
+            localStorage.setItem("vacei-active-company", mappedCompanies[0].id);
+            console.log('✅ Active company set to first company:', mappedCompanies[0].name);
+          }
+        } else {
+          console.warn('⚠️ No companies returned from API');
+        }
+      } catch (error) {
+        console.error("Failed to fetch companies:", error);
+        // Fallback to localStorage if available (e.g., after onboarding completion)
+        const storedCompanies = localStorage.getItem("vacei-companies");
+        if (storedCompanies) {
+          try {
+            const parsed = JSON.parse(storedCompanies);
+            setCompanies(parsed);
+            console.log('✅ Using companies from localStorage fallback:', parsed);
+            
+            const storedCompanyId = localStorage.getItem("vacei-active-company");
+            if (parsed.length > 0) {
+              if (storedCompanyId) {
+                const company = parsed.find((c: Company) => c.id === storedCompanyId);
+              if (company) {
+                setActiveCompany(company.name);
+                  console.log('✅ Active company set from localStorage:', company.name);
+                } else {
+                  setActiveCompany(parsed[0].name);
+                  localStorage.setItem("vacei-active-company", parsed[0].id);
+                  console.log('✅ Active company set to first from localStorage:', parsed[0].name);
+                }
+              } else {
+                setActiveCompany(parsed[0].name);
+                localStorage.setItem("vacei-active-company", parsed[0].id);
+                console.log('✅ Active company set to first from localStorage:', parsed[0].name);
+              }
+            }
+          } catch (e) {
+            console.error("Failed to parse stored companies:", e);
+        }
+        } else {
+          console.warn('⚠️ No companies in localStorage and API fetch failed');
+        }
+      } finally {
+        setLoadingCompanies(false);
+    }
+    };
+
+    fetchCompanies();
+  }, [authLoading]);
 
   // Set username on client side to avoid hydration error
   useEffect(() => {
@@ -72,19 +205,13 @@ export default function DashboardPage() {
       if (decoded) {
         setUsername(decoded);
       }
-      const storedCompany = localStorage.getItem("vacei-active-company");
-      const storedCompanies = localStorage.getItem("vacei-companies");
-      if (storedCompany && storedCompanies) {
-        try {
-          const companies = JSON.parse(storedCompanies);
-          const company = companies.find((c: { id: string; name: string }) => c.id === storedCompany);
-          if (company) setActiveCompany(company.name);
-        } catch {}
-      }
     }
   }, []);
 
+  // Load dashboard data (only after auth is verified)
   useEffect(() => {
+    if (authLoading) return; // Wait for auth verification
+    
     const loadDashboardData = async () => {
       setLoading(true);
       try {
@@ -121,8 +248,19 @@ export default function DashboardPage() {
         );
         setStats(filteredStats);
 
-      } catch (error) {
-        // console.error("Failed to load dashboard summary:", error);
+      } catch (error: any) {
+        console.error("Failed to load dashboard summary:", error);
+        
+        // Handle authentication errors
+        if (error?.message?.toLowerCase().includes('authentication') || 
+            error?.message?.toLowerCase().includes('unauthorized') ||
+            error?.status === 401 || 
+            error?.status === 403) {
+          handleAuthError(error, router);
+          return; // Don't set loading to false, redirect will happen
+        }
+        
+        // Other errors - show empty state
         setStats([]);
         setRevenueYTD(null);
         setNetIncomeYTD(null);
@@ -131,7 +269,7 @@ export default function DashboardPage() {
       }
     };
     loadDashboardData();
-  }, []);
+  }, [router, authLoading]);
 
   useEffect(() => {
     const loadUploadSummary = async () => {
@@ -245,10 +383,37 @@ export default function DashboardPage() {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Good morning — here's your compliance status";
-    if (hour < 17) return "Good afternoon — here's your compliance status";
-    return "Good evening — here's your compliance status";
+    let timeGreeting = '';
+    if (hour < 12) {
+      timeGreeting = 'Good morning';
+    } else if (hour < 17) {
+      timeGreeting = 'Good afternoon';
+    } else {
+      timeGreeting = 'Good evening';
+    }
+    
+    // Include username if available
+    if (username && username.trim()) {
+      // Extract first name if full name is provided
+      const firstName = username.split(' ')[0];
+      return `${timeGreeting}, ${firstName}!`;
+    }
+    
+    // Fallback greeting without name
+    return `${timeGreeting}!`;
   };
+
+  // Show loading state while verifying authentication (prevents page flash)
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-brand-body flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
+          <p className="text-gray-600">Verifying authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-brand-body p-6">
@@ -256,7 +421,7 @@ export default function DashboardPage() {
         {/* Premium Dashboard Header */}
         <PageHeader 
           title={getGreeting()}
-          subtitle="Welcome back! Here's what's happening with your business today."
+          subtitle={username ? "Here's your compliance status and what's happening with your business today." : "Welcome back! Here's what's happening with your business today."}
           activeCompany={activeCompany}
           badge={
             <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-700 font-bold text-xs uppercase tracking-widest shadow-sm text-white`}>

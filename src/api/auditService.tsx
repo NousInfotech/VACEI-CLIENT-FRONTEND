@@ -1,6 +1,6 @@
-// const apiUrl = (process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:8000/api/");
-const apiUrl = process.env.NEXT_PUBLIC_AUDIT_BACKEND_URL?.replace(/\/?$/, "/") || "";
-const backendUrl = apiUrl + "accounting-portal";
+// Use VACEI backend URL for company data
+const apiUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
+const backendUrl = apiUrl;
 
 // Get auth token from localStorage
 function getAuthHeaders(): Record<string, string> {
@@ -226,20 +226,44 @@ export interface ClearDocumentResponse {
  * @returns Promise<Company[]>
  */
 export async function getCompanies(): Promise<Pick<Company, "_id" | "name" | "registrationNumber">[]> {
-  const response = await fetch(`${backendUrl}/companies`, {
+  try {
+    const response = await fetch(`${backendUrl}companies`, {
     method: "GET",
     headers: {
       ...getAuthHeaders(),
       "Content-Type": "application/json",
     },
+      credentials: 'include',
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to fetch companies");
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || error.message || "Failed to fetch companies");
   }
 
-  return response.json();
+    const result = await response.json();
+    
+    // Backend returns { success: true, data: [...], message: "..." }
+    // Extract the data field if present, otherwise use the whole response
+    const companiesData = result.data || result || [];
+    
+    // Ensure it's an array
+    if (!Array.isArray(companiesData)) {
+      console.warn('getCompanies: Expected array but got:', typeof companiesData, companiesData);
+      return [];
+    }
+    
+    // Transform Supabase company format to frontend format
+    return companiesData.map((company: any) => ({
+      _id: company.id || company._id,
+      id: company.id || company._id,
+      name: company.name,
+      registrationNumber: company.registrationNumber,
+    }));
+  } catch (error) {
+    console.error('Error fetching companies:', error);
+    throw error;
+  }
 }
 
 /**
@@ -248,18 +272,25 @@ export async function getCompanies(): Promise<Pick<Company, "_id" | "name" | "re
  * @returns Promise<Company>
  */
 export async function getCompanyById(id: string): Promise<Company> {
-  // Try to fetch from backend first
+  // Try to fetch from VACEI backend first
   try {
-    const response = await fetch(`${backendUrl}/companies/${id}`, {
+    const response = await fetch(`${backendUrl}companies/${id}`, {
       method: "GET",
       headers: {
         ...getAuthHeaders(),
         "Content-Type": "application/json",
       },
+      credentials: 'include',
     });
 
     if (response.ok) {
-      return response.json();
+      const result = await response.json();
+      // Backend returns { success: true, data: {...}, message: "..." }
+      // Extract the data field if present, otherwise use the whole response
+      return result.data || result;
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      console.warn("Failed to fetch company from backend:", response.status, errorData);
     }
   } catch (error) {
     console.warn("Failed to fetch company from backend, using mock data:", error);
@@ -282,20 +313,24 @@ export async function getCompanyById(id: string): Promise<Company> {
  * @returns Promise<HierarchyResponse>
  */
 export async function getCompanyHierarchy(id: string): Promise<HierarchyData> {
-  const response = await fetch(`${backendUrl}/companies/${id}/hierarchy`, {
+  const response = await fetch(`${backendUrl}companies/${id}/hierarchy`, {
     method: "GET",
     headers: {
       ...getAuthHeaders(),
       "Content-Type": "application/json",
     },
+    credentials: 'include',
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to fetch company hierarchy");
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || error.message || "Failed to fetch company hierarchy");
   }
 
-  return response.json();
+  const result = await response.json();
+  // Backend returns { success: true, data: {...}, message: "..." }
+  // Extract the data field if present, otherwise use the whole response
+  return result.data || result;
 }
 
 // ============================================================================

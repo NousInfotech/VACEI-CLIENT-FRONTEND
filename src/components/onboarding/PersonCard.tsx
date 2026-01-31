@@ -57,6 +57,22 @@ export function PersonCard({
             placeholder="email@example.com"
           />
         </div>
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Address *</label>
+          <Input
+            value={person.address || ''}
+            onChange={(e) => onChange(index, 'address', e.target.value)}
+            placeholder="Enter address"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Nationality *</label>
+          <Input
+            value={person.nationality || ''}
+            onChange={(e) => onChange(index, 'nationality', e.target.value)}
+            placeholder="e.g., Maltese, British"
+          />
+        </div>
         {showOwnership && (
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Ownership %</label>

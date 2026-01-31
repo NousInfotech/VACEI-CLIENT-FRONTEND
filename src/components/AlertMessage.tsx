@@ -38,7 +38,7 @@ const AlertMessage: React.FC<AlertProps> = ({
 
   return (
     <div
-      className={`fixed top-4 right-4 z-50 max-w-sm rounded px-4 py-3 text-sm shadow-md flex justify-between items-center mb-4 ${variantStyles[variant]}`}
+      className={`fixed top-4 right-4 z-[9999] max-w-sm rounded-lg px-4 py-3 text-sm shadow-lg flex justify-between items-center mb-4 transition-all duration-300 ease-out ${variantStyles[variant]}`}
       role="alert"
     >
       <span>{message}</span>
