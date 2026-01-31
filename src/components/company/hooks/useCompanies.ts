@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { getCompanies, Company } from '@/api/auditService'
+import { Company } from '@/api/auditService'
 
 interface UseCompaniesReturn {
   companies: Pick<Company, '_id' | 'name' | 'registrationNumber'>[]
@@ -19,8 +19,9 @@ export const useCompanies = (): UseCompaniesReturn => {
     setLoading(true)
     setError(null)
     try {
-      const data = await getCompanies()
-      setCompanies(data)
+      // Import mock data dynamically or statically
+      const { MOCK_COMPANIES } = await import('../mockData')
+      setCompanies(MOCK_COMPANIES)
     } catch (err: any) {
       setError(err.message || 'Failed to fetch companies')
       setCompanies([])

@@ -6,6 +6,8 @@ import DashboardCard from "@/components/DashboardCard"
 import EmptyState from '../shared/EmptyState'
 import { TableSkeleton } from "../shared/CommonSkeletons"
 import { useEngagement } from './hooks/useEngagement'
+import { ENGAGEMENT_CONFIG } from '@/config/engagementConfig'
+import { MOCK_ENGAGEMENT_DATA } from './mockEngagementData'
 
 const TaxTab = () => {
   const { engagement } = useEngagement()
@@ -16,6 +18,43 @@ const TaxTab = () => {
   useEffect(() => {
     const fetchTaxData = async () => {
       try {
+        if (ENGAGEMENT_CONFIG.USE_MOCK_DATA) {
+          // Mock data for Tax Agencies and Rates
+          const mockTaxData = [
+            {
+              entityType: "TaxAgency",
+              jsonData: {
+                TaxAgency: [
+                  { Id: "1", DisplayName: "Malta Tax and Customs Administration" },
+                  { Id: "2", DisplayName: "Social Security Department" }
+                ]
+              }
+            },
+            {
+              entityType: "TaxRate",
+              jsonData: {
+                TaxRate: [
+                  { Id: "1", Name: "Standard VAT", RateValue: 18 },
+                  { Id: "2", Name: "Reduced VAT", RateValue: 7 },
+                  { Id: "3", Name: "Corporate Tax", RateValue: 35 }
+                ]
+              }
+            }
+          ];
+          setTaxData(mockTaxData);
+          setCompany({
+            simplifiedProfile: {
+              companyName: MOCK_ENGAGEMENT_DATA.company.name,
+              legalName: MOCK_ENGAGEMENT_DATA.company.name,
+              email: "finance@springfield.mt",
+              address: MOCK_ENGAGEMENT_DATA.company.address,
+              startDate: "2020-01-01"
+            }
+          });
+          setLoading(false);
+          return;
+        }
+
         const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL
         const token = localStorage.getItem("token") || ""
 

@@ -4,19 +4,19 @@ import React from 'react';
 import { FolderIcon, Download, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { getFileIcon } from '@/data/libraryData';
-import { useLibrary } from '../../../app/context/LibraryContext';
+import { getFileIcon } from '@/lib/libraryData';
+import { useLibrary } from '@/app/context/LibraryContext';
 
 export const ListView: React.FC = () => {
-  const { currentItems, selectedItems, handleDoubleClick, handleSelection, handleContextMenu } = useLibrary();
+  const { currentItems, selectedItems, handleDoubleClick, handleSelection, handleContextMenu, handleDownload } = useLibrary();
 
   return (
     <table className="w-full text-left border-separate border-spacing-y-2">
       <thead>
         <tr className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
           <th className="pb-2 pl-4">Name</th>
-          <th className="pb-2">Type</th>
-          <th className="pb-2">Size</th>
+          <th className="pb-2 hidden sm:table-cell">Type</th>
+          <th className="pb-2 hidden md:table-cell">Size</th>
           <th className="pb-2 text-right pr-4">Actions</th>
         </tr>
       </thead>
@@ -48,20 +48,30 @@ export const ListView: React.FC = () => {
                   <span className="text-sm text-gray-700 font-medium">{item.name}</span>
                 </div>
               </td>
-              <td className="py-3">
+              <td className="py-3 hidden sm:table-cell">
                 <span className="text-xs text-gray-500 uppercase font-medium">{item.fileType || 'Folder'}</span>
               </td>
-              <td className="py-3">
-                <span className="text-xs text-gray-500">{item.size || '--'}</span>
+              <td className="py-3 hidden md:table-cell">
+                <span className="text-xs text-gray-500">{item.size}</span>
               </td>
               <td className="pr-4 text-right rounded-r-xl">
                 <div className="flex items-center justify-end gap-1 opacity-10 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg hover:bg-white shadow-sm border border-transparent hover:border-gray-200">
-                    <Download className="w-4 h-4 text-gray-600" />
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={(e) => { e.stopPropagation(); handleDownload(item); }}
+                    className="h-10 w-10 p-0 rounded-lg hover:bg-white shadow-sm border border-transparent hover:border-gray-200"
+                  >
+                    <Download className="w-5 h-5 text-gray-600" />
                   </Button>
-                  {item.type === 'file' && (
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg hover:bg-white shadow-sm border border-transparent hover:border-gray-200">
-                      <Eye className="w-4 h-4 text-gray-600" />
+                  {item.type === 'file' && (item.fileType === 'PDF' || ['PNG', 'JPG', 'JPEG'].includes(item.fileType || '')) && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={(e) => { e.stopPropagation(); handleDoubleClick(item); }}
+                      className="h-10 w-10 p-0 rounded-lg hover:bg-white shadow-sm border border-transparent hover:border-gray-200"
+                    >
+                      <Eye className="w-5 h-5 text-gray-600" />
                     </Button>
                   )}
                 </div>

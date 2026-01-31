@@ -53,7 +53,7 @@ const STORAGE_KEY = "vacei-service-request-draft";
 
 const serviceLabels: Record<ServiceCode, string> = {
   bookkeeping: "Bookkeeping",
-  vat: "VAT & Tax",
+  vat: "VAT",
   payroll: "Payroll",
   audit: "Audit & Annual Accounts",
   csp: "Corporate and CSP Services",

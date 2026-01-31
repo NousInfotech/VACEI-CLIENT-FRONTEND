@@ -274,7 +274,7 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
         const startDate = new Date(existingDetails.companyStartDate);
         
         // Map directors, shareholders, etc. to involvementDetails
-        const involvementDetails: any[] = [];
+        let involvementDetails: any[] = [];
 
         // Add directors if option is 'own'
         if (existingDetails.directors.option === 'own' && existingDetails.directors.persons) {
@@ -307,32 +307,118 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
         }
 
         // Add company secretary if option is 'own'
-        if (existingDetails.companySecretary.option === 'own' && existingDetails.companySecretary.person) {
-          const secretary = existingDetails.companySecretary.person;
-          if (secretary.fullName?.trim() && secretary.address?.trim() && secretary.nationality?.trim()) {
-            involvementDetails.push({
-              personName: secretary.fullName.trim(),
-              personAddress: secretary.address.trim(),
-              personNationality: secretary.nationality.trim(),
-              role: ['SECRETARY'] as const,
-              ordinary: 0,
-            });
+        if (existingDetails.companySecretary.option === 'own') {
+          // Get user information from onboarding data
+          const onboardingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
+          const userFirstName = onboardingData.firstName || '';
+          const userLastName = onboardingData.lastName || '';
+          const userFullName = `${userFirstName} ${userLastName}`.trim();
+          
+          let secretaryAdded = false;
+          
+          if (existingDetails.companySecretary.person) {
+            const secretary = existingDetails.companySecretary.person;
+            if (secretary.fullName?.trim() && secretary.address?.trim() && secretary.nationality?.trim()) {
+              involvementDetails.push({
+                personName: secretary.fullName.trim(),
+                personAddress: secretary.address.trim(),
+                personNationality: secretary.nationality.trim(),
+                role: ['SECRETARY'] as const,
+                ordinary: 0,
+              });
+              secretaryAdded = true;
+            }
+          }
+          
+          // If person not provided or incomplete, use user information
+          if (!secretaryAdded) {
+            const userAddress = existingDetails.registeredAddress || '';
+            const userNationality = onboardingData.nationality || 'Unknown';
+            
+            if (userFullName && userAddress.trim()) {
+              involvementDetails.push({
+                personName: userFullName,
+                personAddress: userAddress.trim(),
+                personNationality: userNationality.trim(),
+                role: ['SECRETARY'] as const,
+                ordinary: 0,
+              });
+              secretaryAdded = true;
+            }
           }
         }
 
-        // Add judicial representative if option is 'own'
-        if (existingDetails.judicialRepresentative.option === 'own' && existingDetails.judicialRepresentative.person) {
-          const rep = existingDetails.judicialRepresentative.person;
-          if (rep.fullName?.trim() && rep.address?.trim() && rep.nationality?.trim()) {
+        // Add judicial representative if option is 'own' (default is 'own')
+        const judicialRepOption = existingDetails.judicialRepresentative?.option || 'own'; // Default to 'own' if undefined
+        
+        if (judicialRepOption === 'own') {
+          // Get user information from onboarding data
+          const onboardingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
+          const userFirstName = onboardingData.firstName || '';
+          const userLastName = onboardingData.lastName || '';
+          const userEmail = onboardingData.email || '';
+          const userFullName = `${userFirstName} ${userLastName}`.trim();
+          
+          let judicialRepAdded = false;
+          
+          if (existingDetails.judicialRepresentative.person) {
+            const rep = existingDetails.judicialRepresentative.person;
+            if (rep.fullName?.trim() && rep.address?.trim() && rep.nationality?.trim()) {
+              involvementDetails.push({
+                personName: rep.fullName.trim(),
+                personAddress: rep.address.trim(),
+                personNationality: rep.nationality.trim(),
+                role: ['JUDICIAL_REPRESENTATIVE'] as const,
+                ordinary: 0,
+              });
+              judicialRepAdded = true;
+            }
+          }
+          
+          // If person not provided or incomplete, use user information
+          if (!judicialRepAdded) {
+            // Use user information if person not provided
+            const userAddress = existingDetails.registeredAddress || '';
+            const userNationality = onboardingData.nationality || 'Unknown';
+            
+            // Always add judicial representative - use user info if available, otherwise use company address
+            // Backend requires address, so use registered address or a placeholder
+            const finalName = userFullName || 'Judicial Representative';
+            const finalAddress = userAddress.trim() || 'Address to be provided';
+            const finalNationality = userNationality.trim() || 'Unknown';
+            
             involvementDetails.push({
-              personName: rep.fullName.trim(),
-              personAddress: rep.address.trim(),
-              personNationality: rep.nationality.trim(),
+              personName: finalName,
+              personAddress: finalAddress,
+              personNationality: finalNationality,
               role: ['JUDICIAL_REPRESENTATIVE'] as const,
               ordinary: 0,
             });
+            judicialRepAdded = true;
           }
         }
+
+        // Merge duplicate persons - combine their roles into a single involvement
+        // This is necessary because the backend skips creating a new involvement if one already exists for the same person
+        // IMPORTANT: Do this BEFORE creating companyPayload so the merged data is used
+        const mergedInvolvements = new Map<string, typeof involvementDetails[0]>();
+        for (const inv of involvementDetails) {
+          // Normalize the key to handle case sensitivity and whitespace differences
+          const normalizedName = inv.personName.trim().toLowerCase();
+          const normalizedAddress = inv.personAddress.trim().toLowerCase();
+          const normalizedNationality = inv.personNationality.trim().toLowerCase();
+          const key = `${normalizedName}|${normalizedAddress}|${normalizedNationality}`;
+          
+          if (mergedInvolvements.has(key)) {
+            const existing = mergedInvolvements.get(key)!;
+            // Merge roles - combine arrays and remove duplicates
+            const combinedRoles = [...new Set([...existing.role, ...inv.role])];
+            existing.role = combinedRoles as typeof existing.role;
+          } else {
+            mergedInvolvements.set(key, { ...inv });
+          }
+        }
+        involvementDetails = Array.from(mergedInvolvements.values());
 
         companyPayload = {
           name: existingDetails.companyName,
@@ -360,7 +446,7 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
           : new Date(); // Use expected date or current date
 
         // Map directors, shareholders, etc. to involvementDetails
-        const involvementDetails: any[] = [];
+        let involvementDetails: any[] = [];
 
         // Add directors if option is 'own'
         // According to API spec: role should be an array
@@ -396,33 +482,114 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
 
         // Add company secretary if option is 'own'
         // According to API spec: role should be an array
-        if (newDetails.companySecretary.option === 'own' && newDetails.companySecretary.person) {
-          const secretary = newDetails.companySecretary.person;
-          if (secretary.fullName?.trim() && secretary.address?.trim() && secretary.nationality?.trim()) {
-            involvementDetails.push({
-              personName: secretary.fullName.trim(),
-              personAddress: secretary.address.trim(),
-              personNationality: secretary.nationality.trim(),
-              role: ['SECRETARY'] as const, // Array of roles as per API spec
-              ordinary: 0,
-            });
+        if (newDetails.companySecretary.option === 'own') {
+          // Get user information from onboarding data
+          const onboardingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
+          const userFirstName = onboardingData.firstName || '';
+          const userLastName = onboardingData.lastName || '';
+          const userEmail = onboardingData.email || '';
+          const userFullName = `${userFirstName} ${userLastName}`.trim();
+          
+          if (newDetails.companySecretary.person) {
+            const secretary = newDetails.companySecretary.person;
+            if (secretary.fullName?.trim() && secretary.address?.trim() && secretary.nationality?.trim()) {
+              involvementDetails.push({
+                personName: secretary.fullName.trim(),
+                personAddress: secretary.address.trim(),
+                personNationality: secretary.nationality.trim(),
+                role: ['SECRETARY'] as const, // Array of roles as per API spec
+                ordinary: 0,
+              });
+            }
+          } else if (userFullName) {
+            // Use user information if person not provided
+            const userAddress = newDetails.registeredAddress.address || '';
+            const userNationality = onboardingData.nationality || 'Unknown';
+            
+            if (userAddress.trim()) {
+              involvementDetails.push({
+                personName: userFullName,
+                personAddress: userAddress.trim(),
+                personNationality: userNationality.trim(),
+                role: ['SECRETARY'] as const, // Array of roles as per API spec
+                ordinary: 0,
+              });
+            }
           }
         }
 
-        // Add judicial representative if option is 'own'
+        // Add judicial representative if option is 'own' (default is 'own')
         // According to API spec: role should be an array
-        if (newDetails.judicialRepresentative.option === 'own' && newDetails.judicialRepresentative.person) {
-          const rep = newDetails.judicialRepresentative.person;
-          if (rep.fullName?.trim() && rep.address?.trim() && rep.nationality?.trim()) {
+        const judicialRepOption = newDetails.judicialRepresentative?.option || 'own'; // Default to 'own' if undefined
+        
+        if (judicialRepOption === 'own') {
+          // Get user information from onboarding data
+          const onboardingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
+          const userFirstName = onboardingData.firstName || '';
+          const userLastName = onboardingData.lastName || '';
+          const userEmail = onboardingData.email || '';
+          const userFullName = `${userFirstName} ${userLastName}`.trim();
+          
+          let judicialRepAdded = false;
+          
+          if (newDetails.judicialRepresentative.person) {
+            const rep = newDetails.judicialRepresentative.person;
+            if (rep.fullName?.trim() && rep.address?.trim() && rep.nationality?.trim()) {
+              involvementDetails.push({
+                personName: rep.fullName.trim(),
+                personAddress: rep.address.trim(),
+                personNationality: rep.nationality.trim(),
+                role: ['JUDICIAL_REPRESENTATIVE'] as const, // Array of roles as per API spec
+                ordinary: 0,
+              });
+              judicialRepAdded = true;
+            }
+          }
+          
+          // If person not provided or incomplete, use user information
+          if (!judicialRepAdded) {
+            // Use user information if person not provided
+            const userAddress = newDetails.registeredAddress.address || '';
+            const userNationality = onboardingData.nationality || 'Unknown';
+            
+            // Always add judicial representative - use user info if available, otherwise use company address
+            // Backend requires address, so use registered address or a placeholder
+            const finalName = userFullName || 'Judicial Representative';
+            const finalAddress = userAddress.trim() || newDetails.registeredAddress.address || 'Address to be provided';
+            const finalNationality = userNationality.trim() || 'Unknown';
+            
             involvementDetails.push({
-              personName: rep.fullName.trim(),
-              personAddress: rep.address.trim(),
-              personNationality: rep.nationality.trim(),
+              personName: finalName,
+              personAddress: finalAddress,
+              personNationality: finalNationality,
               role: ['JUDICIAL_REPRESENTATIVE'] as const, // Array of roles as per API spec
               ordinary: 0,
             });
+            judicialRepAdded = true;
           }
         }
+
+        // Merge duplicate persons - combine their roles into a single involvement
+        // This is necessary because the backend skips creating a new involvement if one already exists for the same person
+        // IMPORTANT: Do this BEFORE creating companyPayload so the merged data is used
+        const mergedInvolvements = new Map<string, typeof involvementDetails[0]>();
+        for (const inv of involvementDetails) {
+          // Normalize the key to handle case sensitivity and whitespace differences
+          const normalizedName = inv.personName.trim().toLowerCase();
+          const normalizedAddress = inv.personAddress.trim().toLowerCase();
+          const normalizedNationality = inv.personNationality.trim().toLowerCase();
+          const key = `${normalizedName}|${normalizedAddress}|${normalizedNationality}`;
+          
+          if (mergedInvolvements.has(key)) {
+            const existing = mergedInvolvements.get(key)!;
+            // Merge roles - combine arrays and remove duplicates
+            const combinedRoles = [...new Set([...existing.role, ...inv.role])];
+            existing.role = combinedRoles as typeof existing.role;
+          } else {
+            mergedInvolvements.set(key, { ...inv });
+          }
+        }
+        involvementDetails = Array.from(mergedInvolvements.values());
 
         companyPayload = {
           name: companyName,

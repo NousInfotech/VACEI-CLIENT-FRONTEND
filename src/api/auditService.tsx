@@ -272,40 +272,36 @@ export async function getCompanies(): Promise<Pick<Company, "_id" | "name" | "re
  * @returns Promise<Company>
  */
 export async function getCompanyById(id: string): Promise<Company> {
-  // Try to fetch from VACEI backend first
-  try {
-    const response = await fetch(`${backendUrl}companies/${id}`, {
-      method: "GET",
-      headers: {
-        ...getAuthHeaders(),
-        "Content-Type": "application/json",
-      },
-      credentials: 'include',
-    });
+  // Fetch from VACEI backend
+  const response = await fetch(`${backendUrl}companies/${id}`, {
+    method: "GET",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    credentials: 'include',
+  });
 
-    if (response.ok) {
-      const result = await response.json();
-      // Backend returns { success: true, data: {...}, message: "..." }
-      // Extract the data field if present, otherwise use the whole response
-      return result.data || result;
-    } else {
-      const errorData = await response.json().catch(() => ({}));
-      console.warn("Failed to fetch company from backend:", response.status, errorData);
-    }
-  } catch (error) {
-    console.warn("Failed to fetch company from backend, using mock data:", error);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage = errorData.error || errorData.message || `Failed to fetch company: ${response.status}`;
+    throw new Error(errorMessage);
   }
 
-  // Fallback to mock data - return mock data for any ID when backend fails
-  const { MOCK_COMPANY_DATA } = await import("@/components/company/mockData");
-  const mockCompany = MOCK_COMPANY_DATA.data;
+  const result = await response.json();
+  // Backend returns { success: true, data: {...}, message: "..." }
+  // Extract the data field if present, otherwise use the whole response
+  const companyData = result.data || result;
   
-  // Return mock data (useful for development and when backend is unavailable)
-  return {
-    ...mockCompany,
-    _id: id,
-    id: id,
-  } as Company;
+  // Ensure the company data has both _id and id fields for compatibility
+  if (companyData.id && !companyData._id) {
+    companyData._id = companyData.id;
+  }
+  if (companyData._id && !companyData.id) {
+    companyData.id = companyData._id;
+  }
+  
+  return companyData as Company;
 }
 /**
  * Get company hierarchy by ID

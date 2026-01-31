@@ -1870,6 +1870,241 @@ export const MOCK_ENGAGEMENT_DATA: EngagementData = {
   lead_sheets: [],
   documentRequests: [
     {
+        "_id": "mock-dr-vat-001",
+        "engagement": "68f62e70da7e334a6f9b79c6",
+        "clientId": "ff0978b5-ca1d-4f44-977c-f5e0b9c5952c",
+        "name": "VAT Return Documentation - Q4 2025",
+        "category": "VAT Compliance",
+        "description": "Please provide all sales and purchase invoices for the last quarter to prepare the VAT return.",
+        "status": "pending",
+        "documents": [
+            {
+                "name": "Sales Ledger",
+                "type": "direct",
+                "status": "pending",
+                "_id": "mock-doc-vat-001"
+            },
+            {
+                "name": "Purchase Ledger",
+                "type": "direct",
+                "status": "pending",
+                "_id": "mock-doc-vat-002"
+            }
+        ],
+        "multipleDocuments": [
+            {
+                "name": "Bank Proof",
+                "type": "template",
+                "instruction": "Upload Required Document",
+                "multiple": [
+                    {
+                        "template": {
+                            "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/engagement-documents/templates/template_1767704212952_0lj37.pdf",
+                            "instruction": "Upload Required Document"
+                        },
+                        "label": "Front SIde",
+                        "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/engagement-documents/68f62e70da7e334a6f9b79c6/Capital%20&%20Reserves/1767705186191_bz41y_0.jpg",
+                        "uploadedFileName": "example-of-a-real-bank-statement-from-bank-of-america-1440x1238.jpg",
+                        "uploadedAt": "2026-01-06T13:13:06.984Z",
+                        "status": "uploaded",
+                        "comment": "",
+                        "_id": "695d0a6215597e608038228e"
+                    },
+                    {
+                        "template": {
+                            "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/engagement-documents/templates/template_1767704213011_4q17m.pdf",
+                            "instruction": "Upload Required Document"
+                        },
+                        "label": "Back Side",
+                        "status": "pending",
+                        "comment": "",
+                        "_id": "695d069615597e60803807e8",
+                        "uploadedAt": "2026-01-06T12:56:54.431Z"
+                    }
+                ],
+                "_id": "695d069615597e60803807e6"
+            }
+        ],
+        "requestedAt": "2026-01-15T09:00:00.000Z"
+    },
+    {
+        "_id": "mock-dr-payroll-001",
+        "engagement": "68f62e70da7e334a6f9b79c6",
+        "clientId": "ff0978b5-ca1d-4f44-977c-f5e0b9c5952c",
+        "name": "January Payroll Records",
+        "category": "Payroll",
+        "description": "Required documentation for payroll processing and statutory filings for January 2026.",
+        "status": "completed",
+        "documents": [
+            {
+                "name": "ID Cards - New Joiners",
+                "type": "direct",
+                "status": "uploaded",
+                "_id": "mock-doc-payroll-001",
+                "uploadedAt": "2026-01-20T14:30:00.000Z"
+            },
+            {
+                "name": "FS3 Forms",
+                "type": "direct",
+                "status": "uploaded",
+                "_id": "mock-doc-payroll-002",
+                "uploadedAt": "2026-01-20T14:35:00.000Z"
+            }
+        ],
+        "multipleDocuments": [
+            {
+                "name": "Bank Proof",
+                "type": "template",
+                "instruction": "Upload Required Document",
+                "multiple": [
+                    {
+                        "template": {
+                            "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/engagement-documents/templates/template_1767704212952_0lj37.pdf",
+                            "instruction": "Upload Required Document"
+                        },
+                        "label": "Front SIde",
+                        "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/engagement-documents/68f62e70da7e334a6f9b79c6/Capital%20&%20Reserves/1767705186191_bz41y_0.jpg",
+                        "uploadedFileName": "example-of-a-real-bank-statement-from-bank-of-america-1440x1238.jpg",
+                        "uploadedAt": "2026-01-06T13:13:06.984Z",
+                        "status": "uploaded",
+                        "comment": "",
+                        "_id": "695d0a6215597e608038228e"
+                    },
+                    {
+                        "template": {
+                            "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/engagement-documents/templates/template_1767704213011_4q17m.pdf",
+                            "instruction": "Upload Required Document"
+                        },
+                        "label": "Back Side",
+                        "status": "pending",
+                        "comment": "",
+                        "_id": "695d069615597e60803807e8",
+                        "uploadedAt": "2026-01-06T12:56:54.431Z"
+                    }
+                ],
+                "_id": "695d069615597e60803807e6"
+            }
+        ],
+        "requestedAt": "2026-01-18T10:00:00.000Z"
+    },
+    {
+        "_id": "mock-dr-audit-001",
+        "engagement": "68f62e70da7e334a6f9b79c6",
+        "clientId": "ff0978b5-ca1d-4f44-977c-f5e0b9c5952c",
+        "name": "Fixed Asset Verification",
+        "category": "Audit Preparation",
+        "description": "Documents needed for the physical verification of assets and depreciation schedule review.",
+        "status": "submitted",
+        "documents": [
+            {
+                "name": "Fixed Asset Register",
+                "type": "direct",
+                "status": "uploaded",
+                "_id": "mock-doc-audit-001",
+                "uploadedAt": "2026-01-25T11:20:00.000Z"
+            },
+            {
+                "name": "Additions Vouchers",
+                "type": "direct",
+                "status": "pending",
+                "_id": "mock-doc-audit-002"
+            }
+        ],
+        "multipleDocuments": [
+            {
+                "name": "Bank Proof",
+                "type": "template",
+                "instruction": "Upload Required Document",
+                "multiple": [
+                    {
+                        "template": {
+                            "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/engagement-documents/templates/template_1767704212952_0lj37.pdf",
+                            "instruction": "Upload Required Document"
+                        },
+                        "label": "Front SIde",
+                        "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/engagement-documents/68f62e70da7e334a6f9b79c6/Capital%20&%20Reserves/1767705186191_bz41y_0.jpg",
+                        "uploadedFileName": "example-of-a-real-bank-statement-from-bank-of-america-1440x1238.jpg",
+                        "uploadedAt": "2026-01-06T13:13:06.984Z",
+                        "status": "uploaded",
+                        "comment": "",
+                        "_id": "695d0a6215597e608038228e"
+                    },
+                    {
+                        "template": {
+                            "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/engagement-documents/templates/template_1767704213011_4q17m.pdf",
+                            "instruction": "Upload Required Document"
+                        },
+                        "label": "Back Side",
+                        "status": "pending",
+                        "comment": "",
+                        "_id": "695d069615597e60803807e8",
+                        "uploadedAt": "2026-01-06T12:56:54.431Z"
+                    }
+                ],
+                "_id": "695d069615597e60803807e6"
+            }
+        ],
+        "requestedAt": "2026-01-22T08:45:00.000Z"
+    },
+    {
+        "_id": "mock-dr-strat-001",
+        "engagement": "68f62e70da7e334a6f9b79c6",
+        "clientId": "ff0978b5-ca1d-4f44-977c-f5e0b9c5952c",
+        "name": "Business Plan 2026-2028",
+        "category": "Strategic Planning",
+        "description": "Draft projections and market analysis for the upcoming three-year strategic plan.",
+        "status": "pending",
+        "documents": [
+            {
+                "name": "3-Year Revenue Projection",
+                "type": "direct",
+                "status": "pending",
+                "_id": "mock-doc-strat-001"
+            },
+            {
+                "name": "Market Research Report",
+                "type": "direct",
+                "status": "pending",
+                "_id": "mock-doc-strat-002"
+            }
+        ],
+        "multipleDocuments": [
+            {
+                "name": "Bank Proof",
+                "type": "template",
+                "instruction": "Upload Required Document",
+                "multiple": [
+                    {
+                        "template": {
+                            "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/engagement-documents/templates/template_1767704212952_0lj37.pdf",
+                            "instruction": "Upload Required Document"
+                        },
+                        "label": "Front SIde",
+                        "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/engagement-documents/68f62e70da7e334a6f9b79c6/Capital%20&%20Reserves/1767705186191_bz41y_0.jpg",
+                        "uploadedFileName": "example-of-a-real-bank-statement-from-bank-of-america-1440x1238.jpg",
+                        "uploadedAt": "2026-01-06T13:13:06.984Z",
+                        "status": "uploaded",
+                        "comment": "",
+                        "_id": "695d0a6215597e608038228e"
+                    },
+                    {
+                        "template": {
+                            "url": "https://xqetphggxhqttjnaxilk.supabase.co/storage/v1/object/public/engagement-documents/templates/template_1767704213011_4q17m.pdf",
+                            "instruction": "Upload Required Document"
+                        },
+                        "label": "Back Side",
+                        "status": "pending",
+                        "comment": "",
+                        "_id": "695d069615597e60803807e8",
+                        "uploadedAt": "2026-01-06T12:56:54.431Z"
+                    }
+                ],
+                "_id": "695d069615597e60803807e6"
+            }
+        ],
+        "requestedAt": "2026-01-27T10:30:00.000Z"
+    },
+    {
         "_id": "695d05ef15597e608038070b",
         "engagement": "68f62e70da7e334a6f9b79c6",
         "clientId": "ff0978b5-ca1d-4f44-977c-f5e0b9c5952c",

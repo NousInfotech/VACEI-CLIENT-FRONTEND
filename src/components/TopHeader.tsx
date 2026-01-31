@@ -289,6 +289,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             onClick: () => {
                 setActiveCompany(c.id);
                 if (typeof window !== "undefined") localStorage.setItem("vacei-active-company", c.id);
+                router.push(`/dashboard/company/${c.id}`);
             }
         };
     });

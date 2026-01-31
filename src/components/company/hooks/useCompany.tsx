@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { getCompanyById, Company } from '@/api/auditService'
+import { Company, getCompanyById } from '@/api/auditService'
 
 interface CompanyContextType {
   company: Company | null
@@ -31,8 +31,9 @@ export const CompanyProvider: React.FC<CompanyProviderProps> = ({ companyId, chi
     setLoading(true)
     setError(null)
     try {
-      const data = await getCompanyById(companyId)
-      setCompany(data)
+      // Fetch company data from backend API
+      const companyData = await getCompanyById(companyId)
+      setCompany(companyData)
     } catch (err: any) {
       setError(err.message || 'Failed to fetch company')
       setCompany(null)

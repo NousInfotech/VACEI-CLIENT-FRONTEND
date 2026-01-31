@@ -3,14 +3,14 @@
 import React from 'react';
 import { FolderIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getFileIcon } from '@/data/libraryData';
-import { useLibrary } from '../../../app/context/LibraryContext';
+import { getFileIcon } from '@/lib/libraryData';
+import { useLibrary } from '@/app/context/LibraryContext';
 
 export const GridView: React.FC = () => {
   const { currentItems, selectedItems, handleDoubleClick, handleSelection, handleContextMenu } = useLibrary();
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
       {currentItems.map((item) => {
         const Icon = item.type === 'folder' ? FolderIcon : getFileIcon(item.fileType);
         const isSelected = selectedItems.includes(item.id);
@@ -37,7 +37,9 @@ export const GridView: React.FC = () => {
             </div>
             <div className="text-center overflow-hidden w-full">
               <p className="text-sm text-gray-700 font-medium truncate px-2">{item.name}</p>
-              <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-tight">{item.fileType || 'Folder'} • {item.size || '--'}</p>
+              <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-tight">
+                {item.fileType || 'Folder'} {item.size && `• ${item.size}`}
+              </p>
             </div>
           </div>
         );

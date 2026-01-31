@@ -69,7 +69,7 @@ const Reclassification = () => {
             <CardHeader className="bg-slate-50/50 border-b border-gray-300 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-100 text-orange-700 font-bold">
+                  <div className="flex items-center justify-center px-5 py-2 rounded-lg bg-orange-100 text-orange-700 font-bold">
                     {rc.reclassificationNo}
                   </div>
                   <div>

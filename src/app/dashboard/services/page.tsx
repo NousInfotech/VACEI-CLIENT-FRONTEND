@@ -53,12 +53,22 @@ const serviceCategories = [
       },
       {
         slug: "vat",
-        title: "VAT & Tax",
+        title: "VAT",
         status: "Draft",
         statusTone: "info",
         href: "/dashboard/services/vat",
         icon: TaxesIcon,
-        description: "VAT periods, submissions and tax review.",
+        description: "VAT periods, submissions and returns.",
+        color: "green",
+      },
+      {
+        slug: "tax",
+        title: "Tax",
+        status: "Open",
+        statusTone: "info",
+        href: "/dashboard/services/tax",
+        icon: TaxesIcon,
+        description: "Corporate and personal tax compliance.",
         color: "green",
       },
       {
@@ -166,7 +176,7 @@ const serviceCategories = [
       active: true,
       status: "Active",
       cta: "View services",
-      services: ["Bookkeeping", "VAT & Tax", "Payroll"], // Demo services
+      services: ["Bookkeeping", "VAT", "Tax", "Payroll"], // Demo services
     },
     {
       label: "Pending Actions",
@@ -435,7 +445,7 @@ export default function ServicesHubPage() {
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="space-y-3 flex-1 text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
-              <div className="p-2 rounded-xl bg-primary shadow-lg shadow-primary/20">
+              <div className="p-2 rounded-lg shadow-lg shadow-primary/20">
                 <TrendingUp className="w-5 h-5" />
               </div>
               <h3 className="text-xl font-bold text-brand-body tracking-tight">

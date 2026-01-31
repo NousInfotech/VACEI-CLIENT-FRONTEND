@@ -129,11 +129,7 @@ const Engagement = () => {
   
   return (
     <div className="p-8 max-w-[1600px] mx-auto min-h-screen bg-white space-y-10">
-      <div className="flex flex-col gap-2">
-        <BackButton />
-      </div>
-
-      <EngagementSummary 
+      {/* <EngagementSummary 
         serviceName={engagement.title || "Audit Engagement"}
         description="Statutory audit engagement for the current financial period ensuring compliance with local regulations and international standards."
         status="on_track"
@@ -145,7 +141,11 @@ const Engagement = () => {
           { type: 'schedule', label: 'Schedule a call' }
         ]}
       />
-      
+       */}
+
+       <PageHeader 
+        title={engagement.title || "Audit Engagement"}
+      />
       <div className="space-y-6">
         <PillTabs 
           tabs={tabs} 

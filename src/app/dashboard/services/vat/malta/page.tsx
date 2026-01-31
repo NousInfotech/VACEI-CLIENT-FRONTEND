@@ -119,7 +119,7 @@ export default function VatMaltaPage() {
           <div className="flex gap-2">
             <Link href="/dashboard/services/vat">
               <Button variant="outline" className="bg-light text-primary-color-new">
-                Back to VAT & Tax
+                Back to VAT
               </Button>
             </Link>
             <Button

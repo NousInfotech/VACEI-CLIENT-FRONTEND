@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { OnboardingLayout } from '@/components/onboarding/OnboardingLayout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -30,21 +30,8 @@ export default function UserRegistrationScreen({ onComplete, onSaveExit, onBack 
     phone?: string;
   }>({});
 
-  useEffect(() => {
-    // Load saved data if available
-    const saved = localStorage.getItem('onboarding-data');
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        if (data.email) setEmail(data.email);
-        if (data.firstName) setFirstName(data.firstName);
-        if (data.lastName) setLastName(data.lastName);
-        if (data.phone) setPhone(data.phone);
-      } catch (error) {
-        console.error('Failed to parse saved data:', error);
-      }
-    }
-  }, []);
+  // Removed auto-fill from localStorage - fields should start empty
+  // Users can still save their progress, but fields won't auto-populate on page load
 
   const validate = () => {
     const newErrors: typeof errors = {};
@@ -169,7 +156,15 @@ export default function UserRegistrationScreen({ onComplete, onSaveExit, onBack 
           </p>
         </div>
 
-        <div className="space-y-4">
+        <form 
+          autoComplete="off" 
+          noValidate 
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleContinue();
+          }}
+        >
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">First name *</label>
@@ -178,6 +173,8 @@ export default function UserRegistrationScreen({ onComplete, onSaveExit, onBack 
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="John"
                 className={errors.firstName ? 'border-red-500' : ''}
+                autoComplete="off"
+                data-form-type="other"
               />
               {errors.firstName && (
                 <p className="text-sm text-red-500 mt-1">{errors.firstName}</p>
@@ -191,6 +188,8 @@ export default function UserRegistrationScreen({ onComplete, onSaveExit, onBack 
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Doe"
                 className={errors.lastName ? 'border-red-500' : ''}
+                autoComplete="off"
+                data-form-type="other"
               />
               {errors.lastName && (
                 <p className="text-sm text-red-500 mt-1">{errors.lastName}</p>
@@ -206,6 +205,8 @@ export default function UserRegistrationScreen({ onComplete, onSaveExit, onBack 
               onChange={(e) => setEmail(e.target.value)}
               placeholder="john.doe@example.com"
               className={errors.email ? 'border-red-500' : ''}
+              autoComplete="off"
+              data-form-type="other"
             />
             {errors.email && (
               <p className="text-sm text-red-500 mt-1">{errors.email}</p>
@@ -220,6 +221,8 @@ export default function UserRegistrationScreen({ onComplete, onSaveExit, onBack 
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+356 1234 5678"
               className={errors.phone ? 'border-red-500' : ''}
+              autoComplete="off"
+              data-form-type="other"
             />
             {errors.phone && (
               <p className="text-sm text-red-500 mt-1">{errors.phone}</p>
@@ -235,6 +238,8 @@ export default function UserRegistrationScreen({ onComplete, onSaveExit, onBack 
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="At least 6 characters"
                 className={errors.password ? 'border-red-500' : ''}
+                autoComplete="new-password"
+                data-form-type="other"
               />
               <button
                 type="button"
@@ -261,12 +266,14 @@ export default function UserRegistrationScreen({ onComplete, onSaveExit, onBack 
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Re-enter your password"
               className={errors.confirmPassword ? 'border-red-500' : ''}
+              autoComplete="new-password"
+              data-form-type="other"
             />
             {errors.confirmPassword && (
               <p className="text-sm text-red-500 mt-1">{errors.confirmPassword}</p>
             )}
           </div>
-        </div>
+        </form>
       </div>
     </OnboardingLayout>
   );

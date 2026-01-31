@@ -48,6 +48,12 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
     }
     return null;
   }); // Track if company needs incorporation
+  const [incorporationCycleId, setIncorporationCycleId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('incorporation-cycle-id');
+    }
+    return null;
+  }); // Track incorporation cycle ID
   // Default documents state
   const [defaultKycDocuments, setDefaultKycDocuments] = useState<Array<{ id: string; name: string; status: 'pending' | 'uploaded' }>>([
     { id: 'default-company-profile', name: 'Company Profile', status: 'pending' },
@@ -225,6 +231,16 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
       // NEW WORKFLOW:
       // PATH A: Existing Company (incorporationStatus: false) → Load incorporation documents if cycle exists
       // PATH B: New Company Profile (incorporationStatus: true) → No incorporation cycle, no documents
+      
+      // If no cycle ID from API, check localStorage and service-request-id as fallback
+      if (!incorporationCycleId && actualIncorporationStatus === false) {
+        incorporationCycleId = localStorage.getItem('incorporation-cycle-id');
+        // If still no cycle ID but service request exists, we can still show default documents
+        if (!incorporationCycleId && localStorage.getItem('service-request-id')) {
+          console.log('PATH A: Service request exists but incorporation cycle not created yet - will show default documents');
+        }
+      }
+      
       if (actualIncorporationStatus === false && incorporationCycleId) {
         // PATH A: Existing Company → Incorporation Service → Load incorporation documents
         try {
@@ -252,6 +268,9 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
           : 'PATH A: No incorporation cycle ID found yet');
         setIncorporationDocuments([]);
       }
+      
+      // Update state with cycle ID (even if null, so UI can react)
+      setIncorporationCycleId(incorporationCycleId);
     } catch (error) {
       console.error('Failed to load data:', error);
       // Set empty arrays on error
@@ -776,8 +795,8 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {people.map((person) => (
-                    <Card key={person.id}>
+                  {people.map((person, index: number) => (
+                    <Card key={index}>
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -832,7 +851,7 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
                 </div>
 
                 {/* Default Documents Section - Show for PATH B (New Company Profile) */}
-                {incorporationStatus !== false && defaultKycDocuments.length > 0 && (
+                {incorporationStatus === true && defaultKycDocuments.length > 0 && (
                   <div className="space-y-3">
                     {defaultKycDocuments.map((doc) => (
                       <Card key={doc.id}>
@@ -841,7 +860,7 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="font-medium">{doc.name}</p>
-                                <StatusBadge status={doc.status === 'uploaded' ? 'uploaded' : 'pending'} className="mt-2" />
+                                <StatusBadge status={doc.status === 'uploaded' ? 'completed' : 'pending'} className="mt-2" />
                               </div>
                             </div>
 
@@ -891,7 +910,7 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
             ) : (
               <div className="space-y-3">
                 {/* Default Documents Section - shown above platform-created documents for PATH B */}
-                {incorporationStatus !== false && defaultKycDocuments.length > 0 && (
+                {incorporationStatus === true && defaultKycDocuments.length > 0 && (
                   <>
                     {defaultKycDocuments.map((doc) => (
                       <Card key={doc.id}>
@@ -900,7 +919,7 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="font-medium">{doc.name}</p>
-                                <StatusBadge status={doc.status === 'uploaded' ? 'uploaded' : 'pending'} className="mt-2" />
+                                <StatusBadge status={doc.status === 'uploaded' ? 'completed' : 'pending'} className="mt-2" />
                               </div>
                             </div>
 
@@ -1022,28 +1041,35 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
                   Your company is already incorporated. Please proceed with KYC verification in the "People" and "Company" tabs.
                 </p>
               </div>
-            ) : incorporationStatus === false && incorporationDocuments.length === 0 ? (
+            ) : incorporationStatus === false ? (
               // PATH A: Existing Company → Incorporation Service - incorporation documents
               <div className="space-y-4">
-                <div className="text-center py-4">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {localStorage.getItem('incorporation-cycle-id') 
-                      ? 'Document requests have not been created yet by our team.' 
-                      : 'Incorporation documents will be available after service request submission.'}
-                  </p>
-                  {localStorage.getItem('incorporation-cycle-id') ? (
-                    <p className="text-xs text-muted-foreground">
-                      Our platform team will create document requests for you shortly. You'll be able to upload documents once they're ready.
+                {/* Show message only if no incorporation-cycle-id and no service-request-id exists */}
+                {!incorporationCycleId && !localStorage.getItem('service-request-id') && (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Incorporation documents will be available after service request submission.
                     </p>
-                  ) : (
                     <p className="text-xs text-muted-foreground">
                       Please complete the incorporation service request submission in Step 5 to proceed with incorporation.
                     </p>
-                  )}
-                </div>
+                  </div>
+                )}
 
-                {/* Default Incorporation Documents Section - only for PATH A */}
-                {localStorage.getItem('incorporation-cycle-id') && (
+                {/* Show message if incorporation-cycle-id or service-request-id exists but no platform-created documents yet */}
+                {(incorporationCycleId || localStorage.getItem('service-request-id')) && incorporationDocuments.length === 0 && (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Document requests have not been created yet by our team.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Our platform team will create document requests for you shortly. You'll be able to upload documents once they're ready.
+                    </p>
+                  </div>
+                )}
+
+                {/* Default Incorporation Documents Section - show when incorporation-cycle-id or service-request-id exists */}
+                {(incorporationCycleId || localStorage.getItem('service-request-id')) && (
                   <div className="space-y-3">
                     {defaultIncorporationDocuments.map((doc) => (
                       <Card key={doc.id}>
@@ -1052,7 +1078,7 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="font-medium">{doc.name}</p>
-                                <StatusBadge status={doc.status === 'uploaded' ? 'uploaded' : 'pending'} className="mt-2" />
+                                <StatusBadge status={doc.status === 'uploaded' ? 'completed' : 'pending'} className="mt-2" />
                               </div>
                             </div>
 
@@ -1098,26 +1124,18 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
                     ))}
                   </div>
                 )}
-              </div>
-            ) : incorporationDocuments.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-sm text-muted-foreground mb-2">
-                  No incorporation documents required at this time.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {/* Default Incorporation Documents Section - shown above platform-created documents */}
-                {incorporationStatus === false && localStorage.getItem('incorporation-cycle-id') && (
-                  <>
-                    {defaultIncorporationDocuments.map((doc) => (
+
+                {/* Platform-created incorporation document requests - show if they exist */}
+                {incorporationDocuments.length > 0 && (
+                  <div className="space-y-3">
+                    {incorporationDocuments.map((doc) => (
                       <Card key={doc.id}>
                         <CardContent className="p-4">
                           <div className="space-y-3">
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="font-medium">{doc.name}</p>
-                                <StatusBadge status={doc.status === 'uploaded' ? 'uploaded' : 'pending'} className="mt-2" />
+                                <StatusBadge status={doc.status as any} className="mt-2" />
                               </div>
                             </div>
 
@@ -1125,12 +1143,12 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
                               <div>
                                 <input
                                   type="file"
-                                  id={`default-incorp-file-${doc.id}`}
+                                  id={`incorp-file-${doc.id}`}
                                   className="hidden"
                                   onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     if (file) {
-                                      handleDefaultIncorporationDocumentUpload(doc.id, file);
+                                      handleIncorporationDocumentUpload(doc.id, file);
                                     }
                                   }}
                                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
@@ -1140,7 +1158,7 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
                                   variant="outline" 
                                   size="sm" 
                                   onClick={() => {
-                                    const fileInput = document.getElementById(`default-incorp-file-${doc.id}`) as HTMLInputElement;
+                                    const fileInput = document.getElementById(`incorp-file-${doc.id}`) as HTMLInputElement;
                                     if (fileInput && !uploadingDocId) {
                                       fileInput.click();
                                     }
@@ -1152,84 +1170,38 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
                               </div>
                             )}
 
-                            {doc.status === 'uploaded' && (
+                            {doc.status === 'uploaded' && doc.progress !== undefined && (
+                              <div>
+                                <div className="w-full bg-muted rounded-full h-2 mb-2">
+                                  <div
+                                    className="bg-primary h-2 rounded-full transition-all"
+                                    style={{ width: `${doc.progress}%` }}
+                                  />
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  {doc.progress}% complete
+                                </p>
+                              </div>
+                            )}
+
+                            {(doc.status === 'uploaded' && (doc.progress === 100 || doc.progress === undefined)) && (
                               <div className="text-sm text-muted-foreground">
-                                Document uploaded successfully
+                                ✓ Document uploaded successfully
                               </div>
                             )}
                           </div>
                         </CardContent>
                       </Card>
                     ))}
-                  </>
+                  </div>
                 )}
-
-                {/* Platform-created incorporation document requests */}
-                {incorporationDocuments.map((doc) => (
-                  <Card key={doc.id}>
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">{doc.name}</p>
-                            <StatusBadge status={doc.status as any} className="mt-2" />
-                          </div>
-                        </div>
-
-                        {doc.status === 'pending' && (
-                          <div>
-                            <input
-                              type="file"
-                              id={`incorp-file-${doc.id}`}
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  handleIncorporationDocumentUpload(doc.id, file);
-                                }
-                              }}
-                              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                              disabled={uploadingDocId === doc.id}
-                            />
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => {
-                                const fileInput = document.getElementById(`incorp-file-${doc.id}`) as HTMLInputElement;
-                                if (fileInput && !uploadingDocId) {
-                                  fileInput.click();
-                                }
-                              }}
-                              disabled={uploadingDocId === doc.id}
-                            >
-                              {uploadingDocId === doc.id ? 'Uploading...' : 'Upload'}
-                            </Button>
-                          </div>
-                        )}
-
-                        {doc.status === 'uploaded' && doc.progress !== undefined && (
-                          <div>
-                            <div className="w-full bg-muted rounded-full h-2 mb-2">
-                              <div
-                                className="bg-primary h-2 rounded-full transition-all"
-                                style={{ width: `${doc.progress}%` }}
-                              />
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              {doc.progress}% complete
-                            </p>
-                          </div>
-                        )}
-
-                        {(doc.status === 'uploaded' && doc.progress === 100) && (
-                          <div className="text-xs text-muted-foreground">
-                            ✓ Document uploaded successfully
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+              </div>
+            ) : (
+              // incorporationStatus is null (not yet determined)
+              <div className="text-center py-8">
+                <p className="text-sm text-muted-foreground mb-2">
+                  No incorporation documents required at this time.
+                </p>
               </div>
             )}
           </TabsContent>

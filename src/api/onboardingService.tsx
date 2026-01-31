@@ -963,36 +963,91 @@ export async function getKYCPersons(): Promise<KYCPerson[]> {
     // Use the same approach as New Company Profile - combine representationalSchema and shareHolders
     // representationalSchema contains people with roles (directors, secretary, judicial rep)
     // shareHolders contains people with shares or SHAREHOLDER role
-    const persons: KYCPerson[] = [];
-    const personMap = new Map<string, KYCPerson>(); // Use Map to avoid duplicates
+    const personMap = new Map<string, KYCPerson>(); // Use Map to avoid duplicates by personId
     
     // Add people from representationalSchema (directors, secretary, judicial rep)
+    // IMPORTANT: Each involvement creates a separate entry in representationalSchema
+    // A person can appear multiple times if they have multiple roles in separate involvements
     if (company.representationalSchema && Array.isArray(company.representationalSchema)) {
-      company.representationalSchema.forEach((rep: any) => {
+      company.representationalSchema.forEach((rep: any, index: number) => {
         const personId = rep.personId?._id || rep.personId?.id || rep._id || rep.id;
         const personName = rep.personId?.name || 'Unknown';
         const roles = Array.isArray(rep.role) ? rep.role : [rep.role];
         
-        // Determine role for KYC display (prioritize DIRECTOR, then SECRETARY, then JUDICIAL_REPRESENTATIVE)
-        let kycRole: string = 'unknown';
-        if (roles.some((r: string) => r.toUpperCase() === 'DIRECTOR')) {
-          kycRole = 'director';
-        } else if (roles.some((r: string) => r.toUpperCase() === 'SECRETARY')) {
-          kycRole = 'secretary';
-        } else if (roles.some((r: string) => r.toUpperCase() === 'JUDICIAL_REPRESENTATIVE')) {
-          kycRole = 'judicial_representative';
+        if (!personId) {
+          console.warn(`[${index}] Skipping person in representationalSchema - no personId:`, rep);
+          return;
         }
         
-        if (personId && kycRole !== 'unknown') {
-          personMap.set(personId, {
-            id: personId,
-            name: personName,
-            role: kycRole,
-            status: 'pending',
-            email: '', // Person doesn't have email field
+        // Process ALL roles for this person - create separate entries for each valid role
+        // This ensures that if a person has both SECRETARY and JUDICIAL_REPRESENTATIVE,
+        // both will appear in the People tab
+        const rolesUpper = roles.map((r: string) => String(r).toUpperCase().trim());
+        
+        // Check for each role type (handle variations in role naming)
+        const hasDirector = rolesUpper.some(r => r === 'DIRECTOR');
+        const hasSecretary = rolesUpper.some(r => r === 'SECRETARY');
+        const hasJudicialRep = rolesUpper.some(r => 
+          r === 'JUDICIAL_REPRESENTATIVE' || 
+          r === 'JUDICIALREPRESENTATIVE' ||
+          (r.includes('JUDICIAL') && r.includes('REPRESENTATIVE'))
+        );
+        
+        // Create entries for each role the person has
+        // Use composite key: personId-role to allow same person with multiple roles
+        if (hasDirector) {
+          const key = `${personId}-director`;
+          if (!personMap.has(key)) {
+            personMap.set(key, {
+              id: personId,
+              name: personName,
+              role: 'director',
+              status: 'pending',
+              email: '',
+            });
+          }
+        }
+        
+        if (hasSecretary) {
+          const key = `${personId}-secretary`;
+          if (!personMap.has(key)) {
+            personMap.set(key, {
+              id: personId,
+              name: personName,
+              role: 'secretary',
+              status: 'pending',
+              email: '',
+            });
+          }
+        }
+        
+        if (hasJudicialRep) {
+          const key = `${personId}-judicial_representative`;
+          if (!personMap.has(key)) {
+            personMap.set(key, {
+              id: personId,
+              name: personName,
+              role: 'judicial_representative',
+              status: 'pending',
+              email: '',
+            });
+          }
+        }
+        
+        // If no valid roles found, log a warning
+        if (!hasDirector && !hasSecretary && !hasJudicialRep) {
+          console.warn(`[${index}] Skipping person in representationalSchema - no valid role found:`, {
+            personId,
+            personName,
+            roles,
+            rolesUpper,
+            rawRole: rep.role,
+            fullRep: rep
           });
         }
       });
+    } else {
+      console.warn('representationalSchema is missing or not an array:', company.representationalSchema);
     }
     
     // Add people from shareHolders (shareholders)
@@ -1001,8 +1056,12 @@ export async function getKYCPersons(): Promise<KYCPerson[]> {
         const personId = sh.personId?._id || sh.personId?.id || sh._id || sh.id;
         const personName = sh.personId?.name || 'Unknown';
         
+        if (!personId) return;
+        
         // Only add if not already added (to avoid duplicates)
-        if (personId && !personMap.has(personId)) {
+        // If person already exists, keep their existing role (director/secretary/judicial_representative)
+        // Only add as shareholder if they don't exist yet
+        if (!personMap.has(personId)) {
           personMap.set(personId, {
             id: personId,
             name: personName,
@@ -1022,67 +1081,9 @@ export async function getKYCPersons(): Promise<KYCPerson[]> {
       return getKYCPersonsFromLocalStorage();
     }
     
-    // For Existing Company: Also check localStorage for Company Secretary and Judicial Representative
-    // These might not be in backend if "own" was selected but no person was provided
-    // Reuse the onboardingData already declared at the top of the function
-    if (onboardingData.companyType === 'existing' && onboardingData.existingCompanyDetails) {
-      const existingDetails = onboardingData.existingCompanyDetails;
-      const userFullName = onboardingData.firstName && onboardingData.lastName 
-        ? `${onboardingData.firstName} ${onboardingData.lastName}`.trim() 
-        : '';
-      
-      // Check if Company Secretary is missing from backend results
-      const hasSecretary = personsArray.some(p => p.role === 'secretary');
-      if (!hasSecretary && existingDetails.companySecretary && existingDetails.companySecretary.option === 'own') {
-        if (existingDetails.companySecretary.person) {
-          const person = existingDetails.companySecretary.person;
-          if (person.fullName?.trim() || person.email?.trim()) {
-            personsArray.push({
-              id: 'company-secretary-existing',
-              name: person.fullName?.trim() || person.email?.trim() || 'Unnamed Secretary',
-              role: 'secretary',
-              status: 'pending',
-              email: person.email || '',
-            });
-          }
-        } else if (userFullName) {
-          // Auto-add user as company secretary if not provided
-          personsArray.push({
-            id: 'company-secretary-existing-user',
-            name: userFullName,
-            role: 'secretary',
-            status: 'pending',
-            email: '',
-          });
-        }
-      }
-      
-      // Check if Judicial Representative is missing from backend results
-      const hasJudicialRep = personsArray.some(p => p.role === 'judicial_representative');
-      if (!hasJudicialRep && existingDetails.judicialRepresentative && existingDetails.judicialRepresentative.option === 'own') {
-        if (existingDetails.judicialRepresentative.person) {
-          const person = existingDetails.judicialRepresentative.person;
-          if (person.fullName?.trim() || person.email?.trim()) {
-            personsArray.push({
-              id: 'judicial-representative-existing',
-              name: person.fullName?.trim() || person.email?.trim() || 'Unnamed Representative',
-              role: 'judicial_representative',
-              status: 'pending',
-              email: person.email || '',
-            });
-          }
-        } else if (userFullName) {
-          // Auto-add user as judicial representative if not provided
-          personsArray.push({
-            id: 'judicial-representative-existing-user',
-            name: userFullName,
-            role: 'judicial_representative',
-            status: 'pending',
-            email: '',
-          });
-        }
-      }
-    }
+    // Note: Company Secretary and Judicial Representative should now be in backend
+    // as they are passed during company creation with user info if person not provided
+    // No localStorage fallback needed - data should come from backend
     
     return personsArray;
   } catch (error: any) {

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-
+ 
 export const GridViewSkeleton: React.FC = () => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">

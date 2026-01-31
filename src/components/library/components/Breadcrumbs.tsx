@@ -3,7 +3,7 @@
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useLibrary } from '../../../app/context/LibraryContext';
+import { useLibrary } from '@/app/context/LibraryContext';
 
 export const Breadcrumbs: React.FC = () => {
   const { breadcrumbs, handleFolderClick } = useLibrary();

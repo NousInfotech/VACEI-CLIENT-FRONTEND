@@ -2,12 +2,14 @@
 
 import React from 'react'
 import { MessageSquare } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface Message {
   id: string
-  text: string
+  text?: string
+  content?: string
   timestamp: string
-  type: 'system' | 'user'
+  type: 'system' | 'user' | 'message' | 'notification' | string
 }
 
 interface ServiceMessagesProps {
@@ -24,7 +26,20 @@ function formatDate(dateString: string): string {
   })
 }
 
-const ServiceMessages: React.FC<ServiceMessagesProps> = ({ serviceName, messages }) => {
+const DEFAULT_MOCK_MESSAGES: Message[] = [
+  { id: '1', text: 'Welcome to the engagement! We are ready to start processing your request.', timestamp: new Date(Date.now() - 86400000 * 5).toISOString(), type: 'system' },
+  { id: '2', text: 'Please ensure all monthly documents are uploaded by the 5th of each month.', timestamp: new Date(Date.now() - 86400000 * 4).toISOString(), type: 'system' },
+  { id: '3', text: 'We have received your recent document upload. Our team is currently reviewing it.', timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), type: 'system' },
+  { id: '4', text: 'Your VAT return for Q4 has been prepared and is ready for your review.', timestamp: new Date(Date.now() - 86400000 * 2).toISOString(), type: 'system' },
+  { id: '5', text: 'Hi, I have a question about the recent payroll filing.', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), type: 'user' },
+  { id: '6', text: 'Sure! Please go ahead. We are here to help.', timestamp: new Date(Date.now() - 3600000 * 10).toISOString(), type: 'system' },
+  { id: '7', text: 'Does this cover the new employees as well?', timestamp: new Date(Date.now() - 3600000 * 8).toISOString(), type: 'user' },
+  { id: '8', text: 'Yes, it includes all active employees in our system as of the last cutoff.', timestamp: new Date(Date.now() - 3600000 * 5).toISOString(), type: 'system' },
+]
+
+const ServiceMessages: React.FC<ServiceMessagesProps> = ({ serviceName, messages = [] }) => {
+  const displayMessages = messages.length > 0 ? messages : DEFAULT_MOCK_MESSAGES
+
   return (
     <div className="bg-card border border-border rounded-0 shadow-md p-6 space-y-4">
       <div className="flex items-center gap-2">
@@ -48,8 +63,8 @@ const ServiceMessages: React.FC<ServiceMessagesProps> = ({ serviceName, messages
       </div>
 
       <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
-        {messages.length > 0 ? (
-          messages.map((message) => (
+        {displayMessages.length > 0 ? (
+          displayMessages.map((message) => (
             <div
               key={message.id}
               className={`p-3 rounded-lg border ${
@@ -58,7 +73,7 @@ const ServiceMessages: React.FC<ServiceMessagesProps> = ({ serviceName, messages
                   : "bg-primary/5 border-primary/20"
               }`}
             >
-              <p className="text-sm text-brand-body">{message.text}</p>
+              <p className="text-sm text-brand-body">{message.content || message.text}</p>
               <p className="text-xs text-muted-foreground mt-1">
                 {formatDate(message.timestamp)}
               </p>
