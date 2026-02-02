@@ -43,28 +43,16 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
   const [latestCommentTimestamp, setLatestCommentTimestamp] = useState<string | null>(null);
   const latestTimestampRef = useRef<string | null>(null);
 
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
-
   const fetchComments = async (targetId: string, silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const token = localStorage.getItem("token") || "";
-      let queryParam = targetId !== "0" ? `?fileId=${targetId}` : "";
-
+      const { mockGetComments } = await import('@/api/mockApiService');
       const sinceTimestamp = silent ? latestTimestampRef.current : latestCommentTimestamp;
-      if (sinceTimestamp) {
-        queryParam += queryParam
-          ? `&since=${encodeURIComponent(sinceTimestamp)}`
-          : `?since=${encodeURIComponent(sinceTimestamp)}`;
-      }
-
-      const res = await fetch(`${backendUrl}comments${queryParam}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      
+      const data: Comment[] = await mockGetComments({
+        fileId: targetId !== "0" ? targetId : undefined,
+        since: sinceTimestamp || undefined,
       });
-
-      if (!res.ok) throw new Error("Failed to fetch comments");
-
-      const data: Comment[] = await res.json();
 
       if (silent) {
         if (data && data.length > 0) {
@@ -113,28 +101,15 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     setSubmitting(true);
-    const token = localStorage.getItem("token") || "";
 
     try {
+      const { mockCreateComment } = await import('@/api/mockApiService');
       const bodyPayload =
         newCommentTarget === "0"
           ? { text: newComment }
           : { fileId: newCommentTarget, text: newComment };
 
-      const res = await fetch(`${backendUrl}comments/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(bodyPayload),
-      });
-
-      if (!res.ok) {
-        setAlert({ message: "Failed to add comment.", variant: "danger" });
-        setSubmitting(false);
-        return;
-      }
+      await mockCreateComment(bodyPayload);
 
       if (selectedTarget === newCommentTarget) {
         await fetchComments(selectedTarget, true);
@@ -166,23 +141,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
       return;
     }
     setSubmitting(true);
-    const token = localStorage.getItem("token") || "";
 
     try {
-      const res = await fetch(`${backendUrl}comments/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ text: editingText }),
-      });
-
-      if (!res.ok) {
-        setAlert({ message: "Failed to update comment.", variant: "danger" });
-        setSubmitting(false);
-        return;
-      }
+      const { mockUpdateComment } = await import('@/api/mockApiService');
+      await mockUpdateComment(id, { text: editingText });
 
       setComments((prev) =>
         prev.map((c) => (c.id === id ? { ...c, message: editingText } : c))
@@ -203,17 +165,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
     if (!confirmed) return;
 
     setSubmitting(true);
-    const token = localStorage.getItem("token") || "";
 
     try {
-      const res = await fetch(`${backendUrl}comments/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) throw new Error("Failed to delete comment");
+      const { mockDeleteComment } = await import('@/api/mockApiService');
+      await mockDeleteComment(id);
 
       await fetchComments(selectedTarget, true);
       setAlert({ message: "Comment deleted.", variant: "info" });

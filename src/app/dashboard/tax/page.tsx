@@ -5,22 +5,16 @@ import Image from "next/image";
 import DashboardCard from "@/components/DashboardCard";
 
 export default function TaxPage() {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     const [company, setCompany] = useState<any>(null);
     const [taxData, setTaxData] = useState<any>(null);
     const [loadingCompany, setLoadingCompany] = useState(true);
     const [loadingTax, setLoadingTax] = useState(true);
 
     useEffect(() => {
-        const token = localStorage.getItem("token") || "";
-
         const fetchCompany = async () => {
             try {
-                const res = await fetch(`${backendUrl}company`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                if (!res.ok) throw new Error(`Failed to fetch company`);
-                const data = await res.json();
+                const { mockGetCompany } = await import('@/api/mockApiService');
+                const data = await mockGetCompany();
                 setCompany(data);
             } catch (error) {
                 console.error("Company fetch error:", error);
@@ -31,11 +25,8 @@ export default function TaxPage() {
 
         const fetchTaxData = async () => {
             try {
-                const res = await fetch(`${backendUrl}tax`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                if (!res.ok) throw new Error(`Failed to fetch tax data`);
-                const data = await res.json();
+                const { mockGetTaxData } = await import('@/api/mockApiService');
+                const data = await mockGetTaxData();
                 setTaxData(data);
             } catch (error) {
                 console.error("Tax fetch error:", error);

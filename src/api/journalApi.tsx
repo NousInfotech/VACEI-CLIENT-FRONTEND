@@ -18,6 +18,7 @@ export interface FetchJournalItemResponse {
     };
 }
 
+// Mock implementation - no backend calls
 export async function fetchJournalItemAPI(
     backendUrl: string,
     parentId: string,
@@ -30,27 +31,14 @@ export async function fetchJournalItemAPI(
     postingType: string = "",
     amount: string = ""
 ): Promise<FetchJournalItemResponse> {
-
-    const params = new URLSearchParams({
-        page: page.toString(),
-        limit: itemsPerPage.toString(),
-        ...(searchTerm && { privateNote: searchTerm }),
-        ...(accountName && { accountName }),
-        ...(description && { description }),
-        ...(postingType && { postingType }),
-        ...(amount && { amount }),
+    const { mockGetJournalItems } = await import('./mockApiService');
+    return await mockGetJournalItems({
+        parentId,
+        page,
+        limit: itemsPerPage,
+        accountName: accountName || undefined,
+        description: description || undefined,
+        postingType: postingType || undefined,
+        amount: amount || undefined,
     });
-
-    const url: string = `${backendUrl}journal/getJournalItems/${parentId}?${params.toString()}`;
-
-    const res: Response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!res.ok) {
-        throw new Error("Failed to load journal entries");
-    }
-
-    const data: FetchJournalItemResponse = await res.json();
-    return data;
 }

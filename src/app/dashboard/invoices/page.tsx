@@ -91,7 +91,6 @@ const StatsCard = ({
 );
 
 export default function InvoiceList() {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);
     const [stats, setStats] = useState<InvoiceStats>({
@@ -120,27 +119,19 @@ export default function InvoiceList() {
     };
 
     const fetchInvoices = async () => {
-        if (!isDateRangeValid || !backendUrl) return;
+        if (!isDateRangeValid) return;
 
         setLoading(true);
         try {
-            const token = localStorage.getItem("token") || "";
-            const params = new URLSearchParams({
-                page: page.toString(),
-                limit: itemsPerPage.toString(),
-                ...(search && { customerName: search }),
-                ...(fromDate && { fromDate: formatDate(fromDate) }),
-                ...(toDate && { toDate: formatDate(toDate) }),
-                ...(statusFilter && { status: statusFilter }),
+            const { mockGetInvoices } = await import('@/api/mockApiService');
+            const data = await mockGetInvoices({
+                page,
+                limit: itemsPerPage,
+                customerName: search || undefined,
+                fromDate: fromDate ? formatDate(fromDate) : undefined,
+                toDate: toDate ? formatDate(toDate) : undefined,
+                status: statusFilter || undefined,
             });
-
-            const res = await fetch(`${backendUrl}invoices?${params.toString()}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            if (!res.ok) throw new Error("Failed to fetch invoices");
-
-            const data = await res.json();
             setInvoices(data.invoices || []);
             setPage(data.pagination?.currentPage || 1);
             setTotalPages(data.pagination?.totalPages || 1);
@@ -153,21 +144,15 @@ export default function InvoiceList() {
     };
 
     const fetchStats = async () => {
-        if (!isDateRangeValid || !backendUrl) return;
+        if (!isDateRangeValid) return;
 
         try {
-            const token = localStorage.getItem("token") || "";
-            const params = new URLSearchParams({
-                ...(search && { customerName: search }),
-                ...(fromDate && { fromDate: formatDate(fromDate) }),
-                ...(toDate && { toDate: formatDate(toDate) }),
+            const { mockGetInvoiceStats } = await import('@/api/mockApiService');
+            const data = await mockGetInvoiceStats({
+                customerName: search || undefined,
+                fromDate: fromDate ? formatDate(fromDate) : undefined,
+                toDate: toDate ? formatDate(toDate) : undefined,
             });
-            const res = await fetch(`${backendUrl}invoices/stats?${params.toString()}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            if (!res.ok) throw new Error("Failed to fetch stats");
-            const data = await res.json();
 
             if (data.success && data.stats) {
                 setStats(data.stats);

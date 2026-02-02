@@ -35,7 +35,6 @@ const SkeletonCard = () => (
 );
 
 export default function JournalList() {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
     const [journalEntries, setJournalEntries] = useState<any[]>([]);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -91,22 +90,14 @@ export default function JournalList() {
 
         setLoading(true);
         try {
-            const token = localStorage.getItem("token") || "";
-            const params = new URLSearchParams({
-                page: page.toString(),
-                limit: itemsPerPage.toString(),
-                ...(searchTerm && { privateNote: searchTerm }),
-                ...(from && { fromDate: formatDate(from) }),
-                ...(to && { toDate: formatDate(to) }),
+            const { mockGetJournal } = await import('@/api/mockApiService');
+            const data = await mockGetJournal({
+                page,
+                limit: itemsPerPage,
+                privateNote: searchTerm || undefined,
+                fromDate: from ? formatDate(from) : undefined,
+                toDate: to ? formatDate(to) : undefined,
             });
-
-            const url = `${backendUrl}journal?${params.toString()}`;
-            const res = await fetch(url, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            if (!res.ok) throw new Error("Failed to load journal entries");
-            const data = await res.json();
 
             setJournalEntries(data.journalEntries || []);
             setTotalDebit(data.totalDebit || 0);
@@ -122,9 +113,8 @@ export default function JournalList() {
     };
 
     useEffect(() => {
-        if (!backendUrl) return console.error("Backend URL is not set");
         fetchJournalData(page, search, fromDate, toDate);
-    }, [backendUrl, page, search, fromDate, toDate]);
+    }, [page, search, fromDate, toDate]);
 
     return (
         <section className="mx-auto max-w-[1400px] w-full pt-5">

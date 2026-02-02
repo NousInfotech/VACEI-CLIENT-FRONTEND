@@ -67,7 +67,6 @@ function DocumentFormContent() {
     const [errors, setErrors] = useState<{ [key: string]: ReactNode }>({});
     const [initialLoading, setInitialLoading] = useState(true);
     const dropRef = useRef<HTMLDivElement>(null);
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     const backendUploadPath = process.env.NEXT_PUBLIC_UPLOAD_PATH;
 
     const monthOptions = Array.from({ length: 12 }, (_, i) => {

@@ -47,21 +47,14 @@ export default function AccountsListContent() {
     const fetchAccounts = async () => {
       setLoading(true);
       try {
-        const token = localStorage.getItem("token") || "";
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
-
-        const params = new URLSearchParams();
-        params.append("page", page.toString());
-        params.append("limit", itemsPerPage.toString());
-        if (searchQuery.trim()) params.append("search", searchQuery.trim());
-        if (accountTypeFilter) params.append("accountType", accountTypeFilter);
-        if (accountSubTypeFilter) params.append("accountSubType", accountSubTypeFilter);
-
-        const res = await fetch(`${backendUrl}account?${params.toString()}`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const { mockGetAccounts } = await import('@/api/mockApiService');
+        const data = await mockGetAccounts({
+          page,
+          limit: itemsPerPage,
+          search: searchQuery.trim() || undefined,
+          accountType: accountTypeFilter || undefined,
+          accountSubType: accountSubTypeFilter || undefined,
         });
-
-        const data = await res.json();
         setAccounts(data.accounts || []);
         setTotalItems(data.totalItems || 0);
         setTotalPages(Math.ceil((data.totalItems || 0) / itemsPerPage));

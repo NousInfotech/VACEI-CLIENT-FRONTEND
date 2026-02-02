@@ -7,8 +7,6 @@ import DocumentPreview from "../components/DocumentPreview";
 import CommentSection from "../components/CommentSection";
 import DocumentStatusHistoryDisplay from "../components/DocumentStatusHistory"; // Corrected import name
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
-
 function DocumentViewPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -26,12 +24,8 @@ function DocumentViewPageInner() {
 
     (async () => {
       try {
-        const token = localStorage.getItem("token") || "";
-        const res = await fetch(`${backendUrl}documents/get-documents?id=${docId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error("Failed to load document");
-        const data = await res.json();
+        const { mockGetDocument } = await import('@/api/mockApiService');
+        const data = await mockGetDocument(docId);
         const doc = data.data?.[0];
         setDocument(doc);
         if (doc?.files?.length > 0) setPreviewFile(doc.files[0]);
@@ -112,7 +106,7 @@ function DocumentViewPageInner() {
         <div className="mt-8">
           <DocumentStatusHistoryDisplay 
             documentId={document.id} 
-            backendUrl={backendUrl} 
+            backendUrl="" 
           />
         </div>
       )}

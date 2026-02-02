@@ -12,51 +12,94 @@ interface UserProfile {
   role?: number;
 }
 
+interface ClientResponse {
+  id: string;
+  user: {
+    id: string;
+    email: string | null;
+    phone: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    role: number;
+  };
+}
+
 const SkeletonInput = () => (
   <div className="w-full bg-card shadow-lg rounded-xl p-6 sm:p-8 space-y-6 border border-border"> </div>
 );
 
 const ProfilePage: React.FC = () => {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [formData, setFormData] = useState({ first_name: '', last_name: '', phone: '', username: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [alertVariant, setAlertVariant] = useState<'success' | 'danger' | 'warning' | 'info'>('success');
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const res = await fetch(`${backendUrl}user/profile`, {
+        // Get user ID from localStorage (it's base64 encoded)
+        const encodedUserId = localStorage.getItem('user_id');
+        if (!encodedUserId) {
+          throw new Error('User ID not found. Please login again.');
+        }
+
+        // Decode user ID
+        const userId = atob(encodedUserId);
+        
+        // Get backend URL and token
+        const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          throw new Error('Authentication token not found. Please login again.');
+        }
+
+        // Fetch client data from backend
+        const response = await fetch(`${backendUrl}clients/${userId}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          credentials: 'include',
         });
 
-        if (!res.ok) throw new Error('Failed to fetch user profile');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch user profile: ${response.status} ${response.statusText}`);
+        }
 
-        const data = await res.json();
-        setUserProfile(data);
+        const result = await response.json();
+        const clientData: ClientResponse = result.data;
+
+        // Map backend response to frontend UserProfile interface
+        const profileData: UserProfile = {
+          email: clientData.user.email || '',
+          first_name: clientData.user.firstName || '',
+          last_name: clientData.user.lastName || '',
+          username: `${clientData.user.firstName || ''} ${clientData.user.lastName || ''}`.trim() || '',
+          phone: clientData.user.phone || '',
+          role: clientData.user.role,
+        };
+
+        setUserProfile(profileData);
         setFormData({
-          username: data.username || '',
-          phone: data.phone || '',
-          first_name: data.first_name || '',
-          last_name: data.last_name || '',
+          username: profileData.username || '',
+          phone: profileData.phone || '',
+          first_name: profileData.first_name || '',
+          last_name: profileData.last_name || '',
         });
       } catch (error) {
         console.error('Error fetching user profile:', error);
+        setAlertVariant('danger');
+        setMessage(error instanceof Error ? error.message : 'Failed to load profile. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchUserProfile();
-  }, [backendUrl, token]);
+  }, []);
 
   const handleChange = (field: keyof typeof formData, value: string) => {
     setFormData({ ...formData, [field]: value });
@@ -76,23 +119,62 @@ const ProfilePage: React.FC = () => {
     }
 
     try {
-      const res = await fetch(`${backendUrl}user/profile`, {
+      // Get user ID from localStorage
+      const encodedUserId = localStorage.getItem('user_id');
+      if (!encodedUserId) {
+        throw new Error('User ID not found. Please login again.');
+      }
+
+      // Decode user ID
+      const userId = atob(encodedUserId);
+      
+      // Get backend URL and token
+      const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('Authentication token not found. Please login again.');
+      }
+
+      // Update client data on backend
+      // Note: The updateClientSchema only supports firstName, lastName, and preferences
+      // Phone update may require a separate endpoint or schema update
+      const response = await fetch(`${backendUrl}clients/${userId}`, {
         method: 'PUT',
-        credentials: 'include',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          firstName: formData.first_name,
+          lastName: formData.last_name,
+        }),
       });
 
-      if (!res.ok) throw new Error('Failed to update profile');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to update profile: ${response.status} ${response.statusText}`);
+      }
 
+      const result = await response.json();
+      const clientData: ClientResponse = result.data;
+
+      // Update local state with the response
+      const updatedProfile: UserProfile = {
+        email: clientData.user.email || userProfile?.email || '',
+        first_name: clientData.user.firstName || '',
+        last_name: clientData.user.lastName || '',
+        username: `${clientData.user.firstName || ''} ${clientData.user.lastName || ''}`.trim() || '',
+        phone: clientData.user.phone || '',
+        role: clientData.user.role,
+      };
+
+      setUserProfile(updatedProfile);
       setAlertVariant('success');
       setMessage('Profile updated successfully!');
     } catch (error) {
       setAlertVariant('danger');
-      setMessage('Error updating profile');
+      setMessage(error instanceof Error ? error.message : 'Error updating profile');
     } finally {
       setSaving(false);
     }

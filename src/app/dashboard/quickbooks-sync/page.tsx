@@ -11,7 +11,6 @@ import { checkQuickbooksAuth, syncQuickbooksData } from '@/api/quickbooksApi'; /
 import { PageHeader } from '@/components/shared/PageHeader';
 
 function SettingsContent() {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -53,7 +52,8 @@ function SettingsContent() {
             setIsCheckingAuth(true);
             setAlert(null); // Clear previous alerts
             try {
-                const { success, data, error: authError } = await checkQuickbooksAuth(backendUrl);
+                const { mockCheckQuickbooksAuth } = await import('@/api/mockApiService');
+                const { success, data, error: authError } = await mockCheckQuickbooksAuth();
 
                 if (success && data.isValid === true && data.intuitAccount?.updatedAt) {
                     localStorage.setItem('accessToken', data.intuitAccount.accessToken);
@@ -88,10 +88,11 @@ function SettingsContent() {
         };
 
         checkAuthentication();
-    }, [searchParams, backendUrl]);
+    }, [searchParams]);
 
     const handleBookkeepingRedirect = () => {
-        router.push(backendUrl + 'quickbooks');
+        // Mock redirect - no actual backend URL needed
+        console.log('QuickBooks redirect (mocked)');
     };
 
     // Generic sync handler
@@ -105,7 +106,8 @@ function SettingsContent() {
         setAlert(null);
 
         try {
-            const { success, data, error: syncError } = await syncQuickbooksData(backendUrl, endpoint);
+            const { mockSyncQuickbooksData } = await import('@/api/mockApiService');
+            const { success, data, error: syncError } = await mockSyncQuickbooksData(endpoint);
 
             if (success) {
                 setAlert({ text: successMessage, type: 'success' });

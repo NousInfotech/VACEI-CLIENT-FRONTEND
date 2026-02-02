@@ -2,13 +2,11 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { search } from '@/api/searchService';
 import Link from 'next/link';
 import { SearchResponse, SearchResultItem } from '@/interfaces/index';
 import { menuData, MenuItem } from '@/lib/menuData';
 
 const RESULTS_PER_PAGE = 10;
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/?$/, "/") || 'http://localhost:5000/';
 
 // Function to recursively flatten menu items into search index
 const flattenMenuItems = (items: MenuItem[], parentLabel?: string): SearchResultItem[] => {
@@ -234,7 +232,8 @@ function SearchContent() {
       setError(null);
 
       try {
-        const response: SearchResponse = await search(searchQuery, backendUrl, token, page, RESULTS_PER_PAGE);
+        const { mockSearch } = await import('@/api/mockApiService');
+        const response: SearchResponse = await mockSearch(searchQuery, page, RESULTS_PER_PAGE);
 
         if (!response.success) {
           // If API fails, still show client-side results
@@ -266,7 +265,7 @@ function SearchContent() {
     };
 
     fetchResults();
-  }, [searchQuery, backendUrl, token, page]);
+  }, [searchQuery, token, page]);
 
   const totalPages = Math.ceil(totalCount / RESULTS_PER_PAGE);
 

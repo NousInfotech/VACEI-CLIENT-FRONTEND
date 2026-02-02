@@ -86,33 +86,22 @@ export default function ComplianceSetupPage() {
     setSaving(true);
     try {
       const companyId = typeof window !== "undefined" ? localStorage.getItem("vacei-active-company") || "" : "";
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
-      const base = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/?$/, "/") || "";
-      if (companyId && base && token) {
-        const res = await fetch(`${base}compliance/settings`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            companyId,
-            jurisdiction: form.jurisdiction,
-            financialYearEnd: form.financialYearEnd,
-            vatFrequency: form.vatFrequency,
-            payrollFrequency: form.payrollFrequency,
-            corporateType: form.corporateType || null,
-            mbrAnniversaryDate: form.mbrAnniversaryDate || null,
-            vatDueDateOffsetOverride: form.vatDueDateOffsetOverride || null,
-            payrollSubmissionDueDateOverride: form.payrollSubmissionDueDateOverride || null,
-            provisionalTaxEnabled: form.provisionalTaxEnabled,
-            extensionsEnabled: form.extensionsEnabled,
-            servicesActivated: form.servicesActivated,
-          }),
+      if (companyId) {
+        const { mockSaveComplianceSettings } = await import('@/api/mockApiService');
+        await mockSaveComplianceSettings({
+          companyId,
+          jurisdiction: form.jurisdiction,
+          financialYearEnd: form.financialYearEnd,
+          vatFrequency: form.vatFrequency,
+          payrollFrequency: form.payrollFrequency,
+          corporateType: form.corporateType || null,
+          mbrAnniversaryDate: form.mbrAnniversaryDate || null,
+          vatDueDateOffsetOverride: form.vatDueDateOffsetOverride || null,
+          payrollSubmissionDueDateOverride: form.payrollSubmissionDueDateOverride || null,
+          provisionalTaxEnabled: form.provisionalTaxEnabled,
+          extensionsEnabled: form.extensionsEnabled,
+          servicesActivated: form.servicesActivated,
         });
-        if (!res.ok) {
-          console.error("Failed to save compliance settings");
-        }
       }
       setLastSavedAt(new Date().toLocaleString());
     } finally {

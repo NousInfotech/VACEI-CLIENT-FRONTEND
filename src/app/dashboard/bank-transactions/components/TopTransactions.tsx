@@ -45,28 +45,13 @@ export default function TopTransactions() {
         setError(null); // Clear any previous errors
         setNoDataFound(false); // Clear no data found state
 
-        const token = localStorage.getItem('token');
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
-        const query = new URLSearchParams({
-          page: page.toString(),
-          limit: limit.toString(),
+        const { mockGetTransactions } = await import('@/api/mockApiService');
+        const data = await mockGetTransactions({
+          page,
+          limit,
           type,
           intuitAccountId: '1',
-        }).toString();
-
-        const res = await fetch(`${backendUrl}transaction?${query}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         });
-
-        if (!res.ok) {
-          // If the response is not OK, it's an HTTP error
-          const errorText = await res.text(); // Attempt to get more detail from response body
-          throw new Error(`Failed to fetch transactions: ${res.status} ${res.statusText} - ${errorText || 'Unknown error'}`);
-        }
-
-        const data = await res.json();
 
         // Check if data.transactions is an array and if it's empty or has items
         if (Array.isArray(data.transactions) && data.transactions.length > 0) {

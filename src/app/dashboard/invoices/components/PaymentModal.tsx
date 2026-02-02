@@ -27,7 +27,6 @@ type PaymentModalProps = {
 };
 
 const PaymentModal = ({ invoice, onClose, onPaymentSuccess }: PaymentModalProps) => {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
   const [amount, setAmount] = useState(invoice.balance || 0);
   const [date, setDate] = useState<Date | null>(new Date());
   const [mode, setMode] = useState("");
@@ -60,28 +59,16 @@ const PaymentModal = ({ invoice, onClose, onPaymentSuccess }: PaymentModalProps)
     setLoading(true);
 
     try {
-      const token = localStorage.getItem("token") || "";
-      const res = await fetch(`${backendUrl}invoices/payments`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          invoiceId: invoice.invoiceId,
-          amount,
-          date: date?.toISOString().slice(0, 10),
-          mode,
-          txnId,
-          note,
-          suppressEmail,
-        }),
+      const { mockRecordPayment } = await import('@/api/mockApiService');
+      await mockRecordPayment({
+        invoiceId: invoice.invoiceId,
+        amount,
+        date: date?.toISOString().slice(0, 10),
+        mode,
+        txnId,
+        note,
+        suppressEmail,
       });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Failed to record payment");
-      }
 
       // ✅ Show success message
       setSuccessMessage("Payment recorded successfully!");

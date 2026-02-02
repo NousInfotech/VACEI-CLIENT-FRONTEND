@@ -16,17 +16,9 @@ export default function Accounts() {
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
-            const token = localStorage.getItem('token');
-            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
-
             try {
-                const res = await fetch(`${backendUrl}account/getBankData`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-
-                const data = await res.json();
+                const { mockGetBankData } = await import('@/api/mockApiService');
+                const data = await mockGetBankData();
                 const accounts = data.accounts || [];
                 const masterCurrentBalance = data.masterCurrentBalance || 0;
 

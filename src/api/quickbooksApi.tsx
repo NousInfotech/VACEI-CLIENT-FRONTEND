@@ -12,23 +12,13 @@ const getAuthHeaders = () => {
     };
 };
 
+// Mock implementation - no backend calls
 export const checkQuickbooksAuth = async (backendUrl: string | undefined) => {
-    // Add a check for backendUrl
-    if (!backendUrl) {
-        return { success: false, error: 'Backend URL is not defined.' };
-    }
-
     try {
-        const headers = getAuthHeaders();
-        const res = await fetch(`${backendUrl}intuitAccount/checkAuth`, {
-            method: 'POST',
-            headers: headers,
-        });
-        const data = await res.json();
-        return { success: res.ok, data };
-    } catch (error: unknown) { // Explicitly type 'error' as unknown
+        const { mockCheckQuickbooksAuth } = await import('./mockApiService');
+        return await mockCheckQuickbooksAuth();
+    } catch (error: unknown) {
         console.error('Error checking QuickBooks authentication:', error);
-        // Type narrowing for error
         let errorMessage = 'An unknown error occurred during authentication check.';
         if (error instanceof Error) {
             errorMessage = error.message;
@@ -42,22 +32,11 @@ export const checkQuickbooksAuth = async (backendUrl: string | undefined) => {
 };
 
 export const syncQuickbooksData = async (backendUrl: string | undefined, endpoint: string) => {
-    // Add a check for backendUrl
-    if (!backendUrl) {
-        return { success: false, error: 'Backend URL is not defined.' };
-    }
-
     try {
-        const headers = getAuthHeaders();
-        const response = await fetch(`${backendUrl}${endpoint}`, {
-            method: 'POST',
-            headers: headers,
-        });
-        const data = await response.json();
-        return { success: response.ok, data };
-    } catch (error: unknown) { // Explicitly type 'error' as unknown
+        const { mockSyncQuickbooksData } = await import('./mockApiService');
+        return await mockSyncQuickbooksData(endpoint);
+    } catch (error: unknown) {
         console.error(`Error syncing data from ${endpoint}:`, error);
-        // Type narrowing for error
         let errorMessage = `An unknown error occurred during sync from ${endpoint}.`;
         if (error instanceof Error) {
             errorMessage = error.message;

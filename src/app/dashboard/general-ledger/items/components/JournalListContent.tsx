@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { fetchJournalItemAPI, JournalLine } from "../../../../../api/journalApi";
+import { JournalLine } from "../../../../../api/journalApi";
 import Link from "next/link"; // Import Link for client-side navigation
 import Dropdown from "@/components/Dropdown";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,6 @@ const SkeletonCard = () => (
 );
 
 export default function JournalListContent() {
-    const backendUrl: string = process.env.NEXT_PUBLIC_BACKEND_URL || "";
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -52,25 +51,22 @@ export default function JournalListContent() {
     const fetchJournalItem = async () => {
         setLoading(true);
         try {
-            const token: string = localStorage.getItem("token") || "";
             if (!parentId) {
                 console.warn("Parent ID is null, cannot fetch journal items.");
                 setLoading(false);
                 return;
             }
 
-            const data = await fetchJournalItemAPI(
-                backendUrl,
+            const { mockGetJournalItems } = await import('@/api/mockApiService');
+            const data = await mockGetJournalItems({
                 parentId,
-                token,
                 page,
-                itemsPerPage,
-                search,
-                accountNameFilter,
-                descriptionFilter,
-                postingTypeFilter,
-                amountFilter
-            );
+                limit: itemsPerPage,
+                accountName: accountNameFilter || undefined,
+                description: descriptionFilter || undefined,
+                postingType: postingTypeFilter || undefined,
+                amount: amountFilter || undefined,
+            });
 
             setJournalLines(data.journalLines || []);
             setTotalDebit(data.totalDebit || 0);
@@ -101,10 +97,9 @@ export default function JournalListContent() {
     }, [searchParams]);
 
     useEffect(() => {
-        if (!backendUrl || !parentId) return;
+        if (!parentId) return;
         fetchJournalItem();
     }, [
-        backendUrl,
         page,
         search,
         parentId,
