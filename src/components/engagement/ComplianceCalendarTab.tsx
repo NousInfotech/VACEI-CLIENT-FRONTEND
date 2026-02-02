@@ -89,7 +89,7 @@ function SummaryCard({
   return (
     <div
       className={cn(
-        "cursor-pointer transition-all hover:shadow-md rounded-0 border p-4",
+        "cursor-pointer transition-all rounded-0 border p-4",
         classes.border,
         classes.bg,
         isActive ? "ring-2 ring-primary" : "bg-white"
@@ -223,6 +223,26 @@ const MOCK_COMPLIANCE_DATA: Record<string, ComplianceItem[]> = {
       authority: 'Commissioner for Revenue',
       description: 'Annual reconciliation of all monthly FS5 submissions for the 2025 calendar year.'
     }
+  ],
+  'Banking & Payments': [
+    {
+      id: 'bp-1',
+      title: 'Monthly Bank Reconciliation',
+      type: 'Accounting',
+      dueDate: '2026-02-05',
+      status: 'upcoming',
+      authority: 'Internal',
+      description: 'Reconciliation of all corporate bank accounts for the previous month.'
+    },
+    {
+      id: 'bp-2',
+      title: 'Quarterly Source of Funds Update',
+      type: 'Compliance',
+      dueDate: '2026-03-31',
+      status: 'upcoming',
+      authority: 'Bank / FIAU',
+      description: 'Periodic review and update of source of funds documentation for banking partners.'
+    }
   ]
 }
 
@@ -327,7 +347,7 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
                 return (
                   <div 
                     key={item.id}
-                    className="group bg-white border border-gray-100 p-6 flex flex-col md:flex-row md:items-center gap-6 hover:shadow-lg hover:border-primary/20 transition-all duration-300 relative overflow-hidden"
+                    className="group bg-white border border-gray-100 p-6 flex flex-col md:flex-row md:items-center gap-6 relative overflow-hidden"
                   >
                     <div className={cn(
                       "absolute left-0 top-0 bottom-0 w-1",

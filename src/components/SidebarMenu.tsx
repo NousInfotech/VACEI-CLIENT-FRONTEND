@@ -35,6 +35,8 @@ const serviceStatusConfig: Record<string, { label: string; color: string; dotCol
   "business-plans": { label: "In progress", color: "text-blue-500", dotColor: "bg-blue-500" },
   "liquidation": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
   "cfo": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
+  "banking-payments": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
+  "regulated-licenses": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
   // "grants-incentives": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
 };
 
@@ -164,6 +166,7 @@ export default function SidebarMenu({
         "incorporation",
         "business-plans",
         "liquidation",
+        "banking-payments",
       ].includes(item.slug);
       if (!isHub) {
         e.preventDefault();
@@ -387,6 +390,8 @@ export default function SidebarMenu({
                 "incorporation",
                 "business-plans",
                 "liquidation",
+                "banking-payments",
+                "regulated-licenses",
               ].includes(item.slug);
               if (!isNavigableHeader) {
                 e.preventDefault();

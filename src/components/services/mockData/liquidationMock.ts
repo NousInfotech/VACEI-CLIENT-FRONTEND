@@ -70,9 +70,52 @@ export const liquidationMock: ServiceMockData = {
     { id: 'l-l-f1', file_name: 'Statement_of_Affairs.pdf', type: 'file', file_type: 'PDF', file_size: 2048000, url: '#', folderId: 'l-l-legal', version: 1, tags: ['official'], uploaderId: 'user-1', isDeleted: false, createdAt: '2026-01-15T10:00:00Z' },
     { id: 'l-l-f2', file_name: 'Creditor_Claims_Schedule_Q4.xlsx', type: 'file', file_type: 'XLSX', file_size: 450000, url: '#', folderId: 'l-l-creditors', version: 2, tags: ['internal'], uploaderId: 'user-1', isDeleted: false, createdAt: '2026-01-20T10:00:00Z' }
   ],
-  filings: [
-    { id: 'l-f-1', filing_type: 'Notice of Appointment', reference: 'L-12345', status: 'completed', due_date: '2026-01-30', filing_status: 'completed' },
-    { id: 'l-f-2', filing_type: 'Interim Report', reference: 'R-2025-01', status: 'completed', due_date: '2025-10-15', filing_status: 'completed' }
+  liquidationFilings: [
+    {
+      id: "liq-f-1",
+      stageFiling: "Shareholder Resolution",
+      description: "Approval to liquidate",
+      status: "Completed",
+      serviceStatus: "on_track",
+      completedOn: "10 Feb 2026",
+      documents: ["Resolution"],
+    },
+    {
+      id: "liq-f-2",
+      stageFiling: "Appointment of Liquidator",
+      description: "Formal appointment",
+      status: "Completed",
+      serviceStatus: "on_track",
+      completedOn: "12 Feb 2026",
+      documents: ["Appointment Notice"],
+    },
+    {
+      id: "liq-f-3",
+      stageFiling: "Statutory Notices",
+      description: "Registry & gazette notices",
+      status: "In progress",
+      serviceStatus: "on_track",
+      completedOn: "—",
+      documents: [],
+    },
+    {
+      id: "liq-f-4",
+      stageFiling: "Final Accounts",
+      description: "Closing financial statements",
+      status: "Waiting on you",
+      serviceStatus: "action_required",
+      completedOn: "—",
+      documents: [],
+    },
+    {
+      id: "liq-f-5",
+      stageFiling: "Dissolution Filing",
+      description: "Company struck off",
+      status: "Not started",
+      serviceStatus: "on_track",
+      completedOn: "—",
+      documents: [],
+    },
   ],
   liquidationProcess: [
     { step: "Liquidator Appointment", status: "completed" },

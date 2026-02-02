@@ -126,6 +126,16 @@ const serviceCategories = [
         color: "indigo",
       },
       {
+        slug: "banking-payments",
+        title: "Banking & Payments",
+        status: "Open",
+        statusTone: "info",
+        href: "/dashboard/services/banking-payments",
+        icon: CashbackPoundIcon,
+        description: "Bank docs, approvals, and payment workflows.",
+        color: "blue",
+      },
+      {
         slug: "legal",
         title: "Legal",
         status: "Open",
