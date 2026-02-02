@@ -52,7 +52,11 @@ export interface FetchRecurringExpensesParams {
     limit?: number;
 }
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/?$/, "/") || "";
+// Mock implementation - no backend calls
+// Simulate API delay
+async function simulateDelay(ms: number = 300) {
+    await new Promise(resolve => setTimeout(resolve, ms));
+}
 
 /**
  * Fetches a paginated list of recurring expenses for a specific user.
@@ -63,46 +67,73 @@ const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/?$/, "/") || 
 export async function fetchPaginatedRecurringExpenses(
     params: FetchRecurringExpensesParams
 ): Promise<PaginatedRecurringExpensesResponse> {
+    // Simulate API delay
+    await simulateDelay(300);
 
-    const token = localStorage.getItem("token") || "";
+    const page = params.page || 1;
+    const limit = params.limit || 10;
 
-    if (!backendUrl) {
-        console.error("NEXT_PUBLIC_BACKEND_URL is not defined.");
-        throw new Error("Backend API URL is not configured.");
-    }
+    // Mock recurring expenses
+    const mockExpenses: RecurringExpense[] = [
+        {
+            id: 1,
+            vendorId: "vendor-1",
+            vendorName: "Office Supplies Co.",
+            totalAmount: 5000,
+            transactionCount: 12,
+            active: true,
+            intuitAccountId: 1,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            transactions: [
+                {
+                    id: 1,
+                    txnDate: new Date().toISOString(),
+                    amount: 500,
+                    attachments: [],
+                    recurringExpenseSummaryId: 1,
+                },
+            ],
+        },
+        {
+            id: 2,
+            vendorId: "vendor-2",
+            vendorName: "Utility Services",
+            totalAmount: 3600,
+            transactionCount: 12,
+            active: true,
+            intuitAccountId: 1,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            transactions: [
+                {
+                    id: 2,
+                    txnDate: new Date().toISOString(),
+                    amount: 300,
+                    attachments: [],
+                    recurringExpenseSummaryId: 2,
+                },
+            ],
+        },
+    ];
 
-    const query = new URLSearchParams();
-    query.append('page', (params.page || 1).toString());
-    query.append('limit', (params.limit || 10).toString());
+    // Paginate
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedExpenses = mockExpenses.slice(startIndex, endIndex);
+    const totalCount = mockExpenses.length;
+    const totalPages = Math.ceil(totalCount / limit);
 
-    const baseUrl = backendUrl.endsWith('/') ? backendUrl : `${backendUrl}/`;
-
-    const url = `${baseUrl}recurring-expenses/user-expenses?${query.toString()}`;
-
-    try {
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-        });
-
-        if (!response.ok) {
-            let errorMessage = `HTTP error! status: ${response.status}`;
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.error || errorData.message || errorMessage;
-            } catch (e) {
-                // Fallback if response body is not JSON or parsing fails
-            }
-            throw new Error(errorMessage);
-        }
-
-        const data: PaginatedRecurringExpensesResponse = await response.json();
-        return data;
-    } catch (error) {
-        console.error("Error fetching paginated recurring expenses:", error);
-        throw error;
-    }
+    return {
+        message: "Success",
+        expenses: paginatedExpenses,
+        pagination: {
+            totalCount,
+            totalPages,
+            currentPage: page,
+            pageSize: limit,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
+        },
+    };
 }

@@ -1,8 +1,8 @@
 // utils/api/authService.tsx
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/?$/, "") || "";
+const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
 
-// Auth header utility (can be shared or duplicated if services are very distinct)
+// Get auth token from localStorage
 function getAuthHeaders(): Record<string, string> {
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -15,16 +15,12 @@ async function handleResponse(res: Response): Promise<any> {
     const errorData = await res.json().catch(() => ({ message: "Something went wrong (non-JSON error)" }));
 
     // Special handling for 401/403: still throw a standard Error for consistency
-    // or you could throw errorData directly here as well if your frontend expects it.
-    // For this case, let's keep throwing an Error object for authentication failures.
     if ([401, 403].includes(res.status)) {
-      console.error("Authentication error:", errorData.error);
-      throw new Error(errorData.error || "Authentication failed. Please log in.");
+      console.error("Authentication error:", errorData.error || errorData.message);
+      throw new Error(errorData.error || errorData.message || "Authentication failed. Please log in.");
     }
 
     // For all other non-OK responses (e.g., 400, 500, etc.)
-    // Throw the entire errorData object returned from the backend.
-    // This allows the caller to access properties like 'error', 'message', etc.
     throw errorData; 
   }
 
@@ -58,7 +54,7 @@ interface ChangePasswordResponse {
  */
 export async function changePassword(payload: ChangePasswordPayload): Promise<ChangePasswordResponse> {
   try {
-    const res = await fetch(`${backendUrl}/user/change-password`, { // Assuming this is your endpoint
+    const res = await fetch(`${backendUrl}auth/change-password`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -67,40 +63,111 @@ export async function changePassword(payload: ChangePasswordPayload): Promise<Ch
       body: JSON.stringify(payload),
     });
 
-    return handleResponse(res);
+    const response = await handleResponse(res);
+    return {
+      message: response.message || "Password changed successfully",
+    };
   } catch (error) {
-    console.error("Error changing password in service:", error); // Changed log message
-    throw error; // Re-throw the error received from handleResponse
+    console.error("Error changing password in service:", error);
+    throw error;
   }
 }
 
-// You might also add other auth-related functions here (e.g., login, register, forgot password)
-
-
-
-interface LoginResponse {
-  token: string;
-  username: string;
-  user_id: string;
+/**
+ * User data structure from backend
+ */
+interface User {
+  id: string;
+  email: string | null;
+  phone: string | null;
+  firstName: string;
+  lastName: string;
+  role: string;
+  status: string;
 }
 
+/**
+ * Login response structure from backend
+ */
+interface LoginResponse {
+  user: User;
+  client?: any | null;
+  organizationMember?: any | null;
+  token?: string;
+}
+
+/**
+ * Backend API response wrapper
+ */
+interface BackendLoginResponse {
+  data: LoginResponse;
+  message: string;
+}
+
+/**
+ * Login payload
+ */
 interface LoginPayload {
   email: string;
   password: string;
 }
 
-export async function login({ email, password }: LoginPayload): Promise<LoginResponse> {
-  const response = await fetch(`${backendUrl}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-    credentials: "include",
-  });
+/**
+ * Transformed login response for frontend compatibility
+ */
+interface TransformedLoginResponse {
+  token: string;
+  username: string;
+  user_id: string;
+  user: User;
+  client?: any | null;
+  organizationMember?: any | null;
+}
 
-  if (!response.ok) {
-    const data = await response.json();
-    throw new Error(data.message || "Failed to login");
+/**
+ * Login user
+ * @param payload - Object containing email and password
+ * @returns A promise that resolves to TransformedLoginResponse on success
+ */
+export async function login({ email, password }: LoginPayload): Promise<TransformedLoginResponse> {
+  try {
+    const res = await fetch(`${backendUrl}auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ message: "Failed to login" }));
+      throw new Error(errorData.message || errorData.error || `Login failed: ${res.status} ${res.statusText}`);
+    }
+
+    const responseData: BackendLoginResponse = await res.json();
+    const loginData = responseData.data || responseData;
+    const token = loginData.token;
+    const user = loginData.user;
+    
+    if (!token) {
+      console.warn('No token in response:', responseData);
+      throw new Error("No authentication token received. Please contact support.");
+    }
+    
+    if (!user) {
+      throw new Error("User data not found in response.");
+    }
+
+    // Transform response to match frontend expectations
+    return {
+      token,
+      username: `${user.firstName || ''} ${user.lastName || ''}`.trim() || email.split("@")[0],
+      user_id: user.id,
+      user,
+      client: loginData.client,
+      organizationMember: loginData.organizationMember,
+    };
+  } catch (error) {
+    console.error("Login error:", error);
+    throw error;
   }
-
-  return response.json();
 }

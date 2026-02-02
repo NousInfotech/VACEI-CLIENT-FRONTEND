@@ -12,8 +12,7 @@ import {
 import { ENGAGEMENT_CONFIG } from '@/config/engagementConfig';
 import { MOCK_CHAT_DATA } from './chat/mockChatData';
 
-const backendUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001/api/';
+// Mock implementation - no backend URL needed
 
 type Message = {
     id: number | string;

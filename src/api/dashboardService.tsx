@@ -1,45 +1,22 @@
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/?$/, "/") || "";
-
-// Get auth token from localStorage
-function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem("token") || "";
-  return { Authorization: `Bearer ${token}` };
+// Mock implementation - no backend calls
+// Simulate API delay
+async function simulateDelay(ms: number = 300) {
+  await new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Generic request function
-async function request(method: string, endpoint: string, { params = {}, body = null, isFormData = false } = {}) {
-  const url = new URL(`${backendUrl}${endpoint}`);
-
-  // Handle query params for GET requests
-  if (method === "GET" && params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        url.searchParams.append(key, String(value));
-      }
-    });
-  }
-
-  const headers = getAuthHeaders();
-  if (!isFormData) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: isFormData ? body : body ? JSON.stringify(body) : null,
-  });
-
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(errorText || `API request failed: ${res.status}`);
-  }
-
-  // In DELETE some APIs may not return JSON
-  if (res.status === 204) return null;
-  
-  return await res.json();
-}
 export async function fetchDashboardStats() {
-  return await request("GET", "dashboard/fetch-dashboard-stats");
+  // Simulate API delay
+  await simulateDelay(300);
+  
+  // Mock dashboard stats data
+  return {
+    totalRevenue: 125450.00,
+    totalExpenses: 89230.00,
+    netIncome: 36220.00,
+    cashFlow: 42180.00,
+    revenueChange: "+12.5%",
+    expensesChange: "+5.2%",
+    netIncomeChange: "+28.3%",
+    cashFlowChange: "+15.7%",
+  };
 }

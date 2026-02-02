@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { fetchAccounts, setDefaultAccount } from "../api/accountService";  
+// Mock implementation - no accountService needed  
 import { useAlert } from "../app/context/AlertContext";
 
 interface Account {
@@ -24,15 +24,17 @@ const AccountSelector: React.FC = () => {
       try {
         setLoading(true);
 
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-        const token = localStorage.getItem("token") || "";
-        const user_id = localStorage.getItem("user_id") || "";
-
-        if (!backendUrl || !user_id || !token) {
-          throw new Error("Missing backend URL or credentials");
-        }
-
-        const data = await fetchAccounts(backendUrl, token);
+        // Mock data - no backend calls
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Mock accounts data
+        const mockAccounts: Account[] = [
+          { id: 1, realmId: "Account 1" },
+          { id: 2, realmId: "Account 2" },
+          { id: 3, realmId: "Account 3" },
+        ];
+        
+        const data = mockAccounts;
         setAccounts(data);
 
         const savedEncodedAccountId = localStorage.getItem("account_id");
@@ -59,11 +61,12 @@ const AccountSelector: React.FC = () => {
   }, []);
 
   const handleSubmit = async (accountId: number) => {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
-    const token = localStorage.getItem("token") || "";
-
     try {
-      const result = await setDefaultAccount(backendUrl, token, accountId);
+      // Mock - no backend calls
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Mock result
+      const result = { accountId };
       localStorage.setItem("account_id", btoa(String(result.accountId)));
 
       setAlert({ message: "Account changed successfully", variant: "success" });

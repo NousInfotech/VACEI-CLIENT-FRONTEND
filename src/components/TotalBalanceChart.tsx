@@ -19,7 +19,6 @@ type ChartData = {
 };
 
 export default function ProfitLossChart() {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const [view, setView] = useState<'Monthly' | 'Weekly'>('Monthly');
   const [loading, setLoading] = useState(true);
   const [dataError, setDataError] = useState(false);
@@ -37,24 +36,34 @@ export default function ProfitLossChart() {
       setLoading(true);
       setDataError(false);
       try {
-        const token = localStorage.getItem("token") || "";
-        const url = `${backendUrl?.replace(/\/?$/, "/")}financial-reports/fetch-profit-loss-chart`;
+        // Mock data - no backend calls
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Generate mock profit/loss chart data
+        let mockData: ChartData[] = [];
+        
+        if (view === 'Monthly') {
+          mockData = Array.from({ length: 6 }, (_, i) => {
+            const date = new Date();
+            date.setMonth(date.getMonth() - (5 - i));
+            return {
+              label: `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`,
+              grossProfit: Math.floor(Math.random() * 50000) + 30000,
+            };
+          });
+        } else {
+          // Weekly view - last 8 weeks
+          mockData = Array.from({ length: 8 }, (_, i) => {
+            const date = new Date();
+            date.setDate(date.getDate() - (7 - i) * 7);
+            return {
+              label: `Week ${i + 1}`,
+              grossProfit: Math.floor(Math.random() * 15000) + 5000,
+            };
+          });
+        }
 
-        const response = await fetch(url, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        const result = await response.json();
-        const dataArr = result?.[view.toLowerCase()] || [];
-
-        const formatted: ChartData[] = dataArr.map((entry: any) => ({
-          label: entry.label,
-          grossProfit: entry.grossProfit,
-        }));
-
-        setChartData(prev => ({ ...prev, [view]: formatted }));
+        setChartData(prev => ({ ...prev, [view]: mockData }));
       } catch (error) {
         console.error("Error fetching profit/loss chart:", error);
         setDataError(true);

@@ -1,72 +1,86 @@
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/?$/, "/") || "";
-import axios from "axios";
-// Get auth token from localStorage
-function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem("token") || "";
-  return { Authorization: `Bearer ${token}` };
-}
-
-// Generic request function
-async function request(method: string, endpoint: string, { params = {}, body = null, isFormData = false } = {}) {
-  const url = new URL(`${backendUrl}${endpoint}`);
-
-  // Handle query params for GET requests
-  if (method === "GET" && params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        url.searchParams.append(key, String(value));
-      }
-    });
-  }
-
-  const headers = getAuthHeaders();
-  if (!isFormData) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: isFormData ? body : body ? JSON.stringify(body) : null,
-  });
-
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(errorText || `API request failed: ${res.status}`);
-  }
-
-  // In DELETE some APIs may not return JSON
-  if (res.status === 204) return null;
-  
-  return await res.json();
+// Mock implementation - no backend calls
+// Simulate API delay
+async function simulateDelay(ms: number = 300) {
+  await new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // --------------------- Individual API functions ---------------------
 
 export async function fetchDocumentById(docId: string) {
-  const result = await request("GET", "documents/get-documents", { params: { id: docId } });
-  return result.data?.[0] || null;
+  // Simulate API delay
+  await simulateDelay(200);
+  
+  // Mock document
+  return {
+    id: docId,
+    name: "Sample Document",
+    category: "Financial",
+    status: "active",
+    tags: ["important", "2024"],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
 }
 
-
 export async function fetchCategories() {
-  return await request("GET", "documents/categories");
+  // Simulate API delay
+  await simulateDelay(200);
+  
+  // Mock categories
+  return {
+    data: [
+      { id: "1", name: "Financial", parentId: null },
+      { id: "2", name: "Tax", parentId: null },
+      { id: "3", name: "Legal", parentId: null },
+    ],
+  };
 }
 
 export async function fetchStatuses() {
-  return await request("GET", "documents/fetch-statuses");
+  // Simulate API delay
+  await simulateDelay(200);
+  
+  // Mock statuses
+  return {
+    data: [
+      { id: "1", name: "active" },
+      { id: "2", name: "archived" },
+      { id: "3", name: "pending" },
+    ],
+  };
 }
 
 export async function fetchTags() {
-  return await request("GET", "documents/tags");
+  // Simulate API delay
+  await simulateDelay(200);
+  
+  // Mock tags
+  return {
+    data: [
+      { id: "1", name: "important" },
+      { id: "2", name: "2024" },
+      { id: "3", name: "reviewed" },
+    ],
+  };
 }
 
 export async function fetchSubCategories(parentId: string) {
-  return await request("GET", "documents/subCategories", { params: { parentId } });
+  // Simulate API delay
+  await simulateDelay(200);
+  
+  // Mock subcategories
+  return {
+    data: [
+      { id: "1", name: "Subcategory 1", parentId },
+      { id: "2", name: "Subcategory 2", parentId },
+    ],
+  };
 }
 
 export async function deleteFile(fileId: any) {
-  await request("DELETE", `documents/delete-file/${fileId}`);
+  // Simulate API delay
+  await simulateDelay(200);
+  // Mock - no action needed
 }
 
 export async function createOrUpdateDocument(
@@ -74,24 +88,22 @@ export async function createOrUpdateDocument(
   docId?: string,
   onUploadProgress?: (percent: number) => void
 ) {
-  const endpoint = docId
-    ? `documents/update/${docId}`
-    : `documents/create`;
-
-  const res = await axios.post(`${backendUrl}${endpoint}`, formData, {
-    headers: {
-      ...getAuthHeaders(),
-      "Content-Type": "multipart/form-data",
-    },
-    onUploadProgress: (progressEvent) => {
-      if (progressEvent.total) {
-        const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-        if (onUploadProgress) onUploadProgress(percent);
-      }
-    },
-  });
-
-  return res.data;
+  // Simulate upload progress
+  if (onUploadProgress) {
+    for (let i = 0; i <= 100; i += 10) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+      onUploadProgress(i);
+    }
+  } else {
+    await simulateDelay(500);
+  }
+  
+  // Mock response
+  return {
+    id: docId || `doc-${Date.now()}`,
+    name: formData.get("name") as string || "New Document",
+    message: docId ? "Document updated successfully" : "Document created successfully",
+  };
 }
 
 type FetchDocumentsParams = {
@@ -115,20 +127,47 @@ export async function fetchDocuments({
   tags,
   status,
 }: FetchDocumentsParams) {
-  const params = {
-    page,
-    limit,
-    ...(search && { search }),
-    ...(category && { category }),
-    ...(year && { year }),
-    ...(month && { month }),
-    ...(status && { status }),
-    ...(tags && { tags: tags.join(",") }),
+  // Simulate API delay
+  await simulateDelay(300);
+  
+  // Mock documents
+  const mockDocuments = Array.from({ length: 25 }, (_, i) => ({
+    id: `doc-${i + 1}`,
+    name: `Document ${i + 1}`,
+    category: category || "Financial",
+    status: status || "active",
+    tags: tags || ["important"],
+    createdAt: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
+  }));
+  
+  // Apply search filter if provided
+  let filtered = mockDocuments;
+  if (search) {
+    filtered = filtered.filter(doc => 
+      doc.name.toLowerCase().includes(search.toLowerCase())
+    );
+  }
+  
+  // Paginate
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  const paginated = filtered.slice(startIndex, endIndex);
+  
+  return {
+    data: paginated,
+    pagination: {
+      page,
+      limit,
+      total: filtered.length,
+      totalPages: Math.ceil(filtered.length / limit),
+    },
   };
-
-  return await request("GET", "documents/get-documents", { params });
 }
 
 export async function deleteDocument(docId: any) {
-  return await request("DELETE", `documents/${docId}`);
+  // Simulate API delay
+  await simulateDelay(200);
+  // Mock - no action needed
+  return { message: "Document deleted successfully" };
 }

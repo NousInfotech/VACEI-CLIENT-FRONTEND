@@ -29,14 +29,12 @@ export default function PnLChart() {
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<'Monthly' | 'YTD' | '12 Month'>('12 Month');
 
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
       try {
-        const token = localStorage.getItem("token") || "";
-        const reportType = "ProfitAndLoss";
+        // Mock data - no backend calls
+        await new Promise(resolve => setTimeout(resolve, 300));
 
         const today = new Date();
         const formatDate = (date: Date) => {
@@ -138,7 +136,7 @@ export default function PnLChart() {
     }
 
     fetchData();
-  }, [view, backendUrl]);
+  }, [view]);
 
   const data = chartData[view] || [];
 

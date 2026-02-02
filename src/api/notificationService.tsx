@@ -1,7 +1,6 @@
 // app/dashboard/notifications/notificationApi.ts
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/?$/, "") || "";
-
+// Mock implementation - no backend URL needed
 // Mock notification data stored in memory
 let mockNotifications: Notification[] = [
   {

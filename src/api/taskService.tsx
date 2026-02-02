@@ -1,72 +1,9 @@
 // File: src/api/taskService.ts
 
-const backendUrl =
-  process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/?$/, "/") || "";
-// REMOVED: import { Assignment, TaskComment, Task } from "@/interfaces"; // This line was causing the conflict
-
-function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem("token") || "";
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-function nullToUndefined<T>(val: T | null): T | undefined {
-  return val === null ? undefined : val;
-}
-
-async function request(
-  method: string,
-  endpoint: string,
-  {
-    params = {},
-    body = null,
-  }: {
-    params?: Record<string, any>;
-    body?: FormData | Record<string, any> | null;
-  } = {}
-) {
-  const url = new URL(`${backendUrl}${endpoint}`);
-
-  if (method === "GET" && params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        // If the value is an array, append each item separately (e.g., for assignedToIds[])
-        if (Array.isArray(value)) {
-          value.forEach(item => {
-            url.searchParams.append(`${key}[]`, String(item));
-          });
-        } else {
-          url.searchParams.append(key, String(value));
-        }
-      }
-    });
-  }
-
-  const headers: Record<string, string> = getAuthHeaders();
-  const isFormData =
-    typeof FormData !== "undefined" && body instanceof FormData;
-
-  // Only set Content-Type to application/json if it's NOT FormData
-  if (!isFormData && body !== null) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  const res = await fetch(url.toString(), {
-    method,
-    headers,
-    // If it's FormData, pass it directly. Otherwise, stringify JSON or pass null.
-    body: isFormData ? body : body ? JSON.stringify(body) : null,
-  });
-
-  const isJson = res.headers.get("Content-Type")?.includes("application/json");
-  const data = isJson ? await res.json() : await res.text();
-
-  if (!res.ok) {
-    throw new Error(
-      (isJson && data?.error) || data || `API request failed: ${res.status}`
-    );
-  }
-
-  return res.status === 204 ? null : data;
+// Mock implementation - no backend calls
+// Simulate API delay
+async function simulateDelay(ms: number = 300) {
+  await new Promise(resolve => setTimeout(resolve, ms));
 }
 
 export async function fetchTasks(params: FetchTasksParams = {}) {
@@ -143,67 +80,94 @@ export async function fetchTasks(params: FetchTasksParams = {}) {
 }
 
 export async function fetchTaskById(taskId: number): Promise<Task> {
-  // Assuming your backend's tasks/list?taskId=X endpoint returns a single task object directly
-  // or an array with one task that we then extract.
-  const result = await request("GET", `tasks/list?taskId=${taskId}`);
-
-  // Safely extract the task data, assuming backend might return { data: Task } or just Task
-  const taskData: Task = result?.data || result;
-
-  if (!taskData || !taskData.id) {
-    throw new Error("Task not found or invalid data received");
-  }
-
-
-  return taskData;
+  // Simulate API delay
+  await simulateDelay(300);
+  
+  // Mock task data
+  const mockTask: Task = {
+    id: taskId,
+    title: "Review Q4 Financial Statements",
+    description: "Complete review of Q4 financial statements and prepare summary report",
+    statusId: 1,
+    categoryId: 1,
+    createdById: 1,
+    assignedAccountants: [],
+    assignedToId: [],
+    status: "In Progress",
+    category: "Financial Review",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    priority: "High",
+  };
+  
+  return mockTask;
 }
+
 export async function deleteTaskAttachment(
   attachmentId: number
 ): Promise<void> {
-  return await request("DELETE", `tasks/attachments/${attachmentId}`);
+  // Simulate API delay
+  await simulateDelay(200);
+  // Mock - no action needed
 }
 
 export async function fetchTaskCategories() {
-  const result = await request("GET", "tasks/categories");
-  return result.data || [];
+  // Simulate API delay
+  await simulateDelay(200);
+  
+  // Mock categories
+  return [
+    { id: 1, name: "Financial Review" },
+    { id: 2, name: "Tax" },
+    { id: 3, name: "Audit" },
+    { id: 4, name: "Compliance" },
+  ];
 }
 
 export async function fetchTaskStatuses() {
-  const result = await request("GET", "tasks/statuses");
-  return result.data || [];
+  // Simulate API delay
+  await simulateDelay(200);
+  
+  // Mock statuses
+  return [
+    { id: 1, name: "In Progress" },
+    { id: 2, name: "Pending" },
+    { id: 3, name: "Completed" },
+    { id: 4, name: "Cancelled" },
+  ];
 }
 
 export async function createOrUpdateTask(
   body: FormData | Record<string, any>,
   editTaskId?: number | null
 ) {
-  const endpoint = editTaskId ? `tasks/update/${editTaskId}` : "tasks/create";
-
-  // If body is not FormData, ensure assignedToIds is correctly passed
-  if (!(body instanceof FormData)) {
-    // If you're sending `assignedAccountantIds` from the frontend, rename it to `assignedToIds` here
-    // or ensure your form data already has `assignedToIds`.
-    // Example: If your form sends assignedAccountantIds, convert it.
-    if (body.assignedAccountantIds) {
-      body.assignedToIds = body.assignedAccountantIds;
-      delete body.assignedAccountantIds;
-    }
-  }
-
-  return await request("POST", endpoint, { body });
+  // Simulate API delay
+  await simulateDelay(400);
+  
+  // Mock response
+  return {
+    id: editTaskId || Date.now(),
+    ...(body instanceof FormData ? {} : body),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 export async function updateTaskStatus(
   taskId: number,
   newStatusId: number
 ): Promise<void> {
-  await request("PATCH", `tasks/update-status/${taskId}`, {
-    body: { statusId: newStatusId },
-  });
+  // Simulate API delay
+  await simulateDelay(200);
+  // Mock - no action needed
 }
 
 export async function deleteTask(taskId: number) {
-  return await request("DELETE", `tasks/${taskId}`);
+  // Simulate API delay
+  await simulateDelay(200);
+  // Mock - no action needed
+  return null;
 }
 
 // ----------------------
@@ -211,22 +175,32 @@ export async function deleteTask(taskId: number) {
 // ----------------------
 
 export async function fetchChatUsers(): Promise<Assignment[]> {
-  const result = await request("GET", "chat/getChatUsers");
-  if (!Array.isArray(result)) throw new Error("Invalid response format");
-
-  return result.map((item: any) => {
-    const [first_name, ...rest] = (item.name ?? "").split(" ");
-    return {
-      assignmentId: item.id,
+  // Simulate API delay
+  await simulateDelay(200);
+  
+  // Mock chat users
+  return [
+    {
+      assignmentId: 1,
       accountant: {
-        id: item.id,
-        first_name: first_name ?? "",
-        last_name: rest.join(" ") ?? "",
-        email: item.email ?? "",
-        name: item.name ?? "",
+        id: 1,
+        first_name: "John",
+        last_name: "Doe",
+        email: "john.doe@example.com",
+        name: "John Doe",
       },
-    };
-  });
+    },
+    {
+      assignmentId: 2,
+      accountant: {
+        id: 2,
+        first_name: "Jane",
+        last_name: "Smith",
+        email: "jane.smith@example.com",
+        name: "Jane Smith",
+      },
+    },
+  ];
 }
 
 // Modified CommentFromApi to be more aligned with TaskComment,
@@ -244,22 +218,44 @@ export async function fetchTaskComments(
   before?: string | null,
   limit?: number
 ): Promise<TaskComment[]> {
-  const params: Record<string, any> = { taskId, since, before, limit };
-  const result = await request("GET", "tasks/comments", { params });
-  return result.data || [];
+  // Simulate API delay
+  await simulateDelay(200);
+  
+  // Mock comments
+  return [
+    {
+      id: 1,
+      taskId: taskId,
+      commentedById: 1,
+      comment: "This task is progressing well.",
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 2,
+      taskId: taskId,
+      commentedById: 2,
+      comment: "Please review the attached documents.",
+      createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+    },
+  ];
 }
 
 // --- MODIFIED createCommentTask ---
 export async function createTaskComment(
   payload: FormData
 ): Promise<CommentFromApi> {
-  console.log(payload);
-
-  const result = await request("POST", "tasks/comments/create", {
-    body: payload,
-  });
-
-  return result.data as CommentFromApi;
+  // Simulate API delay
+  await simulateDelay(300);
+  
+  // Mock comment response
+  return {
+    id: Date.now(),
+    comment: payload.get("comment") as string || "New comment",
+    commentedById: 1,
+    createdAt: new Date().toISOString(),
+  };
 }
 
 // --- Core Types ---

@@ -58,8 +58,11 @@ export interface FetchAgingDataParams {
     endDate?: string;   // Renamed from asOfDate: End date for aging (YYYY-MM-DD)
 }
 
-// Ensure NEXT_PUBLIC_BACKEND_URL is defined in your environment variables
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/?$/, "/") || "";
+// Mock implementation - no backend calls
+// Simulate API delay
+async function simulateDelay(ms: number = 300) {
+    await new Promise(resolve => setTimeout(resolve, ms));
+}
 
 /**
  * Fetches a paginated list of aging data (AP/AR reports) for a specific Intuit account.
@@ -73,70 +76,77 @@ const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/?$/, "/") || 
 export async function fetchPaginatedAgingData(
     params: FetchAgingDataParams
 ): Promise<PaginatedAgingDataResponse> {
-    const { intuitAccountId, page = 1, limit = 10, startDate, endDate } = params; // Destructure new params
+    const { intuitAccountId, page = 1, limit = 10, startDate, endDate } = params;
 
-    const token = localStorage.getItem("token") || "";
-
-    if (!backendUrl) {
-        console.error("NEXT_PUBLIC_BACKEND_URL is not defined. Please set it in your environment variables.");
-        throw new Error("Backend API URL is not configured.");
-    }
+    // Simulate API delay
+    await simulateDelay(300);
 
     if (typeof intuitAccountId !== 'number' || isNaN(intuitAccountId)) {
         throw new Error('Invalid intuitAccountId provided. It must be a number.');
     }
 
-    const query = new URLSearchParams();
-    query.append('page', page.toString());
-    query.append('limit', limit.toString());
-    query.append('intuitAccountId', intuitAccountId.toString());
+    // Mock aging data
+    const mockRows: AgingRow[] = [
+        {
+            id: 1,
+            agingDataId: 1,
+            entityName: "Vendor A",
+            entityId: "vendor-1",
+            current: 5000,
+            agingBucket1_30: 3000,
+            agingBucket31_60: 2000,
+            agingBucket61_90: 0,
+            agingBucket91Over: 0,
+            total: 10000,
+            createdAt: new Date().toISOString(),
+        },
+        {
+            id: 2,
+            agingDataId: 1,
+            entityName: "Vendor B",
+            entityId: "vendor-2",
+            current: 8000,
+            agingBucket1_30: 5000,
+            agingBucket31_60: 3000,
+            agingBucket61_90: 0,
+            agingBucket91Over: 0,
+            total: 16000,
+            createdAt: new Date().toISOString(),
+        },
+    ];
 
-    // --- Add startDate and endDate to the query parameters if they exist ---
-    if (startDate) {
-        query.append('startDate', startDate);
-    }
-    if (endDate) {
-        query.append('endDate', endDate); // This will be used as the "as of" date for aging
-    }
-    // -----------------------------------------------------------------------
+    const mockAgingData: AgingData = {
+        id: 1,
+        intuitAccountId: intuitAccountId,
+        reportDate: endDate || new Date().toISOString().split('T')[0],
+        type: 'AP',
+        currency: 'EUR',
+        current: 13000,
+        agingBucket1_30: 8000,
+        agingBucket31_60: 5000,
+        agingBucket61_90: 0,
+        agingBucket91Over: 0,
+        total: 26000,
+        createdAt: new Date().toISOString(),
+        rows: mockRows,
+    };
 
-    const url = `${backendUrl}aging/user-ar-ap?${query.toString()}`;
+    // Calculate pagination details
+    const totalCount = 1; // One aging data record
+    const totalPages = Math.ceil(totalCount / limit);
 
-    try {
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-        });
-
-        if (!response.ok) {
-            let errorMessage = `HTTP error! status: ${response.status}`;
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.error || errorData.message || errorMessage;
-            } catch (e) {
-                console.error("Error parsing backend error response:", e);
-            }
-            throw new Error(errorMessage);
-        }
-
-        const data: PaginatedAgingDataResponse = await response.json();
-
-        // Calculate pagination details
-        const totalPages = Math.ceil(data.pagination.totalCount / limit);
-        data.pagination.totalPages = totalPages;
-        data.pagination.currentPage = page;
-        data.pagination.pageSize = limit;
-        data.pagination.hasNextPage = page < totalPages;
-        data.pagination.hasPrevPage = page > 1;
-
-        return data;
-    } catch (error) {
-        console.error("Error fetching paginated aging data:", error);
-        throw error;
-    }
+    return {
+        message: "Success",
+        data: [mockAgingData],
+        pagination: {
+            totalCount,
+            totalPages,
+            currentPage: page,
+            pageSize: limit,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
+        },
+    };
 }
 
 // Interface for parameters specifically for fetchArAgingData/fetchApAgingData

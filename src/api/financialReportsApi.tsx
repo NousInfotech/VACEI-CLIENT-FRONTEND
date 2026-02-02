@@ -96,33 +96,30 @@ export interface CashSpendApiResponse {
 // Existing fetch functions...
 
 export async function fetchFinancialReports(params: FetchReportParams) {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-    const token = localStorage.getItem("token") || "";
-
-    const query = new URLSearchParams({
-        reportType: params.reportType,
-        startDate: params.startDate,
-        endDate: params.endDate,
-    });
-
-    if (params.filterType === '12month' && params.quickFilterRange) {
-        query.append('quickFilterRange', params.quickFilterRange);
-    }
-
-    const url = `${backendUrl?.replace(/\/?$/, "/")}financial-reports/fetchReports?${query.toString()}`;
-
-    const response = await fetch(url, {
-        headers: {
-            Authorization: `Bearer ${token}`,
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Mock financial reports
+    return [
+        {
+            id: 1,
+            reportType: params.reportType,
+            startDate: params.startDate,
+            endDate: params.endDate,
+            revenue: 125450.00,
+            expenses: 89230.00,
+            netIncome: 36220.00,
         },
-    });
-
-    if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.reports;
+        {
+            id: 2,
+            reportType: params.reportType,
+            startDate: params.startDate,
+            endDate: params.endDate,
+            revenue: 118000.00,
+            expenses: 85000.00,
+            netIncome: 33000.00,
+        },
+    ];
 }
 
 export async function fetchDashboardSummary(): Promise<any> {
@@ -193,66 +190,42 @@ export async function fetchDashboardSummary(): Promise<any> {
 
 
 export async function fetchMonthlyCashFlowReport(startDate: string, endDate: string): Promise<MonthlyCashFlowReportResponse> {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-    const token = localStorage.getItem("token") || "";
-
-    if (!backendUrl) {
-        console.error("NEXT_PUBLIC_BACKEND_URL is not defined.");
-        throw new Error("Backend URL is not configured.");
-    }
-
-    const query = new URLSearchParams({ startDate, endDate });
-    const url = `${backendUrl?.replace(/\/?$/, "/")}financial-reports/monthly-cash-flow?${query.toString()}`;
-
-    try {
-        const response = await fetch(url, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data: MonthlyCashFlowReportResponse = await response.json();
-        return data;
-    } catch (error) {
-        console.error("Error fetching monthly cash flow report:", error);
-        throw error;
-    }
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Mock monthly cash flow report
+    const months = ["Jan 2024", "Feb 2024", "Mar 2024", "Apr 2024", "May 2024", "Jun 2024"];
+    
+    return {
+        beginningCash: 50000,
+        endingCash: 75000,
+        cashIncrease: 25000,
+        months: months,
+        data: [
+            { name: "Operating Activities", "Jan 2024": "15000", "Feb 2024": "18000", "Mar 2024": "20000", "Apr 2024": "22000", "May 2024": "25000", "Jun 2024": "28000" },
+            { name: "Investing Activities", "Jan 2024": "-5000", "Feb 2024": "-3000", "Mar 2024": "-2000", "Apr 2024": "-1000", "May 2024": "-500", "Jun 2024": "0" },
+            { name: "Financing Activities", "Jan 2024": "10000", "Feb 2024": "5000", "Mar 2024": "3000", "Apr 2024": "2000", "May 2024": "1000", "Jun 2024": "0" },
+        ],
+    };
 }
 
 // This is the function whose return type needs to be aligned with the single, correct CashSpendApiResponse
 export async function fetchCashSpend(startDate: string, endDate: string): Promise<CashSpendApiResponse> {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-    const token = localStorage.getItem("token") || "";
-
-    if (!backendUrl) {
-        console.error("NEXT_PUBLIC_BACKEND_URL is not defined.");
-        throw new Error("Backend URL is not configured.");
-    }
-
-    const query = new URLSearchParams({ startDate, endDate });
-    const url = `${backendUrl.replace(/\/?$/, "/")}financial-reports/cash-spend?${query.toString()}`;
-
-    try {
-        const response = await fetch(url, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-        });
-
-        if (!response.ok) {
-            const errorBody = await response.text();
-            throw new Error(`HTTP error! status: ${response.status}, message: ${errorBody}`);
-        }
-
-        const data: CashSpendApiResponse = await response.json(); // Type assertion here
-        return data;
-    } catch (error) {
-        console.error("Error fetching cash spend data:", error);
-        throw error;
-    }
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Mock cash spend data
+    return {
+        data: {
+            month: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+            totalSpend: 89230.00,
+            categories: [
+                { category: "Office Supplies", amount: 5000 },
+                { category: "Utilities", amount: 3000 },
+                { category: "Salaries", amount: 60000 },
+                { category: "Marketing", amount: 10000 },
+                { category: "Other", amount: 11230 },
+            ],
+        },
+    };
 }

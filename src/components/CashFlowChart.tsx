@@ -29,7 +29,6 @@ const formatQuarter = (label: string) => {
 
 export default function CashFlowChart() {
   const router = useRouter(); // Using the correct Next.js router
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const [view, setView] = useState<'Monthly' | 'YTD' | '12-Month'>('Monthly');
   const [loading, setLoading] = useState(true);
   const [dataError, setDataError] = useState(false);
@@ -66,8 +65,8 @@ export default function CashFlowChart() {
       setLoading(true);
       setDataError(false);
       try {
-        const token = localStorage.getItem("token") || "";
-        const reportType = "CashFlow";
+        // Mock data - no backend calls
+        await new Promise(resolve => setTimeout(resolve, 300));
 
         const today = new Date();
         const formatDate = (date: Date) => {
@@ -145,7 +144,7 @@ export default function CashFlowChart() {
     }
 
     fetchData();
-  }, [view, backendUrl, router]);
+  }, [view, router]);
 
   return (
     <DashboardCard className="py-6">

@@ -1,46 +1,7 @@
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/?$/, "/") || "";
-
-function getAuthHeaders(): Record<string, string> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-async function request(
-  method: string,
-  endpoint: string,
-  {
-    params = {},
-    body = null,
-  }: {
-    params?: Record<string, any>;
-    body?: Record<string, any> | null;
-  } = {}
-) {
-  const url = new URL(`${backendUrl}${endpoint}`);
-  if (method === "GET" && params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        url.searchParams.append(key, String(value));
-      }
-    });
-  }
-  const headers: Record<string, string> = {
-    ...getAuthHeaders(),
-  };
-  if (body !== null) {
-    headers["Content-Type"] = "application/json";
-  }
-  const res = await fetch(url.toString(), {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : null,
-  });
-  const isJson = res.headers.get("Content-Type")?.includes("application/json");
-  const data = isJson ? await res.json() : await res.text();
-  if (!res.ok) {
-    throw new Error((isJson && data?.error) || data || `API request failed: ${res.status}`);
-  }
-  return res.status === 204 ? null : data;
+// Mock implementation - no backend calls
+// Simulate API delay
+async function simulateDelay(ms: number = 300) {
+  await new Promise(resolve => setTimeout(resolve, ms));
 }
 
 export type LiquidationStrictStatus = "draft" | "in_progress" | "waiting_on_you" | "completed";
@@ -82,20 +43,59 @@ export interface LiquidationProject {
 }
 
 export async function getLiquidationProject(companyId: string): Promise<LiquidationProject | null> {
-  const result = await request("GET", "liquidations/projects", { params: { companyId } });
-  const list: LiquidationProject[] = result?.data || result || [];
-  if (!Array.isArray(list) || list.length === 0) return null;
-  return list.find((p) => p.company_id === companyId) || list[0] || null;
+  // Simulate API delay
+  await simulateDelay(300);
+  
+  // Mock liquidation project
+  return {
+    project_id: `project-${companyId}`,
+    company_id: companyId,
+    project_type: "liquidation",
+    liquidation_type: "MVL",
+    status: "in_progress",
+    start_date: new Date().toISOString(),
+    expected_completion: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+    liquidator: "Liquidator Name",
+    milestones: [
+      { id: "1", name: "Initial Filing", status: "Completed", due: new Date().toISOString() },
+      { id: "2", name: "Creditor Notification", status: "Upcoming", due: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() },
+      { id: "3", name: "Final Distribution", status: "Upcoming", due: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString() },
+    ],
+    documents: [
+      { id: "1", name: "Statement of Affairs", status: "Uploaded" },
+      { id: "2", name: "Creditor List", status: "Missing" },
+    ],
+    invoices: [
+      { id: "1", status: "Pending", amount: 5000 },
+    ],
+  };
 }
 
 export async function createLiquidationProject(payload: Omit<LiquidationProject, "project_id">): Promise<LiquidationProject> {
-  const result = await request("POST", "liquidations/projects", { body: payload });
-  return result?.data || result;
+  // Simulate API delay
+  await simulateDelay(400);
+  
+  // Mock response
+  return {
+    project_id: `project-${Date.now()}`,
+    ...payload,
+  };
 }
 
 export async function updateLiquidationStatus(projectId: string, status: LiquidationStrictStatus): Promise<LiquidationProject> {
-  const result = await request("PATCH", `liquidations/projects/${projectId}/status`, { body: { status } });
-  return result?.data || result;
+  // Simulate API delay
+  await simulateDelay(300);
+  
+  // Mock response - get existing project and update status
+  const existing = await getLiquidationProject(projectId.split("-")[1] || "default");
+  if (!existing) {
+    throw new Error("Project not found");
+  }
+  
+  return {
+    ...existing,
+    status,
+  };
 }
 
 import { fetchTasks, fetchTaskCategories, fetchTaskStatuses, createOrUpdateTask, deleteTask } from "@/api/taskService";

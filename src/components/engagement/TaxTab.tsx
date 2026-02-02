@@ -55,26 +55,43 @@ const TaxTab = () => {
           return;
         }
 
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL
-        const token = localStorage.getItem("token") || ""
-
-        // Fetch tax data
-        const taxRes = await fetch(`${backendUrl}tax`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (taxRes.ok) {
-          const tax = await taxRes.json()
-          setTaxData(tax)
-        }
-
-        // Fetch company data
-        const companyRes = await fetch(`${backendUrl}company`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (companyRes.ok) {
-          const comp = await companyRes.json()
-          setCompany(comp)
-        }
+        // Mock data - no backend calls
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Mock tax data
+        const mockTaxData = [
+          {
+            entityType: "TaxAgency",
+            jsonData: {
+              TaxAgency: [
+                { Id: "1", DisplayName: "Malta Tax and Customs Administration" },
+                { Id: "2", DisplayName: "Social Security Department" }
+              ]
+            }
+          },
+          {
+            entityType: "TaxRate",
+            jsonData: {
+              TaxRate: [
+                { Id: "1", Name: "Standard VAT", RateValue: 18 },
+                { Id: "2", Name: "Reduced VAT", RateValue: 7 },
+                { Id: "3", Name: "Corporate Tax", RateValue: 35 }
+              ]
+            }
+          }
+        ];
+        setTaxData(mockTaxData);
+        
+        // Mock company data
+        setCompany({
+          simplifiedProfile: {
+            companyName: MOCK_ENGAGEMENT_DATA.company.name,
+            legalName: MOCK_ENGAGEMENT_DATA.company.name,
+            email: "finance@springfield.mt",
+            address: MOCK_ENGAGEMENT_DATA.company.address,
+            startDate: "2020-01-01"
+          }
+        });
       } catch (error) {
         console.error("Tax data fetch error:", error)
       } finally {
