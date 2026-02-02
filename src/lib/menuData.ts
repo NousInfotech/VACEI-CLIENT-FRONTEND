@@ -22,6 +22,20 @@ import {
   Unlink03Icon,
 } from "@hugeicons/core-free-icons";
 
+import { accountingBookingMock } from "../components/services/mockData/accountingBookingMock";
+import { auditMock } from "../components/services/mockData/auditMock";
+import { vatMock } from "../components/services/mockData/vatMock";
+import { taxMock } from "../components/services/mockData/taxMock";
+import { corporateMock } from "../components/services/mockData/corporateMock";
+import { payrollMock } from "../components/services/mockData/payrollMock";
+import { cfoMock } from "../components/services/mockData/cfoMock";
+import { mbrMock } from "../components/services/mockData/mbrMock";
+import { incorporationMock } from "../components/services/mockData/incorporationMock";
+import { businessPlansMock } from "../components/services/mockData/businessPlansMock";
+import { liquidationMock } from "../components/services/mockData/liquidationMock";
+import { regulatedLicensesMock } from "../components/services/mockData/regulatedLicensesMock";
+import { bankingPaymentsMock } from "../components/services/mockData/bankingPaymentsMock";
+
 export type MenuSection = "primary" | "workspaces" | "operations" | "settings";
 
 export interface MenuItem {
@@ -96,8 +110,14 @@ export const menuData: MenuItem[] = [
             icon: DocumentValidationIcon,
             label: "Document Requests",
             href: "/dashboard/services/bookkeeping?tab=document_requests",
-            count: 5,
-            totalCount: 5,
+            count: accountingBookingMock.documentRequests?.length || 0,
+            totalCount: accountingBookingMock.documentRequests?.length || 0,
+          },
+          {
+            slug: "ab-milestones",
+            icon: TaskDaily01Icon,
+            label: "Milestones",
+            href: "/dashboard/services/bookkeeping?tab=milestones",
           },
           {
             slug: "ab-lib",
@@ -112,24 +132,18 @@ export const menuData: MenuItem[] = [
             href: "/dashboard/services/bookkeeping?tab=compliance_calendar",
           },
           {
-            slug: "ab-history",
-            icon: TaskDaily01Icon,
-            label: "Service History",
-            href: "/dashboard/services/bookkeeping?tab=service_history",
-          },
-          {
             slug: "ab-messages",
             icon: Message01Icon,
             label: "Messages",
             href: "/dashboard/services/bookkeeping?tab=messages",
-            count: 8,
-            totalCount: 10,
+            count: accountingBookingMock.messages?.filter((m) => !m.read).length || 0,
+            totalCount: accountingBookingMock.messages?.length || 0,
           },
           {
-            slug: "ab-mbr-filings",
+            slug: "ab-filings",
             icon: TaskDaily01Icon,
             label: "Filings",
-            href: "/dashboard/services/bookkeeping?tab=mbr_filings",
+            href: "/dashboard/services/bookkeeping?tab=accounting_filings",
           },
           {
             slug: "invoices",
@@ -235,8 +249,14 @@ export const menuData: MenuItem[] = [
             icon: DocumentValidationIcon,
             label: "Document Requests",
             href: "/dashboard/services/audit?tab=document_requests",
-            count: 5,
-            totalCount: 12,
+            count: auditMock.documentRequests?.length || 0,
+            totalCount: auditMock.documentRequests?.length || 0,
+          },
+          {
+            slug: "audit-milestones",
+            icon: TaskDaily01Icon,
+            label: "Milestones",
+            href: "/dashboard/services/audit?tab=milestones",
           },
           {
             slug: "audit-lib",
@@ -251,24 +271,18 @@ export const menuData: MenuItem[] = [
             href: "/dashboard/services/audit?tab=compliance_calendar",
           },
           {
-            slug: "audit-history",
+            slug: "audit-filings",
             icon: TaskDaily01Icon,
-            label: "Service History",
-            href: "/dashboard/services/audit?tab=service_history",
+            label: "Filings",
+            href: "/dashboard/services/audit?tab=audit_filings",
           },
           {
             slug: "audit-messages",
             icon: Message01Icon,
             label: "Messages",
             href: "/dashboard/services/audit?tab=messages",
-            count: 1,
-            totalCount: 4,
-          },
-          {
-            slug: "audit-mbr-filings",
-            icon: TaskDaily01Icon,
-            label: "Filings",
-            href: "/dashboard/services/audit?tab=mbr_filings",
+            count: auditMock.messages?.filter((m) => !m.read).length || 0,
+            totalCount: auditMock.messages?.length || 0,
           },
           {
             slug: "engagements",
@@ -287,16 +301,18 @@ export const menuData: MenuItem[] = [
         isActive: true,
         children: [
           {
-            slug: "vat-periods",
-            icon: TaxesIcon,
-            label: "VAT Periods",
-            href: "/dashboard/services/vat?tab=vat_periods",
-          },
-          {
             slug: "vat-docs",
             icon: DocumentValidationIcon,
             label: "Document Requests",
             href: "/dashboard/services/vat?tab=document_requests",
+            count: vatMock.documentRequests?.length || 0,
+            totalCount: vatMock.documentRequests?.length || 0,
+          },
+          {
+            slug: "vat-milestones",
+            icon: TaskDaily01Icon,
+            label: "Milestones",
+            href: "/dashboard/services/vat?tab=milestones",
           },
           {
             slug: "vat-lib",
@@ -311,22 +327,18 @@ export const menuData: MenuItem[] = [
             href: "/dashboard/services/vat?tab=compliance_calendar",
           },
           {
-            slug: "vat-history",
-            icon: TaskDaily01Icon,
-            label: "Service History",
-            href: "/dashboard/services/vat?tab=service_history",
-          },
-          {
             slug: "vat-messages",
             icon: Message01Icon,
             label: "Messages",
             href: "/dashboard/services/vat?tab=messages",
+            count: vatMock.messages?.filter((m) => !m.read).length || 0,
+            totalCount: vatMock.messages?.length || 0,
           },
           {
-            slug: "vat-mbr-filings",
-            icon: TaskDaily01Icon,
+            slug: "vat-periods",
+            icon: TaxesIcon,
             label: "Filings",
-            href: "/dashboard/services/vat?tab=mbr_filings",
+            href: "/dashboard/services/vat?tab=vat_periods",
           },
           {
             slug: "vat-malta",
@@ -349,6 +361,14 @@ export const menuData: MenuItem[] = [
             icon: DocumentValidationIcon,
             label: "Document Requests",
             href: "/dashboard/services/tax?tab=document_requests",
+            count: taxMock.documentRequests?.length || 0,
+            totalCount: taxMock.documentRequests?.length || 0,
+          },
+          {
+            slug: "tax-milestones",
+            icon: TaskDaily01Icon,
+            label: "Milestones",
+            href: "/dashboard/services/tax?tab=milestones",
           },
           {
             slug: "tax-lib",
@@ -363,22 +383,18 @@ export const menuData: MenuItem[] = [
             href: "/dashboard/services/tax?tab=compliance_calendar",
           },
           {
-            slug: "tax-history",
+            slug: "tax-filings",
             icon: TaskDaily01Icon,
-            label: "Service History",
-            href: "/dashboard/services/tax?tab=service_history",
+            label: "Filings",
+            href: "/dashboard/services/tax?tab=tax_filings",
           },
           {
             slug: "tax-messages",
             icon: Message01Icon,
             label: "Messages",
             href: "/dashboard/services/tax?tab=messages",
-          },
-          {
-            slug: "tax-mbr-filings",
-            icon: TaskDaily01Icon,
-            label: "Filings",
-            href: "/dashboard/services/tax?tab=mbr_filings",
+            count: taxMock.messages?.filter((m) => !m.read).length || 0,
+            totalCount: taxMock.messages?.length || 0,
           },
         ],
       },
@@ -394,6 +410,14 @@ export const menuData: MenuItem[] = [
             icon: DocumentValidationIcon,
             label: "Document Requests",
             href: "/dashboard/services/csp-mbr?tab=document_requests",
+            count: corporateMock.documentRequests?.length || 0,
+            totalCount: corporateMock.documentRequests?.length || 0,
+          },
+          {
+            slug: "csp-milestones",
+            icon: TaskDaily01Icon,
+            label: "Milestones",
+            href: "/dashboard/services/csp-mbr?tab=milestones",
           },
           {
             slug: "csp-lib",
@@ -408,16 +432,18 @@ export const menuData: MenuItem[] = [
             href: "/dashboard/services/csp-mbr?tab=compliance_calendar",
           },
           {
-            slug: "csp-history",
-            icon: TaskDaily01Icon,
-            label: "Service History",
-            href: "/dashboard/services/csp-mbr?tab=service_history",
-          },
-          {
             slug: "csp-messages",
             icon: Message01Icon,
             label: "Messages",
             href: "/dashboard/services/csp-mbr?tab=messages",
+            count: corporateMock.messages?.filter((m) => !m.read).length || 0,
+            totalCount: corporateMock.messages?.length || 0,
+          },
+          {
+            slug: "csp-filings",
+            icon: TaskDaily01Icon,
+            label: "Filings",
+            href: "/dashboard/services/csp-mbr?tab=corporate_filings",
           },
         ],
       },
@@ -433,6 +459,14 @@ export const menuData: MenuItem[] = [
             icon: DocumentValidationIcon,
             label: "Document Requests",
             href: "/dashboard/services/payroll?tab=document_requests",
+            count: payrollMock.documentRequests?.length || 0,
+            totalCount: payrollMock.documentRequests?.length || 0,
+          },
+          {
+            slug: "payroll-milestones",
+            icon: TaskDaily01Icon,
+            label: "Milestones",
+            href: "/dashboard/services/payroll?tab=milestones",
           },
           {
             slug: "payroll-lib",
@@ -446,23 +480,20 @@ export const menuData: MenuItem[] = [
             label: "Compliance Calendar",
             href: "/dashboard/services/payroll?tab=compliance_calendar",
           },
-          {
-            slug: "payroll-history",
-            icon: TaskDaily01Icon,
-            label: "Service History",
-            href: "/dashboard/services/payroll?tab=service_history",
-          },
+
           {
             slug: "payroll-messages",
             icon: Message01Icon,
             label: "Messages",
             href: "/dashboard/services/payroll?tab=messages",
+            count: payrollMock.messages?.filter((m) => !m.read).length || 0,
+            totalCount: payrollMock.messages?.length || 0,
           },
           {
-            slug: "payroll-mbr-filings",
+            slug: "payroll-filings",
             icon: TaskDaily01Icon,
             label: "Filings",
-            href: "/dashboard/services/payroll?tab=mbr_filings",
+            href: "/dashboard/services/payroll?tab=payroll_filings",
           },
           {
             slug: "payroll(malta)",
@@ -486,6 +517,8 @@ export const menuData: MenuItem[] = [
             icon: DocumentValidationIcon,
             label: "Document Requests",
             href: "/dashboard/services/cfo?tab=document_requests",
+            count: cfoMock.documentRequests?.length || 0,
+            totalCount: cfoMock.documentRequests?.length || 0,
           },
           {
             slug: "cfo-milestones",
@@ -510,6 +543,14 @@ export const menuData: MenuItem[] = [
             icon: Message01Icon,
             label: "Messages",
             href: "/dashboard/services/cfo?tab=messages",
+            count: cfoMock.messages?.filter((m) => !m.read).length || 0,
+            totalCount: cfoMock.messages?.length || 0,
+          },
+          {
+            slug: "cfo-filings",
+            icon: TaskDaily01Icon,
+            label: "Filings",
+            href: "/dashboard/services/cfo?tab=cfo_filings",
           },
         ],
       },
@@ -525,6 +566,8 @@ export const menuData: MenuItem[] = [
             icon: DocumentValidationIcon,
             label: "Document Requests",
             href: "/dashboard/services/mbr-filing?tab=document_requests",
+            count: mbrMock.documentRequests?.length || 0,
+            totalCount: mbrMock.documentRequests?.length || 0,
           },
           {
             slug: "mbr-milestones",
@@ -549,6 +592,8 @@ export const menuData: MenuItem[] = [
             icon: Message01Icon,
             label: "Messages",
             href: "/dashboard/services/mbr-filing?tab=messages",
+            count: mbrMock.messages?.filter((m) => !m.read).length || 0,
+            totalCount: mbrMock.messages?.length || 0,
           },
           {
             slug: "mbr-filing-list",
@@ -570,6 +615,8 @@ export const menuData: MenuItem[] = [
             icon: DocumentValidationIcon,
             label: "Document Requests",
             href: "/dashboard/services/incorporation?tab=document_requests",
+            count: incorporationMock.documentRequests?.length || 0,
+            totalCount: incorporationMock.documentRequests?.length || 0,
           },
           {
             slug: "inc-milestones",
@@ -590,10 +637,18 @@ export const menuData: MenuItem[] = [
             href: "/dashboard/services/incorporation?tab=compliance_calendar",
           },
           {
+            slug: "incorporation-filings",
+            icon: TaskDaily01Icon,
+            label: "Filings",
+            href: "/dashboard/services/incorporation?tab=incorporation_filings",
+          },
+          {
             slug: "inc-messages",
             icon: Message01Icon,
             label: "Messages",
             href: "/dashboard/services/incorporation?tab=messages",
+            count: incorporationMock.messages?.filter((m) => !m.read).length || 0,
+            totalCount: incorporationMock.messages?.length || 0,
           },
         ],
       },
@@ -609,6 +664,8 @@ export const menuData: MenuItem[] = [
             icon: DocumentValidationIcon,
             label: "Document Requests",
             href: "/dashboard/services/business-plans?tab=document_requests",
+            count: businessPlansMock.documentRequests?.length || 0,
+            totalCount: businessPlansMock.documentRequests?.length || 0,
           },
           {
             slug: "bp-milestones",
@@ -629,10 +686,18 @@ export const menuData: MenuItem[] = [
             href: "/dashboard/services/business-plans?tab=compliance_calendar",
           },
           {
+            slug: "business-plans-filings",
+            icon: TaskDaily01Icon,
+            label: "Filings",
+            href: "/dashboard/services/business-plans?tab=business_plans_filings",
+          },
+          {
             slug: "bp-messages",
             icon: Message01Icon,
             label: "Messages",
             href: "/dashboard/services/business-plans?tab=messages",
+            count: businessPlansMock.messages?.filter((m) => !m.read).length || 0,
+            totalCount: businessPlansMock.messages?.length || 0,
           },
         ],
       },
@@ -648,6 +713,8 @@ export const menuData: MenuItem[] = [
             icon: DocumentValidationIcon,
             label: "Document Requests",
             href: "/dashboard/services/liquidation?tab=document_requests",
+            count: liquidationMock.documentRequests?.length || 0,
+            totalCount: liquidationMock.documentRequests?.length || 0,
           },
           {
             slug: "liq-milestones",
@@ -668,10 +735,73 @@ export const menuData: MenuItem[] = [
             href: "/dashboard/services/liquidation?tab=compliance_calendar",
           },
           {
+            slug: "liquidation-filings",
+            icon: TaskDaily01Icon,
+            label: "Filings",
+            href: "/dashboard/services/liquidation?tab=liquidation_filings",
+          },
+          {
             slug: "liq-messages",
             icon: Message01Icon,
             label: "Messages",
             href: "/dashboard/services/liquidation?tab=messages",
+            count: liquidationMock.messages?.filter((m) => !m.read).length || 0,
+            totalCount: liquidationMock.messages?.length || 0,
+          },
+        ],
+      },
+      {
+        slug: "regulated-licenses",
+        icon: GitPullRequestIcon,
+        label: "Regulated Licenses",
+        href: "/dashboard/services/regulated-licenses?tab=dashboard",
+        isActive: true,
+        children: [
+          {
+            slug: "rl-dashboard",
+            icon: DashboardSquare02Icon,
+            label: "Dashboard",
+            href: "/dashboard/services/regulated-licenses?tab=dashboard",
+          },
+          {
+            slug: "rl-docs",
+            icon: DocumentValidationIcon,
+            label: "Document Requests",
+            href: "/dashboard/services/regulated-licenses?tab=document_requests",
+            count: regulatedLicensesMock.documentRequests?.length || 0,
+            totalCount: regulatedLicensesMock.documentRequests?.length || 0,
+          },
+          {
+            slug: "rl-milestones",
+            icon: TaskDaily01Icon,
+            label: "Milestones",
+            href: "/dashboard/services/regulated-licenses?tab=milestones",
+          },
+          {
+            slug: "rl-lib",
+            icon: Book02Icon,
+            label: "Library",
+            href: "/dashboard/services/regulated-licenses?tab=library",
+          },
+          {
+            slug: "rl-calendar",
+            icon: TaxesIcon,
+            label: "Compliance Calendar",
+            href: "/dashboard/services/regulated-licenses?tab=compliance_calendar",
+          },
+          {
+            slug: "rl-messages",
+            icon: Message01Icon,
+            label: "Messages",
+            href: "/dashboard/services/regulated-licenses?tab=messages",
+            count: (regulatedLicensesMock.messages || []).filter((m: any) => !m.read).length || 0,
+            totalCount: regulatedLicensesMock.messages?.length || 0,
+          },
+          {
+            slug: "rl-filings",
+            icon: TaskDaily01Icon,
+            label: "Filings",
+            href: "/dashboard/services/regulated-licenses?tab=regulated_licenses_filings",
           },
         ],
       },
@@ -679,8 +809,56 @@ export const menuData: MenuItem[] = [
         slug: "banking-payments",
         icon: CreditCardIcon,
         label: "Banking & Payments",
-        href: "/dashboard/services/banking-payments",
-        disabled: true,
+        href: "/dashboard/services/banking-payments?tab=dashboard",
+        isActive: true,
+        children: [
+          {
+            slug: "bp-dashboard",
+            icon: DashboardSquare02Icon,
+            label: "Dashboard",
+            href: "/dashboard/services/banking-payments?tab=dashboard",
+          },
+          {
+            slug: "bp-docs",
+            icon: DocumentValidationIcon,
+            label: "Document Requests",
+            href: "/dashboard/services/banking-payments?tab=document_requests",
+            count: bankingPaymentsMock.documentRequests?.length || 0,
+            totalCount: bankingPaymentsMock.documentRequests?.length || 0,
+          },
+          {
+            slug: "bp-milestones",
+            icon: TaskDaily01Icon,
+            label: "Milestones",
+            href: "/dashboard/services/banking-payments?tab=milestones",
+          },
+          {
+            slug: "bp-lib",
+            icon: Book02Icon,
+            label: "Library",
+            href: "/dashboard/services/banking-payments?tab=library",
+          },
+          {
+            slug: "bp-compliance",
+            icon: TaxesIcon,
+            label: "Compliance Calendar",
+            href: "/dashboard/services/banking-payments?tab=compliance_calendar",
+          },
+          {
+            slug: "bp-messages",
+            icon: Message01Icon,
+            label: "Messages",
+            href: "/dashboard/services/banking-payments?tab=messages",
+            count: bankingPaymentsMock.messages?.filter((m) => !m.read).length || 0,
+            totalCount: bankingPaymentsMock.messages?.length || 0,
+          },
+          {
+            slug: "bp-filings",
+            icon: TaskDaily01Icon,
+            label: "Filings",
+            href: "/dashboard/services/banking-payments?tab=banking_payments_filings",
+          },
+        ],
       },
       {
         slug: "regulated-licences",

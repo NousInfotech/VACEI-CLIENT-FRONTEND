@@ -66,8 +66,52 @@ export const incorporationMock: ServiceMockData = {
     { id: 'i-l-f1', file_name: 'Certificate_of_Incorporation.pdf', type: 'file', file_type: 'PDF', file_size: 2048000, url: '#', folderId: 'i-l-legal', version: 1, tags: ['official'], uploaderId: 'user-1', isDeleted: false, createdAt: '2024-01-20T10:00:00Z' },
     { id: 'i-l-f2', file_name: 'Certified_Passport_JS.pdf', type: 'file', file_type: 'PDF', file_size: 890000, url: '#', folderId: 'i-l-kyc-director1', version: 1, tags: ['kyc'], uploaderId: 'user-1', isDeleted: false, createdAt: '2024-01-15T10:00:00Z' }
   ],
-  filings: [
-    { id: 'i-f-1', filing_type: 'Company Registration', reference: 'TechNova Ltd', status: 'completed', due_date: '2026-01-10', filing_status: 'completed' }
+  incorporationFilings: [
+    {
+      id: "inc-f-1",
+      stage: "Company Name Approval",
+      description: "Registrar name clearance",
+      status: "Completed",
+      serviceStatus: "on_track",
+      completedOn: "05 Feb 2026",
+      documents: ["Approval Letter"],
+    },
+    {
+      id: "inc-f-2",
+      stage: "KYC & Due Diligence",
+      description: "Directors & shareholders verification",
+      status: "Waiting on you",
+      serviceStatus: "action_required",
+      completedOn: "—",
+      documents: [],
+    },
+    {
+      id: "inc-f-3",
+      stage: "Constitutional Documents",
+      description: "Memorandum & Articles",
+      status: "In progress",
+      serviceStatus: "on_track",
+      completedOn: "—",
+      documents: ["Draft M&A"],
+    },
+    {
+      id: "inc-f-4",
+      stage: "Registration Filing",
+      description: "Submission to registry",
+      status: "Not started",
+      serviceStatus: "on_track",
+      completedOn: "—",
+      documents: [],
+    },
+    {
+      id: "inc-f-5",
+      stage: "Certificate of Incorporation",
+      description: "Company legally formed",
+      status: "Not started",
+      serviceStatus: "on_track",
+      completedOn: "—",
+      documents: [],
+    },
   ],
   incorporationProgress: [
     { step: "Name Reservation & Approval", status: "completed" },

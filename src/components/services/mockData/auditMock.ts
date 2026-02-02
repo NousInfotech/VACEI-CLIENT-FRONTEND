@@ -3,7 +3,7 @@ import { MOCK_TEAM, MOCK_MESSAGES } from "./helpers";
 
 export const auditMock: ServiceMockData = {
   serviceSlug: "audit",
-  serviceName: "Statutory Audit",
+  serviceName: "Audit",
   description: "Independent examination of financial statements to ensure accuracy and compliance.",
   milestones: [
   {
@@ -63,37 +63,240 @@ export const auditMock: ServiceMockData = {
     status: "pending",
   },
   ],
-  documentRequests: [
-    {
-      _id: "req-aud-1",
-      title: "Fixed Asset Register",
-      description: "Provide the updated fixed asset register as of year-end.",
-      status: "pending",
-      category: "assets",
-      documents: [{ name: "Asset_Register_Template.xlsx" }],
-      multipleDocuments: [],
-    },
-    {
-      _id: "req-aud-2",
-      title: "Engagement Letter",
-      description: "Signed copy of the audit engagement letter.",
-      status: "completed",
-      category: "legal",
-      documents: [{ name: "Signed_Engagement_Letter.pdf", url: "mock-url" }],
-      multipleDocuments: [],
-    },
-  ],
-  complianceItems: [
-    {
-      id: "aud-c-1",
-      title: "Statutory Audit FY2025",
-      type: "Statutory Requirement",
-      dueDate: "2026-09-30",
-      status: "upcoming",
-      authority: "MBR",
-      description: "Annual statutory audit filing.",
-    },
-  ],
+documentRequests: [
+  {
+    _id: "req-aud-1",
+    title: "Fixed Asset Register",
+    description: "Provide the updated fixed asset register as of year-end.",
+    status: "in_progress",
+    category: "assets",
+
+    // 🔹 SINGLE DOCUMENT (simple upload)
+    documents: [
+      {
+        name: "Fixed_Asset_Register_2025.xlsx",
+        url: "mock-url"
+      }
+    ],
+
+    // 🔹 MULTIPLE DOCUMENTS (supporting evidence)
+    multipleDocuments: [
+      {
+        name: "Asset Supporting Documents",
+        type: "template",
+        instruction: "Upload asset purchase and disposal documents",
+        multiple: [
+          {
+            template: {
+              url: "https://example.com/templates/asset_purchase_template.pdf",
+              instruction: "Upload Required Document"
+            },
+            label: "Asset Purchase Invoices",
+            url: "https://example.com/uploads/asset_invoice_001.pdf",
+            uploadedFileName: "asset_invoice_001.pdf",
+            uploadedAt: "2026-01-14T10:45:00.000Z",
+            status: "uploaded",
+            comment: "Invoice verified",
+            _id: "aud-asset-doc-1"
+          },
+          {
+            template: {
+              url: "https://example.com/templates/asset_disposal_template.pdf",
+              instruction: "Upload Required Document"
+            },
+            label: "Asset Disposal Documents",
+            status: "pending",
+            comment: "",
+            _id: "aud-asset-doc-2",
+            uploadedAt: "2026-01-16T09:20:00.000Z"
+          }
+        ],
+        _id: "aud-asset-group-1"
+      }
+    ]
+  },
+
+  {
+    _id: "req-aud-2",
+    title: "Engagement Letter",
+    description: "Signed copy of the audit engagement letter.",
+    status: "completed",
+    category: "legal",
+
+    // 🔹 SINGLE DOCUMENT ONLY
+    documents: [
+      {
+        name: "Signed_Engagement_Letter.pdf",
+        url: "mock-url"
+      }
+    ],
+
+    multipleDocuments: []
+  },
+
+  {
+    _id: "req-aud-3",
+    title: "Bank Confirmations",
+    description: "Bank confirmation letters for all active bank accounts.",
+    status: "pending",
+    category: "banking",
+
+    // 🔹 SINGLE DOCUMENT (optional summary)
+    documents: [
+      {
+        name: "Bank_Accounts_List.pdf",
+        url: "mock-url"
+      }
+    ],
+
+    // 🔹 MULTIPLE DOCUMENTS (per bank)
+    multipleDocuments: [
+      {
+        name: "Primary Bank Account",
+        type: "template",
+        instruction: "Upload bank confirmation letter",
+        multiple: [
+          {
+            template: {
+              url: "https://example.com/templates/bank_confirmation_template.pdf",
+              instruction: "Upload Required Document"
+            },
+            label: "Confirmation Letter",
+            status: "pending",
+            comment: "",
+            _id: "aud-bank-doc-1",
+            uploadedAt: "2026-01-18T12:00:00.000Z"
+          }
+        ],
+        _id: "aud-bank-group-1"
+      },
+      {
+        name: "Secondary Bank Account",
+        type: "template",
+        instruction: "Upload bank confirmation letter",
+        multiple: [
+          {
+            template: {
+              url: "https://example.com/templates/bank_confirmation_template.pdf",
+              instruction: "Upload Required Document"
+            },
+            label: "Confirmation Letter",
+            status: "pending",
+            comment: "",
+            _id: "aud-bank-doc-2",
+            uploadedAt: "2026-01-18T12:00:00.000Z"
+          }
+        ],
+        _id: "aud-bank-group-2"
+      }
+    ]
+  },
+
+  {
+    _id: "req-aud-4",
+    title: "Revenue Contracts",
+    description: "Customer contracts supporting revenue recognition.",
+    status: "pending",
+    category: "revenue",
+
+    // 🔹 SINGLE DOCUMENT (summary)
+    documents: [
+      {
+        name: "Revenue_Contracts_Summary.xlsx",
+        url: "mock-url"
+      }
+    ],
+
+    // 🔹 MULTIPLE DOCUMENTS (individual contracts)
+    multipleDocuments: [
+      {
+        name: "Customer Contracts",
+        type: "template",
+        instruction: "Upload customer contracts",
+        multiple: [
+          {
+            template: {
+              url: "https://example.com/templates/revenue_contract_template.pdf",
+              instruction: "Upload Required Document"
+            },
+            label: "Contract PDF",
+            status: "pending",
+            comment: "",
+            _id: "aud-rev-doc-1",
+            uploadedAt: "2026-01-19T11:30:00.000Z"
+          }
+        ],
+        _id: "aud-rev-group-1"
+      }
+    ]
+  }
+],
+complianceItems: [
+  {
+    id: "aud-c-1",
+    title: "Statutory Audit FY2025",
+    type: "Statutory Requirement",
+    dueDate: "2026-09-30",
+    status: "upcoming",
+    authority: "MBR",
+    description: "Annual statutory audit filing.",
+  },
+  {
+    id: "aud-c-2",
+    title: "Audit Planning Memorandum",
+    type: "Audit Documentation",
+    dueDate: "2026-01-15",
+    status: "filed",
+    authority: "Internal",
+    description: "Formal documentation of audit scope, risks, and materiality.",
+  },
+  {
+    id: "aud-c-3",
+    title: "Internal Control Evaluation",
+    type: "Audit Procedure",
+    dueDate: "2026-01-20",
+    status: "filed",
+    authority: "Internal",
+    description: "Assessment of internal controls and walkthroughs.",
+  },
+  {
+    id: "aud-c-4",
+    title: "Substantive Testing Completion",
+    type: "Audit Procedure",
+    dueDate: "2026-02-05",
+    status: "pending",
+    authority: "Internal",
+    description: "Completion of substantive audit testing on key balances.",
+  },
+  {
+    id: "aud-c-5",
+    title: "Management Representation Letter",
+    type: "Statutory Requirement",
+    dueDate: "2026-02-15",
+    status: "upcoming",
+    authority: "MBR",
+    description: "Signed management representation letter required for audit completion.",
+  },
+  {
+    id: "aud-c-6",
+    title: "Audit Completion & Partner Review",
+    type: "Audit Review",
+    dueDate: "2026-02-18",
+    status: "due_today",
+    authority: "Internal",
+    description: "Final partner review before issuing audit opinion.",
+  },
+  {
+    id: "aud-c-7",
+    title: "Final Audit Report Issuance",
+    type: "Statutory Requirement",
+    dueDate: "2026-02-20",
+    status: "pending",
+    authority: "MBR",
+    description: "Issuance of signed statutory audit report.",
+  },
+],
+
   team: MOCK_TEAM,
   messages: [
     {
@@ -117,8 +320,34 @@ export const auditMock: ServiceMockData = {
     { id: 'au-l-f2', file_name: 'Materiality_Assessment.pdf', type: 'file', file_type: 'PDF', file_size: 890000, url: '#', folderId: 'au-l-planning', version: 2, tags: ['planning'], uploaderId: 'user-1', isDeleted: false, createdAt: '2025-12-10T10:00:00Z' },
     { id: 'au-l-f3', file_name: 'Bank_Confirmation_HSBC.pdf', type: 'file', file_type: 'PDF', file_size: 512000, url: '#', folderId: 'au-l-pbc-cash', version: 1, tags: ['external'], uploaderId: 'user-1', isDeleted: false, createdAt: '2026-01-20T10:00:00Z' }
   ],
-  filings: [
-    { id: 'au-f-1', filing_type: 'Audit Plan', reference: 'FY 2025', status: 'completed', due_date: '2026-01-10', filing_status: 'completed' }
+  auditFilings: [
+    {
+      id: "aud-f-1",
+      engagement: "Statutory Audit",
+      financialYear: "FY 2025",
+      status: "In progress",
+      serviceStatus: "on_track",
+      reportDate: "—",
+      deliverables: [],
+    },
+    {
+      id: "aud-f-2",
+      engagement: "Statutory Audit",
+      financialYear: "FY 2024",
+      status: "Completed",
+      serviceStatus: "on_track",
+      reportDate: "30 Sep 2025",
+      deliverables: ["Audit Report", "FS"],
+    },
+    {
+      id: "aud-f-3",
+      engagement: "Statutory Audit",
+      financialYear: "FY 2023",
+      status: "Completed",
+      serviceStatus: "on_track",
+      reportDate: "28 Sep 2024",
+      deliverables: ["Audit Report", "FS"],
+    },
   ],
   etb: {
     accounts: [

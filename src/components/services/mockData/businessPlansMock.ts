@@ -54,9 +54,43 @@ export const businessPlansMock: ServiceMockData = {
     { id: 'bp-l-f2', file_name: 'Business_Plan_v2.0_Final.docx', type: 'file', file_type: 'DOCX', file_size: 3072000, url: '#', folderId: 'bp-l-drafts', version: 5, tags: ['final'], uploaderId: 'user-1', isDeleted: false, createdAt: '2026-01-20T10:00:00Z' },
     { id: 'bp-l-f3', file_name: 'Business_Plan_v1.5_Archive.docx', type: 'file', file_type: 'DOCX', file_size: 2800000, url: '#', folderId: 'bp-l-drafts', version: 2, tags: ['archive'], uploaderId: 'user-1', isDeleted: false, createdAt: '2025-11-10T10:00:00Z' }
   ],
-  filings: [
-    { id: 'bp-f-1', filing_type: 'Draft Review', reference: 'V2.0', status: 'completed', due_date: '2026-01-20', filing_status: 'completed' },
-    { id: 'bp-f-2', filing_type: 'Draft Review', reference: 'V1.5', status: 'completed', due_date: '2025-11-05', filing_status: 'completed' }
+  businessPlansFilings: [
+    {
+      id: "bp-f-1",
+      stageVersion: "Information Gathering",
+      description: "Data collection & inputs",
+      status: "Completed",
+      serviceStatus: "on_track",
+      completedOn: "02 Feb 2026",
+      documents: ["Inputs"],
+    },
+    {
+      id: "bp-f-2",
+      stageVersion: "Draft v1",
+      description: "Initial business plan draft",
+      status: "Completed",
+      serviceStatus: "on_track",
+      completedOn: "12 Feb 2026",
+      documents: ["Draft v1"],
+    },
+    {
+      id: "bp-f-3",
+      stageVersion: "Draft v2",
+      description: "Revised draft after feedback",
+      status: "In progress",
+      serviceStatus: "on_track",
+      completedOn: "—",
+      documents: ["Draft v2"],
+    },
+    {
+      id: "bp-f-4",
+      stageVersion: "Final Version",
+      description: "Final approved business plan",
+      status: "Not started",
+      serviceStatus: "on_track",
+      completedOn: "—",
+      documents: [],
+    },
   ],
   businessPlanMilestones: [
     { label: "Market Research", status: "Completed" },

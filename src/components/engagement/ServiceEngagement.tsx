@@ -159,6 +159,29 @@ const serviceData: Record<
     workflowStatus: "in_progress",
     actions: [{ type: "schedule", label: "Consult Liquidator" }],
   },
+  "banking-payments": {
+    name: "Banking & Payments",
+    description: "Manage bank accounts, payments, and corporate banking workflows.",
+    status: "on_track",
+    cycle: "January 2026",
+    workflowStatus: "in_progress",
+    actions: [
+      { type: "upload", label: "Upload Statement" },
+      { type: "confirm", label: "Approve Payment" }
+    ],
+  },
+  "regulated-licenses": {
+    name: "Regulated Licenses",
+    description: "Management of regulatory license applications, renewals, and ongoing compliance.",
+    status: "on_track",
+    cycle: "February 2026",
+    workflowStatus: "in_progress",
+    neededFromUser: "Please upload the AML policy draft for the MFSA application.",
+    actions: [
+      { type: "upload", label: "Upload AML Policy" },
+      { type: "confirm", label: "Confirm Details" }
+    ],
+  },
 };
 
 const ServiceEngagement: React.FC<ServiceEngagementProps> = ({

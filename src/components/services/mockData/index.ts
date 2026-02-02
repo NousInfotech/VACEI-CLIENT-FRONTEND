@@ -14,6 +14,7 @@ export interface DocumentRequest {
   category: string;
   documents: { name: string; url?: string }[];
   multipleDocuments: any[];
+  caseId?: string;
 }
 
 export interface ComplianceItem {
@@ -37,6 +38,33 @@ export interface ServiceMockData {
   // Additional fields for specific services
   filings?: any[]; // For MBR
   periods?: any[]; // For VAT
+  accountingFilings?: any[]; // For Accounting
+  auditFilings?: any[]; // For Audit
+  taxFilings?: any[]; // For Tax
+  incorporationFilings?: any[]; // For Incorporation
+  businessPlansFilings?: any[]; // For Business Plans
+  liquidationFilings?: any[]; // For Liquidation
+  bankAccounts?: any[]; // For Banking & Payments
+  payments?: any[]; // For Banking & Payments
+  bankingPaymentsFilings?: any[]; // For Banking & Payments
+  regulatedLicensesFilings?: {
+    id: string;
+    title: string;
+    type: string;
+    regulator: string;
+    submissionDate: string;
+    status: string;
+    documents: string[];
+    queryRounds?: number;
+  }[];
+  licenseCases?: {
+    id: string;
+    licenseType: string;
+    regulator: string;
+    caseType: string;
+    status: string;
+    targetDate: string;
+  }[];
   team?: any[];    // For Team tab
   etb?: any;
   adjustments?: any[];
@@ -83,10 +111,21 @@ export interface ServiceMockData {
     open: boolean;
   }[];
   libraryItems?: any[]; // For service-specific library
+  currentPeriod?: string;
+  lastUpdate?: string;
+  nextStep?: string;
+  actionNeeded?: {
+    type: 'payment_approval' | 'document_request' | 'signature_request' | string;
+    title: string;
+    description: string;
+    ctaLabel: string;
+    count?: number;
+  };
 }
 
 import { accountingBookingMock } from './accountingBookingMock';
 import { auditMock } from './auditMock';
+import { bankingPaymentsMock } from './bankingPaymentsMock';
 import { businessPlansMock } from './businessPlansMock';
 import { cfoMock } from './cfoMock';
 import { corporateMock } from './corporateMock';
@@ -94,11 +133,13 @@ import { incorporationMock } from './incorporationMock';
 import { liquidationMock } from './liquidationMock';
 import { mbrMock } from './mbrMock';
 import { payrollMock } from './payrollMock';
+import { regulatedLicensesMock } from './regulatedLicensesMock';
 import { taxMock } from './taxMock';
 import { vatMock } from './vatMock';
 
 export const ALL_SERVICE_MOCKS: Record<string, ServiceMockData> = {
   bookkeeping: accountingBookingMock,
+  'banking-payments': bankingPaymentsMock,
   audit: auditMock,
   'business-plans': businessPlansMock,
   cfo: cfoMock,
@@ -107,6 +148,7 @@ export const ALL_SERVICE_MOCKS: Record<string, ServiceMockData> = {
   liquidation: liquidationMock,
   'mbr-filing': mbrMock,
   payroll: payrollMock,
+  'regulated-licenses': regulatedLicensesMock,
   tax: taxMock,
   vat: vatMock,
 };
