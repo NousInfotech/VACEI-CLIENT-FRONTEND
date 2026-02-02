@@ -10,10 +10,10 @@ import AlertMessage from "@/components/AlertMessage"; // This is the correct imp
 
 export default function ResetPasswordForm() {
     const searchParams = useSearchParams();
-    const token = searchParams.get('token');
+    const otp = searchParams.get('otp') || searchParams.get('token'); // Support both 'otp' and 'token' for backward compatibility
     const emailFromUrl = searchParams.get('email');
 
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL; // Ensure this is configured
+    const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
 
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -23,11 +23,11 @@ export default function ResetPasswordForm() {
     const [messageVariant, setMessageVariant] = useState<"success" | "danger">("danger");
 
     useEffect(() => {
-        if (!token || !emailFromUrl) {
-            setAlertMessage("Invalid or missing password reset link parameters.");
+        if (!otp || !emailFromUrl) {
+            setAlertMessage("Invalid or missing password reset link parameters. Please check your reset link.");
             setMessageVariant("danger");
         }
-    }, [token, emailFromUrl]);
+    }, [otp, emailFromUrl]);
 
     const validate = () => {
         const newErrors: typeof errors = {};
@@ -54,7 +54,7 @@ export default function ResetPasswordForm() {
         setLoading(true);
         setAlertMessage(null); // Clear previous alerts
 
-        if (!token || !emailFromUrl) {
+        if (!otp || !emailFromUrl) {
             setAlertMessage("Invalid password reset link. Please try again from the forgot password page.");
             setMessageVariant("danger");
             setLoading(false);
@@ -62,24 +62,27 @@ export default function ResetPasswordForm() {
         }
 
         try {
-            const response = await fetch(`${backendUrl}user/reset-password`, { // Adjust to your actual reset password endpoint
+            const response = await fetch(`${backendUrl}auth/reset-password`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    token,
                     email: emailFromUrl,
-                    newPassword,
+                    otp: otp,
+                    newPassword: newPassword,
                 }),
                 credentials: "include",
             });
 
-            const data = await response.json();
-
             if (!response.ok) {
-                throw new Error(data.message || "Failed to reset password.");
+                const errorData = await response.json().catch(() => ({ message: "Failed to reset password." }));
+                throw new Error(errorData.message || errorData.error || `Failed to reset password: ${response.status}`);
             }
 
-            setAlertMessage(data.message || "Your password has been reset successfully! You can now log in with your new password.");
+            const responseData = await response.json();
+            // Backend response structure: { message: string }
+            const message = responseData.message || "Your password has been reset successfully! You can now log in with your new password.";
+
+            setAlertMessage(message);
             setMessageVariant("success");
             setNewPassword(""); // Clear fields on success
             setConfirmPassword("");

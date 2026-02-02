@@ -7,7 +7,7 @@ import AlertMessage from "../../../components/AlertMessage";
 import { Button } from "@/components/ui/button";
 
 export default function ForgotPasswordForm() {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
 
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState<{ email?: string }>({}); // Only email error is needed
@@ -35,20 +35,23 @@ export default function ForgotPasswordForm() {
     setAlertMessage(null); // Clear previous alerts
 
     try {
-      const response = await fetch(backendUrl + "user/forgot-password", { // Assuming this is your forgot password endpoint
+      const response = await fetch(`${backendUrl}auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
-        credentials: "include", // Adjust if your API doesn't require credentials for this
+        credentials: "include",
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || "Failed to send password reset email.");
+        const errorData = await response.json().catch(() => ({ message: "Failed to send password reset email." }));
+        throw new Error(errorData.message || errorData.error || `Failed to send password reset email: ${response.status}`);
       }
 
-      setAlertMessage(data.message || "If an account with that email exists, a password reset link has been sent to your inbox.");
+      const responseData = await response.json();
+      // Backend response structure: { data: { message: string }, message?: string }
+      const message = responseData.data?.message || responseData.message || "If an account with that email exists, an OTP has been sent to your inbox.";
+
+      setAlertMessage(message);
       setMessageVariant("success");
       setEmail(""); // Clear email field on success
       setErrors({}); // Clear any errors
