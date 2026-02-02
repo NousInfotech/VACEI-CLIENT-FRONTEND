@@ -19,6 +19,7 @@ import {
     markNotificationAsReadAPI,
 } from '@/api/notificationService';
 import { getCompanies } from '@/api/auditService';
+import { useActiveCompany } from '@/context/ActiveCompanyContext';
 
 // NotificationItem component
 interface HeaderNotificationItemProps {
@@ -94,9 +95,10 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
     const [searchTerm, setSearchTerm] = useState(''); 
     const [username, setUsername] = useState<string>('User'); 
     const [role, setRole] = useState<string>('Client');
-    const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
-    const [activeCompany, setActiveCompany] = useState<string>("");
     const [showUploadDrawer, setShowUploadDrawer] = useState(false);
+    
+    // Use ActiveCompanyContext instead of local state
+    const { activeCompanyId, setActiveCompanyId, companies, setCompanies } = useActiveCompany();
 
     const router = useRouter();
     const pathname = usePathname();
@@ -143,13 +145,12 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                 localStorage.setItem("vacei-companies", JSON.stringify(mappedCompanies));
                 
                 // Set active company if not already set or if current active company doesn't exist
-                const storedActiveCompany = localStorage.getItem("vacei-active-company");
-                if (storedActiveCompany && mappedCompanies.some(c => c.id === storedActiveCompany)) {
-                    setActiveCompany(storedActiveCompany);
+                if (activeCompanyId && mappedCompanies.some(c => c.id === activeCompanyId)) {
+                    // Keep current active company if it still exists
+                    // Context will handle localStorage sync
                 } else if (mappedCompanies.length > 0) {
                     const firstCompanyId = mappedCompanies[0].id;
-                    setActiveCompany(firstCompanyId);
-                    localStorage.setItem("vacei-active-company", firstCompanyId);
+                    setActiveCompanyId(firstCompanyId);
                 }
             }
         } catch (error) {
@@ -163,13 +164,12 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                 } catch { /* ignore */ }
             }
         }
-    }, []);
+    }, [activeCompanyId, setActiveCompanyId, setCompanies]);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const storedUsername = localStorage.getItem("username");
             const storedRole = localStorage.getItem("role");
-            const storedActiveCompany = localStorage.getItem("vacei-active-company");
 
             if (storedUsername) {
                 try { setUsername(atob(storedUsername)); } catch { setUsername('User'); }
@@ -180,11 +180,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
 
             // Fetch companies from API immediately after login
             fetchCompaniesFromAPI();
-
-            // Set active company from localStorage if available
-            if (storedActiveCompany) {
-                setActiveCompany(storedActiveCompany);
-            }
+            // Active company is managed by context, no need to set it here
         }
     }, [fetchCompaniesFromAPI]);
 
@@ -277,18 +273,17 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
         }
     };
 
-    const activeCompanyName = companies.find(c => c.id === activeCompany)?.name || "Select Company";
+    const activeCompanyName = companies.find(c => c.id === activeCompanyId)?.name || "Select Company";
 
     const companyMenuItems = companies.map(c => {
-        const isActive = c.id === activeCompany;
+        const isActive = c.id === activeCompanyId;
         return {
             id: c.id,
             label: c.name,
             className: isActive ? "bg-success/10 text-success font-bold" : "",
             icon: <div className={cn("w-2 h-2 rounded-full", isActive ? "bg-success" : "bg-gray-200")} />,
             onClick: () => {
-                setActiveCompany(c.id);
-                if (typeof window !== "undefined") localStorage.setItem("vacei-active-company", c.id);
+                setActiveCompanyId(c.id);
                 router.push(`/dashboard/company/${c.id}`);
             }
         };

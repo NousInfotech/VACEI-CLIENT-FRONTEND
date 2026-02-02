@@ -339,7 +339,7 @@ export async function getCompanyHierarchy(id: string): Promise<HierarchyData> {
  * @returns Promise<KYC>
  */
 export async function getKycByCompanyId(companyId: string): Promise<KYC> {
-  const response = await fetch(`${backendUrl}/kyc?companyId=${companyId}`, {
+  const response = await fetch(`${backendUrl}kyc?companyId=${companyId}`, {
     method: "GET",
     headers: {
       ...getAuthHeaders(),
@@ -361,10 +361,16 @@ export async function getKycByCompanyId(companyId: string): Promise<KYC> {
 
 /**
  * Get engagements by client ID (from middleware)
+ * @param companyId - Optional company ID to filter engagements
  * @returns Promise<Engagement[]>
  */
-export async function getEngagements(): Promise<Engagement[]> {
-  const response = await fetch(`${backendUrl}/engagements`, {
+export async function getEngagements(companyId?: string): Promise<Engagement[]> {
+  const url = new URL(`${backendUrl}engagements`);
+  if (companyId) {
+    url.searchParams.append('companyId', companyId);
+  }
+
+  const response = await fetch(url.toString(), {
     method: "GET",
     headers: {
       ...getAuthHeaders(),
@@ -374,10 +380,13 @@ export async function getEngagements(): Promise<Engagement[]> {
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error || "Failed to fetch engagements");
+    throw new Error(error.message || error.error || "Failed to fetch engagements");
   }
 
-  return response.json();
+  const result = await response.json();
+  // Backend returns { success: true, data: [...], message: "..." }
+  // Extract the data field if present, otherwise use the whole response
+  return result.data || result || [];
 }
 
 /**
@@ -386,7 +395,7 @@ export async function getEngagements(): Promise<Engagement[]> {
  * @returns Promise<Engagement>
  */
 export async function getEngagementById(id: string): Promise<Engagement> {
-  const response = await fetch(`${backendUrl}/engagements/${id}`, {
+  const response = await fetch(`${backendUrl}engagements/${id}`, {
     method: "GET",
     headers: {
       ...getAuthHeaders(),
@@ -412,7 +421,7 @@ export async function getEngagementById(id: string): Promise<Engagement> {
  * @returns Promise<ExtendedTrialBalance>
  */
 export async function getEtb(engagementId: string): Promise<ExtendedTrialBalance> {
-  const response = await fetch(`${backendUrl}/etb?engagementId=${engagementId}`, {
+  const response = await fetch(`${backendUrl}etb?engagementId=${engagementId}`, {
     method: "GET",
     headers: {
       ...getAuthHeaders(),
@@ -438,7 +447,7 @@ export async function getEtb(engagementId: string): Promise<ExtendedTrialBalance
  * @returns Promise<Adjustment[]>
  */
 export async function getAdjustments(etbId: string): Promise<Adjustment[]> {
-  const response = await fetch(`${backendUrl}/adjustments?etbId=${etbId}`, {
+  const response = await fetch(`${backendUrl}adjustments?etbId=${etbId}`, {
     method: "GET",
     headers: {
       ...getAuthHeaders(),
@@ -460,7 +469,7 @@ export async function getAdjustments(etbId: string): Promise<Adjustment[]> {
  * @returns Promise<Adjustment>
  */
 export async function getAdjustmentById(id: string): Promise<Adjustment> {
-  const response = await fetch(`${backendUrl}/adjustments/${id}`, {
+  const response = await fetch(`${backendUrl}adjustments/${id}`, {
     method: "GET",
     headers: {
       ...getAuthHeaders(),
@@ -486,7 +495,7 @@ export async function getAdjustmentById(id: string): Promise<Adjustment> {
  * @returns Promise<Reclassification[]>
  */
 export async function getReclassifications(etbId: string): Promise<Reclassification[]> {
-  const response = await fetch(`${backendUrl}/reclassifications?etbId=${etbId}`, {
+  const response = await fetch(`${backendUrl}reclassifications?etbId=${etbId}`, {
     method: "GET",
     headers: {
       ...getAuthHeaders(),
@@ -508,7 +517,7 @@ export async function getReclassifications(etbId: string): Promise<Reclassificat
  * @returns Promise<Reclassification>
  */
 export async function getReclassificationById(id: string): Promise<Reclassification> {
-  const response = await fetch(`${backendUrl}/reclassifications/${id}`, {
+  const response = await fetch(`${backendUrl}reclassifications/${id}`, {
     method: "GET",
     headers: {
       ...getAuthHeaders(),
@@ -537,7 +546,7 @@ export async function getDocumentRequestsByEngagementId(
   engagementId: string
 ): Promise<DocumentRequest[]> {
   const response = await fetch(
-    `${backendUrl}/document-requests?engagementId=${engagementId}`,
+    `${backendUrl}document-requests?engagementId=${engagementId}`,
     {
       method: "GET",
       headers: {
@@ -581,7 +590,7 @@ export async function uploadDocumentRequestDocument(
     });
   }
 
-  const response = await fetch(`${backendUrl}/document-requests/${requestId}/documents`, {
+  const response = await fetch(`${backendUrl}document-requests/${requestId}/documents`, {
     method: "POST",
     headers: {
       ...getAuthHeaders(),
@@ -609,7 +618,7 @@ export async function clearDocumentRequestDocument(
   docIndex: number
 ): Promise<ClearDocumentResponse> {
   const response = await fetch(
-    `${backendUrl}/document-requests/${requestId}/clear/${docIndex}`,
+    `${backendUrl}document-requests/${requestId}/clear/${docIndex}`,
     {
       method: "POST",
       headers: {
