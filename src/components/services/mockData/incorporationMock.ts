@@ -39,7 +39,36 @@ export const incorporationMock: ServiceMockData = {
       multipleDocuments: [],
     },
   ],
-  complianceItems: [],
+  complianceItems: [
+  {
+    id: "bp-c-1",
+    title: "Draft v1 Review Deadline",
+    type: "Internal Review",
+    dueDate: "2026-02-15",
+    status: "upcoming",
+    authority: "VACEI Team",
+    description: "Client review and feedback on Draft v1.",
+  },
+  {
+    id: "bp-c-2",
+    title: "Final Plan Submission",
+    type: "Delivery",
+    dueDate: "2026-03-01",
+    status: "filed",
+    authority: "VACEI Team",
+    description: "Final business plan delivery to client.",
+  },
+  {
+    id: "bp-c-3",
+    title: "Financial Model Approval",
+    type: "Approval",
+    dueDate: "2026-02-20",
+    status: "filed",
+    authority: "Finance Lead",
+    description: "Approval of financial projections.",
+  },
+],
+
   summaryData: {
     companyName: "TechNova Solutions Ltd",
     registrationNumber: "C102345",

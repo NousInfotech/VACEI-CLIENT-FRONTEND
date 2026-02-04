@@ -27,6 +27,41 @@ export interface ComplianceItem {
   description: string;
 }
 
+export interface InternationalStructuringFiling {
+  id: string;
+  entity: string;
+  country: string;
+  filing: string;
+  period: string;
+  dueDate: string;
+  status:
+    | "due_soon"
+    | "in_progress"
+    | "waiting_on_advisor"
+    | "submitted"
+    | "on_track";
+  responsibility: string;
+  action: "view" | "upload";
+}
+
+export interface CryptoDigitalAssetsFiling {
+  id: string;
+  entity: string;
+  activityType: string;
+  filing: string;
+  period: string;
+  dueDate: string;
+  status:
+    | "completed"
+    | "due_soon"
+    | "ready"
+    | "waiting_on_you"
+    | "on_track"
+    | "prepared";
+  responsibility: string;
+  action: "view" | "upload";
+}
+
 export interface ServiceMockData {
   serviceSlug: string;
   serviceName: string;
@@ -48,6 +83,8 @@ export interface ServiceMockData {
   liquidationFilings?: any[];
   bankingPaymentsFilings?: any[];
   payments?: any[];
+  internationalStructuringFilings?: InternationalStructuringFiling[];
+  cryptoDigitalAssetsFilings?: CryptoDigitalAssetsFiling[];
 
   regulatedLicensesFilings?: {
     id: string;

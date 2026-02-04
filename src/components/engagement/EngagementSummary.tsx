@@ -415,7 +415,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
         ] : []),
         ...(isInternationalStructuring ? [
           {
-            id: "international_structuring_filings",
+            id: "international_filings",
             label: "Filings",
             icon: FileCheck,
           },
@@ -423,7 +423,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
 
         ...(isCryptoAssets ? [
           {
-            id: "crypto_assets_filings",
+            id: "crypto_filings",
             label: "Filings",
             icon: FileCheck,
           },
@@ -1446,136 +1446,223 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           </DashboardCard>
         )}
 
-        {isInternationalStructuring && activeTab === "international_structuring_filings" && (
-  <DashboardCard className="p-8">
-    <div className="space-y-6">
+        {isInternationalStructuring &&
+  activeTab === "international_filings" && (
+    <DashboardCard className="p-6">
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-1 h-6 bg-gray-900 rounded-full" />
+          <h3 className="text-lg font-medium tracking-tight">
+            Group Filings
+          </h3>
+        </div>
 
-      <div className="flex items-center gap-3">
-        <div className="w-1 h-6 bg-gray-900 rounded-full" />
-        <h3 className="text-lg font-medium tracking-tight">
-          Structuring Filings
-        </h3>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Entity</th>
-              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Country</th>
-              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Filing</th>
-              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Period/Event</th>
-              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Due Date</th>
-              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Status</th>
-              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Responsibility</th>
-              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {(engagementData?.structuringFilings || []).map((f: any) => (
-              <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50">
-
-                <td className="py-4 px-4 font-medium">{f.entity}</td>
-                <td className="py-4 px-4">{f.jurisdiction}</td>
-                <td className="py-4 px-4">{f.structureType}</td>
-
-                <td className="py-4 px-4">
-                  <Badge variant="outline">
-                    {f.status}
-                  </Badge>
-                </td>
-
-                <td className="py-4 px-4 text-gray-600">
-                  {f.updatedDate}
-                </td>
-
-                <td className="py-4 px-4 text-right">
-                  <Button variant="ghost" size="sm">
-                    View
-                  </Button>
-                </td>
-
-              </tr>
-            ))}
-          </tbody>
-
-        </table>
-      </div>
-
-    </div>
-  </DashboardCard>
-)}
-
-{isCryptoAssets && activeTab === "crypto_assets_filings" && (
-  <DashboardCard className="p-8">
-    <div className="space-y-6">
-
-      <div className="flex items-center gap-3">
-        <div className="w-1 h-6 bg-gray-900 rounded-full" />
-        <h3 className="text-lg font-medium tracking-tight">
-          Crypto Compliance Filings
-        </h3>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Entity</th>
-              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Activity Type</th>
-              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Filing/Report</th>
-              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Period/Event</th>
-              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Due Date</th>
-              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Status</th>
-              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Responsibility</th>
-              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {(engagementData?.cryptoFilings || []).map((f: any) => (
-              <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50">
-
-                <td className="py-4 px-4 font-medium">{f.reportName}</td>
-                <td className="py-4 px-4">{f.jurisdiction}</td>
-                <td className="py-4 px-4">{f.period}</td>
-
-                <td className="py-4 px-4">
-                  <Badge
-                    className={cn(
-                      "border",
-                      f.status === "Completed" && "text-emerald-600 border-emerald-200",
-                      f.status === "Pending" && "text-orange-600 border-orange-200",
-                      f.status === "In Progress" && "text-blue-600 border-blue-200"
-                    )}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                {[
+                  "Entity",
+                  "Country",
+                  "Filing",
+                  "Period / Event",
+                  "Due Date",
+                  "Status",
+                  "Responsibility",
+                  "Action",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-widest"
                   >
-                    {f.status}
-                  </Badge>
-                </td>
-
-                <td className="py-4 px-4 text-gray-600">
-                  {f.submittedDate || "—"}
-                </td>
-
-                <td className="py-4 px-4 text-right">
-                  <Button variant="ghost" size="sm">
-                    View
-                  </Button>
-                </td>
-
+                    {h}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
+            </thead>
 
+            <tbody>
+              {(engagementData?.internationalStructuringFilings || []).map(
+                (f: any) => (
+                  <tr
+                    key={f.id}
+                    className="border-b border-gray-100 hover:bg-gray-50"
+                  >
+                    <td className="py-3 px-4 font-medium">
+                      {f.entity}
+                    </td>
+
+                    <td className="py-3 px-4 text-gray-600">
+                      {f.country}
+                    </td>
+
+                    <td className="py-3 px-4">
+                      {f.filing}
+                    </td>
+
+                    <td className="py-3 px-4 text-gray-600">
+                      {f.period}
+                    </td>
+
+                    <td className="py-3 px-4 text-gray-600">
+                      {f.dueDate}
+                    </td>
+
+                    {/* Status */}
+                    <td className="py-3 px-4">
+                      <Badge
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-xs flex items-center gap-1 w-fit",
+                          f.status === "due_soon" &&
+                            "bg-orange-100 text-orange-600",
+                          f.status === "in_progress" &&
+                            "bg-blue-100 text-blue-600",
+                          f.status === "submitted" &&
+                            "bg-emerald-100 text-emerald-600",
+                          f.status === "waiting_on_advisor" &&
+                            "bg-red-100 text-red-600",
+                          f.status === "on_track" &&
+                            "bg-green-100 text-green-600",
+                        )}
+                      >
+                        ●{" "}
+                        {f.status.replaceAll("_", " ")}
+                      </Badge>
+                    </td>
+
+                    <td className="py-3 px-4 text-gray-600">
+                      {f.responsibility}
+                    </td>
+
+                    {/* Action */}
+                    <td className="py-3 px-4 text-right">
+                      {f.action === "upload" ? (
+                        <Button size="sm">Upload</Button>
+                      ) : (
+                        <Button variant="outline" size="sm">
+                          View
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ),
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </DashboardCard>
+  )}
+
+
+        {/* Crypto & Digital Assets: Filings */}
+{isCryptoAssets && activeTab === "crypto_filings" && (
+  <DashboardCard className="p-6">
+    <div className="space-y-4">
+
+      <div className="flex items-center gap-3">
+        <div className="w-1 h-6 bg-gray-900 rounded-full" />
+        <h3 className="text-lg font-medium tracking-tight">
+          Filings
+        </h3>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+
+          <thead>
+            <tr className="border-b border-gray-200">
+
+              {[
+                "Entity",
+                "Activity Type",
+                "Filing / Report",
+                "Period / Event",
+                "Due Date",
+                "Status",
+                "Responsibility",
+                "Action",
+              ].map((h) => (
+                <th
+                  key={h}
+                  className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]"
+                >
+                  {h}
+                </th>
+              ))}
+
+            </tr>
+          </thead>
+
+          <tbody>
+            {(engagementData?.cryptoDigitalAssetsFilings || []).map(
+              (f: any) => (
+                <tr
+                  key={f.id}
+                  className="border-b border-gray-100 hover:bg-gray-50"
+                >
+                  <td className="py-3 px-4 font-medium">{f.entity}</td>
+                  <td className="py-3 px-4 text-gray-600">{f.activityType}</td>
+                  <td className="py-3 px-4 text-gray-600">{f.filing}</td>
+                  <td className="py-3 px-4 text-gray-600">{f.period}</td>
+                  <td className="py-3 px-4 text-gray-600">{f.dueDate}</td>
+
+                  {/* Status */}
+                  <td className="py-3 px-4">
+                    <Badge
+                      className={cn(
+                        "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
+
+                        f.status === "completed" &&
+                          "text-emerald-500 border-emerald-500/20",
+
+                        f.status === "due_soon" &&
+                          "text-orange-500 border-orange-500/20",
+
+                        f.status === "ready" &&
+                          "text-blue-500 border-blue-500/20",
+
+                        f.status === "waiting_on_you" &&
+                          "text-red-500 border-red-500/20",
+
+                        f.status === "on_track" &&
+                          "text-green-500 border-green-500/20",
+
+                        f.status === "prepared" &&
+                          "text-purple-500 border-purple-500/20"
+                      )}
+                    >
+                      {f.status.replaceAll("_", " ")}
+                    </Badge>
+                  </td>
+
+                  <td className="py-3 px-4 text-gray-600">
+                    {f.responsibility}
+                  </td>
+
+                  {/* Action */}
+                  <td className="py-3 px-4 text-right">
+                    {f.action === "upload" ? (
+                      <Button size="sm" variant="outline">
+                        Upload
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="ghost">
+                        View
+                      </Button>
+                    )}
+                  </td>
+                </tr>
+              )
+            )}
+          </tbody>
         </table>
       </div>
 
     </div>
   </DashboardCard>
 )}
+
 
 
         {/* CFO: Filings tab (table of all CFO deliverables) */}
@@ -1958,7 +2045,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       Overdue items
                     </p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {mbrStats?.overdue}
+                      {/* {mbrStats?.overdue} */}1
                     </p>
                   </DashboardCard>
                   <DashboardCard className="p-4 border-l-4 border-yellow-500 rounded-0">
@@ -1966,7 +2053,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       Due soon (30 days)
                     </p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {mbrStats?.dueSoon}
+                      {/* {mbrStats?.dueSoon} */}1
                     </p>
                   </DashboardCard>
                   <DashboardCard className="p-4 border-l-4 border-blue-500 rounded-0">
@@ -1974,7 +2061,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       In progress
                     </p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {mbrStats?.inProgress}
+                      {/* {mbrStats?.inProgress} */}1
                     </p>
                   </DashboardCard>
                   <DashboardCard className="p-4 border-l-4 border-green-500 rounded-0">
@@ -1982,7 +2069,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       Completed this year
                     </p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {mbrStats?.completedThisYear}
+                      {/* {mbrStats?.completedThisYear} */}2
                     </p>
                   </DashboardCard>
                 </div>
@@ -2433,7 +2520,70 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                 ) : isInternationalStructuring ? (
                   <div className="space-y-8">
 
-                    {/* ROW 1: Structure Summary */}
+
+
+
+                    {/* ROW 1: Current Cycle + Required Actions */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* 1.1 Current cycle / period card */}
+                      <DashboardCard className="p-8 flex items-center justify-between">
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                            Current cycle/period
+                          </p>
+                          <div className="flex items-center gap-3 text-gray-900">
+                            <div className="w-10 h-10 rounded-0 bg-primary/5 flex items-center justify-center border border-primary/10">
+                              <Calendar className="w-5 h-5 text-primary" />
+                            </div>
+                            <span className="text-lg font-medium">{engagementData?.currentPeriod}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-3 text-right">
+                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                            Current status
+                          </p>
+                          <Badge
+                            className="rounded-0 border px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-emerald-50 text-emerald-600 border-emerald-500/20 w-fit block"
+                          >
+                            ON TRACK
+                          </Badge>
+                        </div>
+                      </DashboardCard>
+
+                      {/* 1.2 What we need from you */}
+                      <DashboardCard className="p-8 bg-gray-50/30 flex flex-col justify-center">
+                        <div className="space-y-4">
+                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                            What we need from you
+                          </p>
+                          {engagementData?.actionNeeded ? (
+                            <div className="flex items-center justify-between gap-6">
+                              <div className="flex gap-4">
+                                <div className="w-1.5 h-auto bg-primary/20 rounded-full" />
+                                <div className="space-y-1">
+                                  <p className="text-gray-900 font-bold leading-tight text-lg">
+                                    {engagementData.actionNeeded.title}
+                                  </p>
+                                  <p className="text-gray-500 text-xs">
+                                    {engagementData.actionNeeded.description}
+                                  </p>
+                                </div>
+                              </div>
+                              <Button className="h-10 rounded-0 font-bold uppercase tracking-widest text-[10px] px-6 shadow-lg shadow-primary/20 shrink-0">
+                                {engagementData.actionNeeded.ctaLabel}
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-3 text-emerald-600 bg-emerald-50 p-4 border border-emerald-100/50">
+                              <CheckCircle2 className="w-5 h-5 shrink-0" />
+                              <p className="font-medium text-sm">Nothing required from you right now.</p>
+                            </div>
+                          )}
+                        </div>
+                      </DashboardCard>
+                    </div>
+
+                    {/* ROW 2: Structure Summary */}
                     <DashboardCard className="p-8">
                       <div className="space-y-4">
                         <div className="flex items-center gap-3">
@@ -2467,44 +2617,6 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       </div>
                     </DashboardCard>
 
-
-                    {/* ROW 2: Current Cycle + Required Actions */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-                      {/* Current Review */}
-                      <DashboardCard className="p-8">
-                        <p className="text-[10px] uppercase text-gray-400">
-                          Current Review Cycle
-                        </p>
-
-                        <p className="text-lg font-semibold mt-2">
-                          {cycle}
-                        </p>
-
-                        <Badge className="mt-3">
-                          {workflowInfo.label}
-                        </Badge>
-                      </DashboardCard>
-
-
-                      {/* What we need */}
-                      <DashboardCard className="p-8 bg-gray-50/30">
-                        <p className="text-[10px] uppercase text-gray-400">
-                          What We Need From You
-                        </p>
-
-                        {neededFromUser ? (
-                          <p className="mt-3 font-medium">{neededFromUser}</p>
-                        ) : (
-                          <p className="mt-3 text-emerald-600">
-                            No action required
-                          </p>
-                        )}
-                      </DashboardCard>
-
-                    </div>
-
-
                     {/* ROW 3: Recent Activity */}
                     <DashboardCard className="p-8">
                       <div className="space-y-4">
@@ -2532,7 +2644,69 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                 ) : isCryptoAssets ? (
                   <div className="space-y-8">
 
-                    {/* ROW 1: Portfolio Summary */}
+
+
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* 1.1 Current cycle / period card */}
+                      <DashboardCard className="p-8 flex items-center justify-between">
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                            Current cycle/period
+                          </p>
+                          <div className="flex items-center gap-3 text-gray-900">
+                            <div className="w-10 h-10 rounded-0 bg-primary/5 flex items-center justify-center border border-primary/10">
+                              <Calendar className="w-5 h-5 text-primary" />
+                            </div>
+                            <span className="text-lg font-medium">{engagementData?.currentPeriod}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-3 text-right">
+                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                            Current status
+                          </p>
+                          <Badge
+                            className="rounded-0 border px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-emerald-50 text-emerald-600 border-emerald-500/20 w-fit block"
+                          >
+                            ON TRACK
+                          </Badge>
+                        </div>
+                      </DashboardCard>
+
+                      {/* 1.2 What we need from you */}
+                      <DashboardCard className="p-8 bg-gray-50/30 flex flex-col justify-center">
+                        <div className="space-y-4">
+                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                            What we need from you
+                          </p>
+                          {engagementData?.actionNeeded ? (
+                            <div className="flex items-center justify-between gap-6">
+                              <div className="flex gap-4">
+                                <div className="w-1.5 h-auto bg-primary/20 rounded-full" />
+                                <div className="space-y-1">
+                                  <p className="text-gray-900 font-bold leading-tight text-lg">
+                                    {engagementData.actionNeeded.title}
+                                  </p>
+                                  <p className="text-gray-500 text-xs">
+                                    {engagementData.actionNeeded.description}
+                                  </p>
+                                </div>
+                              </div>
+                              <Button className="h-10 rounded-0 font-bold uppercase tracking-widest text-[10px] px-6 shadow-lg shadow-primary/20 shrink-0">
+                                {engagementData.actionNeeded.ctaLabel}
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-3 text-emerald-600 bg-emerald-50 p-4 border border-emerald-100/50">
+                              <CheckCircle2 className="w-5 h-5 shrink-0" />
+                              <p className="font-medium text-sm">Nothing required from you right now.</p>
+                            </div>
+                          )}
+                        </div>
+                      </DashboardCard>
+                    </div>
+
+                    {/* ROW 2: Portfolio Summary */}
                     <DashboardCard className="p-8">
 
                       <div className="space-y-4">
@@ -2548,7 +2722,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
 
                           {/* Exposure Type */}
                           <div>
-                            <p className="text-[10px] uppercase text-gray-400 pb-1">
+                            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em] pb-1">
                               Exposure Type
                             </p>
                             <p className="text-md font-bold text-gray-900">
@@ -2558,7 +2732,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
 
                           {/* Nature of Activity */}
                           <div>
-                            <p className="text-[10px] uppercase text-gray-400 pb-1">
+                            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em] pb-1">
                               Activity Nature
                             </p>
                             <p className="text-md font-bold text-gray-900">
@@ -2568,7 +2742,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
 
                           {/* Structuring Status */}
                           <div>
-                            <p className="text-[10px] uppercase text-gray-400 pb-1">
+                            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em] pb-1">
                               Structuring Status
                             </p>
                             <Badge className="bg-orange-100 text-orange-600">
@@ -2581,43 +2755,6 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       </div>
 
                     </DashboardCard>
-
-
-                    {/* ROW 2: Review + Required Info */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-                      {/* Current Review */}
-                      <DashboardCard className="p-8">
-                        <p className="text-[10px] uppercase text-gray-400">
-                          Current Crypto Review
-                        </p>
-
-                        <p className="text-lg font-semibold mt-2">
-                          {cycle}
-                        </p>
-
-                        <Badge className="mt-3">
-                          {workflowInfo.label}
-                        </Badge>
-                      </DashboardCard>
-
-
-                      {/* What we need */}
-                      <DashboardCard className="p-8 bg-gray-50/30">
-                        <p className="text-[10px] uppercase text-gray-400">
-                          Required From You
-                        </p>
-
-                        {neededFromUser ? (
-                          <p className="mt-3 font-medium">{neededFromUser}</p>
-                        ) : (
-                          <p className="mt-3 text-emerald-600">
-                            All documents received
-                          </p>
-                        )}
-                      </DashboardCard>
-
-                    </div>
 
 
                     {/* ROW 3: Activity */}
@@ -2697,23 +2834,23 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                     </DashboardCard>
 
                     {/* ROW 2: What we need from you & Recent Activity */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="space-y-8">
                       {/* 2.1 What we need from you (Priority-based) */}
-                      <DashboardCard className="p-8 bg-blue-50/20 border-blue-100 flex flex-col justify-center">
+                      <DashboardCard className="p-8 border-blue-100 flex flex-col justify-center">
                         <div className="space-y-6">
                           <div className="flex items-center gap-3">
-                            <div className="w-1 h-6 bg-blue-600 rounded-full" />
-                            <h3 className="text-lg font-medium tracking-tight text-blue-900">What we need from you</h3>
+                            <div className="w-1 h-6 bg-black rounded-full" />
+                            <h3 className="text-lg font-medium tracking-tight">What we need from you</h3>
                           </div>
                           {engagementData?.actionNeeded ? (
                             <div className="space-y-6">
                               <div className="p-4 bg-white border border-blue-100/50 shadow-sm">
-                                <p className="text-lg font-bold text-blue-900 mb-2">{engagementData.actionNeeded.title}</p>
-                                <p className="text-sm text-blue-700/70 leading-relaxed font-medium">
+                                <p className="text-lg font-bold mb-2">{engagementData.actionNeeded.title}</p>
+                                <p className="text-sm leading-relaxed font-medium">
                                   {engagementData.actionNeeded.description}
                                 </p>
                               </div>
-                              <Button className="w-full h-12 rounded-0 font-bold uppercase tracking-[0.2em] text-xs shadow-lg shadow-blue-500/20 bg-blue-600 hover:bg-blue-700">
+                              <Button className="h-12 rounded-0 font-bold uppercase tracking-[0.2em] text-xs shadow-lg shadow-blue-500/20">
                                 {engagementData.actionNeeded.ctaLabel}
                               </Button>
                             </div>
@@ -2726,55 +2863,10 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                         </div>
                       </DashboardCard>
 
-                      {/* 2.2 Recent Activity */}
-                      <DashboardCard className="p-8 flex flex-col">
-                        <div className="space-y-6 flex-1">
-                          <div className="flex items-center gap-3">
-                            <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                            <h3 className="text-lg font-medium tracking-tight">Recent Activity</h3>
-                          </div>
-                          <div className="space-y-4">
-                            {(engagementData?.recentActivity || []).map((act: any, idx: number) => (
-                              <div key={idx} className="flex items-start gap-3 pb-4 border-b border-gray-50 last:border-0 last:pb-0">
-                                <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-gray-300" />
-                                <div className="space-y-0.5">
-                                  <p className="text-sm font-medium text-gray-900">{act.action}</p>
-                                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">{act.date}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </DashboardCard>
+
                     </div>
 
-                    {/* ROW 3: Quick Access Documents */}
-                    <DashboardCard className="p-8">
-                      <div className="space-y-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                          <h3 className="text-lg font-medium tracking-tight">Quick Access Documents</h3>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                          {(engagementData?.quickAccessDocs || []).map((doc: any, idx: number) => (
-                            <div key={idx} className="p-4 border border-gray-100 hover:border-blue-200 transition-all group flex items-center justify-between bg-white">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-gray-50 flex items-center justify-center border border-gray-100 group-hover:bg-blue-50 group-hover:border-blue-100">
-                                  <FileText className="w-5 h-5 text-gray-400 group-hover:text-blue-500" />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-bold text-gray-900 truncate max-w-[150px]">{doc.title || doc.name}</p>
-                                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">{doc.date || doc.createdAt}</p>
-                                </div>
-                              </div>
-                              <Button variant="ghost" size="sm" className="p-0 h-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Download className="w-4 h-4 text-blue-600" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </DashboardCard>
+
                   </div>
                 ) : (
                   <DashboardCard className="grid grid-cols-1 md:grid-cols-2 rounded-0 overflow-hidden p-0">
@@ -3167,7 +3259,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
                         Status
                       </p>
-                      <Badge className="mt-1 rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-gray-700 border-gray-200">
+                      {/* <Badge className="mt-1 rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-gray-700 border-gray-200">
                         {vatActivePeriod.filing_status === "waiting_on_you" &&
                           "Waiting on you"}
                         {vatActivePeriod.filing_status === "in_progress" &&
@@ -3176,6 +3268,9 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                           "Submitted"}
                         {vatActivePeriod.filing_status === "completed" &&
                           "Completed"}
+                      </Badge> */}
+                      <Badge className="mt-1 rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent text-gray-700 border-gray-200">
+                        In Progress
                       </Badge>
                     </div>
                   </div>

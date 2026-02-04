@@ -36,7 +36,7 @@ const serviceStatusConfig: Record<string, { label: string; color: string; dotCol
   "liquidation": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
   "cfo": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
   "banking-payments": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
-  "regulated-licenses": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
+  // "regulated-licenses": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
   // "grants-incentives": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
   "international-structuring": {
     label: "On track",
@@ -405,7 +405,6 @@ export default function SidebarMenu({
                 "business-plans",
                 "liquidation",
                 "banking-payments",
-                "regulated-licenses",
                 "international-structuring",
                 "crypto-digital-assets",
               ].includes(item.slug);
