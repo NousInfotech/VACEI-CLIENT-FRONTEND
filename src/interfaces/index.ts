@@ -251,7 +251,7 @@ export interface Pagination {
   page: number;
   totalPages: number;
   total: number;
-  limit: 10;
+  limit: number;
 }
 
 // --- Onboarding Interfaces ---
@@ -340,6 +340,7 @@ export interface OnboardingData {
   newCompanyDetails?: NewCompanyDetails;
   selectedServices: string[]; // Service IDs
   pricingInfo?: PricingInfo;
+  incorporationStatus?: boolean; // true if already incorporated, false if needs incorporation service
 }
 
 export interface Quotation {

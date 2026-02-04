@@ -37,8 +37,8 @@ export async function fetchMeetings(
       status: 1,
       clientId: "client-1",
       accountantId: "1",
-      client: "Client Name (client@example.com)",
-      accountant: "Accountant Name (accountant@example.com)",
+      client: null,
+      accountant: null,
     },
     {
       id: 2,
@@ -49,8 +49,8 @@ export async function fetchMeetings(
       status: 1,
       clientId: "client-1",
       accountantId: "2",
-      client: "Client Name (client@example.com)",
-      accountant: "Accountant Name 2 (accountant2@example.com)",
+      client: null,
+      accountant: null,
     },
   ];
   
@@ -129,7 +129,7 @@ export async function fetchMeetingById(id: string): Promise<Meeting> {
     status: 1,
     clientId: "client-1",
     accountantId: "1",
-    client: "Client Name (client@example.com)",
-    accountant: "Accountant Name (accountant@example.com)",
+    client: null,
+    accountant: null,
   };
 }

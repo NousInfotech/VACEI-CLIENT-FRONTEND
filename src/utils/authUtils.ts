@@ -15,6 +15,22 @@ export function getDecodedUsername(): string | null {
 }
 
 /**
+ * Get user ID from localStorage
+ */
+export function getUserIdFromLocalStorage(): string | null {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const userId = localStorage.getItem('user_id');
+    if (!userId) return null;
+    return userId;
+  } catch (error) {
+    console.error('Error getting user ID:', error);
+    return null;
+  }
+}
+
+/**
  * Utility function to handle authentication errors and redirect to login
  * This prevents page flash by handling 401 errors consistently
  */

@@ -31,11 +31,19 @@ interface Company {
 }
 
 interface UploadStatusSummary {
-  documentsUploaded: number;
-  documentsProcessed: number;
-  documentsPending: number;
-  documentsNeedsCorrection: number;
   filesUploadedThisMonth: number;
+  typeBreakdown: {
+    Invoices: number;
+    Receipts: number;
+    Statements: number;
+    Other: number;
+  };
+  monthlyStatusBreakdown: {
+    "Pending Review": number;
+    Processed: number;
+    "Needs Correction": number;
+    Other: number;
+  };
 }
 
 export default function DashboardPage() {
@@ -278,11 +286,7 @@ export default function DashboardPage() {
       setUploadLoading(true);
       try {
         const summary = await fetchUploadStatusSummary();
-        setUploadSummary({
-          ...summary,
-          documentsNeedsCorrection: 0,
-          filesUploadedThisMonth: 0,
-        });
+        setUploadSummary(summary);
       } catch (error) {
         console.error("Failed to load upload status summary:", error);
         setUploadSummary(null);
@@ -350,10 +354,13 @@ export default function DashboardPage() {
     return "";
   };
 
-  const totalUploaded = uploadSummary?.documentsUploaded || 0;
-  const processedPercentage = totalUploaded > 0 ? ((uploadSummary?.documentsProcessed || 0) / totalUploaded) * 100 : 0;
-  const pendingPercentage = totalUploaded > 0 ? ((uploadSummary?.documentsPending || 0) / totalUploaded) * 100 : 0;
-  const needCorrectionPercentage = totalUploaded > 0 ? ((uploadSummary?.documentsNeedsCorrection || 0) / totalUploaded) * 100 : 0;
+  const totalUploaded = uploadSummary?.filesUploadedThisMonth || 0;
+  const processedCount = uploadSummary?.monthlyStatusBreakdown?.Processed || 0;
+  const pendingCount = uploadSummary?.monthlyStatusBreakdown?.["Pending Review"] || 0;
+  const needsCorrectionCount = uploadSummary?.monthlyStatusBreakdown?.["Needs Correction"] || 0;
+  const processedPercentage = totalUploaded > 0 ? (processedCount / totalUploaded) * 100 : 0;
+  const pendingPercentage = totalUploaded > 0 ? (pendingCount / totalUploaded) * 100 : 0;
+  const needCorrectionPercentage = totalUploaded > 0 ? (needsCorrectionCount / totalUploaded) * 100 : 0;
   const encodedPendingStatus = btoa('1');
   const encodedProcessedStatus = btoa('2');
   const encodedNeedCorrectionStatus = btoa('3');

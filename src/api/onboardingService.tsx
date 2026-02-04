@@ -985,9 +985,9 @@ export async function getKYCPersons(): Promise<KYCPerson[]> {
         const rolesUpper = roles.map((r: string) => String(r).toUpperCase().trim());
         
         // Check for each role type (handle variations in role naming)
-        const hasDirector = rolesUpper.some(r => r === 'DIRECTOR');
-        const hasSecretary = rolesUpper.some(r => r === 'SECRETARY');
-        const hasJudicialRep = rolesUpper.some(r => 
+        const hasDirector = rolesUpper.some((r: string) => r === 'DIRECTOR');
+        const hasSecretary = rolesUpper.some((r: string) => r === 'SECRETARY');
+        const hasJudicialRep = rolesUpper.some((r: string) => 
           r === 'JUDICIAL_REPRESENTATIVE' || 
           r === 'JUDICIALREPRESENTATIVE' ||
           (r.includes('JUDICIAL') && r.includes('REPRESENTATIVE'))
@@ -1003,7 +1003,6 @@ export async function getKYCPersons(): Promise<KYCPerson[]> {
               name: personName,
               role: 'director',
               status: 'pending',
-              email: '',
             });
           }
         }
@@ -1016,7 +1015,6 @@ export async function getKYCPersons(): Promise<KYCPerson[]> {
               name: personName,
               role: 'secretary',
               status: 'pending',
-              email: '',
             });
           }
         }
@@ -1029,7 +1027,6 @@ export async function getKYCPersons(): Promise<KYCPerson[]> {
               name: personName,
               role: 'judicial_representative',
               status: 'pending',
-              email: '',
             });
           }
         }
@@ -1067,7 +1064,6 @@ export async function getKYCPersons(): Promise<KYCPerson[]> {
             name: personName,
             role: 'shareholder',
             status: 'pending',
-            email: '', // Person doesn't have email field
           });
         }
       });

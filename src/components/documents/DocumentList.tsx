@@ -38,7 +38,16 @@ export default function DocumentList({ refreshTrigger }: { refreshTrigger: numbe
     try {
       const res = await fetchDocuments({ page: 1, limit: 50 });
       // Handle both array response or object with data property
-      const docs = Array.isArray(res) ? res : (res.data || []);
+      const rawDocs = Array.isArray(res) ? res : (res.data || []);
+      // Map API response to Document interface
+      const docs: Document[] = rawDocs.map((doc: any) => ({
+        id: doc.id,
+        document_title: doc.name || doc.document_title || '',
+        created_at: doc.createdAt || doc.created_at || new Date().toISOString(),
+        status: doc.status,
+        uploader: doc.uploader,
+        file_path: doc.file_path,
+      }));
       setDocuments(docs);
       setError(null);
     } catch (err: any) {

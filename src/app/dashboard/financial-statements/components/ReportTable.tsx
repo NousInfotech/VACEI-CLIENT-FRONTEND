@@ -112,7 +112,19 @@ export default function ReportTable({ reportType }: { reportType: string }) {
                     quickFilterRange,
                 });
 
-                setMetricsData(reports);
+                // Transform reports array into the expected nested object structure
+                const transformedData: { [metricName: string]: { [key: string]: number } } = {};
+                reports.forEach((report) => {
+                    const key = report.startDate; // Use startDate as the key
+                    if (!transformedData.revenue) transformedData.revenue = {};
+                    if (!transformedData.expenses) transformedData.expenses = {};
+                    if (!transformedData.netIncome) transformedData.netIncome = {};
+                    transformedData.revenue[key] = report.revenue;
+                    transformedData.expenses[key] = report.expenses;
+                    transformedData.netIncome[key] = report.netIncome;
+                });
+
+                setMetricsData(transformedData);
             } catch (err) {
                 console.error(err);
             } finally {

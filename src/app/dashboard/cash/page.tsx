@@ -5,10 +5,19 @@ import TotalBalanceChart from '@/components/TotalBalanceChart';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 
+interface Account {
+    id: string;
+    name: string;
+    accountType: string;
+    accountSubType: string;
+    currentBalance: number;
+    active: boolean;
+}
+
 export default function CashPage() {
     const router = useRouter();
-    const [banks, setBanks] = useState([]);
-    const [creditCards, setCreditCards] = useState([]);
+    const [banks, setBanks] = useState<Account[]>([]);
+    const [creditCards, setCreditCards] = useState<Account[]>([]);
     const [totalBalance, setTotalBalance] = useState(0);
     const [loading, setLoading] = useState(true);
 
@@ -19,15 +28,15 @@ export default function CashPage() {
             try {
                 const { mockGetBankData } = await import('@/api/mockApiService');
                 const data = await mockGetBankData();
-                const accounts = data.accounts || [];
+                const accounts: Account[] = data.accounts || [];
                 const masterCurrentBalance = data.masterCurrentBalance || 0;
 
                 const bankAccounts = accounts.filter(
-                    (acc: any) => acc.accountType === 'Bank' && acc.active
+                    (acc: Account) => acc.accountType === 'Bank' && acc.active
                 );
 
                 const creditCardAccounts = accounts.filter(
-                    (acc: any) => acc.accountType === 'Credit Card' && acc.active
+                    (acc: Account) => acc.accountType === 'Credit Card' && acc.active
                 );
 
                 setBanks(bankAccounts);
@@ -99,7 +108,7 @@ export default function CashPage() {
                             <ul className="space-y-2">
                                 {loading
                                     ? Array(3).fill(null).map((_, i) => <SkeletonItem key={i} />)
-                                    : banks.map((bank: any) => (
+                                    : banks.map((bank: Account) => (
                                         <li key={bank.id} className="flex items-center justify-between py-3">
                                             <div className="flex items-center gap-2">
                                                 <div className="icon flex align-middle border px-3 border-border py-2 rounded leading-0">
@@ -129,7 +138,7 @@ export default function CashPage() {
                             <ul className="space-y-2">
                                 {loading
                                     ? Array(2).fill(null).map((_, i) => <SkeletonItem key={i} />)
-                                    : creditCards.map((card: any) => (
+                                    : creditCards.map((card: Account) => (
                                         <li key={card.id} className="flex items-center justify-between py-3">
                                             <div className="flex items-center gap-2">
                                                 <div className="icon flex align-middle border px-3 border-border py-2 rounded leading-0">

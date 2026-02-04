@@ -53,7 +53,7 @@ function SettingsContent() {
             setAlert(null); // Clear previous alerts
             try {
                 const { mockCheckQuickbooksAuth } = await import('@/api/mockApiService');
-                const { success, data, error: authError } = await mockCheckQuickbooksAuth();
+                const { success, data } = await mockCheckQuickbooksAuth();
 
                 if (success && data.isValid === true && data.intuitAccount?.updatedAt) {
                     localStorage.setItem('accessToken', data.intuitAccount.accessToken);
@@ -73,8 +73,8 @@ function SettingsContent() {
                     setAuthenticated(false);
                     setLastAuthenticated(null);
                     setRealmId(null);
-                    if (authError) {
-                        setAlert({ text: authError, type: 'danger' });
+                    if (!success) {
+                        setAlert({ text: 'QuickBooks authentication check failed', type: 'danger' });
                     }
                 }
             } catch (err) {
@@ -107,12 +107,12 @@ function SettingsContent() {
 
         try {
             const { mockSyncQuickbooksData } = await import('@/api/mockApiService');
-            const { success, data, error: syncError } = await mockSyncQuickbooksData(endpoint);
+            const { success, data } = await mockSyncQuickbooksData(endpoint);
 
             if (success) {
                 setAlert({ text: successMessage, type: 'success' });
             } else {
-                setAlert({ text: data?.message || syncError || failureMessage, type: 'danger' });
+                setAlert({ text: data?.message || failureMessage, type: 'danger' });
             }
         } catch (err) {
             setAlert({ text: `An unexpected error occurred during ${failureMessage.toLowerCase()}`, type: 'danger' });

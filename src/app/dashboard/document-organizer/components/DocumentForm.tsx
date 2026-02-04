@@ -60,10 +60,10 @@ function DocumentFormContent() {
     const [form, setForm] = useState({
         year: "", month: "", document_title: "", category: "", subCategory: "", notes: "", selectedTags: [] as string[],
     });
-    const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
-    const [subCategories, setSubCategories] = useState<{ id: number; name: string }[]>([]);
+    const [categories, setCategories] = useState<{ id: string; name: string; parentId: null | string }[]>([]);
+    const [subCategories, setSubCategories] = useState<{ id: string; name: string; parentId: null | string }[]>([]);
     const [loadingSubCategories, setLoadingSubCategories] = useState(false);
-    const [tags, setTags] = useState<{ id: number; name: string; color: string }[]>([]);
+    const [tags, setTags] = useState<{ id: string; name: string; color: string }[]>([]);
     const [errors, setErrors] = useState<{ [key: string]: ReactNode }>({});
     const [initialLoading, setInitialLoading] = useState(true);
     const dropRef = useRef<HTMLDivElement>(null);
@@ -77,7 +77,7 @@ function DocumentFormContent() {
     const currentYear = new Date().getFullYear();
     const years = generateYears(currentYear);
     const yearOptions = toOptions(years);
-    const categoryOptions = categories.map(cat => ({ value: cat.id.toString(), label: cat.name }));
+    const categoryOptions = categories.map(cat => ({ value: cat.id, label: cat.name }));
 
     const getSchema = (isUpdate: boolean, hasExistingFiles: boolean) => {
         return yup.object().shape({
@@ -123,8 +123,8 @@ function DocumentFormContent() {
                     fetchCategories(),
                     fetchTags()
                 ]);
-                setCategories(catData);
-                setTags(tagData);
+                setCategories(catData.data || []);
+                setTags((tagData.data || []).map(tag => ({ ...tag, color: '#3b82f6' })));
 
                 if (docId) {
                     const document = await fetchDocumentById(docId);
@@ -142,7 +142,7 @@ function DocumentFormContent() {
                     if (document.categories?.[0]?.id) {
                         setLoadingSubCategories(true);
                         const subCats = await fetchSubCategories(document.categories[0].id);
-                        setSubCategories(subCats);
+                        setSubCategories(subCats.data || []);
                         setLoadingSubCategories(false);
                     }
                 }
@@ -165,7 +165,7 @@ function DocumentFormContent() {
             setLoadingSubCategories(true);
             try {
                 const subCats = await fetchSubCategories(form.category);
-                setSubCategories(subCats);
+                setSubCategories(subCats.data || []);
             } catch (err) {
                 setSubCategories([]);
             } finally {

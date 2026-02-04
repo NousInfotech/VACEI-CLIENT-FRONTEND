@@ -216,10 +216,10 @@ function DocumentsMasterPage() {
         result.forEach((doc: any) => {
           if (doc.id) newIds.push(String(doc.id));
         });
-      } else if (result && result.id) {
+      } else if (result && 'id' in result && result.id) {
         newIds.push(String(result.id));
-      } else if (result && result.data && Array.isArray(result.data)) {
-          result.data.forEach((doc: any) => {
+      } else if (result && 'data' in result && Array.isArray((result as any).data)) {
+          (result as any).data.forEach((doc: any) => {
           if (doc.id) newIds.push(String(doc.id));
         });
       }

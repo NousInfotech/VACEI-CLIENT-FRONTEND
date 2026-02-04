@@ -156,9 +156,9 @@ export default function DocumentList() {
                     fetchTags(),
                     fetchStatuses(),
                 ]);
-                setCategories(cats);
-                setTags(tgs);
-                setStatuses(sts);
+                setCategories(cats.data || []);
+                setTags(tgs.data || []);
+                setStatuses(sts.data || []);
                 const dashboardSummary = await fetchUploadStatusSummary();
                 if (dashboardSummary) {
                     setSummary(dashboardSummary);
@@ -186,8 +186,8 @@ export default function DocumentList() {
                     tags: selectedTags,
                 });
                 setDocuments(res.data);
-                setPage(res.page);
-                setTotalPages(res.totalPages);
+                setPage(res.pagination.page);
+                setTotalPages(res.pagination.totalPages);
             } catch (e) {
                 console.error(e);
                 setDocuments([]);

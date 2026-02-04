@@ -157,8 +157,18 @@ export async function fetchUploadStatusSummary() {
 
   // Mock upload status summary
   return {
-    documentsUploaded: 45,
-    documentsProcessed: 38,
-    documentsPending: 7,
+    filesUploadedThisMonth: 45,
+    typeBreakdown: {
+      "Invoices": 20,
+      "Receipts": 15,
+      "Statements": 7,
+      "Other": 3,
+    },
+    monthlyStatusBreakdown: {
+      "Pending Review": 7,
+      "Processed": 38,
+      "Needs Correction": 0,
+      "Other": 0,
+    },
   };
 }

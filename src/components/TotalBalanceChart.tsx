@@ -74,7 +74,7 @@ export default function ProfitLossChart() {
     }
 
     fetchData();
-  }, [view, backendUrl]);
+  }, [view]);
 
   return (
     <div className="bg-card border-border border rounded-card p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-lg card-hover">

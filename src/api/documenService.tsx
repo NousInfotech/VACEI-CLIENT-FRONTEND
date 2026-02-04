@@ -13,10 +13,21 @@ export async function fetchDocumentById(docId: string) {
   // Mock document
   return {
     id: docId,
-    name: "Sample Document",
-    category: "Financial",
-    status: "active",
-    tags: ["important", "2024"],
+    document_title: "Sample Document",
+    year: "2024",
+    month: "3",
+    files: [
+      {
+        id: "file-1",
+        fileName: "document.pdf",
+        fileUrl: "/uploads/document.pdf",
+        fileType: "pdf",
+      },
+    ],
+    categories: [{ id: "1", name: "Financial", parentId: null }],
+    subCategories: [{ id: "1", name: "Invoice", parentId: "1" }],
+    tags: [{ id: "1", name: "important" }],
+    notes: "Sample document notes",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

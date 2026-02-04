@@ -118,10 +118,10 @@ export async function fetchTaskCategories() {
   
   // Mock categories
   return [
-    { id: 1, name: "Financial Review" },
-    { id: 2, name: "Tax" },
-    { id: 3, name: "Audit" },
-    { id: 4, name: "Compliance" },
+    { id: 1, name: "Financial Review", taskCount: 5 },
+    { id: 2, name: "Tax", taskCount: 3 },
+    { id: 3, name: "Audit", taskCount: 2 },
+    { id: 4, name: "Compliance", taskCount: 4 },
   ];
 }
 
@@ -444,9 +444,8 @@ export interface BaseTask {
 
 // This interface is how the frontend expects the task data after fetching
 export interface Task extends HasId, Timestamps {
-  dueDate(dueDate: any): unknown;
-  priority // Inherited from BaseMeeting
- (priority: any): unknown;
+  dueDate: any;
+  priority: string;
   title: string;
   description: string;
   statusId: number;
