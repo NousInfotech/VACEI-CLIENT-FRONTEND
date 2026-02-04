@@ -21,7 +21,7 @@ const PillTabs: React.FC<PillTabsProps> = ({
   className = "" 
 }) => {
   return (
-    <div className={`w-full max-w-full overflow-x-auto no-scrollbar bg-gray-100 p-1 rounded-xl ${className}`}>
+    <div className={`w-fit max-w-full overflow-x-auto no-scrollbar bg-gray-100 p-1 rounded-xl ${className}`}>
       <div className="flex space-x-1 min-w-max">
         {tabs.map((tab) => {
           const Icon = tab.icon;

@@ -105,9 +105,9 @@ export const bankingPaymentsMock: ServiceMockData = {
     },
   ],
   bankAccounts: [
-    { institution: "HSBC UK", currency: "GBP", status: "Active", accountNo: "**** 9822" },
-    { institution: "Bank of America", currency: "USD", status: "Active", accountNo: "**** 1150" },
-    { institution: "Wise Business", currency: "EUR", status: "Active", accountNo: "**** 4432" },
+    { id: "ba-1", institution: "HSBC UK", currency: "GBP", status: "Active", accountNo: "**** 9822" },
+    { id: "ba-2", institution: "Bank of America", currency: "USD", status: "Active", accountNo: "**** 1150" },
+    { id: "ba-3", institution: "Wise Business", currency: "EUR", status: "Active", accountNo: "**** 4432" },
   ],
   payments: [
     { id: "p-1", beneficiary: "Azure Cloud Services", amount: "£1,240.50", date: "30 Jan 2026", status: "Pending Approval" },

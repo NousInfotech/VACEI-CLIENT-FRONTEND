@@ -38,6 +38,18 @@ const serviceStatusConfig: Record<string, { label: string; color: string; dotCol
   "banking-payments": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
   "regulated-licenses": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
   // "grants-incentives": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
+  "international-structuring": {
+    label: "On track",
+    color: "text-emerald-500",
+    dotColor: "bg-emerald-500",
+  },
+
+  "crypto-digital-assets": {
+    label: "On track",
+    color: "text-emerald-500",
+    dotColor: "bg-emerald-500",
+  },
+
 };
 
 export default function SidebarMenu({
@@ -167,6 +179,8 @@ export default function SidebarMenu({
         "business-plans",
         "liquidation",
         "banking-payments",
+        "international-structuring",
+        "crypto-digital-assets",
       ].includes(item.slug);
       if (!isHub) {
         e.preventDefault();
@@ -391,6 +405,8 @@ export default function SidebarMenu({
                 "business-plans",
                 "liquidation",
                 "banking-payments",
+                "international-structuring",
+                "crypto-digital-assets",
                 "regulated-licenses",
               ].includes(item.slug);
               if (!isNavigableHeader) {
@@ -432,55 +448,55 @@ export default function SidebarMenu({
               <span className="flex items-center justify-center min-w-5 h-5 px-2 rounded-full bg-white/10 text-white text-[10px] font-bold">
                 {item.count} Total
               </span>
-            )} 
+            )}
             {level === 2 && serviceStatusConfig[item.slug] && (
-            serviceStatusConfig[item.slug].description ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1.5 opacity-90 scale-[0.85] origin-right ml-2 shrink-0 cursor-help">
-                    <div className={cn(
-                      "w-1.5 h-1.5 rounded-full animate-pulse",
-                      serviceStatusConfig[item.slug].dotColor
-                    )} />
-                    <span className={cn(
-                      "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
-                      serviceStatusConfig[item.slug].color
-                    )}>
-                      {serviceStatusConfig[item.slug].label}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="max-w-[200px] text-xs bg-primary text-primary-foreground border-none">
-                  {serviceStatusConfig[item.slug].description}
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <div className="flex items-center gap-1.5 opacity-90 scale-[0.85] origin-right ml-2 shrink-0">
-                <div className={cn(
-                  "w-1.5 h-1.5 rounded-full animate-pulse",
-                  serviceStatusConfig[item.slug].dotColor
-                )} />
-                <span className={cn(
-                  "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
-                  serviceStatusConfig[item.slug].color
-                )}>
-                  {serviceStatusConfig[item.slug].label}
-                </span>
-              </div>
-            )
-          )}
-          {!isServiceActive && !hasChildren && !item.disabled && (
-            <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider ml-2 shrink-0">
-              Request service
-            </span>
-          )}
-          {hasChildren &&
-            !item.disabled &&
-            (isItemOpen ? (
-              <ChevronUp className="h-3 w-3 opacity-50 shrink-0" />
-            ) : (
-              <ChevronDown className="h-3 w-3 opacity-50 shrink-0" />
-            ))}
+              serviceStatusConfig[item.slug].description ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1.5 opacity-90 scale-[0.85] origin-right ml-2 shrink-0 cursor-help">
+                      <div className={cn(
+                        "w-1.5 h-1.5 rounded-full animate-pulse",
+                        serviceStatusConfig[item.slug].dotColor
+                      )} />
+                      <span className={cn(
+                        "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
+                        serviceStatusConfig[item.slug].color
+                      )}>
+                        {serviceStatusConfig[item.slug].label}
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-[200px] text-xs bg-primary text-primary-foreground border-none">
+                    {serviceStatusConfig[item.slug].description}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <div className="flex items-center gap-1.5 opacity-90 scale-[0.85] origin-right ml-2 shrink-0">
+                  <div className={cn(
+                    "w-1.5 h-1.5 rounded-full animate-pulse",
+                    serviceStatusConfig[item.slug].dotColor
+                  )} />
+                  <span className={cn(
+                    "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
+                    serviceStatusConfig[item.slug].color
+                  )}>
+                    {serviceStatusConfig[item.slug].label}
+                  </span>
+                </div>
+              )
+            )}
+            {!isServiceActive && !hasChildren && !item.disabled && (
+              <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider ml-2 shrink-0">
+                Request service
+              </span>
+            )}
+            {hasChildren &&
+              !item.disabled &&
+              (isItemOpen ? (
+                <ChevronUp className="h-3 w-3 opacity-50 shrink-0" />
+              ) : (
+                <ChevronDown className="h-3 w-3 opacity-50 shrink-0" />
+              ))}
           </div>
         </Link>
 
