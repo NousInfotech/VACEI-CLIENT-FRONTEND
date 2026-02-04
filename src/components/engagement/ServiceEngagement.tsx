@@ -171,18 +171,18 @@ const serviceData: Record<
       { type: "confirm", label: "Approve Payment" }
     ],
   },
-  // "regulated-licenses": {
-  //   name: "Regulated Licenses",
-  //   description: "Management of regulatory license applications, renewals, and ongoing compliance.",
-  //   status: "on_track",
-  //   cycle: "February 2026",
-  //   workflowStatus: "in_progress",
-  //   neededFromUser: "Please upload the AML policy draft for the MFSA application.",
-  //   actions: [
-  //     { type: "upload", label: "Upload AML Policy" },
-  //     { type: "confirm", label: "Confirm Details" }
-  //   ],
-  // },
+  "regulated-licenses": {
+    name: "Regulated Licenses",
+    description: "Management of regulatory license applications, renewals, and ongoing compliance.",
+    status: "on_track",
+    cycle: "February 2026",
+    workflowStatus: "in_progress",
+    neededFromUser: "Please upload the AML policy draft for the MFSA application.",
+    actions: [
+      { type: "upload", label: "Upload AML Policy" },
+      { type: "confirm", label: "Confirm Details" }
+    ],
+  },
   "international-structuring": {
     name: "International Structuring",
     description:

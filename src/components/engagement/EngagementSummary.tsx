@@ -1512,17 +1512,17 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                     <td className="py-3 px-4">
                       <Badge
                         className={cn(
-                          "rounded-full px-2 py-0.5 text-xs flex items-center gap-1 w-fit",
+                          "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
                           f.status === "due_soon" &&
-                            "bg-orange-100 text-orange-600",
+                            "border-orange-500/20 text-orange-600",
                           f.status === "in_progress" &&
-                            "bg-blue-100 text-blue-600",
+                            "border-blue-500/20 text-blue-600",
                           f.status === "submitted" &&
-                            "bg-emerald-100 text-emerald-600",
+                            "border-emerald-500/20 text-emerald-600",
                           f.status === "waiting_on_advisor" &&
-                            "bg-red-100 text-red-600",
+                            "border-red-500/20 text-red-600",
                           f.status === "on_track" &&
-                            "bg-green-100 text-green-600",
+                            "border-green-500/20 text-green-600",
                         )}
                       >
                         ●{" "}
@@ -1641,17 +1641,15 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                   </td>
 
                   {/* Action */}
-                  <td className="py-3 px-4 text-right">
-                    {f.action === "upload" ? (
-                      <Button size="sm" variant="outline">
-                        Upload
-                      </Button>
-                    ) : (
-                      <Button size="sm" variant="ghost">
-                        View
-                      </Button>
-                    )}
-                  </td>
+                 <td className="py-3 px-4 text-right">
+                      {f.action === "upload" ? (
+                        <Button size="sm">Upload</Button>
+                      ) : (
+                        <Button variant="outline" size="sm">
+                          View
+                        </Button>
+                      )}
+                    </td>
                 </tr>
               )
             )}
