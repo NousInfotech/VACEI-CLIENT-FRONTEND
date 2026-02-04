@@ -23,6 +23,7 @@ const serviceData: Record<
     workflowStatus: WorkflowStatus;
     neededFromUser?: string;
     actions: EngagementAction[];
+
   }
 > = {
   bookkeeping: {
@@ -180,6 +181,37 @@ const serviceData: Record<
     actions: [
       { type: "upload", label: "Upload AML Policy" },
       { type: "confirm", label: "Confirm Details" }
+    ],
+  },
+  "international-structuring": {
+    name: "International Structuring",
+    description:
+      "Design, implementation, and management of cross-border group structures.",
+    status: "action_required",
+    cycle: "Structuring Review",
+    workflowStatus: "waiting",
+
+    neededFromUser: "Please upload your existing group structure and ownership details.",
+
+    actions: [
+      { type: "upload", label: "Upload Documents" },
+      { type: "confirm", label: "Review Proposal" },
+    ],
+  },
+  "crypto-digital-assets": {
+    name: "Crypto & Digital Assets",
+    description:
+      "Coordination of structuring, banking, compliance, and reporting for crypto exposure.",
+    status: "action_required",
+    cycle: "Initial Crypto Review",
+    workflowStatus: "waiting",
+
+    neededFromUser:
+      "Upload wallet addresses and exchange statements for review.",
+
+    actions: [
+      { type: "upload", label: "Upload Documents" },
+      { type: "confirm", label: "Review Structure" },
     ],
   },
 };

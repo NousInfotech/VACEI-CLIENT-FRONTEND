@@ -36,6 +36,9 @@ import { liquidationMock } from "../components/services/mockData/liquidationMock
 import { regulatedLicensesMock } from "../components/services/mockData/regulatedLicensesMock";
 import { bankingPaymentsMock } from "../components/services/mockData/bankingPaymentsMock";
 
+import { internationalStructuringMock } from "../components/services/mockData/internationalStructuringMock";
+import { cryptoDigitalAssetsMock } from "../components/services/mockData/cryptoDigitalAssetsMock";
+
 export type MenuSection = "primary" | "workspaces" | "operations" | "settings";
 
 export interface MenuItem {
@@ -860,6 +863,111 @@ export const menuData: MenuItem[] = [
           },
         ],
       },
+
+      {
+        slug: "international-structuring",
+        icon: GitPullRequestIcon,
+        label: "International Structuring",
+        href: "/dashboard/services/international-structuring",
+        isActive: true,
+        children: [
+          {
+            slug: "is-docs",
+            icon: DocumentValidationIcon,
+            label: "Document Requests",
+            href: "/dashboard/services/international-structuring?tab=document_requests",
+            count: internationalStructuringMock.documentRequests?.length || 0,
+            totalCount: internationalStructuringMock.documentRequests?.length || 0,
+          },
+          {
+            slug: "is-milestones",
+            icon: TaskDaily01Icon,
+            label: "Milestones",
+            href: "/dashboard/services/international-structuring?tab=milestones",
+          },
+          {
+            slug: "is-lib",
+            icon: Book02Icon,
+            label: "Library",
+            href: "/dashboard/services/international-structuring?tab=library",
+          },
+          {
+            slug: "is-compliance",
+            icon: TaxesIcon,
+            label: "Compliance Calendar",
+            href: "/dashboard/services/international-structuring?tab=compliance_calendar",
+          },
+          {
+            slug: "is-messages",
+            icon: Message01Icon,
+            label: "Messages",
+            href: "/dashboard/services/international-structuring?tab=messages",
+            count:
+              internationalStructuringMock.messages?.filter((m) => !m.read).length ||
+              0,
+            totalCount: internationalStructuringMock.messages?.length || 0,
+          },
+          {
+            slug: "is-filings",
+            icon: TaskDaily01Icon,
+            label: "Filings",
+            href: "/dashboard/services/international-structuring?tab=filings",
+          },
+        ],
+      },
+
+      {
+        slug: "crypto-digital-assets",
+        icon: Wallet01Icon,
+        label: "Crypto & Digital Assets",
+        href: "/dashboard/services/crypto-digital-assets",
+        isActive: true,
+        children: [
+          {
+            slug: "crypto-docs",
+            icon: DocumentValidationIcon,
+            label: "Document Requests",
+            href: "/dashboard/services/crypto-digital-assets?tab=document_requests",
+            count: cryptoDigitalAssetsMock.documentRequests?.length || 0,
+            totalCount: cryptoDigitalAssetsMock.documentRequests?.length || 0,
+          },
+          {
+            slug: "crypto-milestones",
+            icon: TaskDaily01Icon,
+            label: "Milestones",
+            href: "/dashboard/services/crypto-digital-assets?tab=milestones",
+          },
+          {
+            slug: "crypto-lib",
+            icon: Book02Icon,
+            label: "Library",
+            href: "/dashboard/services/crypto-digital-assets?tab=library",
+          },
+          {
+            slug: "crypto-compliance",
+            icon: TaxesIcon,
+            label: "Compliance Calendar",
+            href: "/dashboard/services/crypto-digital-assets?tab=compliance_calendar",
+          },
+          {
+            slug: "crypto-messages",
+            icon: Message01Icon,
+            label: "Messages",
+            href: "/dashboard/services/crypto-digital-assets?tab=messages",
+            count:
+              cryptoDigitalAssetsMock.messages?.filter((m) => !m.read).length || 0,
+            totalCount: cryptoDigitalAssetsMock.messages?.length || 0,
+          },
+          {
+            slug: "crypto-filings",
+            icon: TaskDaily01Icon,
+            label: "Filings",
+            href: "/dashboard/services/crypto-digital-assets?tab=filings",
+          },
+        ],
+      },
+
+
       {
         slug: "regulated-licences",
         icon: ProfileIcon,

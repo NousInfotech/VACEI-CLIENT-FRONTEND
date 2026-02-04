@@ -3,7 +3,7 @@ export interface Milestone {
   title: string;
   description: string;
   date: string;
-  status: 'completed' | 'in_progress' | 'pending';
+  status: "completed" | "in_progress" | "pending";
 }
 
 export interface DocumentRequest {
@@ -22,7 +22,7 @@ export interface ComplianceItem {
   title: string;
   type: string;
   dueDate: string;
-  status: 'filed' | 'upcoming' | 'due_today' | 'overdue' | 'pending';
+  status: "filed" | "upcoming" | "due_today" | "overdue" | "pending";
   authority: string;
   description: string;
 }
@@ -31,22 +31,23 @@ export interface ServiceMockData {
   serviceSlug: string;
   serviceName: string;
   description: string;
+
   milestones: Milestone[];
   documentRequests: DocumentRequest[];
   complianceItems: ComplianceItem[];
   messages: any[];
-  // Additional fields for specific services
-  filings?: any[]; // For MBR
-  periods?: any[]; // For VAT
-  accountingFilings?: any[]; // For Accounting
-  auditFilings?: any[]; // For Audit
-  taxFilings?: any[]; // For Tax
-  incorporationFilings?: any[]; // For Incorporation
-  businessPlansFilings?: any[]; // For Business Plans
-  liquidationFilings?: any[]; // For Liquidation
-  bankAccounts?: any[]; // For Banking & Payments
-  payments?: any[]; // For Banking & Payments
-  bankingPaymentsFilings?: any[]; // For Banking & Payments
+
+  // Filings / Periods
+  filings?: any[];
+  periods?: any[];
+  accountingFilings?: any[];
+  auditFilings?: any[];
+  taxFilings?: any[];
+  incorporationFilings?: any[];
+  businessPlansFilings?: any[];
+  liquidationFilings?: any[];
+  bankingPaymentsFilings?: any[];
+
   regulatedLicensesFilings?: {
     id: string;
     title: string;
@@ -57,6 +58,7 @@ export interface ServiceMockData {
     documents: string[];
     queryRounds?: number;
   }[];
+
   licenseCases?: {
     id: string;
     licenseType: string;
@@ -65,41 +67,75 @@ export interface ServiceMockData {
     status: string;
     targetDate: string;
   }[];
-  team?: any[];    // For Team tab
+
+  team?: any[];
+
+  // Accounting / Finance
   etb?: any;
   adjustments?: any[];
   reclassifications?: any[];
   financialStatements?: any;
   leadSheets?: any[];
-  summaryData?: any; // For custom dashboard summaries
-  
-  // Dashboard / Overview specific data
+
+  summaryData?: any;
+
+  // Dashboard Data
   dashboardStats?: any[];
   recentActivity?: { action: string; date: string }[];
-  quickAccessDocs?: { name: string; date?: string; url?: string; createdAt?: string; title?: string }[];
-  
-  // Service-specific Overview sections
-  incorporationProgress?: { step: string; status: 'completed' | 'in_progress' | 'pending' }[];
-  auditProgress?: { step: string; status: 'completed' | 'in_progress' | 'pending' }[];
-  liquidationProcess?: { step: string; status: 'completed' | 'in_progress' | 'pending' | string }[];
-  businessPlanMilestones?: { label: string; status: string }[];
-  corporateServicesStatus?: { 
-    type: string; 
-    holder: string; 
-    status: string; 
+  quickAccessDocs?: {
+    name: string;
+    date?: string;
+    url?: string;
+    createdAt?: string;
+    title?: string;
+  }[];
+
+  // Service Overview Sections
+  incorporationProgress?: {
+    step: string;
+    status: "completed" | "in_progress" | "pending";
+  }[];
+
+  auditProgress?: {
+    step: string;
+    status: "completed" | "in_progress" | "pending";
+  }[];
+
+  liquidationProcess?: {
+    step: string;
+    status: "completed" | "in_progress" | "pending" | string;
+  }[];
+
+  businessPlanMilestones?: {
+    label: string;
+    status: string;
+  }[];
+
+  corporateServicesStatus?: {
+    type: string;
+    holder: string;
+    status: string;
     startDate?: string | null;
     expiry: string | null;
     service_status?: string;
     documents?: string[];
     open?: boolean;
   }[];
-  payrollOverview?: { 
+
+  payrollOverview?: {
     totalEmployees: number;
     activeThisPeriod: number;
     pendingChanges: number;
     recentEmployees: { name: string; role: string; status: string }[];
   };
-  cfoEngagementsList?: { name: string; start: string; status: string; end: string }[];
+
+  cfoEngagementsList?: {
+    name: string;
+    start: string;
+    status: string;
+    end: string;
+  }[];
+
   cfoFilings?: {
     service: string;
     frequency: string;
@@ -110,12 +146,19 @@ export interface ServiceMockData {
     documents: string[];
     open: boolean;
   }[];
-  libraryItems?: any[]; // For service-specific library
+
+  libraryItems?: any[];
+
   currentPeriod?: string;
   lastUpdate?: string;
   nextStep?: string;
+
   actionNeeded?: {
-    type: 'payment_approval' | 'document_request' | 'signature_request' | string;
+    type:
+      | "payment_approval"
+      | "document_request"
+      | "signature_request"
+      | string;
     title: string;
     description: string;
     ctaLabel: string;
@@ -123,32 +166,47 @@ export interface ServiceMockData {
   };
 }
 
-import { accountingBookingMock } from './accountingBookingMock';
-import { auditMock } from './auditMock';
-import { bankingPaymentsMock } from './bankingPaymentsMock';
-import { businessPlansMock } from './businessPlansMock';
-import { cfoMock } from './cfoMock';
-import { corporateMock } from './corporateMock';
-import { incorporationMock } from './incorporationMock';
-import { liquidationMock } from './liquidationMock';
-import { mbrMock } from './mbrMock';
-import { payrollMock } from './payrollMock';
-import { regulatedLicensesMock } from './regulatedLicensesMock';
-import { taxMock } from './taxMock';
-import { vatMock } from './vatMock';
+// ===============================
+// Imports
+// ===============================
+
+import { accountingBookingMock } from "./accountingBookingMock";
+import { auditMock } from "./auditMock";
+import { bankingPaymentsMock } from "./bankingPaymentsMock";
+import { businessPlansMock } from "./businessPlansMock";
+import { cfoMock } from "./cfoMock";
+import { corporateMock } from "./corporateMock";
+import { incorporationMock } from "./incorporationMock";
+import { liquidationMock } from "./liquidationMock";
+import { mbrMock } from "./mbrMock";
+import { payrollMock } from "./payrollMock";
+import { regulatedLicensesMock } from "./regulatedLicensesMock";
+import { taxMock } from "./taxMock";
+import { vatMock } from "./vatMock";
+
+import { internationalStructuringMock } from "./internationalStructuringMock";
+import { cryptoDigitalAssetsMock } from "./cryptoDigitalAssetsMock";
+
+// ===============================
+// Service Registry
+// ===============================
 
 export const ALL_SERVICE_MOCKS: Record<string, ServiceMockData> = {
+  // Core Services
   bookkeeping: accountingBookingMock,
-  'banking-payments': bankingPaymentsMock,
+  "banking-payments": bankingPaymentsMock,
   audit: auditMock,
-  'business-plans': businessPlansMock,
+  "business-plans": businessPlansMock,
   cfo: cfoMock,
-  'csp-mbr': corporateMock,
+  "csp-mbr": corporateMock,
   incorporation: incorporationMock,
   liquidation: liquidationMock,
-  'mbr-filing': mbrMock,
+  "mbr-filing": mbrMock,
   payroll: payrollMock,
-  'regulated-licenses': regulatedLicensesMock,
+  "regulated-licenses": regulatedLicensesMock,
   tax: taxMock,
   vat: vatMock,
+
+  "international-structuring": internationalStructuringMock,
+  "crypto-digital-assets": cryptoDigitalAssetsMock,
 };
