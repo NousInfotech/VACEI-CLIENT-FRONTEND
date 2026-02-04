@@ -47,6 +47,7 @@ export interface ServiceMockData {
   businessPlansFilings?: any[];
   liquidationFilings?: any[];
   bankingPaymentsFilings?: any[];
+  payments?: any[];
 
   regulatedLicensesFilings?: {
     id: string;
@@ -67,6 +68,15 @@ export interface ServiceMockData {
     status: string;
     targetDate: string;
   }[];
+
+  bankAccounts?: {
+  id: string;
+  institution: string;
+  currency: string;
+  status: string;
+  accountNo: string;
+}[];
+
 
   team?: any[];
 

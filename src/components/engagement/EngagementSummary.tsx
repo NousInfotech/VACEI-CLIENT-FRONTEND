@@ -413,6 +413,22 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
         ...(isBankingPayments ? [
           { id: "banking_payments_filings", label: "Filings", icon: FileCheck },
         ] : []),
+        ...(isInternationalStructuring ? [
+          {
+            id: "international_structuring_filings",
+            label: "Filings",
+            icon: FileCheck,
+          },
+        ] : []),
+
+        ...(isCryptoAssets ? [
+          {
+            id: "crypto_assets_filings",
+            label: "Filings",
+            icon: FileCheck,
+          },
+        ] : []),
+
         ...(isRegulatedLicenses ? [
           { id: "regulated_licenses_filings", label: "Filings", icon: FileCheck },
         ] : []),
@@ -1429,6 +1445,138 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
             </div>
           </DashboardCard>
         )}
+
+        {isInternationalStructuring && activeTab === "international_structuring_filings" && (
+  <DashboardCard className="p-8">
+    <div className="space-y-6">
+
+      <div className="flex items-center gap-3">
+        <div className="w-1 h-6 bg-gray-900 rounded-full" />
+        <h3 className="text-lg font-medium tracking-tight">
+          Structuring Filings
+        </h3>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+
+          <thead>
+            <tr className="border-b border-gray-200">
+              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Entity</th>
+              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Country</th>
+              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Filing</th>
+              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Period/Event</th>
+              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Due Date</th>
+              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Status</th>
+              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Responsibility</th>
+              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {(engagementData?.structuringFilings || []).map((f: any) => (
+              <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50">
+
+                <td className="py-4 px-4 font-medium">{f.entity}</td>
+                <td className="py-4 px-4">{f.jurisdiction}</td>
+                <td className="py-4 px-4">{f.structureType}</td>
+
+                <td className="py-4 px-4">
+                  <Badge variant="outline">
+                    {f.status}
+                  </Badge>
+                </td>
+
+                <td className="py-4 px-4 text-gray-600">
+                  {f.updatedDate}
+                </td>
+
+                <td className="py-4 px-4 text-right">
+                  <Button variant="ghost" size="sm">
+                    View
+                  </Button>
+                </td>
+
+              </tr>
+            ))}
+          </tbody>
+
+        </table>
+      </div>
+
+    </div>
+  </DashboardCard>
+)}
+
+{isCryptoAssets && activeTab === "crypto_assets_filings" && (
+  <DashboardCard className="p-8">
+    <div className="space-y-6">
+
+      <div className="flex items-center gap-3">
+        <div className="w-1 h-6 bg-gray-900 rounded-full" />
+        <h3 className="text-lg font-medium tracking-tight">
+          Crypto Compliance Filings
+        </h3>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+
+          <thead>
+            <tr className="border-b border-gray-200">
+              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Entity</th>
+              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Activity Type</th>
+              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Filing/Report</th>
+              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Period/Event</th>
+              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Due Date</th>
+              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Status</th>
+              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Responsibility</th>
+              <th className="py-3 px-4 text-left text-[10px] uppercase text-gray-400">Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {(engagementData?.cryptoFilings || []).map((f: any) => (
+              <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50">
+
+                <td className="py-4 px-4 font-medium">{f.reportName}</td>
+                <td className="py-4 px-4">{f.jurisdiction}</td>
+                <td className="py-4 px-4">{f.period}</td>
+
+                <td className="py-4 px-4">
+                  <Badge
+                    className={cn(
+                      "border",
+                      f.status === "Completed" && "text-emerald-600 border-emerald-200",
+                      f.status === "Pending" && "text-orange-600 border-orange-200",
+                      f.status === "In Progress" && "text-blue-600 border-blue-200"
+                    )}
+                  >
+                    {f.status}
+                  </Badge>
+                </td>
+
+                <td className="py-4 px-4 text-gray-600">
+                  {f.submittedDate || "—"}
+                </td>
+
+                <td className="py-4 px-4 text-right">
+                  <Button variant="ghost" size="sm">
+                    View
+                  </Button>
+                </td>
+
+              </tr>
+            ))}
+          </tbody>
+
+        </table>
+      </div>
+
+    </div>
+  </DashboardCard>
+)}
+
 
         {/* CFO: Filings tab (table of all CFO deliverables) */}
         {isCFO && activeTab === "cfo_filings" && (
