@@ -3,6 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Dropdown from "@/components/Dropdown";
+import { Calendar } from "lucide-react";
 
 export interface FormField {
     question: string;
@@ -13,7 +14,12 @@ export interface FormField {
     | "radio"
     | "checklist"
     | "text_area"
-    | "select";
+    | "select"
+    | "date"
+    | "month"
+    | "year"
+    | "month_year";
+
     options?: (
         | string
         | {
@@ -22,10 +28,15 @@ export interface FormField {
             questions?: FormField[];
         }
     )[];
+
+    minYear?: number;
+    maxYear?: number;
+
     required?: boolean;
     placeholder?: string;
     maxLength?: number;
 }
+
 
 interface Props {
     fields: FormField[];
@@ -38,18 +49,19 @@ export default function DynamicServiceRequestForm({
     values,
     onChange,
 }: Props) {
-    /* -------------------- Render helpers -------------------- */
-
-    const renderFields = (fields: FormField[]) => {
-        return fields.map((field, index) => {
+    const renderFields = (fields: FormField[]) =>
+        fields.map((field, index) => {
             const key = field.question;
 
             return (
-                <div key={index} className="space-y-2">
-                    <label className="font-medium">
+                <div
+                    key={index}
+                    className="space-y-2 p-4 border rounded-lg bg-white"
+                >
+                    <label className="block text-sm font-medium text-gray-800">
                         {field.question}
                         {field.required && (
-                            <span className="text-red-500"> *</span>
+                            <span className="text-red-500 ml-1">*</span>
                         )}
                     </label>
 
@@ -57,50 +69,17 @@ export default function DynamicServiceRequestForm({
                 </div>
             );
         });
-    };
 
-
-    const renderConditionalQuestions = (field: FormField) => {
-        const value = values[field.question];
-        if (!field.options) return null;
-
-        return field.options.map((option) => {
-            if (typeof option === "object" && option.questions) {
-                // RADIO → only selected option
-                if (
-                    field.input_type === "radio" &&
-                    value === option.value
-                ) {
-                    return (
-                        <div
-                            key={option.value}
-                            className="mt-4 ml-4 pl-4 border-l border-gray-200 space-y-6"
-                        >
-                            {renderFields(option.questions)}
-                        </div>
-                    );
-                }
-
-                // CHECKLIST → additive
-                if (
-                    field.input_type === "checklist" &&
-                    Array.isArray(value) &&
-                    value.includes(option.value)
-                ) {
-                    return (
-                        <div
-                            key={option.value}
-                            className="mt-4 ml-4 pl-4 border-l border-gray-200 space-y-6"
-                        >
-                            {renderFields(option.questions)}
-                        </div>
-                    );
-                }
-            }
-
-            return null;
-        });
-    };
+    const PickerWrapper = ({
+        children,
+    }: {
+        children: React.ReactNode;
+    }) => (
+        <div className="flex items-center gap-3 h-10 px-3 border rounded-md bg-gray-50 focus-within:bg-white">
+            <Calendar size={16} className="text-gray-500" />
+            {children}
+        </div>
+    );
 
     const renderField = (field: FormField) => {
         const key = field.question;
@@ -115,10 +94,8 @@ export default function DynamicServiceRequestForm({
                         value={value || ""}
                         placeholder={field.placeholder}
                         maxLength={field.maxLength}
-                        className="h-9"
-                        onChange={(e) =>
-                            onChange(key, e.target.value)
-                        }
+                        className="h-10 bg-gray-50 focus:bg-white"
+                        onChange={(e) => onChange(key, e.target.value)}
                     />
                 );
 
@@ -128,46 +105,128 @@ export default function DynamicServiceRequestForm({
                         value={value || ""}
                         placeholder={field.placeholder}
                         rows={4}
-                        className="resize-none"
-                        onChange={(e) =>
-                            onChange(key, e.target.value)
-                        }
+                        className="resize-none bg-gray-50 focus:bg-white"
+                        onChange={(e) => onChange(key, e.target.value)}
                     />
+                );
+
+            /* -------- DATE -------- */
+            case "date":
+                return (
+                    <PickerWrapper>
+                        <input
+                            type="date"
+                            className="w-full bg-transparent text-sm outline-none"
+                            value={value || ""}
+                            onChange={(e) =>
+                                onChange(key, e.target.value)
+                            }
+                        />
+                    </PickerWrapper>
+                );
+
+            /* -------- MONTH -------- */
+            case "month":
+                return (
+                    <PickerWrapper>
+                        <input
+                            type="month"
+                            className="w-full bg-transparent text-sm outline-none"
+                            value={value || ""}
+                            onChange={(e) =>
+                                onChange(key, e.target.value)
+                            }
+                        />
+                    </PickerWrapper>
+                );
+
+            /* -------- YEAR -------- */
+            case "year": {
+                const minYear = field.minYear;
+                const maxYear = field.maxYear;
+
+                const years =
+                    typeof minYear === "number" &&
+                        typeof maxYear === "number" &&
+                        maxYear >= minYear
+                        ? Array.from(
+                            { length: maxYear - minYear + 1 },
+                            (_, i) => String(minYear + i)
+                        )
+                        : [];
+
+                return (
+                    <PickerWrapper>
+                        <Dropdown
+                            className="w-full"
+                            trigger={
+                                <button
+                                    type="button"
+                                    className="w-full text-left text-sm bg-transparent outline-none flex justify-between items-center"
+                                >
+                                    <span className={value ? "" : "text-muted-foreground"}>
+                                        {value ||
+                                            field.placeholder ||
+                                            "Select year"}
+                                    </span>
+                                    <span className="opacity-50">▾</span>
+                                </button>
+                            }
+                            items={years.map((year) => ({
+                                id: year,
+                                label: year,
+                                onClick: () => onChange(key, year),
+                            }))}
+                        />
+                    </PickerWrapper>
+                );
+            }
+
+
+
+
+            /* -------- MONTH YEAR -------- */
+            case "month_year":
+                return (
+                    <PickerWrapper>
+                        <input
+                            type="month"
+                            className="w-full bg-transparent text-sm outline-none"
+                            value={value || ""}
+                            onChange={(e) =>
+                                onChange(key, e.target.value)
+                            }
+                        />
+                    </PickerWrapper>
                 );
 
             case "radio":
                 return (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {field.options?.map((opt) => {
                             const optionValue =
                                 typeof opt === "string" ? opt : opt.value;
-
                             const isSelected = value === optionValue;
 
                             return (
-                                <div key={optionValue} className="space-y-3">
-                                    {/* Radio option */}
-                                    <label className="flex items-center gap-2 cursor-pointer">
+                                <div key={optionValue} className="space-y-2">
+                                    <label className="flex items-center gap-3 text-sm text-gray-700 cursor-pointer">
                                         <input
                                             type="radio"
-                                            name={key}
                                             checked={isSelected}
                                             onChange={() =>
                                                 onChange(key, optionValue)
                                             }
                                         />
-                                        <span>
-                                            {typeof opt === "string"
-                                                ? opt
-                                                : opt.label || opt.value}
-                                        </span>
+                                        {typeof opt === "string"
+                                            ? opt
+                                            : opt.label || opt.value}
                                     </label>
 
-                                    {/* ✅ Conditional questions DIRECTLY under option */}
                                     {isSelected &&
                                         typeof opt === "object" &&
                                         opt.questions && (
-                                            <div className="ml-6 pl-4 border-l space-y-4">
+                                            <div className="ml-6 p-4 bg-gray-50 border rounded-md space-y-4">
                                                 {renderFields(opt.questions)}
                                             </div>
                                         )}
@@ -177,29 +236,26 @@ export default function DynamicServiceRequestForm({
                     </div>
                 );
 
-
             case "checkbox":
                 return (
                     <label className="flex items-center gap-3 text-sm text-gray-700 cursor-pointer">
                         <input
                             type="checkbox"
-                            className="accent-primary"
                             checked={!!value}
                             onChange={(e) =>
                                 onChange(key, e.target.checked)
                             }
                         />
-                        <span>{field.placeholder || "Yes"}</span>
+                        {field.placeholder || "Yes"}
                     </label>
                 );
 
             case "checklist":
                 return (
-                    <div className="space-y-3 pt-1">
+                    <div className="space-y-3">
                         {field.options?.map((opt) => {
                             const optionValue =
                                 typeof opt === "string" ? opt : opt.value;
-
                             const current = Array.isArray(value)
                                 ? value
                                 : [];
@@ -211,14 +267,14 @@ export default function DynamicServiceRequestForm({
                                 >
                                     <input
                                         type="checkbox"
-                                        className="accent-primary"
                                         checked={current.includes(optionValue)}
                                         onChange={() =>
                                             onChange(
                                                 key,
                                                 current.includes(optionValue)
                                                     ? current.filter(
-                                                        (v: any) => v !== optionValue
+                                                        (v: any) =>
+                                                            v !== optionValue
                                                     )
                                                     : [...current, optionValue]
                                             )
@@ -240,22 +296,12 @@ export default function DynamicServiceRequestForm({
                         trigger={
                             <button
                                 type="button"
-                                className="w-full h-9 px-3 border rounded-md text-left text-sm flex justify-between items-center"
+                                className="w-full h-10 px-3 border rounded-md text-left text-sm flex justify-between items-center bg-gray-50"
                             >
-                                <span className={value ? "" : "text-muted-foreground"}>
-                                    {value
-                                        ? field.options?.find((opt) =>
-                                            typeof opt === "string"
-                                                ? opt === value
-                                                : opt.value === value
-                                        ) instanceof Object
-                                            ? (field.options?.find(
-                                                (opt) =>
-                                                    typeof opt !== "string" &&
-                                                    opt.value === value
-                                            ) as any)?.label || value
-                                            : value
-                                        : field.placeholder || "Select an option"}
+                                <span>
+                                    {value ||
+                                        field.placeholder ||
+                                        "Select an option"}
                                 </span>
                                 <span className="opacity-50">▾</span>
                             </button>
@@ -263,7 +309,9 @@ export default function DynamicServiceRequestForm({
                         items={
                             field.options?.map((opt) => {
                                 const optionValue =
-                                    typeof opt === "string" ? opt : opt.value;
+                                    typeof opt === "string"
+                                        ? opt
+                                        : opt.value;
 
                                 return {
                                     id: optionValue,
@@ -271,24 +319,18 @@ export default function DynamicServiceRequestForm({
                                         typeof opt === "string"
                                             ? opt
                                             : opt.label || opt.value,
-                                    onClick: () => onChange(key, optionValue),
+                                    onClick: () =>
+                                        onChange(key, optionValue),
                                 };
                             }) || []
                         }
                     />
                 );
 
-
             default:
                 return null;
         }
     };
 
-    /* -------------------- UI -------------------- */
-
-    return (
-        <div className="space-y-8">
-            {renderFields(fields)}
-        </div>
-    );
+    return <div className="space-y-6">{renderFields(fields)}</div>;
 }

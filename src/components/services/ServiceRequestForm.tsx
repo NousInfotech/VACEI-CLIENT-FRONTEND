@@ -10,7 +10,7 @@ import { FormField } from "@/types/serviceTemplate";
 import { Button } from "@/components/ui/button";
 
 interface Props {
-  service: string; // VAT, ACCOUNTING, etc.
+  service: string;
 }
 
 export default function ServiceRequestForm({ service }: Props) {
@@ -21,8 +21,6 @@ export default function ServiceRequestForm({ service }: Props) {
   const [serviceValues, setServiceValues] = useState<Record<string, any>>({});
 
   const [loading, setLoading] = useState(true);
-
-  /* ---------------- Load templates ---------------- */
 
   useEffect(() => {
     const loadTemplates = async () => {
@@ -46,11 +44,9 @@ export default function ServiceRequestForm({ service }: Props) {
     loadTemplates();
   }, [service]);
 
-  /* ---------------- Submit ---------------- */
-
   const handleSubmit = () => {
     const payload = {
-      service, 
+      service,
       generalDetails: Object.entries(generalValues).map(
         ([question, answer]) => ({
           question,
@@ -66,7 +62,6 @@ export default function ServiceRequestForm({ service }: Props) {
     };
 
     console.log("SERVICE REQUEST:", payload);
-
   };
 
   if (loading) {
@@ -74,37 +69,47 @@ export default function ServiceRequestForm({ service }: Props) {
   }
 
   return (
-    <div className="space-y-10">
+    <div className="w-full space-y-12">
       {/* GENERAL */}
-      <section className="space-y-4">
-        <h3 className="text-lg font-semibold">General Details</h3>
+      <section className="space-y-6">
+        <h3 className="text-base font-semibold text-gray-900 border-b pb-2">
+          General Details
+        </h3>
 
         <DynamicServiceRequestForm
           fields={generalFields}
           values={generalValues}
           onChange={(key, value) =>
-            setGeneralValues((prev) => ({ ...prev, [key]: value }))
+            setGeneralValues((prev) => ({
+              ...prev,
+              [key]: value,
+            }))
           }
         />
       </section>
 
       {/* SERVICE */}
-      <section className="space-y-4">
-        <h3 className="text-lg font-semibold">{service} Details</h3>
+      <section className="space-y-6">
+        <h3 className="text-base font-semibold text-gray-900 border-b pb-2">
+          {service} Details
+        </h3>
 
         <DynamicServiceRequestForm
           fields={serviceFields}
           values={serviceValues}
           onChange={(key, value) =>
-            setServiceValues((prev) => ({ ...prev, [key]: value }))
+            setServiceValues((prev) => ({
+              ...prev,
+              [key]: value,
+            }))
           }
         />
       </section>
 
       {/* ACTION */}
-      <div className="flex justify-end pt-6 border-t">
-        <Button onClick={handleSubmit}>
-          Submit request
+      <div className="flex justify-end pt-8 border-t">
+        <Button className="px-6" onClick={handleSubmit}>
+          Submit Request
         </Button>
       </div>
     </div>
