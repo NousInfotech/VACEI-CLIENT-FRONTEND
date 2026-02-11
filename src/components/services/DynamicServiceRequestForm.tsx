@@ -3,50 +3,22 @@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Dropdown from "@/components/Dropdown";
-import { Calendar } from "lucide-react";
+import { Calendar, ChevronDown } from "lucide-react";
 
-export interface FormField {
-    question: string;
-    input_type:
-    | "text"
-    | "number"
-    | "checkbox"
-    | "radio"
-    | "checklist"
-    | "text_area"
-    | "select"
-    | "date"
-    | "month"
-    | "year"
-    | "month_year";
-
-    options?: (
-        | string
-        | {
-            value: string;
-            label?: string;
-            questions?: FormField[];
-        }
-    )[];
-
-    minYear?: number;
-    maxYear?: number;
-
-    required?: boolean;
-    placeholder?: string;
-    maxLength?: number;
-}
+import { FormField } from "@/types/serviceTemplate";
 
 
 interface Props {
     fields: FormField[];
     values: Record<string, any>;
+    errors?: Record<string, string>;
     onChange: (key: string, value: any) => void;
 }
 
 export default function DynamicServiceRequestForm({
     fields,
     values,
+    errors = {},
     onChange,
 }: Props) {
     const renderFields = (fields: FormField[]) =>
@@ -56,16 +28,24 @@ export default function DynamicServiceRequestForm({
             return (
                 <div
                     key={index}
-                    className="space-y-2 p-4 border rounded-lg bg-white"
+                    className="group space-y-3 p-5 border border-gray-100 rounded-xl bg-white shadow-sm hover:border-primary/20 transition-all duration-200"
                 >
-                    <label className="block text-sm font-medium text-gray-800">
+                    <label className="block text-sm font-semibold text-gray-700 group-hover:text-primary transition-colors">
                         {field.question}
                         {field.required && (
-                            <span className="text-red-500 ml-1">*</span>
+                            <span className="text-destructive ml-1">*</span>
                         )}
                     </label>
 
-                    {renderField(field)}
+                    <div className="mt-1">
+                        {renderField(field)}
+                    </div>
+
+                    {errors[key] && (
+                        <p className="text-xs font-medium text-destructive animate-in fade-in slide-in-from-top-1 duration-200">
+                            {errors[key]}
+                        </p>
+                    )}
                 </div>
             );
         });
@@ -75,8 +55,8 @@ export default function DynamicServiceRequestForm({
     }: {
         children: React.ReactNode;
     }) => (
-        <div className="flex items-center gap-3 h-10 px-3 border rounded-md bg-gray-50 focus-within:bg-white">
-            <Calendar size={16} className="text-gray-500" />
+        <div className="flex items-center gap-3 h-11 px-3 border border-gray-200 rounded-lg bg-gray-50/50 focus-within:bg-white focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/5 transition-all">
+            <Calendar size={18} className="text-gray-400" />
             {children}
         </div>
     );
@@ -92,9 +72,9 @@ export default function DynamicServiceRequestForm({
                     <Input
                         type={field.input_type}
                         value={value || ""}
-                        placeholder={field.placeholder}
+                        placeholder={field.placeholder || "Enter details..."}
                         maxLength={field.maxLength}
-                        className="h-10 bg-gray-50 focus:bg-white"
+                        className="h-11 border-gray-200 bg-gray-50/50 focus:bg-white focus:border-primary/40 focus:ring-2 focus:ring-primary/5 rounded-lg transition-all"
                         onChange={(e) => onChange(key, e.target.value)}
                     />
                 );
@@ -103,9 +83,9 @@ export default function DynamicServiceRequestForm({
                 return (
                     <Textarea
                         value={value || ""}
-                        placeholder={field.placeholder}
+                        placeholder={field.placeholder || "Type your response here..."}
                         rows={4}
-                        className="resize-none bg-gray-50 focus:bg-white"
+                        className="resize-none border-gray-200 bg-gray-50/50 focus:bg-white focus:border-primary/40 focus:ring-2 focus:ring-primary/5 rounded-lg transition-all"
                         onChange={(e) => onChange(key, e.target.value)}
                     />
                 );
@@ -116,7 +96,7 @@ export default function DynamicServiceRequestForm({
                     <PickerWrapper>
                         <input
                             type="date"
-                            className="w-full bg-transparent text-sm outline-none"
+                            className="w-full bg-transparent text-sm outline-none cursor-pointer"
                             value={value || ""}
                             onChange={(e) =>
                                 onChange(key, e.target.value)
@@ -131,7 +111,7 @@ export default function DynamicServiceRequestForm({
                     <PickerWrapper>
                         <input
                             type="month"
-                            className="w-full bg-transparent text-sm outline-none"
+                            className="w-full bg-transparent text-sm outline-none cursor-pointer"
                             value={value || ""}
                             onChange={(e) =>
                                 onChange(key, e.target.value)
@@ -159,17 +139,18 @@ export default function DynamicServiceRequestForm({
                     <PickerWrapper>
                         <Dropdown
                             className="w-full"
+                            fullWidth
                             trigger={
                                 <button
                                     type="button"
-                                    className="w-full text-left text-sm bg-transparent outline-none flex justify-between items-center"
+                                    className="w-full h-11 px-4 border border-gray-200 rounded-xl text-left text-sm flex justify-between items-center bg-gray-50/50 hover:bg-white hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/5 transition-all shadow-sm"
                                 >
-                                    <span className={value ? "" : "text-muted-foreground"}>
+                                    <span className={value ? "text-gray-900 font-semibold" : "text-gray-400 font-medium"}>
                                         {value ||
                                             field.placeholder ||
                                             "Select year"}
                                     </span>
-                                    <span className="opacity-50">▾</span>
+                                    <ChevronDown className="h-4 w-4 text-gray-400 opacity-50" />
                                 </button>
                             }
                             items={years.map((year) => ({
@@ -182,16 +163,13 @@ export default function DynamicServiceRequestForm({
                 );
             }
 
-
-
-
             /* -------- MONTH YEAR -------- */
             case "month_year":
                 return (
                     <PickerWrapper>
                         <input
                             type="month"
-                            className="w-full bg-transparent text-sm outline-none"
+                            className="w-full bg-transparent text-sm outline-none cursor-pointer"
                             value={value || ""}
                             onChange={(e) =>
                                 onChange(key, e.target.value)
@@ -202,17 +180,24 @@ export default function DynamicServiceRequestForm({
 
             case "radio":
                 return (
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {field.options?.map((opt) => {
                             const optionValue =
                                 typeof opt === "string" ? opt : opt.value;
                             const isSelected = value === optionValue;
 
                             return (
-                                <div key={optionValue} className="space-y-2">
-                                    <label className="flex items-center gap-3 text-sm text-gray-700 cursor-pointer">
+                                <div key={optionValue} className="space-y-2 col-span-full">
+                                    <label 
+                                      className={`flex items-center gap-3 p-3 text-sm rounded-lg border cursor-pointer transition-all ${
+                                        isSelected 
+                                        ? "bg-primary/5 border-primary text-primary font-medium" 
+                                        : "bg-gray-50/50 border-gray-100 text-gray-600 hover:bg-gray-50"
+                                      }`}
+                                    >
                                         <input
                                             type="radio"
+                                            className="w-4 h-4 accent-primary"
                                             checked={isSelected}
                                             onChange={() =>
                                                 onChange(key, optionValue)
@@ -226,7 +211,7 @@ export default function DynamicServiceRequestForm({
                                     {isSelected &&
                                         typeof opt === "object" &&
                                         opt.questions && (
-                                            <div className="ml-6 p-4 bg-gray-50 border rounded-md space-y-4">
+                                            <div className="ml-6 p-5 bg-gray-50/50 border border-dashed border-gray-200 rounded-xl space-y-6 animate-in slide-in-from-top-2 duration-300">
                                                 {renderFields(opt.questions)}
                                             </div>
                                         )}
@@ -238,36 +223,49 @@ export default function DynamicServiceRequestForm({
 
             case "checkbox":
                 return (
-                    <label className="flex items-center gap-3 text-sm text-gray-700 cursor-pointer">
+                    <label 
+                      className={`flex items-center gap-3 p-3 text-sm rounded-lg border cursor-pointer transition-all ${
+                        value 
+                        ? "bg-primary/5 border-primary text-primary font-medium" 
+                        : "bg-gray-50/50 border-gray-100 text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
                         <input
                             type="checkbox"
+                            className="w-4 h-4 accent-primary"
                             checked={!!value}
                             onChange={(e) =>
                                 onChange(key, e.target.checked)
                             }
                         />
-                        {field.placeholder || "Yes"}
+                        {field.placeholder || "Yes, I agree"}
                     </label>
                 );
 
             case "checklist":
                 return (
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {field.options?.map((opt) => {
                             const optionValue =
                                 typeof opt === "string" ? opt : opt.value;
                             const current = Array.isArray(value)
                                 ? value
                                 : [];
+                            const isSelected = current.includes(optionValue);
 
                             return (
                                 <label
                                     key={optionValue}
-                                    className="flex items-center gap-3 text-sm text-gray-700 cursor-pointer"
+                                    className={`flex items-center gap-3 p-3 text-sm rounded-lg border cursor-pointer transition-all ${
+                                      isSelected 
+                                      ? "bg-primary/5 border-primary text-primary font-medium" 
+                                      : "bg-gray-50/50 border-gray-100 text-gray-600 hover:bg-gray-50"
+                                    }`}
                                 >
                                     <input
                                         type="checkbox"
-                                        checked={current.includes(optionValue)}
+                                        className="w-4 h-4 accent-primary"
+                                        checked={isSelected}
                                         onChange={() =>
                                             onChange(
                                                 key,
@@ -291,40 +289,42 @@ export default function DynamicServiceRequestForm({
 
             case "select":
                 return (
-                    <Dropdown
-                        className="w-full"
-                        trigger={
-                            <button
-                                type="button"
-                                className="w-full h-10 px-3 border rounded-md text-left text-sm flex justify-between items-center bg-gray-50"
-                            >
-                                <span>
-                                    {value ||
-                                        field.placeholder ||
-                                        "Select an option"}
-                                </span>
-                                <span className="opacity-50">▾</span>
-                            </button>
-                        }
-                        items={
-                            field.options?.map((opt) => {
-                                const optionValue =
+                <Dropdown
+                    className="w-full"
+                    fullWidth
+                    searchable={field.options && field.options.length > 10}
+                    trigger={
+                        <button
+                            type="button"
+                            className="w-full h-11 px-4 border border-gray-200 rounded-xl text-left text-sm flex justify-between items-center bg-gray-50/50 hover:bg-white hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/5 transition-all shadow-sm"
+                        >
+                            <span className={value ? "text-gray-900 font-semibold" : "text-gray-400 font-medium"}>
+                                {value ||
+                                    field.placeholder ||
+                                    "Select an option"}
+                            </span>
+                            <ChevronDown className="h-4 w-4 text-gray-400 opacity-50" />
+                        </button>
+                    }
+                    items={
+                        field.options?.map((opt) => {
+                            const optionValue =
+                                typeof opt === "string"
+                                    ? opt
+                                    : opt.value;
+
+                            return {
+                                id: optionValue,
+                                label:
                                     typeof opt === "string"
                                         ? opt
-                                        : opt.value;
-
-                                return {
-                                    id: optionValue,
-                                    label:
-                                        typeof opt === "string"
-                                            ? opt
-                                            : opt.label || opt.value,
-                                    onClick: () =>
-                                        onChange(key, optionValue),
-                                };
-                            }) || []
-                        }
-                    />
+                                        : opt.label || opt.value,
+                                onClick: () =>
+                                    onChange(key, optionValue),
+                            };
+                        }) || []
+                    }
+                />
                 );
 
             default:
@@ -332,5 +332,5 @@ export default function DynamicServiceRequestForm({
         }
     };
 
-    return <div className="space-y-6">{renderFields(fields)}</div>;
+    return <div className="grid grid-cols-1 gap-6">{renderFields(fields)}</div>;
 }

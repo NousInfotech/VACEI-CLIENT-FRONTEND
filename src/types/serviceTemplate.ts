@@ -6,7 +6,12 @@ export interface FormField {
     | "checkbox"
     | "radio"
     | "checklist"
-    | "text_area";
+    | "text_area"
+    | "select"
+    | "date"
+    | "month"
+    | "year"
+    | "month_year";
   options?: (
     | string
     | {
@@ -15,6 +20,8 @@ export interface FormField {
         questions?: FormField[];
       }
   )[];
+  minYear?: number;
+  maxYear?: number;
   required?: boolean;
   placeholder?: string;
   maxLength?: number;
