@@ -190,7 +190,7 @@ export default function ServiceRequestHistory({ companyId }: Props) {
             >
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className="font-bold text-gray-900 text-lg">{req.service.replace(/_/g, ' ')}</p>
+                  <p className="font-semibold text-gray-900 text-lg">{req.service.replace(/_/g, ' ')}</p>
                   <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">
                     Submitted on {new Date(req.createdAt).toLocaleDateString(undefined, {
                       year: 'numeric',
@@ -224,7 +224,7 @@ export default function ServiceRequestHistory({ companyId }: Props) {
               </div>
 
               {expandedId === req.id && (
-                <div className="mt-8 pt-8 border-t space-y-10 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="mt-5 pt-5 border-t space-y-10 animate-in fade-in slide-in-from-top-4 duration-300">
                   {req.status === "REJECTED" && (
                     <section className="space-y-3 p-6 bg-red-50/50 border border-red-100 rounded-2xl ring-1 ring-red-500/5">
                       <div className="flex items-center gap-2 text-red-700 font-bold uppercase text-[10px] tracking-widest mb-1">
@@ -237,7 +237,7 @@ export default function ServiceRequestHistory({ companyId }: Props) {
                     </section>
                   )}
 
-                  <div className="space-y-12 mx-auto px-2">
+                  <div className="space-y-8 mx-auto p-2 rounded-2xl bg-gray-50 border border-gray-200">
                     {[...(req.generalDetails || []), ...(req.serviceDetails || [])].map((detail, idx) => (
                       <div key={idx} className="flex items-start gap-6 group">
                         {/* Numbering */}

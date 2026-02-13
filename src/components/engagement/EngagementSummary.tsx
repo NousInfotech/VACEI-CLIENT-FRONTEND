@@ -28,6 +28,7 @@ import {
   ChevronUp,
   Receipt,
   FileCheck,
+  MessageSquare,
   Info,
 } from "lucide-react";
 import {
@@ -44,6 +45,7 @@ import {
 import { cn } from "@/lib/utils";
 import DashboardCard from "../DashboardCard";
 import PillTabs, { Tab } from "../shared/PillTabs";
+import ServiceChat from "./chat/ServiceChat";
 import ServiceMessages from "./ServiceMessages";
 import { LibraryExplorer } from "../library/LibraryExplorer";
 import DocumentRequestsTab from "./DocumentRequestsTab";
@@ -57,7 +59,7 @@ import {
   ProcessedDashboardStat,
 } from "@/api/financialReportsApi";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Alert02Icon, Message01Icon } from "@hugeicons/core-free-icons";
+import { Alert02Icon, Notification02Icon } from "@hugeicons/core-free-icons";
 import { useSearchParams } from "next/navigation";
 import { fetchDocuments } from "@/api/documentApi";
 import {
@@ -87,6 +89,7 @@ export interface EngagementAction {
 
 interface EngagementSummaryProps {
   serviceName: string;
+  serviceSlug?: string;
   description: string;
   status: EngagementStatus;
   cycle: string;
@@ -141,6 +144,7 @@ const workflowStatusConfig: Record<
 
 export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
   serviceName,
+  serviceSlug,
   description,
   status,
   cycle,
@@ -312,8 +316,8 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
     loadRecentDocuments();
   }, [serviceName]);
 
-  const MessageIcon = React.useMemo(() => (props: any) => (
-    <HugeiconsIcon icon={Message01Icon} {...props} />
+  const UpdateIcon = React.useMemo(() => (props: any) => (
+    <HugeiconsIcon icon={Notification02Icon} {...props} />
   ), []);
 
   const tabs: Tab[] = isMBRFilings
@@ -331,7 +335,8 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
         label: "Compliance Calendar",
         icon: Calendar,
       },
-      { id: "messages", label: "Message", icon: MessageIcon },
+      { id: "messages", label: "Updates", icon: UpdateIcon },
+      { id: "chat", label: "Chat", icon: MessageSquare },
       { id: "filings", label: "Filings", icon: FileCheck },
     ]
     : isVAT
@@ -349,7 +354,8 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           label: "Compliance Calendar",
           icon: Calendar,
         },
-        { id: "messages", label: "Message", icon: MessageIcon },
+        { id: "messages", label: "Updates", icon: UpdateIcon },
+        { id: "chat", label: "Chat", icon: MessageSquare },
         { id: "vat_periods", label: "Filings", icon: FileCheck },
       ]
       : [
@@ -366,7 +372,8 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           label: "Compliance Calendar",
           icon: Calendar,
         },
-        { id: "messages", label: "Message", icon: MessageIcon },
+        { id: "messages", label: "Updates", icon: UpdateIcon },
+        { id: "chat", label: "Chat", icon: MessageSquare },
         ...(engagementData?.filings?.length > 0 &&
           !isPayroll && !isCorporate && !isCFO &&
           serviceName !== "Tax" &&
@@ -4384,7 +4391,11 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
         )}
 
         {activeTab === "messages" && (
-          <ServiceMessages serviceName={serviceName} messages={engagementData?.messages || messages} />
+          <ServiceMessages serviceName={serviceName} messages={messages} />
+        )}
+
+        {activeTab === "chat" && (
+          <ServiceChat serviceSlug={serviceSlug || "accounting"} serviceName={serviceName} />
         )}
       </div>
     </TooltipProvider>

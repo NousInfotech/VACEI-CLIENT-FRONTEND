@@ -236,6 +236,7 @@ const ServiceEngagement: React.FC<ServiceEngagementProps> = ({
       <EngagementProvider engagementId={mockId} serviceSlug={serviceSlug}>
         <EngagementSummary
           serviceName={data.name}
+          serviceSlug={serviceSlug}
           description={data.description}
           status={data.status}
           cycle={data.cycle}
