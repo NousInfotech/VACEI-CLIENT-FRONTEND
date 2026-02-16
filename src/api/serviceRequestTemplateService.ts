@@ -42,11 +42,24 @@ export const getActiveGeneralTemplate =
 /* -------------------------------------------------------------------------- */
 
 export const getActiveServiceTemplate = async (
-  service: string
+  service: string,
+  customServiceCycleId?: string | null
 ): Promise<TemplateResponse> => {
   const res = await api.get(
-    `/service-request-templates/active/service/${service}`
+    `/service-request-templates/active/service/${service}`,
+    {
+      params: { customServiceCycleId }
+    }
   );
+  return res.data;
+};
+
+/* -------------------------------------------------------------------------- */
+/*                          GET – Active CUSTOM Templates                       */
+/* -------------------------------------------------------------------------- */
+
+export const getActiveCustomTemplates = async (): Promise<{ data: any[] }> => {
+  const res = await api.get("/service-request-templates/active/custom");
   return res.data;
 };
 

@@ -9,6 +9,7 @@ export interface DetailEntry {
 export interface ServiceRequestPayload {
   companyId: string;
   service: string;
+  customServiceCycleId?: string;
 }
 
 export interface ServiceRequestUpdatePayload {
@@ -44,6 +45,7 @@ export const getServiceRequestById = async (id: string) => {
 export const listServiceRequests = async (params: {
   companyId?: string;
   service?: string;
+  customServiceCycleId?: string;
   status?: string;
   page?: number;
   limit?: number;

@@ -19,6 +19,7 @@ import { toast } from "sonner";
 
 interface Props {
   service: string;
+  customServiceId?: string;
   companyId: string | null;
   onDirtyChange?: (isDirty: boolean) => void;
   onSuccess?: () => void;
@@ -27,6 +28,7 @@ interface Props {
 
 export default function ServiceRequestForm({
   service,
+  customServiceId,
   companyId,
   onDirtyChange,
   onSuccess,
@@ -59,10 +61,11 @@ export default function ServiceRequestForm({
         
         // Parallel fetching of SPECIFIC template and existing drafts
         const [specRes, listRes] = await Promise.all([
-          getActiveServiceTemplate(service),
+          getActiveServiceTemplate(service, customServiceId),
           listServiceRequests({
             companyId,
             service,
+            customServiceCycleId: customServiceId,
             status: "DRAFT",
             limit: 1,
           })
@@ -98,7 +101,7 @@ export default function ServiceRequestForm({
     };
 
     initForm();
-  }, [service, companyId]);
+  }, [service, customServiceId, companyId]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -136,7 +139,11 @@ export default function ServiceRequestForm({
       if (requestId) {
         await updateDraft(requestId, payload);
       } else {
-        const newDraft = await createDraft({ companyId, service });
+        const newDraft = await createDraft({ 
+          companyId, 
+          service, 
+          customServiceCycleId: customServiceId 
+        });
         setRequestId(newDraft.data.id);
         await updateDraft(newDraft.data.id, payload);
       }
@@ -172,7 +179,11 @@ export default function ServiceRequestForm({
       };
 
       if (!rid) {
-        const newDraft = await createDraft({ companyId, service });
+        const newDraft = await createDraft({ 
+          companyId, 
+          service, 
+          customServiceCycleId: customServiceId 
+        });
         rid = newDraft.data.id;
         setRequestId(rid);
       }

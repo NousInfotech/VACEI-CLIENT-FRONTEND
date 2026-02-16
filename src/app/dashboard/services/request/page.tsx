@@ -24,7 +24,8 @@ type ServiceCode =
   | "PROJECTS_TRANSACTIONS"
   | "TECHNOLOGY"
   | "GRANTS_AND_INCENTIVES"
-  | "INCORPORATION";
+  | "INCORPORATION"
+  | "CUSTOM";
 
 const serviceLabels: Record<ServiceCode, string> = {
   VAT: "VAT",
@@ -37,6 +38,7 @@ const serviceLabels: Record<ServiceCode, string> = {
   TECHNOLOGY: "Technology",
   GRANTS_AND_INCENTIVES: "Grants & Incentives",
   INCORPORATION: "Incorporation",
+  CUSTOM: "Custom",
 };
 
 export default function ServiceRequestPage() {
@@ -58,14 +60,29 @@ export default function ServiceRequestPage() {
     buttonText: "View History",
   });
 
+  const [customTemplates, setCustomTemplates] = useState<any[]>([]);
+  const [customServiceId, setCustomServiceId] = useState<string | "">("");
+
+  // Load custom templates
+  useState(() => {
+    import("@/api/serviceRequestTemplateService").then(({ getActiveCustomTemplates }) => {
+      getActiveCustomTemplates().then(res => {
+        setCustomTemplates(res.data || []);
+      });
+    });
+  });
+
   const activeCompanyName = companies.find(c => c.id === activeCompanyId)?.name;
 
-  const handleServiceChange = (code: ServiceCode | "") => {
+  const handleServiceChange = (code: ServiceCode | "CUSTOM" | "") => {
     if (isFormDirty) {
-      setPendingServiceCode(code);
+      setPendingServiceCode(code as any);
       setShowConfirmModal(true);
     } else {
-      setServiceCode(code);
+      setServiceCode(code as any);
+      if (code !== "CUSTOM") {
+        setCustomServiceId("");
+      }
     }
   };
 
@@ -153,7 +170,7 @@ export default function ServiceRequestPage() {
               >
                 <div className="flex items-center gap-2">
                   <span className={serviceCode ? "text-gray-900 font-semibold" : "text-gray-400 font-medium"}>
-                    {serviceCode ? serviceLabels[serviceCode] : "Select a service to get started"}
+                    {serviceCode ? serviceLabels[serviceCode as ServiceCode] : "Select a service to get started"}
                   </span>
                 </div>
                 <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${serviceCode ? "opacity-100" : "opacity-50"}`} />
@@ -162,16 +179,52 @@ export default function ServiceRequestPage() {
             items={Object.entries(serviceLabels).map(([code, label]) => ({
               id: code,
               label,
-              onClick: () => handleServiceChange(code as ServiceCode),
+              onClick: () => handleServiceChange(code as any),
             }))}
           />
         </div>
 
+        {/* Custom Service Sub-Selection */}
+        {serviceCode === "CUSTOM" && (
+          <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+            <label className="text-sm font-semibold">
+              Custom Service Type <span className="text-destructive">*</span>
+            </label>
+            <Dropdown
+              className="w-full"
+              fullWidth
+              searchable
+              searchPlaceholder="Search custom services..."
+              trigger={
+                <Button 
+                  variant="outline" 
+                  className="w-full h-11 px-4 justify-between border-gray-200 bg-gray-50/50 hover:bg-white hover:border-primary/40 focus:ring-2 focus:ring-primary/5 rounded-xl transition-all"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={customServiceId ? "text-gray-900 font-semibold" : "text-gray-400 font-medium"}>
+                      {customServiceId 
+                        ? customTemplates.find(t => t.customServiceCycleId === customServiceId)?.customServiceCycle?.title 
+                        : "Select specific custom service"}
+                    </span>
+                  </div>
+                  <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${customServiceId ? "opacity-100" : "opacity-50"}`} />
+                </Button>
+              }
+              items={customTemplates.map((t) => ({
+                id: t.customServiceCycleId,
+                label: t.customServiceCycle?.title || "Untitled Custom Service",
+                onClick: () => setCustomServiceId(t.customServiceCycleId),
+              }))}
+            />
+          </div>
+        )}
+
         {/* ✅ ONE Dynamic Form */}
-        {serviceCode ? (
+        {(serviceCode && (serviceCode !== "CUSTOM" || customServiceId)) ? (
           <div className="border-t pt-6">
             <ServiceRequestForm
               service={serviceCode}
+              customServiceId={customServiceId || undefined}
               companyId={activeCompanyId}
               onDirtyChange={setIsFormDirty}
               onSuccess={handleSuccess}
