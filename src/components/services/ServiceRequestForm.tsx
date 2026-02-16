@@ -14,8 +14,9 @@ import {
 import { FormField } from "@/types/serviceTemplate";
 import { Button } from "@/components/ui/button";
 import ServiceFormSkeleton from "./ServiceFormSkeleton";
-import { Save, Send, AlertCircle } from "lucide-react";
+import { Save, Send, AlertCircle, FileUp } from "lucide-react";
 import { toast } from "sonner";
+import { FileUploader } from "./FileUploader";
 
 interface Props {
   service: string;
@@ -43,14 +44,17 @@ export default function ServiceRequestForm({
   const [serviceValues, setServiceValues] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const [files, setFiles] = useState<File[]>([]);
+  const [existingFiles, setExistingFiles] = useState<{ id: string, file_name: string, url: string }[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
 
   // Sync dirty state with parent
   useEffect(() => {
-    onDirtyChange?.(isDirty);
-  }, [isDirty, onDirtyChange]);
+    onDirtyChange?.(isDirty || files.length > 0);
+  }, [isDirty, files.length, onDirtyChange]);
 
   // Load templates and check for existing drafts
   useEffect(() => {
@@ -83,15 +87,18 @@ export default function ServiceRequestForm({
           });
 
           setServiceValues(sValues);
+          setExistingFiles(draft.submittedDocuments || []);
           toast.success("Existing draft loaded", {
             description: "You can continue where you left off.",
           });
         } else {
           setRequestId(null);
           setServiceValues({});
+          setExistingFiles([]);
         }
         setErrors({});
         setIsDirty(false);
+        setFiles([]);
       } catch (err) {
         console.error("Initialization failed:", err);
         toast.error("Failed to load form. Please try again.");
@@ -129,27 +136,34 @@ export default function ServiceRequestForm({
     try {
       setSubmitting(true);
       const payload = {
-        generalDetails: [], // No longer using general fields
+        generalDetails: [], 
         serviceDetails: Object.entries(serviceValues).map(([question, answer]) => ({
           question,
           answer,
         })),
+        companyId,
+        service,
+        customServiceCycleId: customServiceId 
       };
 
+      let response;
       if (requestId) {
-        await updateDraft(requestId, payload);
+        response = await updateDraft(requestId, payload, files);
       } else {
-        const newDraft = await createDraft({ 
-          companyId, 
-          service, 
-          customServiceCycleId: customServiceId 
-        });
-        setRequestId(newDraft.data.id);
-        await updateDraft(newDraft.data.id, payload);
+        response = await createDraft(payload, files);
+        setRequestId(response.data.id);
       }
       
+      // Update existing files from response to keep UI in sync
+      if (response?.data?.submittedDocuments) {
+        setExistingFiles(response.data.submittedDocuments);
+      }
+
       setIsDirty(false);
+      setFiles([]); 
+      
       onDraftSave?.();
+      toast.success("Draft saved successfully");
     } catch (err) {
       console.error("Save draft failed:", err);
       toast.error("Failed to save draft");
@@ -188,8 +202,10 @@ export default function ServiceRequestForm({
         setRequestId(rid);
       }
 
-      await submitRequest(rid!, payload);
+      await submitRequest(rid!, payload, files);
       setIsDirty(false);
+      setFiles([]);
+      setExistingFiles([]);
       onSuccess?.();
     } catch (err) {
       console.error("Submit failed:", err);
@@ -198,21 +214,6 @@ export default function ServiceRequestForm({
       setSubmitting(false);
     }
   };
-
-  if (!companyId) {
-    return (
-      <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-2xl bg-gray-50/50">
-        <AlertCircle className="h-10 w-10 text-gray-400 mb-3" />
-        <p className="text-sm font-medium text-gray-600">
-          Please select a company in the sidebar to proceed.
-        </p>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return <ServiceFormSkeleton />;
-  }
 
   return (
     <div className="w-full space-y-12 animate-in fade-in duration-500">
@@ -249,13 +250,33 @@ export default function ServiceRequestForm({
         />
       </section>
 
+      {/* DOCUMENT UPLOAD */}
+      <section className="space-y-6">
+        <div className="flex items-center justify-between border-b pb-2">
+          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <span className="w-1.5 h-6 bg-primary rounded-full"></span>
+            Supporting Documents
+          </h3>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
+            <FileUp className="h-3.5 w-3.5" />
+            Max 10 files
+          </div>
+        </div>
+        
+        <FileUploader 
+          files={files} 
+          onFilesChange={setFiles}
+          existingFiles={existingFiles}
+        />
+      </section>
+
       {/* ACTION BAR */}
       <div className="flex items-center justify-between pt-8 border-t">
         <p className="text-sm text-gray-500 italic">
-          {isDirty ? "● Unsaved changes" : "✓ All changes saved"}
+          {isDirty || files.length > 0 ? "● Unsaved changes" : "✓ All changes saved"}
         </p>
         <div className="flex gap-4">
-          {isDirty && (
+          {(isDirty || files.length > 0) && (
             <Button
               variant="outline"
               onClick={handleSaveDraft}

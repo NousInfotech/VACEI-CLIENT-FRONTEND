@@ -22,17 +22,52 @@ export interface ServiceRequestSubmitPayload {
   serviceDetails: DetailEntry[];
 }
 
-export const createDraft = async (payload: ServiceRequestPayload) => {
+export const createDraft = async (payload: ServiceRequestPayload, files?: File[]) => {
+  if (files && files.length > 0) {
+    const formData = new FormData();
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value !== undefined) formData.append(key, value);
+    });
+    files.forEach((file) => formData.append("files", file));
+    const res = await api.post("/service-requests", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data;
+  }
   const res = await api.post("/service-requests", payload);
   return res.data;
 };
 
-export const updateDraft = async (id: string, payload: ServiceRequestUpdatePayload) => {
+export const updateDraft = async (id: string, payload: ServiceRequestUpdatePayload, files?: File[]) => {
+  if (files && files.length > 0) {
+    const formData = new FormData();
+    if (payload.generalDetails) {
+      formData.append("generalDetails", JSON.stringify(payload.generalDetails));
+    }
+    if (payload.serviceDetails) {
+      formData.append("serviceDetails", JSON.stringify(payload.serviceDetails));
+    }
+    files.forEach((file) => formData.append("files", file));
+    const res = await api.put(`/service-requests/${id}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data;
+  }
   const res = await api.put(`/service-requests/${id}`, payload);
   return res.data;
 };
 
-export const submitRequest = async (id: string, payload: ServiceRequestSubmitPayload) => {
+export const submitRequest = async (id: string, payload: ServiceRequestSubmitPayload, files?: File[]) => {
+  if (files && files.length > 0) {
+    const formData = new FormData();
+    formData.append("generalDetails", JSON.stringify(payload.generalDetails));
+    formData.append("serviceDetails", JSON.stringify(payload.serviceDetails));
+    files.forEach((file) => formData.append("files", file));
+    const res = await api.post(`/service-requests/${id}/submit`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data;
+  }
   const res = await api.post(`/service-requests/${id}/submit`, payload);
   return res.data;
 };
