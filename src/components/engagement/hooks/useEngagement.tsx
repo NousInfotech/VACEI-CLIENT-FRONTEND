@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
 import { getEngagementById, Engagement } from '@/api/auditService'
 import { ENGAGEMENT_CONFIG } from '@/config/engagementConfig'
 import { MOCK_ENGAGEMENT_DATA } from '../mockEngagementData'
@@ -28,46 +28,48 @@ export const EngagementProvider: React.FC<EngagementProviderProps> = ({ engageme
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchEngagement = async () => {
-    if (!engagementId) {
-      setLoading(false)
-      return
-    }
-
+  const doFetch = useCallback(async (signal?: AbortSignal) => {
+    if (!engagementId) return
     setLoading(true)
     setError(null)
     try {
       if (ENGAGEMENT_CONFIG.USE_MOCK_DATA) {
-        // Mock loading delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const mockServiceData = serviceSlug ? ALL_SERVICE_MOCKS[serviceSlug] : null;
-
+        await new Promise(resolve => setTimeout(resolve, 500))
+        const mockServiceData = serviceSlug ? ALL_SERVICE_MOCKS[serviceSlug] : null
+        if (signal?.aborted) return
         setEngagement({
           ...MOCK_ENGAGEMENT_DATA.engagement,
           _id: engagementId,
           clientId: 'mock-client',
           companyId: 'mock-company',
-          ...mockServiceData, // Spread all service-specific data (milestones, filings, periods, etc.)
-        } as any);
+          ...mockServiceData,
+        } as any)
       } else {
-        const data = await getEngagementById(engagementId)
+        const data = await getEngagementById(engagementId, signal)
+        if (signal?.aborted) return
         setEngagement(data)
       }
     } catch (err: any) {
+      if (err.name === 'AbortError') return
       setError(err.message || 'Failed to fetch engagement')
       setEngagement(null)
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) setLoading(false)
     }
-  }
-
-  useEffect(() => {
-    fetchEngagement()
   }, [engagementId, serviceSlug])
 
+  useEffect(() => {
+    if (!engagementId) {
+      setLoading(false)
+      return
+    }
+    const controller = new AbortController()
+    doFetch(controller.signal)
+    return () => controller.abort()
+  }, [engagementId, serviceSlug, doFetch])
+
   const refetch = async () => {
-    await fetchEngagement()
+    await doFetch()
   }
 
   return (

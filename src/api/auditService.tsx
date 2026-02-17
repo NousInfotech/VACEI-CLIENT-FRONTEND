@@ -362,9 +362,10 @@ export async function getKycByCompanyId(companyId: string): Promise<KYC> {
 /**
  * Get engagements by client ID (from middleware)
  * @param companyId - Optional company ID to filter engagements
+ * @param signal - Optional AbortSignal to cancel the request
  * @returns Promise<Engagement[]>
  */
-export async function getEngagements(companyId?: string): Promise<Engagement[]> {
+export async function getEngagements(companyId?: string, signal?: AbortSignal): Promise<Engagement[]> {
   const url = new URL(`${backendUrl}engagements`);
   if (companyId) {
     url.searchParams.append('companyId', companyId);
@@ -376,6 +377,7 @@ export async function getEngagements(companyId?: string): Promise<Engagement[]> 
       ...getAuthHeaders(),
       "Content-Type": "application/json",
     },
+    signal,
   });
 
   if (!response.ok) {
@@ -392,15 +394,17 @@ export async function getEngagements(companyId?: string): Promise<Engagement[]> 
 /**
  * Get engagement by ID
  * @param id - Engagement ID
+ * @param signal - Optional AbortSignal to cancel the request
  * @returns Promise<Engagement>
  */
-export async function getEngagementById(id: string): Promise<Engagement> {
+export async function getEngagementById(id: string, signal?: AbortSignal): Promise<Engagement> {
   const response = await fetch(`${backendUrl}engagements/${id}`, {
     method: "GET",
     headers: {
       ...getAuthHeaders(),
       "Content-Type": "application/json",
     },
+    signal,
   });
 
   if (!response.ok) {
@@ -408,7 +412,9 @@ export async function getEngagementById(id: string): Promise<Engagement> {
     throw new Error(error.error || "Failed to fetch engagement");
   }
 
-  return response.json();
+  const result = await response.json();
+  // Backend returns { success: true, data: {...} }
+  return result.data || result;
 }
 
 // ============================================================================

@@ -189,13 +189,36 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
   const { engagement } = useEngagement();
   const engagementData = engagement as any;
 
+  // Map API engagement fields to display values (real data when available)
+  const apiStatus = engagementData?.status;
+  const apiName = engagementData?.name || engagementData?.title;
+  const displayStatus: EngagementStatus =
+    apiStatus === "ACTIVE"
+      ? "on_track"
+      : apiStatus === "ASSIGNED" || apiStatus === "DRAFT" || apiStatus === "ACCEPTED"
+      ? "due_soon"
+      : apiStatus === "COMPLETED"
+      ? "on_track"
+      : apiStatus === "CANCELLED" || apiStatus === "TERMINATED"
+      ? "overdue"
+      : status;
+  const displayCycle = apiName || cycle;
+  const displayWorkflowStatus: WorkflowStatus =
+    apiStatus === "ACTIVE"
+      ? "in_progress"
+      : apiStatus === "COMPLETED"
+      ? "completed"
+      : apiStatus === "ASSIGNED" || apiStatus === "DRAFT"
+      ? "waiting"
+      : workflowStatus;
+
   const mbrFilings = engagementData?.filings || MBR_FILINGS_MOCK;
   const mbrActiveFiling = isMBRFilings
     ? getActiveMBRFiling(mbrFilings, mbrCurrentFilingId)
     : undefined;
   const mbrStatus = isMBRFilings
     ? getMBRServiceStatusFromFilings(mbrFilings)
-    : status;
+    : displayStatus;
 
   const vatPeriods = engagementData?.periods || VAT_PERIODS_MOCK;
   const vatActivePeriod = isVAT
@@ -235,9 +258,9 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
   }, [isMBRFilings, mbrFilings]);
 
   const statusInfo =
-    statusConfig[isMBRFilings ? mbrStatus : status] || statusConfig.on_track;
+    statusConfig[isMBRFilings ? mbrStatus : displayStatus] || statusConfig.on_track;
   const workflowInfo =
-    workflowStatusConfig[workflowStatus] || workflowStatusConfig.in_progress;
+    workflowStatusConfig[displayWorkflowStatus] || workflowStatusConfig.in_progress;
 
   // Handle deep-linking from query params
   useEffect(() => {
@@ -2305,7 +2328,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                         Current Period
                       </p>
                       <p className="text-sm font-semibold text-gray-900">
-                        {isBankingPayments ? engagementData?.currentPeriod : cycle}
+                        {isBankingPayments ? engagementData?.currentPeriod : displayCycle}
                       </p>
                     </div>
                     <div className="space-y-1">
@@ -2337,11 +2360,11 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                         Next Step
                       </p>
                       <p className="text-sm font-semibold text-gray-900">
-                        {(isBankingPayments || isRegulatedLicenses) ? engagementData?.nextStep : (workflowStatus === "waiting"
+                        {(isBankingPayments || isRegulatedLicenses) ? engagementData?.nextStep : (displayWorkflowStatus === "waiting"
                           ? "Action needed from you"
-                          : workflowStatus === "in_progress"
-                            ? `Processing ${cycle} records`
-                            : workflowStatus === "submitted"
+                          : displayWorkflowStatus === "in_progress"
+                            ? `Processing ${displayCycle} records`
+                            : displayWorkflowStatus === "submitted"
                               ? "Submitted to authority"
                               : "Completed")}
                       </p>
@@ -2885,7 +2908,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                           <div className="w-10 h-10 rounded-0 bg-primary/5 flex items-center justify-center border border-primary/10">
                             <Calendar className="w-5 h-5 text-primary" />
                           </div>
-                          <span className="text-lg font-medium">{cycle}</span>
+                          <span className="text-lg font-medium">{displayCycle}</span>
                         </div>
                       </div>
                       <div className="space-y-3">

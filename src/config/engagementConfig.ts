@@ -4,6 +4,6 @@
  * Set to false to use real data from the API.
  */
 export const ENGAGEMENT_CONFIG = {
-  USE_MOCK_DATA: true,
+  USE_MOCK_DATA: false,
   USE_MOCK_CHAT: true,
 };
