@@ -107,7 +107,7 @@ export const menuData: MenuItem[] = [
         label: "Accounting & Bookkeeping",
         href: "/dashboard/services/bookkeeping",
         isActive: true,
-        children: [
+        children: [], /* children: [
           // {
           //   slug: "ab-docs",
           //   icon: DocumentValidationIcon,
@@ -238,7 +238,7 @@ export const menuData: MenuItem[] = [
             href: "/dashboard/insights",
             isActive: true,
           },
-        ],
+        ], */
       },
       {
         slug: "audit",
@@ -246,7 +246,7 @@ export const menuData: MenuItem[] = [
         label: "Audit",
         href: "/dashboard/services/audit",
         isActive: true,
-        children: [
+        children: [], /* children: [
           // {
           //   slug: "audit-docs",
           //   icon: DocumentValidationIcon,
@@ -294,7 +294,7 @@ export const menuData: MenuItem[] = [
             href: "/dashboard/engagements",
             isActive: true,
           },
-        ],
+        ], */
       },
       {
         slug: "vat",
@@ -302,7 +302,7 @@ export const menuData: MenuItem[] = [
         label: "VAT",
         href: "/dashboard/services/vat",
         isActive: true,
-        children: [
+        children: [], /* children: [
           // {
           //   slug: "vat-docs",
           //   icon: DocumentValidationIcon,
@@ -350,7 +350,7 @@ export const menuData: MenuItem[] = [
             href: "/dashboard/services/vat/malta",
             isActive: true,
           },
-        ],
+        ], */
       },
       {
         slug: "tax",
@@ -358,7 +358,7 @@ export const menuData: MenuItem[] = [
         label: "Tax",
         href: "/dashboard/services/tax",
         isActive: true,
-        children: [
+        children: [], /* children: [
           // {
           //   slug: "tax-docs",
           //   icon: DocumentValidationIcon,
@@ -399,7 +399,7 @@ export const menuData: MenuItem[] = [
           //   count: taxMock.messages?.filter((m) => !m.read).length || 0,
           //   totalCount: taxMock.messages?.length || 0,
           // },
-        ],
+        ], */
       },
       {
         slug: "csp",
@@ -407,7 +407,7 @@ export const menuData: MenuItem[] = [
         label: "Corporate Services (CSP)",
         href: "/dashboard/services/csp-mbr",
         isActive: true,
-        children: [
+        children: [], /* children: [
           // {
           //   slug: "csp-docs",
           //   icon: DocumentValidationIcon,
@@ -448,7 +448,7 @@ export const menuData: MenuItem[] = [
             label: "Filings",
             href: "/dashboard/services/csp-mbr?tab=corporate_filings",
           },
-        ],
+        ], */
       },
       {
         slug: "payroll",
@@ -456,7 +456,7 @@ export const menuData: MenuItem[] = [
         label: "Payroll",
         href: "/dashboard/services/payroll",
         isActive: true,
-        children: [
+        children: [], /* children: [
           // {
           //   slug: "payroll-docs",
           //   icon: DocumentValidationIcon,
@@ -505,7 +505,7 @@ export const menuData: MenuItem[] = [
             href: "/dashboard/services/payroll/malta",
             isActive: true,
           },
-        ],
+        ], */
       },
 
       {
@@ -514,7 +514,7 @@ export const menuData: MenuItem[] = [
         label: "CFO",
         href: "/dashboard/services/cfo",
         isActive: true,
-        children: [
+        children: [], /* children: [
           // {
           //   slug: "cfo-docs",
           //   icon: DocumentValidationIcon,
@@ -555,7 +555,7 @@ export const menuData: MenuItem[] = [
             label: "Filings",
             href: "/dashboard/services/cfo?tab=cfo_filings",
           },
-        ],
+        ], */
       },
       {
         slug: "mbr-filing",
@@ -563,7 +563,7 @@ export const menuData: MenuItem[] = [
         label: "MBR Filings",
         href: "/dashboard/services/mbr-filing",
         isActive: true,
-        children: [
+        children: [], /* children: [
           // {
           //   slug: "mbr-docs",
           //   icon: DocumentValidationIcon,
@@ -604,7 +604,7 @@ export const menuData: MenuItem[] = [
             label: "Filings",
             href: "/dashboard/services/mbr-filing?tab=filings",
           },
-        ],
+        ], */
       },
       {
         slug: "incorporation",
@@ -612,7 +612,7 @@ export const menuData: MenuItem[] = [
         label: "Incorporation",
         href: "/dashboard/services/incorporation",
         isActive: true,
-        children: [
+        children: [], /* children: [
           // {
           //   slug: "inc-docs",
           //   icon: DocumentValidationIcon,
@@ -653,7 +653,7 @@ export const menuData: MenuItem[] = [
           //   count: incorporationMock.messages?.filter((m) => !m.read).length || 0,
           //   totalCount: incorporationMock.messages?.length || 0,
           // },
-        ],
+        ], */
       },
       {
         slug: "business-plans",
@@ -661,7 +661,7 @@ export const menuData: MenuItem[] = [
         label: "Business Plans",
         href: "/dashboard/services/business-plans",
         isActive: true,
-        children: [
+        children: [], /* children: [
           // {
           //   slug: "bp-docs",
           //   icon: DocumentValidationIcon,
@@ -702,7 +702,7 @@ export const menuData: MenuItem[] = [
           //   count: businessPlansMock.messages?.filter((m) => !m.read).length || 0,
           //   totalCount: businessPlansMock.messages?.length || 0,
           // },
-        ],
+        ], */
       },
       {
         slug: "liquidation",
@@ -710,7 +710,7 @@ export const menuData: MenuItem[] = [
         label: "Liquidation",
         href: "/dashboard/services/liquidation",
         isActive: true,
-        children: [
+        children: [], /* children: [
           // {
           //   slug: "liq-docs",
           //   icon: DocumentValidationIcon,
@@ -751,7 +751,7 @@ export const menuData: MenuItem[] = [
           //   count: liquidationMock.messages?.filter((m) => !m.read).length || 0,
           //   totalCount: liquidationMock.messages?.length || 0,
           // },
-        ],
+        ], */
       },
       {
         slug: "regulated-licenses",
@@ -759,7 +759,7 @@ export const menuData: MenuItem[] = [
         label: "Regulated Licenses",
         href: "/dashboard/services/regulated-licenses",
         isActive: true,
-        children: [
+        children: [], /* children: [
           // {
           //   slug: "rl-dashboard",
           //   icon: DashboardSquare02Icon,
@@ -806,7 +806,7 @@ export const menuData: MenuItem[] = [
             label: "Filings",
             href: "/dashboard/services/regulated-licenses?tab=regulated_licenses_filings",
           },
-        ],
+        ], */
       },
       {
         slug: "banking-payments",
@@ -814,7 +814,7 @@ export const menuData: MenuItem[] = [
         label: "Banking & Payments",
         href: "/dashboard/services/banking-payments",
         isActive: true,
-        children: [
+        children: [], /* children: [
           // {
           //   slug: "bp-dashboard",
           //   icon: DashboardSquare02Icon,
@@ -861,7 +861,7 @@ export const menuData: MenuItem[] = [
             label: "Filings",
             href: "/dashboard/services/banking-payments?tab=banking_payments_filings",
           },
-        ],
+        ], */
       },
 
       {
@@ -870,7 +870,7 @@ export const menuData: MenuItem[] = [
         label: "International Structuring",
         href: "/dashboard/services/international-structuring",
         isActive: true,
-        children: [
+        children: [], /* children: [
           // {
           //   slug: "is-docs",
           //   icon: DocumentValidationIcon,
@@ -913,7 +913,7 @@ export const menuData: MenuItem[] = [
             label: "Filings",
             href: "/dashboard/services/international-structuring?tab=filings",
           },
-        ],
+        ], */
       },
 
       {
@@ -922,7 +922,7 @@ export const menuData: MenuItem[] = [
         label: "Crypto & Digital Assets",
         href: "/dashboard/services/crypto-digital-assets",
         isActive: true,
-        children: [
+        children: [], /* children: [
           // {
           //   slug: "crypto-docs",
           //   icon: DocumentValidationIcon,
@@ -964,7 +964,7 @@ export const menuData: MenuItem[] = [
             label: "Filings",
             href: "/dashboard/services/crypto-digital-assets?tab=filings",
           },
-        ],
+        ], */
       },
 
 

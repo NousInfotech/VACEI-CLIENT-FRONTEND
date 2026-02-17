@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
@@ -14,6 +14,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TruncatedTooltip } from "@/components/ui/TruncatedTooltip";
+import { useEngagements } from "@/components/engagement/hooks/useEngagements";
+import { ENGAGEMENT_CONFIG } from "@/config/engagementConfig";
 
 interface SidebarMenuProps {
   menu: MenuItem[];
@@ -23,34 +25,41 @@ interface SidebarMenuProps {
   onExpand?: () => void;
 }
 
-const serviceStatusConfig: Record<string, { label: string; color: string; dotColor: string; description?: string }> = {
-  "accounting-bookkeeping": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
-  "audit": { label: "Your input required", color: "text-orange-500", dotColor: "bg-orange-500" },
-  "vat": { label: "Due soon", color: "text-yellow-500", dotColor: "bg-yellow-500", description: "VAT filing deadline is approaching." },
-  "tax": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
-  "payroll": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
-  "mbr-filing": { label: "Overdue", color: "text-red-500", dotColor: "bg-red-500", description: "This filing has passed its deadline. Please take action now." },
-  "csp": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
-  "incorporation": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
-  "business-plans": { label: "In progress", color: "text-blue-500", dotColor: "bg-blue-500" },
-  "liquidation": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
-  "cfo": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
-  "banking-payments": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
-  "regulated-licenses": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
-  // "grants-incentives": { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
-  "international-structuring": {
-    label: "On track",
-    color: "text-emerald-500",
-    dotColor: "bg-emerald-500",
-  },
+type StatusConfig = { label: string; color: string; dotColor: string; description?: string };
 
-  "crypto-digital-assets": {
-    label: "On track",
-    color: "text-emerald-500",
-    dotColor: "bg-emerald-500",
-  },
-
+// Map API status to sidebar display config
+const API_STATUS_TO_CONFIG: Record<string, StatusConfig> = {
+  ACTIVE: { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
+  COMPLETED: { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
+  ASSIGNED: { label: "Due soon", color: "text-yellow-500", dotColor: "bg-yellow-500" },
+  DRAFT: { label: "Due soon", color: "text-yellow-500", dotColor: "bg-yellow-500" },
+  ACCEPTED: { label: "Due soon", color: "text-yellow-500", dotColor: "bg-yellow-500" },
+  CANCELLED: { label: "Overdue", color: "text-red-500", dotColor: "bg-red-500" },
+  TERMINATED: { label: "Overdue", color: "text-red-500", dotColor: "bg-red-500" },
 };
+
+// Map menu slug to API serviceType for matching engagements
+const MENU_SLUG_TO_SERVICE_TYPE: Record<string, string> = {
+  "accounting-bookkeeping": "ACCOUNTING",
+  audit: "AUDITING",
+  vat: "VAT",
+  tax: "TAX",
+  csp: "CSP",
+  payroll: "PAYROLL",
+  cfo: "CFO",
+  "mbr-filing": "MBR",
+  incorporation: "INCORPORATION",
+  "business-plans": "ADVISORY",
+  liquidation: "CUSTOM",
+  "regulated-licenses": "CUSTOM",
+  "banking-payments": "CUSTOM",
+  "international-structuring": "CUSTOM",
+  "crypto-digital-assets": "CUSTOM",
+  "grants-incentives": "CUSTOM",
+};
+
+// Fallback when no engagement or mock mode
+const DEFAULT_STATUS: StatusConfig = { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" };
 
 export default function SidebarMenu({
   menu,
@@ -61,6 +70,30 @@ export default function SidebarMenu({
 }: SidebarMenuProps) {
   const pathname = usePathname();
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
+  const { engagements } = useEngagements();
+
+  // Build sidebar status from real API engagements (or fallback when mock)
+  const serviceStatusConfig = useMemo((): Record<string, StatusConfig> => {
+    const config: Record<string, StatusConfig> = {};
+    const slugs = Object.keys(MENU_SLUG_TO_SERVICE_TYPE);
+
+    for (const slug of slugs) {
+      const serviceType = MENU_SLUG_TO_SERVICE_TYPE[slug];
+      const engagement = engagements.find(
+        (e: any) =>
+          e.serviceCategory === serviceType || e.serviceType === serviceType || e.title?.toUpperCase().includes(serviceType)
+      );
+      const apiStatus = (engagement as any)?.status;
+      if (engagement && apiStatus && API_STATUS_TO_CONFIG[apiStatus]) {
+        config[slug] = API_STATUS_TO_CONFIG[apiStatus];
+      } else if (ENGAGEMENT_CONFIG.USE_MOCK_DATA) {
+        config[slug] = DEFAULT_STATUS;
+      } else {
+        config[slug] = DEFAULT_STATUS;
+      }
+    }
+    return config;
+  }, [engagements]);
 
   // User data from localStorage
   const [user, setUser] = useState({

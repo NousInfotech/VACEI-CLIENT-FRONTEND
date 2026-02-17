@@ -69,6 +69,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useEngagement } from "./hooks/useEngagement";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export type EngagementStatus =
   | "on_track"
@@ -186,8 +187,34 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
   const isCryptoAssets = serviceName === "Crypto & Digital Assets";
 
 
-  const { engagement } = useEngagement();
+  const { engagement, loading: engagementLoading } = useEngagement();
   const engagementData = engagement as any;
+
+  const apiStatus = engagementData?.status;
+  const apiName = engagementData?.name || engagementData?.title;
+  const displayStatus: EngagementStatus =
+    engagementLoading
+      ? "on_track" 
+      : apiStatus === "ACTIVE"
+      ? "on_track"
+      : apiStatus === "ASSIGNED" || apiStatus === "DRAFT" || apiStatus === "ACCEPTED"
+      ? "due_soon"
+      : apiStatus === "COMPLETED"
+      ? "on_track"
+      : apiStatus === "CANCELLED" || apiStatus === "TERMINATED"
+      ? "overdue"
+      : status;
+  const displayCycle = engagementLoading ? "" : (apiName || cycle);
+  const displayWorkflowStatus: WorkflowStatus =
+    engagementLoading
+      ? "in_progress" 
+      : apiStatus === "ACTIVE"
+      ? "in_progress"
+      : apiStatus === "COMPLETED"
+      ? "completed"
+      : apiStatus === "ASSIGNED" || apiStatus === "DRAFT"
+      ? "waiting"
+      : workflowStatus;
 
   const mbrFilings = engagementData?.filings || MBR_FILINGS_MOCK;
   const mbrActiveFiling = isMBRFilings
@@ -195,7 +222,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
     : undefined;
   const mbrStatus = isMBRFilings
     ? getMBRServiceStatusFromFilings(mbrFilings)
-    : status;
+    : displayStatus;
 
   const vatPeriods = engagementData?.periods || VAT_PERIODS_MOCK;
   const vatActivePeriod = isVAT
@@ -235,9 +262,9 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
   }, [isMBRFilings, mbrFilings]);
 
   const statusInfo =
-    statusConfig[isMBRFilings ? mbrStatus : status] || statusConfig.on_track;
+    statusConfig[isMBRFilings ? mbrStatus : displayStatus] || statusConfig.on_track;
   const workflowInfo =
-    workflowStatusConfig[workflowStatus] || workflowStatusConfig.in_progress;
+    workflowStatusConfig[displayWorkflowStatus] || workflowStatusConfig.in_progress;
 
   // Handle deep-linking from query params
   useEffect(() => {
@@ -455,14 +482,18 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                 <h2 className="text-3xl font-medium text-white tracking-tight">
                   {serviceName}
                 </h2>
-                <Badge
-                  className={cn(
-                    "rounded-0 border px-3 py-1 text-xs font-bold uppercase tracking-widest bg-transparent",
-                    statusInfo.color,
-                  )}
-                >
-                  {statusInfo.label}
-                </Badge>
+                {engagementLoading ? (
+                  <Skeleton className="h-6 w-28 rounded-0" />
+                ) : (
+                  <Badge
+                    className={cn(
+                      "rounded-0 border px-3 py-1 text-xs font-bold uppercase tracking-widest bg-transparent",
+                      statusInfo.color,
+                    )}
+                  >
+                    {statusInfo.label}
+                  </Badge>
+                )}
               </div>
               <p className="text-white/60 text-sm max-w-2xl leading-relaxed">
                 {isBankingPayments ? "Manage bank documents, approvals, and payment workflows." :
@@ -2304,22 +2335,30 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
                         Current Period
                       </p>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {isBankingPayments ? engagementData?.currentPeriod : cycle}
-                      </p>
+                      {engagementLoading && !isBankingPayments ? (
+                        <Skeleton className="h-4 w-24" />
+                      ) : (
+                        <p className="text-sm font-semibold text-gray-900">
+                          {isBankingPayments ? engagementData?.currentPeriod : displayCycle}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-1">
                       <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
                         Overall Status
                       </p>
-                      <Badge
-                        className={cn(
-                          "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit",
-                          isBankingPayments ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : statusInfo.color,
-                        )}
-                      >
-                        {isBankingPayments ? "ON TRACK (HANDLED BY US)" : statusInfo.label}
-                      </Badge>
+                      {engagementLoading && !isBankingPayments ? (
+                        <Skeleton className="h-5 w-24 rounded-0" />
+                      ) : (
+                        <Badge
+                          className={cn(
+                            "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit",
+                            isBankingPayments ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : statusInfo.color,
+                          )}
+                        >
+                          {isBankingPayments ? "ON TRACK (HANDLED BY US)" : statusInfo.label}
+                        </Badge>
+                      )}
                     </div>
                     <div className="space-y-1">
                       <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
@@ -2336,15 +2375,19 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
                         Next Step
                       </p>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {(isBankingPayments || isRegulatedLicenses) ? engagementData?.nextStep : (workflowStatus === "waiting"
-                          ? "Action needed from you"
-                          : workflowStatus === "in_progress"
-                            ? `Processing ${cycle} records`
-                            : workflowStatus === "submitted"
-                              ? "Submitted to authority"
-                              : "Completed")}
-                      </p>
+                      {engagementLoading && !isBankingPayments && !isRegulatedLicenses ? (
+                        <Skeleton className="h-4 w-32" />
+                      ) : (
+                        <p className="text-sm font-semibold text-gray-900">
+                          {(isBankingPayments || isRegulatedLicenses) ? engagementData?.nextStep : (displayWorkflowStatus === "waiting"
+                            ? "Action needed from you"
+                            : displayWorkflowStatus === "in_progress"
+                              ? `Processing ${displayCycle} records`
+                              : displayWorkflowStatus === "submitted"
+                                ? "Submitted to authority"
+                                : "Completed")}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </DashboardCard>
@@ -2885,21 +2928,29 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                           <div className="w-10 h-10 rounded-0 bg-primary/5 flex items-center justify-center border border-primary/10">
                             <Calendar className="w-5 h-5 text-primary" />
                           </div>
-                          <span className="text-lg font-medium">{cycle}</span>
+                          {engagementLoading ? (
+                            <Skeleton className="h-5 w-24" />
+                          ) : (
+                            <span className="text-lg font-medium">{displayCycle}</span>
+                          )}
                         </div>
                       </div>
                       <div className="space-y-3">
                         <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
                           Current status
                         </p>
-                        <Badge
-                          className={cn(
-                            "rounded-0 border px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit block",
-                            workflowInfo.color,
-                          )}
-                        >
-                          {workflowInfo.label}
-                        </Badge>
+                        {engagementLoading ? (
+                          <Skeleton className="h-6 w-28 rounded-0" />
+                        ) : (
+                          <Badge
+                            className={cn(
+                              "rounded-0 border px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit block",
+                              workflowInfo.color,
+                            )}
+                          >
+                            {workflowInfo.label}
+                          </Badge>
+                        )}
                       </div>
                     </div>
 
@@ -3314,22 +3365,30 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
                         Tax Period
                       </p>
-                      <p className="text-sm font-semibold text-gray-900 mt-1">
-                        {cycle}
-                      </p>
+                      {engagementLoading ? (
+                        <Skeleton className="h-4 w-24 mt-1" />
+                      ) : (
+                        <p className="text-sm font-semibold text-gray-900 mt-1">
+                          {displayCycle || cycle}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
                         Status
                       </p>
-                      <Badge
-                        className={cn(
-                          "mt-1 rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit",
-                          workflowInfo.color,
-                        )}
-                      >
-                        {workflowInfo.label}
-                      </Badge>
+                      {engagementLoading ? (
+                        <Skeleton className="h-5 w-20 rounded-0 mt-1" />
+                      ) : (
+                        <Badge
+                          className={cn(
+                            "mt-1 rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit",
+                            workflowInfo.color,
+                          )}
+                        >
+                          {workflowInfo.label}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </div>
