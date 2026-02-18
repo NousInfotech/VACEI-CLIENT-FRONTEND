@@ -140,6 +140,8 @@ export interface Engagement {
   documentRequests?: Array<any>;
   procedures?: Array<any>;
   trialBalanceDoc?: any;
+  /** Partner/org team members - used for direct chat when engagement room access is denied */
+  orgTeam?: Array<{ userId: string; [k: string]: unknown }>;
 }
 
 // Extended Trial Balance Types

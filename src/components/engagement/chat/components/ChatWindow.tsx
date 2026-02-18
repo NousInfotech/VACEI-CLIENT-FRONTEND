@@ -7,6 +7,7 @@ import { MessageInput } from './MessageInput';
 
 interface ChatWindowProps {
   chat: Chat;
+  currentUserId?: string | null;
   onSendMessage: (content: { 
     text?: string; 
     gifUrl?: string; 
@@ -20,6 +21,11 @@ interface ChatWindowProps {
   onMediaClick: (message: Message) => void;
   scrollToMessageId?: string;
   onScrollComplete?: () => void;
+  onFileUpload?: (file: File) => Promise<string>;
+  isUploading?: boolean;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
+  isLoadingMore?: boolean;
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({ 
@@ -29,7 +35,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onInfoToggle, 
   onMediaClick,
   scrollToMessageId,
-  onScrollComplete 
+  onScrollComplete,
+  onFileUpload,
+  isUploading = false,
+  currentUserId,
+  hasMore,
+  onLoadMore,
+  isLoadingMore = false,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [highlightedId, setHighlightedId] = React.useState<string | null>(null);
@@ -91,14 +103,23 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 relative z-10 scroll-smooth custom-scrollbar"
       >
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center gap-3">
+          {hasMore && onLoadMore && (
+            <button
+              onClick={onLoadMore}
+              disabled={isLoadingMore}
+              className="px-4 py-2 text-xs font-medium text-gray-600 bg-white/80 hover:bg-white rounded-lg border border-gray-200 shadow-sm transition-colors disabled:opacity-60"
+            >
+              {isLoadingMore ? "Loading..." : "Load Earlier Messages"}
+            </button>
+          )}
           <span className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg text-[11px] font-medium text-gray-500 shadow-sm uppercase tracking-wider">
             Today
           </span>
         </div>
 
         {chat.messages.map((msg) => {
-          const isMe = msg.senderId === 'me';
+          const isMe = currentUserId ? msg.senderId === currentUserId : msg.senderId === 'me';
           const sender = chat.participants.find(p => p.id === msg.senderId);
           const showSenderName = chat.type === 'GROUP' && !isMe;
 
@@ -123,7 +144,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         })}
       </div>
 
-      <MessageInput onSendMessage={onSendMessage} />
+      <MessageInput onSendMessage={onSendMessage} onFileUpload={onFileUpload} isUploading={isUploading} />
     </div>
   );
 };

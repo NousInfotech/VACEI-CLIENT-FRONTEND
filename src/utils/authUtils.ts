@@ -15,7 +15,7 @@ export function getDecodedUsername(): string | null {
 }
 
 /**
- * Get user ID from localStorage
+ * Get user ID from localStorage (raw value, may be base64-encoded).
  */
 export function getUserIdFromLocalStorage(): string | null {
   if (typeof window === 'undefined') return null;
@@ -28,6 +28,25 @@ export function getUserIdFromLocalStorage(): string | null {
     console.error('Error getting user ID:', error);
     return null;
   }
+}
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Get user ID normalized for comparison (decodes base64 to UUID when applicable).
+ * Use when comparing with API IDs (e.g. chat senderId, participant id).
+ */
+export function getDecodedUserId(): string | null {
+  const raw = getUserIdFromLocalStorage();
+  if (!raw) return null;
+  if (UUID_REGEX.test(raw)) return raw;
+  try {
+    const decoded = atob(raw);
+    if (UUID_REGEX.test(decoded)) return decoded;
+  } catch {
+    /* not base64 */
+  }
+  return raw;
 }
 
 /**

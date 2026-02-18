@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils';
 
 import { AttachmentMenu } from './AttachmentMenu';
 import { EmojiPicker } from './EmojiPicker';
-import { GifPicker } from './GifPicker'
 
 interface MessageInputProps {
   onSendMessage: (content: { 
@@ -15,23 +14,20 @@ interface MessageInputProps {
     fileSize?: string;
     type: 'text' | 'gif' | 'image' | 'document' 
   }) => void;
+  /** If provided, files are uploaded first and the returned URL is used. Otherwise blob URL is used (local only). */
+  onFileUpload?: (file: File) => Promise<string>;
+  isUploading?: boolean;
 }
 
-export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
+export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onFileUpload, isUploading = false }) => {
   const [message, setMessage] = useState('');
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [showGifPicker, setShowGifPicker] = useState(false);
   const imageInputRef = React.useRef<HTMLInputElement>(null);
   const docInputRef = React.useRef<HTMLInputElement>(null);
 
   const onSelectEmoji = (emoji: string) => {
     setMessage(prev => prev + emoji);
-  };
-
-  const onSelectGif = (gifUrl: string) => {
-    onSendMessage({ gifUrl, type: 'gif' });
-    setShowGifPicker(false);
   };
 
   const handleSend = () => {
@@ -41,13 +37,25 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => 
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'document') => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'document') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const fileUrl = URL.createObjectURL(file);
     const fileName = file.name;
     const fileSize = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+    let fileUrl: string;
+
+    if (onFileUpload) {
+      try {
+        fileUrl = await onFileUpload(file);
+      } catch (err) {
+        console.error('File upload failed:', err);
+        e.target.value = '';
+        return;
+      }
+    } else {
+      fileUrl = URL.createObjectURL(file);
+    }
 
     onSendMessage({
       type,
@@ -87,7 +95,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => 
         <button 
           onClick={() => {
             setShowEmojiPicker(!showEmojiPicker);
-            setShowGifPicker(false);
             setShowAttachmentMenu(false);
           }}
           className={cn(
@@ -100,23 +107,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => 
 
         <button 
           onClick={() => {
-            setShowGifPicker(!showGifPicker);
-            setShowEmojiPicker(false);
-            setShowAttachmentMenu(false);
-          }}
-          className={cn(
-            "p-1.5 px-2 hover:bg-gray-200 rounded-lg transition-colors text-[10px] font-bold border border-current",
-            showGifPicker ? "text-primary bg-gray-200" : "text-gray-500"
-          )}
-        >
-          GIF
-        </button>
-
-        <button 
-          onClick={() => {
             setShowAttachmentMenu(!showAttachmentMenu);
             setShowEmojiPicker(false);
-            setShowGifPicker(false);
           }}
           className={cn(
             "p-2 hover:bg-gray-200 rounded-full transition-colors",
@@ -144,13 +136,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => 
         />
       )}
 
-      {showGifPicker && (
-        <GifPicker 
-          onSelect={onSelectGif} 
-          onClose={() => setShowGifPicker(false)} 
-        />
-      )}
-      
       <div className="flex-1 relative group/input">
         <textarea
           rows={1}

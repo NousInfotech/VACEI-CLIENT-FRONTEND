@@ -45,7 +45,7 @@ import {
 import { cn } from "@/lib/utils";
 import DashboardCard from "../DashboardCard";
 import PillTabs, { Tab } from "../shared/PillTabs";
-import ServiceChat from "./chat/ServiceChat";
+import EngagementChatTab from "./EngagementChatTab";
 import ServiceMessages from "./ServiceMessages";
 import { LibraryExplorer } from "../library/LibraryExplorer";
 import DocumentRequestsTab from "./DocumentRequestsTab";
@@ -4452,9 +4452,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
 
         {activeTab === "messages" && <UpdatesTab />}
 
-        {activeTab === "chat" && (
-          <ServiceChat serviceSlug={serviceSlug || "accounting"} serviceName={serviceName} />
-        )}
+        {activeTab === "chat" && <EngagementChatTab />}
       </div>
     </TooltipProvider>
   );
