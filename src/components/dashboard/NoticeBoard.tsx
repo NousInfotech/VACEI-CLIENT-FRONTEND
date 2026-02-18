@@ -13,6 +13,8 @@ enum RoleEnum {
   CLIENT = "client",
 }
 
+import { fetchTodayNotices, Notice as ApiNotice } from '@/api/noticeService';
+
 enum NoticeTypeEnum {
   EMERGENCY = "emergency",
   WARNING = "warning",
@@ -27,55 +29,12 @@ interface Notice {
   id: string;
   title: string;
   description: string;
-  roles: RoleEnum[];
-  createdBy: "admin" | "super-admin";
+  roles: string[];
+  createdBy: string;
   type: NoticeTypeEnum;
   createdAt: Date;
   updatedAt: Date;
 }
-
-const MOCK_NOTICES: Notice[] = [
-  {
-    id: "1",
-    title: "System Maintenance Scheduled",
-    description: "Our systems will undergo routine maintenance this Sunday from 02:00 to 04:00 AM UTC. Some services may be briefly unavailable.",
-    roles: [RoleEnum.CLIENT, RoleEnum.EMPLOYEE],
-    createdBy: "admin",
-    type: NoticeTypeEnum.UPDATE,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2),
-  },
-  {
-    id: "2",
-    title: "New VAT Filing Deadline",
-    description: "Please note the updated deadline for Q2 VAT submissions is now July 15th. Ensure all documents are uploaded by July 10th.",
-    roles: [RoleEnum.CLIENT],
-    createdBy: "super-admin",
-    type: NoticeTypeEnum.EMERGENCY,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
-  },
-  {
-    id: "3",
-    title: "Updated CSP Service Terms",
-    description: "We have updated our Corporate Services terms. You can review the new terms in your service agreement section.",
-    roles: [RoleEnum.CLIENT],
-    createdBy: "admin",
-    type: NoticeTypeEnum.INFO,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48), // 2 days ago
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 48),
-  },
-  {
-    id: "4",
-    title: "Successful Audit Completion",
-    description: "Congratulations! The annual audit for ACME LTD has been successfully completed and filed with the authorities.",
-    roles: [RoleEnum.CLIENT],
-    createdBy: "super-admin",
-    type: NoticeTypeEnum.SUCCESS,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 72), // 3 days ago
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 72),
-  }
-];
 
 const getNoticeTypeConfig = (type: NoticeTypeEnum) => {
   const configs = {
@@ -114,7 +73,7 @@ const getNoticeTypeConfig = (type: NoticeTypeEnum) => {
     [NoticeTypeEnum.REMINDER]: {
       icon: Clock,
       badgeColor: "bg-yellow-500",
-      gradient: "from-yellow-600 via-yellow-500 to-yellow-400",
+      gradient: "from-yellow-600 via-yellow-500 to-blur-400",
       gradientDark: "from-yellow-700 via-yellow-600 to-yellow-500",
       label: "Reminder",
       textColor: "text-white"
@@ -145,14 +104,27 @@ export const NoticeBoard = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     const loadNotices = async () => {
       try {
         setLoading(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setNotices(MOCK_NOTICES);
+        const data = await fetchTodayNotices();
+        
+        // Map API data to component structure
+        const mappedNotices: Notice[] = data.map((n: ApiNotice) => ({
+          id: n.id,
+          title: n.title,
+          description: n.description,
+          roles: n.targetRoles,
+          createdBy: "Admin",
+          type: n.type as NoticeTypeEnum,
+          createdAt: new Date(n.scheduledAt || n.createdAt),
+          updatedAt: new Date(n.createdAt),
+        }));
+
+        setNotices(mappedNotices);
       } catch (err: any) {
         setError(err.message || 'Failed to load notices');
       } finally {
@@ -161,25 +133,44 @@ export const NoticeBoard = () => {
     };
 
     loadNotices();
+    
+    // Refresh notices from API every 5 minutes
+    const apiInterval = setInterval(loadNotices, 5 * 60 * 1000);
+    // Update local time every minute for schedule filtering
+    const timerInterval = setInterval(() => setCurrentTime(new Date()), 60 * 1000);
+
+    return () => {
+      clearInterval(apiInterval);
+      clearInterval(timerInterval);
+    };
   }, []);
+
+  const filteredNotices = notices.filter(n => new Date(n.createdAt) <= currentTime);
 
   // Auto-play carousel effect
   useEffect(() => {
-    if (notices.length <= 1 || isPaused) return;
+    if (filteredNotices.length <= 1 || isPaused) return;
 
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % notices.length);
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % filteredNotices.length);
     }, 5000); // Change notice every 5 seconds
 
     return () => clearInterval(interval);
-  }, [notices.length, isPaused]);
+  }, [filteredNotices.length, isPaused]);
+
+  // Reset index if filtered list changes and current index is out of bounds
+  useEffect(() => {
+    if (currentIndex >= filteredNotices.length) {
+      setCurrentIndex(0);
+    }
+  }, [filteredNotices.length]);
 
   const nextNotice = () => {
-    setCurrentIndex((prev) => (prev + 1) % notices.length);
+    setCurrentIndex((prev) => (prev + 1) % filteredNotices.length);
   };
 
   const prevNotice = () => {
-    setCurrentIndex((prev) => (prev - 1 + notices.length) % notices.length);
+    setCurrentIndex((prev) => (prev - 1 + filteredNotices.length) % filteredNotices.length);
   };
 
   if (loading) {
@@ -215,9 +206,13 @@ export const NoticeBoard = () => {
     );
   }
 
-  if (notices.length === 0) {
+  if (filteredNotices.length === 0) {
     return (
       <div className="relative">
+        <div className="flex items-center gap-2 mb-4">
+          <Bell className="h-5 w-5 text-gray-700" />
+          <h2 className="text-xl font-semibold text-gray-900">Notice Board</h2>
+        </div>
         <div className="bg-linear-to-br from-gray-50 to-gray-100 rounded-2xl p-8 border border-gray-200 shadow-lg">
           <div className="text-center py-12">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-200 mb-4">
@@ -241,10 +236,10 @@ export const NoticeBoard = () => {
           <Bell className="h-5 w-5 text-gray-700" />
           <h2 className="text-lg font-semibold text-gray-900 uppercase tracking-widest">Notice Board</h2>
           <Badge variant="secondary" className="rounded-full px-2 py-0">
-            {notices.length}
+            {filteredNotices.length}
           </Badge>
         </div>
-        {notices.length > 1 && (
+        {filteredNotices.length > 1 && (
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
@@ -255,7 +250,7 @@ export const NoticeBoard = () => {
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <span className="text-[15px] font-medium min-w-[45px] text-center uppercase tracking-widest text-gray-500">
-              {currentIndex + 1} / {notices.length}
+              {currentIndex + 1} / {filteredNotices.length}
             </span>
             <Button
               variant="outline"
@@ -276,7 +271,7 @@ export const NoticeBoard = () => {
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
-        {notices.map((notice, index) => {
+        {filteredNotices.map((notice, index) => {
           const noticeConfig = getNoticeTypeConfig(notice.type as NoticeTypeEnum);
           const NoticeIcon = noticeConfig.icon;
           const noticeDate = new Date(notice.createdAt);
@@ -299,26 +294,26 @@ export const NoticeBoard = () => {
           // Calculate transform and opacity based on position
           let transform = '';
           let opacity = 1;
-          let zIndex = notices.length - Math.abs(distanceFromCurrent);
+          let zIndex = filteredNotices.length - Math.abs(distanceFromCurrent);
           
           if (isCurrent) {
             transform = 'translateX(0) translateY(0) rotate(0deg) scale(1)';
             opacity = 1;
-            zIndex = notices.length + 2;
+            zIndex = filteredNotices.length + 2;
           } else if (isNext) {
             transform = 'translateX(20px) translateY(8px) rotate(2deg) scale(0.95)';
             opacity = 0.7;
-            zIndex = notices.length + 1;
+            zIndex = filteredNotices.length + 1;
           } else if (isPrev) {
             transform = 'translateX(-20px) translateY(8px) rotate(-2deg) scale(0.95)';
             opacity = 0.7;
-            zIndex = notices.length;
+            zIndex = filteredNotices.length;
           } else {
             const offset = Math.abs(distanceFromCurrent) * 15;
             const rotation = distanceFromCurrent > 0 ? 3 : -3;
             transform = `translateX(${distanceFromCurrent > 0 ? offset : -offset}px) translateY(${Math.abs(distanceFromCurrent) * 10}px) rotate(${rotation}deg) scale(${1 - Math.abs(distanceFromCurrent) * 0.05})`;
             opacity = Math.max(0.2, 0.7 - Math.abs(distanceFromCurrent) * 0.15);
-            zIndex = Math.max(1, notices.length - Math.abs(distanceFromCurrent));
+            zIndex = Math.max(1, filteredNotices.length - Math.abs(distanceFromCurrent));
           }
 
           return (
