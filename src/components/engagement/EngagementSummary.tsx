@@ -70,6 +70,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useEngagement } from "./hooks/useEngagement";
 import { Skeleton } from "@/components/ui/skeleton";
+import UpdatesTab from "./UpdatesTab";
 
 export type EngagementStatus =
   | "on_track"
@@ -4449,9 +4450,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           </div>
         )}
 
-        {activeTab === "messages" && (
-          <ServiceMessages serviceName={serviceName} messages={messages} />
-        )}
+        {activeTab === "messages" && <UpdatesTab />}
 
         {activeTab === "chat" && (
           <ServiceChat serviceSlug={serviceSlug || "accounting"} serviceName={serviceName} />

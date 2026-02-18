@@ -1,55 +1,11 @@
 "use client"
 
 import React from 'react'
-import { CheckCircle2, Circle, Clock, Flag, Calendar } from 'lucide-react'
+import { CheckCircle2, Circle, Clock, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import DashboardCard from '../DashboardCard'
-
-interface Milestone {
-  id: string
-  title: string
-  description: string
-  date: string
-  status: 'completed' | 'in_progress' | 'pending'
-}
-
-const milestones: Milestone[] = [
-  {
-    id: '1',
-    title: 'Engagement Kick-off',
-    description: 'Initial meeting held and engagement letter signed by both parties.',
-    date: 'Jan 10, 2026',
-    status: 'completed'
-  },
-  {
-    id: '2',
-    title: 'Initial Data Submission',
-    description: 'Client has provided the primary set of financial records for review.',
-    date: 'Jan 15, 2026',
-    status: 'completed'
-  },
-  {
-    id: '3',
-    title: 'Preliminary Review',
-    description: 'Internal audit team is currently reviewing the submitted records.',
-    date: 'Jan 22, 2026',
-    status: 'in_progress'
-  },
-  {
-    id: '4',
-    title: 'Draft Financial Statements',
-    description: 'Preparation of the draft financial statements for client review.',
-    date: 'Feb 05, 2026',
-    status: 'pending'
-  },
-  {
-    id: '5',
-    title: 'Final Audit Report',
-    description: 'Issuance of the final audited financial statements and audit opinion.',
-    date: 'Feb 15, 2026',
-    status: 'pending'
-  }
-]
+import { Skeleton } from "@/components/ui/skeleton"
+import { useMilestones } from "@/components/engagement/hooks/useMilestones"
 
 const MilestoneIcon = ({ status }: { status: Milestone['status'] }) => {
   switch (status) {
@@ -76,9 +32,73 @@ const MilestoneIcon = ({ status }: { status: Milestone['status'] }) => {
 
 import { useEngagement } from './hooks/useEngagement'
 
+type Milestone = {
+  id?: string
+  _id?: string
+  title?: string
+  description?: string
+  date?: string
+  timestamp?: string
+  status?: string
+}
+
+function normalizeMilestoneStatus(input: unknown): 'completed' | 'in_progress' | 'pending' {
+  const s = String(input || '').toLowerCase()
+  if (['completed', 'done', 'closed', 'finalized'].includes(s)) return 'completed'
+  if (['in_progress', 'in progress', 'active', 'working'].includes(s)) return 'in_progress'
+  return 'pending'
+}
+
+function formatMilestoneDate(m: any): string {
+  const raw = m?.date || m?.timestamp || m?.createdAt || m?.updatedAt
+  if (!raw) return ''
+  const d = new Date(raw)
+  if (Number.isNaN(d.getTime())) return String(raw)
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+}
+
 export const MilestonesTab = () => {
   const { engagement } = useEngagement()
-  const displayMilestones = (engagement as any)?.milestones || []
+  const engagementId =
+    ((engagement as any)?._id as string | undefined) ||
+    ((engagement as any)?.id as string | undefined) ||
+    null
+  const { milestones: displayMilestones, loading, error } = useMilestones(engagementId)
+
+  if (loading) {
+    return (
+      <div className="mx-auto py-6">
+        <div className="mb-5 text-center">
+          <Skeleton className="h-9 w-64 mx-auto rounded-0" />
+          <Skeleton className="h-4 w-72 mx-auto mt-3 rounded-0" />
+        </div>
+        <div className="space-y-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex items-center w-full relative">
+              <div className="absolute left-10 -translate-x-1/2">
+                <Skeleton className="h-10 w-10 rounded-full" />
+              </div>
+              <div className="w-full pl-20 pr-4 md:pr-8">
+                <DashboardCard className="p-6 rounded-0">
+                  <Skeleton className="h-5 w-56 rounded-0" />
+                  <Skeleton className="h-4 w-full mt-3 rounded-0" />
+                  <Skeleton className="h-4 w-3/4 mt-2 rounded-0" />
+                </DashboardCard>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-sm text-red-500 font-medium">Failed to load milestones.</p>
+      </div>
+    )
+  }
 
   if (displayMilestones.length === 0) {
     return (
@@ -101,15 +121,16 @@ export const MilestonesTab = () => {
 
         <div className="space-y-12 relative z-10">
           {displayMilestones.map((milestone: any, index: number) => {
+            const status = normalizeMilestoneStatus(milestone?.status)
             return (
               <div 
-                key={milestone.id} 
+                key={milestone.id || milestone._id || index} 
                 className="flex items-center w-full relative"
               >
                 {/* Left aligned Icon */}
                 <div className="absolute left-10 -translate-x-1/2 flex items-center justify-center">
                   <div className="transition-transform duration-300 hover:scale-110">
-                    <MilestoneIcon status={milestone.status} />
+                    <MilestoneIcon status={status} />
                   </div>
                 </div>
 
@@ -118,8 +139,8 @@ export const MilestonesTab = () => {
                   <DashboardCard 
                     className={cn(
                       "p-6 transition-all duration-300 border-l-4",
-                      milestone.status === 'completed' ? "border-l-emerald-500 bg-white shadow-sm" :
-                      milestone.status === 'in_progress' ? "border-l-blue-500 bg-blue-50/30 shadow-md ring-1 ring-blue-100" :
+                      status === 'completed' ? "border-l-emerald-500 bg-white shadow-sm" :
+                      status === 'in_progress' ? "border-l-blue-500 bg-blue-50/30 shadow-md ring-1 ring-blue-100" :
                       "border-l-gray-200 bg-white/50 opacity-70 grayscale-[0.5]"
                     )}
                   >
@@ -128,11 +149,11 @@ export const MilestonesTab = () => {
                         <div className="flex items-center gap-2">
                           <h4 className={cn(
                             "text-xl font-bold tracking-tight",
-                            milestone.status === 'pending' ? "text-gray-500" : "text-gray-900"
+                            status === 'pending' ? "text-gray-500" : "text-gray-900"
                           )}>
-                            {milestone.title}
+                            {milestone.title || "Milestone"}
                           </h4>
-                          {milestone.status === 'in_progress' && (
+                          {status === 'in_progress' && (
                             <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold uppercase tracking-wider">
                               Active
                             </span>
@@ -140,11 +161,11 @@ export const MilestonesTab = () => {
                         </div>
                         <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-400">
                           <Calendar className="w-3.5 h-3.5" />
-                          <span>{milestone.date}</span>
+                          <span>{formatMilestoneDate(milestone)}</span>
                         </div>
                       </div>
                       <p className="text-gray-600 text-sm font-medium leading-relaxed">
-                        {milestone.description}
+                        {milestone.description || ""}
                       </p>
                     </div>
                   </DashboardCard>

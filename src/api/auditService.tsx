@@ -418,6 +418,192 @@ export async function getEngagementById(id: string, signal?: AbortSignal): Promi
 }
 
 // ============================================================================
+// 4.1 ENGAGEMENT MILESTONES & UPDATES APIs (READ-ONLY)
+// ============================================================================
+
+export interface EngagementMilestone {
+  id: string;
+  engagementId: string;
+  title: string;
+  description: string | null;
+  status: "PENDING" | "ACHIEVED";
+  createdById: string;
+  markedById: string | null;
+  createdAt: string;
+  updatedAt: string;
+  creator: { id: string; firstName: string; lastName: string };
+  marker: { id: string; firstName: string; lastName: string } | null;
+}
+
+export async function getEngagementMilestones(
+  engagementId: string,
+  signal?: AbortSignal,
+): Promise<EngagementMilestone[]> {
+  const response = await fetch(`${backendUrl}engagements/${engagementId}/milestones`, {
+    method: "GET",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    signal,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || error.error || "Failed to fetch milestones");
+  }
+
+  const result = await response.json();
+  return result.data || result || [];
+}
+
+export interface EngagementUpdate {
+  id: string;
+  engagementId: string;
+  title: string | null;
+  message: string;
+  createdById: string;
+  createdAt: string;
+  updatedAt: string;
+  creator: { id: string; firstName: string; lastName: string };
+}
+
+export async function getEngagementUpdates(
+  engagementId: string,
+  signal?: AbortSignal,
+): Promise<EngagementUpdate[]> {
+  const response = await fetch(`${backendUrl}engagements/${engagementId}/updates`, {
+    method: "GET",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    signal,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || error.error || "Failed to fetch updates");
+  }
+
+  const result = await response.json();
+  return result.data || result || [];
+}
+
+// ============================================================================
+// 4.2 ENGAGEMENT COMPLIANCES API (READ-ONLY)
+// ============================================================================
+
+export interface EngagementCompliance {
+  id: string;
+  engagementId: string;
+  companyId: string;
+  service: string;
+  type: string;
+  moduleId: string | null;
+  customServiceCycleId: string | null;
+  title: string;
+  description: string | null;
+  customerComment: string | null;
+  startDate: string;
+  deadline: string;
+  status: "ACTION_REQUIRED" | "ACTION_TAKEN" | "IN_PROGRESS" | "PENDING" | "COMPLETED" | "OVERDUE";
+  statusHistory?: Array<{
+    status: string;
+    changedAt: string;
+    changedBy: { organizationMemberId: string };
+    reason: string | null;
+  }>;
+  createdById: string | null;
+  role: string;
+  cta: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: {
+    id: string;
+    user: { id: string; firstName: string; lastName: string };
+  };
+  customServiceCycle?: { id: string; title: string } | null;
+}
+
+export async function getEngagementCompliances(
+  engagementId: string,
+  signal?: AbortSignal,
+): Promise<EngagementCompliance[]> {
+  const response = await fetch(`${backendUrl}engagements/${engagementId}/compliances`, {
+    method: "GET",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    signal,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || error.error || "Failed to fetch compliances");
+  }
+
+  const result = await response.json();
+  return result.data || result || [];
+}
+
+export async function getEngagementComplianceById(
+  engagementId: string,
+  complianceId: string,
+  signal?: AbortSignal,
+): Promise<EngagementCompliance> {
+  const response = await fetch(`${backendUrl}engagements/${engagementId}/compliances/${complianceId}`, {
+    method: "GET",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    signal,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || error.error || "Failed to fetch compliance");
+  }
+
+  const result = await response.json();
+  return result.data || result;
+}
+
+/**
+ * Update compliance status (CLIENT can only set ACTION_TAKEN)
+ * PATCH /api/v1/engagements/:engagementId/compliances/:complianceId/status
+ */
+export async function updateComplianceStatus(
+  engagementId: string,
+  complianceId: string,
+  payload: { status: "ACTION_TAKEN" },
+  signal?: AbortSignal,
+): Promise<EngagementCompliance> {
+  const response = await fetch(
+    `${backendUrl}engagements/${engagementId}/compliances/${complianceId}/status`,
+    {
+      method: "PATCH",
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      signal,
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || error.error || "Failed to update compliance status");
+  }
+
+  const result = await response.json();
+  return result.data || result;
+}
+
+// ============================================================================
 // 5. EXTENDED TRIAL BALANCE APIs
 // ============================================================================
 

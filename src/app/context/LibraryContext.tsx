@@ -1,323 +1,471 @@
 "use client"
 
-import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
-import { type LibraryItem, mockLibraryData, formatFileSize } from '@/lib/libraryData';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useMemo,
+  useEffect,
+  useCallback,
+} from "react"
+import {
+  type LibraryItem,
+  mockLibraryData,
+  formatFileSize,
+  mimeToFileType,
+} from "@/lib/libraryData"
+import {
+  getRootFolders,
+  getFolderContent,
+  getFileDownloadUrl,
+  type LibraryFolderView,
+  type LibraryFileItem,
+  type LibraryRootType,
+} from "@/api/libraryService"
 
-type ViewMode = 'list' | 'grid';
-type SortField = 'name' | 'type' | 'size';
-type SortOrder = 'asc' | 'desc';
+type ViewMode = "list" | "grid"
+type SortField = "name" | "type" | "size"
+type SortOrder = "asc" | "desc"
 
 interface SortConfig {
-  field: SortField;
-  order: SortOrder;
+  field: SortField
+  order: SortOrder
 }
 
 interface ContextMenuState {
-  x: number;
-  y: number;
-  itemId: string;
+  x: number
+  y: number
+  itemId: string
+}
+
+interface BreadcrumbItem {
+  id: string
+  name: string
 }
 
 interface LibraryContextType {
-  // State
-  viewMode: ViewMode;
-  currentFolderId: string | null;
-  searchQuery: string;
-  selectedItems: string[];
-  sortConfig: SortConfig;
-  contextMenu: ContextMenuState | null;
-  filterType: string;
-  isLoading: boolean;
-  
-  // Derived Data
-  breadcrumbs: LibraryItem[];
-  currentItems: LibraryItem[];
-  rootFolders: LibraryItem[];
-  
-  // Actions
-  setViewMode: (mode: ViewMode) => void;
-  setSearchQuery: (query: string) => void;
-  setFilterType: (type: string) => void;
-  handleFolderClick: (id: string | null) => void;
-  handleBack: () => void;
-  handleDoubleClick: (item: LibraryItem) => void;
-  handleSelection: (id: string, e: React.MouseEvent) => void;
-  handleSort: (field: SortField) => void;
-  handleContextMenu: (e: React.MouseEvent, itemId: string) => void;
-  closeContextMenu: () => void;
-  isMobileSidebarOpen: boolean;
-  setIsMobileSidebarOpen: (open: boolean) => void;
-  setSelectedItems: (ids: string[]) => void;
-  handleDownload: (item?: LibraryItem) => void;
+  viewMode: ViewMode
+  currentFolderId: string | null
+  searchQuery: string
+  selectedItems: string[]
+  sortConfig: SortConfig
+  contextMenu: ContextMenuState | null
+  filterType: string
+  isLoading: boolean
+  error: string | null
+  breadcrumbs: BreadcrumbItem[]
+  currentItems: LibraryItem[]
+  rootFolders: LibraryItem[]
+  /** Folders shown in sidebar: root folders at root level, or child subfolders when inside a folder */
+  sidebarFolders: LibraryItem[]
+  setViewMode: (mode: ViewMode) => void
+  setSearchQuery: (query: string) => void
+  setFilterType: (type: string) => void
+  handleFolderClick: (id: string | null, opts?: { fromBreadcrumb?: boolean; name?: string }) => void
+  handleBack: () => void
+  handleDoubleClick: (item: LibraryItem) => void
+  handleSelection: (id: string, e: React.MouseEvent) => void
+  handleSort: (field: SortField) => void
+  handleContextMenu: (e: React.MouseEvent, itemId: string) => void
+  closeContextMenu: () => void
+  isMobileSidebarOpen: boolean
+  setIsMobileSidebarOpen: (open: boolean) => void
+  setSelectedItems: (ids: string[]) => void
+  handleDownload: (item?: LibraryItem) => void
+  handleView: (item: LibraryItem) => void
 }
 
-const LibraryContext = createContext<LibraryContextType | undefined>(undefined);
+const LibraryContext = createContext<LibraryContextType | undefined>(undefined)
 
-export const LibraryProvider: React.FC<{ children: React.ReactNode; initialItems?: any[] }> = ({ children, initialItems }) => {
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [sortConfig, setSortConfig] = useState<SortConfig>({ field: 'name', order: 'asc' });
-  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
-  const [filterType, setFilterType] = useState('all');
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+/** Normalize folder - supports id/folder_id, name/folder_name (API doc vs backend) */
+function mapApiFolderToItem(f: LibraryFolderView, parentId: string | null): LibraryItem {
+  const id = f.id ?? f.folder_id ?? ""
+  const name = f.name ?? f.folder_name ?? ""
+  return {
+    id,
+    type: "folder",
+    folder_name: name,
+    parentId: f.parentId ?? parentId,
+    tags: f.tags || [],
+    uploaderId: "",
+    isDeleted: false,
+    createdAt: f.createdAt ?? "",
+    updatedAt: f.updatedAt ?? "",
+    name,
+  } as LibraryItem
+}
 
-  const libraryData = useMemo(() => initialItems || mockLibraryData, [initialItems]);
+/** Normalize file - supports id/file_id, filename/file_name, type/file_type, size/file_size, url/file_url */
+function mapApiFileToItem(f: LibraryFileItem, folderId: string): LibraryItem {
+  const id = f.id ?? f.file_id ?? ""
+  const filename = f.filename ?? f.file_name ?? ""
+  const type = f.type ?? f.file_type ?? ""
+  const size = f.size ?? f.file_size ?? 0
+  const url = f.url ?? f.file_url ?? ""
+  const fileType = mimeToFileType(type) || type?.split("/")?.pop()?.toUpperCase() || ""
+  return {
+    id,
+    type: "file",
+    folderId,
+    file_name: filename,
+    file_type: fileType,
+    url,
+    file_size: size,
+    version: 1,
+    tags: f.tags || [],
+    uploaderId: "",
+    isDeleted: false,
+    createdAt: f.createdAt ?? "",
+    name: filename,
+  } as LibraryItem
+}
 
+export const LibraryProvider: React.FC<{
+  children: React.ReactNode
+  initialItems?: any[]
+  useApi?: boolean
+  rootType?: LibraryRootType
+}> = ({ children, initialItems, useApi = true, rootType = "CLIENT" }) => {
+  const [viewMode, setViewMode] = useState<ViewMode>("list")
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
+  const [folderPath, setFolderPath] = useState<BreadcrumbItem[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedItems, setSelectedItems] = useState<string[]>([])
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ field: "name", order: "asc" })
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
+  const [filterType, setFilterType] = useState("all")
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // API mode state
+  const [apiRootFolders, setApiRootFolders] = useState<LibraryItem[]>([])
+  const [apiCurrentContent, setApiCurrentContent] = useState<LibraryItem[]>([])
+
+  const libraryData = useMemo(() => initialItems || mockLibraryData, [initialItems])
+
+  // Mock mode: simulate loading on folder change
   useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [currentFolderId, filterType]);
+    if (useApi) return
+    setIsLoading(true)
+    const t = setTimeout(() => setIsLoading(false), 400)
+    return () => clearTimeout(t)
+  }, [useApi, currentFolderId, filterType])
 
-  const closeContextMenu = () => setContextMenu(null);
-
+  // Load roots when using API (backend returns all roots user can access)
   useEffect(() => {
-    window.addEventListener('click', closeContextMenu);
-    return () => window.removeEventListener('click', closeContextMenu);
-  }, []);
-
-  const breadcrumbs = useMemo(() => {
-    const path: LibraryItem[] = [];
-    let currentId = currentFolderId;
-    while (currentId) {
-      const folder = libraryData.find(item => item.id === currentId && item.type === 'folder');
-      if (folder && folder.type === 'folder') {
-        // Normalize breadcrumb item
-        path.unshift({
-          ...folder,
-          name: folder.folder_name,
-        });
-        currentId = folder.parentId;
-      } else {
-        break;
+    if (!useApi) return
+    let cancelled = false
+    const load = async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const roots = await getRootFolders()
+        if (cancelled) return
+        // Backend filters roots by user access; optionally filter by rootType if present
+        // Roots may have id/folder_id, name/folder_name; filter by rootType when present
+        const filtered =
+          rootType && roots.some((r) => (r as any).rootType)
+            ? roots.filter((f) => (f as any).rootType === rootType)
+            : roots
+        const mapped = filtered.map((f) => mapApiFolderToItem(f as LibraryFolderView, null))
+        setApiRootFolders(mapped)
+      } catch (e) {
+        if (cancelled) return
+        setError(e instanceof Error ? e.message : "Failed to load library")
+      } finally {
+        if (!cancelled) setIsLoading(false)
       }
     }
-    return path;
-  }, [currentFolderId]);
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [useApi, rootType])
+
+  // Load folder content when currentFolderId changes (API mode)
+  useEffect(() => {
+    if (!useApi || !currentFolderId) {
+      setApiCurrentContent([])
+      return
+    }
+    let cancelled = false
+    const load = async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const content = await getFolderContent(currentFolderId)
+        if (cancelled) return
+        const parentId = content.folder?.id ?? content.folder?.folder_id ?? currentFolderId
+        const foldersRaw = content.folders ?? content.childFolders ?? []
+        const childFolders = foldersRaw.map((f) => mapApiFolderToItem(f, parentId))
+        const files = (content.files ?? []).map((f) => mapApiFileToItem(f, parentId))
+        setApiCurrentContent([...childFolders, ...files])
+      } catch (e) {
+        if (cancelled) return
+        setError(e instanceof Error ? e.message : "Failed to load folder")
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [useApi, currentFolderId])
+
+  useEffect(() => {
+    window.addEventListener("click", () => setContextMenu(null))
+    return () => window.removeEventListener("click", () => setContextMenu(null))
+  }, [])
+
+  const closeContextMenu = useCallback(() => setContextMenu(null), [])
+
+  // Breadcrumbs: from folderPath in API mode
+  const breadcrumbs = useMemo(() => {
+    if (useApi) return folderPath
+    const path: BreadcrumbItem[] = []
+    let currentId = currentFolderId
+    while (currentId) {
+      const folder = libraryData.find((item) => item.id === currentId && item.type === "folder")
+      if (folder && folder.type === "folder") {
+        path.unshift({ id: folder.id, name: (folder as any).folder_name || folder.name || "Folder" })
+        currentId = (folder as any).parentId
+      } else break
+    }
+    return path
+  }, [useApi, folderPath, currentFolderId, libraryData])
+
+  // Current items: from API or mock
+  const rawCurrentItems = useMemo(() => {
+    if (useApi) {
+      if (!currentFolderId) return apiRootFolders
+      return apiCurrentContent
+    }
+    return libraryData.filter((item) => {
+      const itemParentId = item.type === "folder" ? (item as any).parentId : (item as any).folderId
+      return itemParentId === currentFolderId
+    })
+  }, [useApi, currentFolderId, apiRootFolders, apiCurrentContent, libraryData])
 
   const currentItems = useMemo(() => {
-    const filtered = libraryData.filter(item => {
-      const itemParentId = item.type === 'folder' ? item.parentId : item.folderId;
-      const itemName = item.type === 'folder' ? item.folder_name : item.file_name;
-      
-      const matchesFolder = itemParentId === currentFolderId;
-      const matchesSearch = searchQuery === '' || itemName.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      let matchesFilter = true;
-      if (filterType === 'pdf') {
-        matchesFilter = item.type === 'file' && item.file_type?.toUpperCase() === 'PDF';
-      } else if (filterType === 'spreadsheet') {
-        matchesFilter = item.type === 'file' && (item.file_type?.toUpperCase() === 'XLSX' || item.file_type?.toUpperCase() === 'CSV');
-      } else if (filterType === 'document') {
-        matchesFilter = item.type === 'file' && (item.file_type?.toUpperCase() === 'DOCX' || item.file_type?.toUpperCase() === 'DOC');
-      }
+    const filtered = rawCurrentItems.filter((item) => {
+      const itemName = item.type === "folder" ? (item as any).folder_name : (item as any).file_name
+      const n = (item as any).name || itemName
+      const matchesSearch =
+        searchQuery === "" || String(n || "").toLowerCase().includes(searchQuery.toLowerCase())
+      let matchesFilter = true
+      if (filterType === "pdf")
+        matchesFilter = item.type === "file" && ((item as any).file_type?.toUpperCase() || "").includes("PDF")
+      else if (filterType === "spreadsheet")
+        matchesFilter =
+          item.type === "file" &&
+          ["XLSX", "CSV"].includes((item as any).file_type?.toUpperCase() || "")
+      else if (filterType === "document")
+        matchesFilter =
+          item.type === "file" &&
+          ["DOCX", "DOC"].includes((item as any).file_type?.toUpperCase() || "")
+      return matchesSearch && matchesFilter
+    })
 
-      return matchesFolder && matchesSearch && matchesFilter;
-    });
-
-    const normalized = filtered.map(item => {
-      const name = item.type === 'folder' ? item.folder_name : item.file_name;
-      const fileType = item.type === 'file' ? item.file_type : 'Folder';
-      const size = item.type === 'file' ? formatFileSize(item.file_size) : '';
-      const updatedAtStr = item.type === 'folder' ? item.updatedAt : item.createdAt;
-      
+    const normalized = filtered.map((item) => {
+      const name = item.type === "folder" ? (item as any).folder_name : (item as any).file_name
+      const fileType = item.type === "file" ? (item as any).file_type : "Folder"
+      const size = item.type === "file" ? formatFileSize((item as any).file_size || 0) : ""
+      const updatedAtStr = item.type === "folder" ? (item as any).updatedAt : (item as any).createdAt
       return {
         ...item,
-        name,
+        name: (item as any).name || name,
         fileType,
         size,
-        updatedAt: new Date(updatedAtStr).toLocaleDateString(),
-        parentId: item.type === 'folder' ? item.parentId : item.folderId,
-      };
-    });
+        updatedAt: updatedAtStr ? new Date(updatedAtStr).toLocaleDateString() : "",
+        parentId: item.type === "folder" ? (item as any).parentId : (item as any).folderId,
+      }
+    })
 
     normalized.sort((a, b) => {
-      let comparison = 0;
-      if (sortConfig.field === 'name') {
-        comparison = (a.name || '').localeCompare(b.name || '');
-      } else if (sortConfig.field === 'type') {
-        comparison = (a.fileType || '').localeCompare(b.fileType || '');
-      } else if (sortConfig.field === 'size') {
-        comparison = (a.size || '').localeCompare(b.size || '');
-      }
-      return sortConfig.order === 'asc' ? comparison : -comparison;
-    });
-
-    return normalized;
-  }, [currentFolderId, searchQuery, sortConfig, filterType]);
+      let comparison = 0
+      if (sortConfig.field === "name") comparison = (a.name || "").localeCompare(b.name || "")
+      else if (sortConfig.field === "type") comparison = (a.fileType || "").localeCompare(b.fileType || "")
+      else if (sortConfig.field === "size") comparison = (a.size || "").localeCompare(b.size || "")
+      return sortConfig.order === "asc" ? comparison : -comparison
+    })
+    return normalized
+  }, [rawCurrentItems, searchQuery, filterType, sortConfig])
 
   const rootFolders = useMemo(() => {
+    if (useApi) return apiRootFolders.map((f) => ({ ...f, name: (f as any).folder_name || f.name }))
     return libraryData
-      .filter(item => item.type === 'folder' && item.parentId === null)
-      .map(folder => ({
-        ...folder,
-        name: folder.type === 'folder' ? folder.folder_name : '',
-      }));
-  }, []);
+      .filter((item) => item.type === "folder" && (item as any).parentId === null)
+      .map((folder) => ({ ...folder, name: (folder as any).folder_name || "" }))
+  }, [useApi, apiRootFolders, libraryData])
 
-  const handleFolderClick = (id: string | null) => {
-    setCurrentFolderId(id);
-    setSelectedItems([]);
-    setContextMenu(null);
-  };
+  /** Sidebar: at root shows root folders; inside a folder shows its child subfolders */
+  const sidebarFolders = useMemo(() => {
+    const items = rawCurrentItems.filter((i) => i.type === "folder")
+    return items.map((f) => ({ ...f, name: (f as any).folder_name || (f as any).name || "Folder" }))
+  }, [rawCurrentItems])
 
-  const handleBack = () => {
-    if (currentFolderId) {
-      const current = libraryData.find(item => item.id === currentFolderId);
-      setCurrentFolderId(current?.parentId || null);
-      setSelectedItems([]);
-      setContextMenu(null);
-    }
-  };
-
-  const handleDoubleClick = (item: LibraryItem) => {
-    if (item.type === 'folder') {
-      handleFolderClick(item.id);
-    } else {
-      const isExcel = item.fileType?.toUpperCase() === 'XLSX' || item.fileType?.toUpperCase() === 'CSV';
-      if (isExcel) {
-        handleDownload(item);
-      } else if (item.url) {
-        window.open(item.url, '_blank');
+  const handleFolderClick = useCallback(
+    (id: string | null, opts?: { fromBreadcrumb?: boolean; name?: string }) => {
+      setSelectedItems([])
+      setContextMenu(null)
+      if (id === null) {
+        setCurrentFolderId(null)
+        setFolderPath([])
+        return
       }
-    }
-  };
-
-  const handleDownload = async (item?: LibraryItem) => {
-    let itemsToDownload: LibraryItem[] = [];
-    let isZip = false;
-    let zipName = "library_export.zip";
-    
-    if (item) {
-      itemsToDownload = [item];
-      if (item.type === 'folder') {
-        isZip = true;
-        zipName = `${item.name}.zip`;
-      }
-    } else if (selectedItems.length > 0) {
-      itemsToDownload = libraryData.filter(i => selectedItems.includes(i.id));
-      if (itemsToDownload.length > 1 || itemsToDownload.some(i => i.type === 'folder')) {
-        isZip = true;
-      }
-    } else {
-      itemsToDownload = currentItems;
-      isZip = true;
-      const folderName = currentFolderId 
-        ? libraryData.find(i => i.id === currentFolderId)?.name 
-        : "Root";
-      zipName = `${folderName}_all_files.zip`;
-    }
-
-    if (isZip) {
-      console.log(`Simulating Zip Creation: ${zipName}`);
-      const blob = new Blob(["This is a simulated ZIP file content for " + zipName], { type: 'application/zip' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = zipName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      return;
-    }
-
-    // Single file download logic
-    const filesToDownload = itemsToDownload.filter(i => i.type === 'file' && i.url);
-    for (const i of filesToDownload) {
-      const itemName = i.type === 'folder' ? i.folder_name : i.file_name;
-      const itemUrl = i.type === 'file' ? i.url : undefined;
-
-      if (itemUrl) {
-        console.log(`Downloading ${itemName}...`);
-        try {
-          const response = await fetch(itemUrl);
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = itemName;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-        } catch {
-          // Fallback: open in new tab if download fails
-          const link = document.createElement('a');
-          link.href = itemUrl;
-          link.setAttribute('download', itemName);
-          link.setAttribute('target', '_blank');
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
+      if (opts?.fromBreadcrumb && folderPath.length > 0) {
+        const idx = folderPath.findIndex((p) => p.id === id)
+        if (idx >= 0) {
+          setFolderPath(folderPath.slice(0, idx + 1))
+          setCurrentFolderId(id)
+          return
         }
       }
-    }
-  };
+      if (useApi) {
+        setCurrentFolderId(id)
+        const name = opts?.name ?? currentItems.find((i) => i.id === id)?.name ?? rootFolders.find((r) => r.id === id)?.name ?? "Folder"
+        setFolderPath((prev) => [...prev, { id, name }])
+      } else {
+        setCurrentFolderId(id)
+      }
+    },
+    [useApi, folderPath, currentItems, rootFolders]
+  )
 
-  const handleSelection = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setContextMenu(null);
-    if (e.ctrlKey || e.metaKey) {
-      setSelectedItems(prev => 
-        prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-      );
+  const handleBack = useCallback(() => {
+    if (!currentFolderId) return
+    setSelectedItems([])
+    setContextMenu(null)
+    if (useApi && folderPath.length > 1) {
+      const prev = folderPath[folderPath.length - 2]
+      setFolderPath(folderPath.slice(0, -1))
+      setCurrentFolderId(prev.id)
+    } else if (useApi) {
+      setFolderPath([])
+      setCurrentFolderId(null)
     } else {
-      setSelectedItems(prev => (prev.length === 1 && prev[0] === id) ? [] : [id]);
+      const current = libraryData.find((item) => item.id === currentFolderId)
+      setCurrentFolderId((current as any)?.parentId || null)
     }
-  };
+  }, [currentFolderId, useApi, folderPath, libraryData])
 
-  const handleSort = (field: SortField) => {
-    setSortConfig(prev => ({
+  const handleView = useCallback((item: LibraryItem) => {
+    if (item.type !== "file") return
+    const url = (item as any).url
+    if (!url) {
+      console.error("No URL available for this file")
+      return
+    }
+    window.open(url, "_blank")
+  }, [])
+
+  const handleDoubleClick = useCallback(
+    (item: LibraryItem) => {
+      if (item.type === "folder") {
+        const name = (item as any).folder_name || (item as any).name
+        handleFolderClick(item.id, { name })
+      } else {
+        handleView(item)
+      }
+    },
+    [handleFolderClick, handleView]
+  )
+
+  const handleDownload = useCallback(
+    async (item?: LibraryItem) => {
+      const files: LibraryItem[] = []
+      if (item) {
+        if (item.type === "folder" && useApi) return
+        files.push(item)
+      } else if (selectedItems.length > 0) {
+        files.push(...currentItems.filter((i) => selectedItems.includes(i.id)))
+      } else {
+        files.push(...currentItems.filter((i) => i.type === "file"))
+      }
+      const fileItems = files.filter((i) => i.type === "file")
+      for (const i of fileItems) {
+        const itemName = (i as any).file_name || (i as any).name
+        const itemUrl = (i as any).url
+        if (!itemUrl) continue
+        const link = document.createElement("a")
+        link.href = itemUrl
+        link.download = itemName || "file"
+        link.target = "_blank"
+        link.rel = "noopener noreferrer"
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      }
+    },
+    [useApi, selectedItems, currentItems]
+  )
+
+  const handleSelection = useCallback((id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setContextMenu(null)
+    setSelectedItems((prev) => {
+      if (e.ctrlKey || e.metaKey) {
+        return prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+      }
+      return prev.length === 1 && prev[0] === id ? [] : [id]
+    })
+  }, [])
+
+  const handleSort = useCallback((field: SortField) => {
+    setSortConfig((prev) => ({
       field,
-      order: prev.field === field && prev.order === 'asc' ? 'desc' : 'asc'
-    }));
-  };
+      order: prev.field === field && prev.order === "asc" ? "desc" : "asc",
+    }))
+  }, [])
 
-  const handleContextMenu = (e: React.MouseEvent, itemId: string) => {
-    e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY, itemId });
-    if (!selectedItems.includes(itemId)) {
-      setSelectedItems([itemId]);
-    }
-  };
+  const handleContextMenu = useCallback((e: React.MouseEvent, itemId: string) => {
+    e.preventDefault()
+    setContextMenu({ x: e.clientX, y: e.clientY, itemId })
+    setSelectedItems((prev) => (prev.includes(itemId) ? prev : [itemId]))
+  }, [])
 
-  const value = {
-    viewMode, setViewMode,
+  const breadcrumbItems: BreadcrumbItem[] = breadcrumbs
+
+  const value: LibraryContextType = {
+    viewMode,
+    setViewMode,
     currentFolderId,
-    searchQuery, setSearchQuery,
-    selectedItems, setSelectedItems,
+    searchQuery,
+    setSearchQuery,
+    selectedItems,
+    setSelectedItems,
     sortConfig,
     contextMenu,
-    filterType, setFilterType,
+    filterType,
+    setFilterType,
     isLoading,
+    error,
     isMobileSidebarOpen,
     setIsMobileSidebarOpen,
-    breadcrumbs,
+    breadcrumbs: breadcrumbItems,
     currentItems,
     rootFolders,
-    handleFolderClick,
+    sidebarFolders,
+    handleFolderClick: (id, opts) => handleFolderClick(id, opts),
     handleBack,
     handleDoubleClick,
     handleSelection,
     handleSort,
     handleContextMenu,
     closeContextMenu,
-    handleDownload
-  };
+    handleDownload,
+    handleView,
+  }
 
-  return <LibraryContext.Provider value={value}>{children}</LibraryContext.Provider>;
-};
+  return <LibraryContext.Provider value={value}>{children}</LibraryContext.Provider>
+}
 
 export const useLibrary = () => {
-  const context = useContext(LibraryContext);
+  const context = useContext(LibraryContext)
   if (context === undefined) {
-    throw new Error('useLibrary must be used within a LibraryProvider');
+    throw new Error("useLibrary must be used within a LibraryProvider")
   }
-  return context;
-};
+  return context
+}

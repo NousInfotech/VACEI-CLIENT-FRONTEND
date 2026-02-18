@@ -8,7 +8,7 @@ import { getFileIcon } from '@/lib/libraryData';
 import { useLibrary } from '@/app/context/LibraryContext';
 
 export const ListView: React.FC = () => {
-  const { currentItems, selectedItems, handleDoubleClick, handleSelection, handleContextMenu, handleDownload } = useLibrary();
+  const { currentItems, selectedItems, handleDoubleClick, handleSelection, handleContextMenu, handleDownload, handleView } = useLibrary();
 
   return (
     <table className="w-full text-left border-separate border-spacing-y-2">
@@ -64,11 +64,11 @@ export const ListView: React.FC = () => {
                   >
                     <Download className="w-5 h-5 text-gray-600" />
                   </Button>
-                  {item.type === 'file' && (item.fileType === 'PDF' || ['PNG', 'JPG', 'JPEG'].includes(item.fileType || '')) && (
+                  {item.type === 'file' && (
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      onClick={(e) => { e.stopPropagation(); handleDoubleClick(item); }}
+                      onClick={(e) => { e.stopPropagation(); handleView?.(item) ?? handleDoubleClick(item); }}
                       className="h-10 w-10 p-0 rounded-lg hover:bg-white shadow-sm border border-transparent hover:border-gray-200"
                     >
                       <Eye className="w-5 h-5 text-gray-600" />

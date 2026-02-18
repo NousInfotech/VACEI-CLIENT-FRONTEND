@@ -1,4 +1,5 @@
 export interface DocumentRequestDocumentSingle {
+  id?: string;
   _id?: string;
   name: string;
   description?: string;
@@ -13,6 +14,8 @@ export interface DocumentRequestDocumentSingle {
 }
 
 export interface MultipleDocumentItem {
+  id?: string;
+  _id?: string;
   label: string;
   status?: string;
   url?: string;

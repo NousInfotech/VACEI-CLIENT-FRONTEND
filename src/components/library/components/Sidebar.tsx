@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { useLibrary } from '@/app/context/LibraryContext';
 
 export const Sidebar: React.FC = () => {
-  const { rootFolders, currentFolderId, handleFolderClick, setIsMobileSidebarOpen } = useLibrary();
+  const { sidebarFolders, currentFolderId, handleFolderClick, setIsMobileSidebarOpen } = useLibrary();
 
   const onFolderClick = (id: string | null) => {
     handleFolderClick(id);
@@ -29,7 +29,7 @@ export const Sidebar: React.FC = () => {
             <FolderIcon className={cn("w-4 h-4", currentFolderId === null ? "text-white fill-white/10" : "text-gray-400")} />
             All Files
           </button>
-          {rootFolders.map(folder => (
+          {sidebarFolders.map(folder => (
             <button
               key={folder.id}
               onClick={() => onFolderClick(folder.id)}

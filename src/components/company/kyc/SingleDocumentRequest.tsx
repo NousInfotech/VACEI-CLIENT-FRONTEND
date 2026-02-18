@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,102 @@ import { DocumentRequestDocumentSingle } from "./types";
 interface UploadingDocumentState {
   documentRequestId?: string;
   documentIndex?: number;
+}
+
+function SingleDocUploadCell({
+  requestId,
+  docIndex,
+  isUploading,
+  isDisabled,
+  onUpload,
+  formatFileSize,
+  accept,
+}: {
+  requestId: string;
+  docIndex: number;
+  isUploading: boolean;
+  isDisabled: boolean;
+  onUpload: (requestId: string, docIndex: number, file: File) => void | Promise<void>;
+  formatFileSize: (bytes: number) => string;
+  accept: string;
+}) {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setSelectedFile(file);
+    e.target.value = "";
+  };
+
+  const handleUploadClick = async () => {
+    if (!selectedFile) return;
+    try {
+      await onUpload(requestId, docIndex, selectedFile);
+      setSelectedFile(null); // Clear only on success (retry possible on failure)
+    } catch {
+      // Keep selectedFile so user can retry
+    }
+  };
+
+  if (isUploading) {
+    return (
+      <div className="flex items-center gap-2">
+        <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
+        <span className="text-xs text-gray-500">Uploading...</span>
+      </div>
+    );
+  }
+
+  if (selectedFile) {
+    return (
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-gray-600 max-w-[140px] truncate" title={selectedFile.name}>
+          {selectedFile.name} ({formatFileSize(selectedFile.size)})
+        </span>
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-blue-300 hover:bg-blue-50 hover:text-blue-800 text-blue-700 h-8 px-3"
+          onClick={handleUploadClick}
+          disabled={isDisabled}
+        >
+          <Upload className="h-4 w-4 mr-1" />
+          Upload
+        </Button>
+        <label className="cursor-pointer">
+          <input type="file" className="hidden" accept={accept} onChange={handleFileSelect} disabled={isDisabled} />
+          <Button size="sm" variant="outline" className="h-8 px-2 text-xs" asChild disabled={isDisabled}>
+            <span>Change</span>
+          </Button>
+        </label>
+      </div>
+    );
+  }
+
+  return (
+    <label className={isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}>
+      <input
+        type="file"
+        className="hidden"
+        accept={accept}
+        onChange={handleFileSelect}
+        disabled={isDisabled}
+      />
+      <Button
+        size="sm"
+        variant="outline"
+        className="border-blue-300 hover:bg-blue-50 hover:text-blue-800 text-blue-700"
+        title="Choose file to upload"
+        disabled={isDisabled}
+        asChild
+      >
+        <span>
+          <Upload className="h-4 w-4 mr-1" />
+          Choose File
+        </span>
+      </Button>
+    </label>
+  );
 }
 
 interface DocumentRequestSingleProps {
@@ -37,6 +133,12 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
 }) => {
  
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   if (!documents || documents.length === 0) {
     return (
       <div className="text-center py-4 text-gray-500 text-sm bg-white rounded-lg">
@@ -53,10 +155,13 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
         const isUploading =
           uploadingDocument?.documentRequestId === requestId &&
           uploadingDocument?.documentIndex === docIndex;
+        const docStatus = (doc.status ?? "").toUpperCase();
+        const canUpload = docStatus !== "REJECTED";
 
+        const docUrl = doc.url ?? (doc as any)?.file?.url
         return (
           <div
-            key={doc._id ?? `${requestId}-${docIndex}`}
+            key={doc._id ?? doc.id ?? `${requestId}-${docIndex}`}
             className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200"
           >
             <div className="flex items-center gap-3">
@@ -74,7 +179,12 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
                     ))}
                   </div>
                 )}
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  {(doc as any).isMandatory && (
+                    <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 text-[10px]">
+                      Required
+                    </Badge>
+                  )}
                   {docType === "template" ? (
                     <Badge
                       variant="outline"
@@ -95,7 +205,7 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
                       ? doc.status
                       : String(doc.status || "pending")}
                   </Badge>
-                  {doc.url && doc.uploadedAt && (
+                  {docUrl && doc.uploadedAt && (
                     <span className="text-xs text-gray-500">
                       Uploaded: {(() => {
                         const date = new Date(doc.uploadedAt);
@@ -110,48 +220,30 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
             </div>
 
             <div className="flex items-center gap-1">
-              {!doc.url ? (
-                // Single-file upload input
-                <label className={`cursor-pointer ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        onUpload(requestId, docIndex, file);
-                      }
-                      e.target.value = "";
-                    }}
-                    disabled={isUploading || isDisabled}
-                  />
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-blue-300 hover:bg-blue-50 hover:text-blue-800 text-blue-700"
-                    title="Upload Document"
-                    disabled={isUploading || isDisabled}
-                    asChild
-                  >
-                    <span>
-                      {isUploading ? (
-                        <RefreshCw className="animate-spin" />
-                      ) : (
-                        <>
-                          <Upload />
-                          Upload
-                        </>
-                      )}
-                    </span>
-                  </Button>
-                </label>
+              {!docUrl ? (
+                <SingleDocUploadCell
+                  requestId={requestId}
+                  docIndex={docIndex}
+                  isUploading={isUploading}
+                  isDisabled={isDisabled || !canUpload}
+                  onUpload={onUpload}
+                  formatFileSize={formatFileSize}
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+                />
               ) : (
                 <>
+                  <span className="text-xs text-gray-600 mr-1 truncate max-w-[120px]" title={(doc.uploadedFileName ?? doc.name) ?? "File"}>
+                    {(doc.uploadedFileName ?? (doc as any)?.file?.file_name ?? doc.name) ?? "File"}
+                    {(doc as any)?.file?.size != null && (
+                      <span className="text-gray-400 ml-1">
+                        ({formatFileSize((doc as any).file.size)})
+                      </span>
+                    )}
+                  </span>
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => window.open(doc.url!, "_blank")}
+                    onClick={() => window.open(docUrl!, "_blank")}
                     className="border-blue-300 hover:bg-blue-50 hover:text-blue-800 text-blue-700 h-8 w-8 p-0"
                     title="View Document"
                     disabled={isDisabled}
@@ -163,7 +255,7 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
                     variant="outline"
                     onClick={async () => {
                       try {
-                        const response = await fetch(doc.url!);
+                        const response = await fetch(docUrl!);
                         const blob = await response.blob();
                         const url = window.URL.createObjectURL(blob);
                         const link = document.createElement("a");
@@ -187,7 +279,7 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
               )}
 
               {/* Clear (reset) only the uploaded file, keep requirement row */}
-              {onClearDocument && doc.url && (
+              {onClearDocument && docUrl && (
                 <Button
                   size="sm"
                   variant="outline"

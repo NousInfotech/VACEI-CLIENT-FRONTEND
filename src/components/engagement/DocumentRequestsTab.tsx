@@ -1,27 +1,44 @@
 "use client"
 
 import React, { useState } from 'react'
+import { format } from 'date-fns'
 import {
   FileText,
   ChevronDown,
   ChevronUp,
-  ClipboardList
+  Eraser
 } from 'lucide-react'
 import { TableSkeleton } from "../shared/CommonSkeletons";
 import { Card, CardContent } from '@/components/ui/card2'
 import { Badge } from '@/components/ui/badge'
 import { Button } from "@/components/ui/button"
+import { SuccessModal } from '@/components/ui/SuccessModal'
+import { ClearReasonModal } from '@/components/ui/ClearReasonModal'
 import { useDocumentRequests } from './hooks/useDocumentRequests'
 import { useEngagement } from './hooks/useEngagement'
-import { uploadDocumentRequestDocument, clearDocumentRequestDocument } from '@/api/auditService'
+import { uploadDocumentRequestFile, clearDocumentRequestFile } from '@/api/documentRequestService'
 import DocumentRequestSingle from '../company/kyc/SingleDocumentRequest'
 import DocumentRequestDouble from '../company/kyc/DoubleDocumentRequest'
 import EmptyState from '../shared/EmptyState'
 
+type UploadingState =
+  | { requestId: string; docIndex: number; multipleId?: null; itemIndex?: null }
+  | { requestId: string; docIndex?: null; multipleId: string; itemIndex: number }
+
+type ClearAction = (reason: string) => Promise<void>
+
 const DocumentRequestsTab = () => {
   const [expandedRequests, setExpandedRequests] = useState<Set<string>>(new Set())
+  const [uploadingState, setUploadingState] = useState<UploadingState | null>(null)
+  const [uploadSuccessOpen, setUploadSuccessOpen] = useState(false)
+  const [clearSuccessOpen, setClearSuccessOpen] = useState(false)
+  const [clearModal, setClearModal] = useState<{ isOpen: boolean; onConfirm: ClearAction; title?: string; message?: string } | null>(null)
   const { engagement } = useEngagement()
-  const { documentRequests, loading, error, refetch } = useDocumentRequests(engagement?._id || null)
+  const { documentRequests, loading, error, refetch } = useDocumentRequests(
+    (engagement as any)?._id ?? (engagement as any)?.id ?? null
+  )
+
+  const reqId = (r: any) => r.id ?? r._id
 
   const toggleExpand = (id: string) => {
     const newSet = new Set(expandedRequests)
@@ -33,71 +50,156 @@ const DocumentRequestsTab = () => {
     setExpandedRequests(newSet)
   }
 
-  // Real API handlers
   const handleUpload = async (requestId: string, docIndex: number, file: File) => {
+    const request = documentRequests.find((r) => reqId(r) === requestId)
+    const doc = request?.documents?.[docIndex]
+    const requestedDocumentId = doc?.id ?? doc?._id
+    if (!requestedDocumentId) {
+      alert('Document not found')
+      return
+    }
+    setUploadingState({ requestId, docIndex })
     try {
-      // Find the document request and document to get the name
-      const request = documentRequests.find(r => r._id === requestId)
-      const document = request?.documents?.[docIndex]
-      const documentName = document?.name || file.name
-      
-      // Backend expects 'documentIndex' (not 'docIndex') and 'documentName'
-      await uploadDocumentRequestDocument(requestId, [file], { 
-        documentIndex: docIndex,
-        documentName: documentName
-      })
+      await uploadDocumentRequestFile(requestId, requestedDocumentId, [file])
       await refetch()
+      setUploadSuccessOpen(true)
     } catch (err: any) {
       console.error('Failed to upload document:', err)
       alert(err.message || 'Failed to upload document')
+      throw err // Rethrow so caller can retry
+    } finally {
+      setUploadingState(null)
     }
   }
 
-  const handleUploadMultiple = async (requestId: string, multipleId: string, files: FileList, itemIndex?: number) => {
+  const handleUploadMultiple = async (
+    requestId: string,
+    requestedDocumentId: string,
+    files: FileList,
+    itemIndex?: number,
+    multipleId?: string
+  ) => {
+    setUploadingState(multipleId != null && itemIndex != null ? { requestId, multipleId, itemIndex } : null)
     try {
       const fileArray = Array.from(files)
-      await uploadDocumentRequestDocument(requestId, fileArray, { multipleId, itemIndex })
+      await uploadDocumentRequestFile(requestId, requestedDocumentId, fileArray)
       await refetch()
+      setUploadSuccessOpen(true)
     } catch (err: any) {
       console.error('Failed to upload documents:', err)
       alert(err.message || 'Failed to upload documents')
+      throw err
+    } finally {
+      setUploadingState(null)
     }
   }
 
-  const handleClear = async (requestId: string, docIndex: number, name: string) => {
-    try {
-      await clearDocumentRequestDocument(requestId, docIndex)
-      await refetch()
-    } catch (err: any) {
-      console.error('Failed to clear document:', err)
-      alert(err.message || 'Failed to clear document')
+  const handleClear = (requestId: string, docIndex: number, _name: string) => {
+    const request = documentRequests.find((r) => reqId(r) === requestId)
+    const doc = request?.documents?.[docIndex]
+    const requestedDocumentId = doc?.id ?? doc?._id
+    if (!requestedDocumentId) {
+      alert('Document not found')
+      return
     }
+    setClearModal({
+      isOpen: true,
+      title: 'Clear Document',
+      message: 'Please provide a reason for clearing this document. This will be logged for audit purposes.',
+      onConfirm: async (reason) => {
+        await clearDocumentRequestFile(requestId, requestedDocumentId, reason)
+        await refetch()
+        setClearSuccessOpen(true)
+      },
+    })
   }
 
-  const handleClearMultipleItem = (requestId: string, multipleId: string, itemIndex: number, label: string) => {
-    // This would need a specific API endpoint for clearing multiple items
-    console.log(`Clearing item ${label} for request ${requestId}, group ${multipleId}`)
+  const handleClearMultipleItem = (requestId: string, multipleId: string, itemIndex: number, _label: string) => {
+    const request = documentRequests.find((r) => reqId(r) === requestId)
+    const group = (request?.multipleDocuments ?? []).find((g) => g._id === multipleId)
+    const item = group?.multiple?.[itemIndex]
+    const requestedDocumentId = item?.id ?? item?._id
+    if (!requestedDocumentId) return
+    setClearModal({
+      isOpen: true,
+      title: 'Clear Document',
+      message: 'Please provide a reason for clearing this document. This will be logged for audit purposes.',
+      onConfirm: async (reason) => {
+        await clearDocumentRequestFile(requestId, requestedDocumentId, reason)
+        await refetch()
+        setClearSuccessOpen(true)
+      },
+    })
   }
 
-  const handleClearMultipleGroup = (requestId: string, multipleId: string, groupName: string) => {
-    // This would need a specific API endpoint for clearing multiple groups
-    console.log(`Clearing all items for group ${groupName} in request ${requestId}`)
+  const handleClearMultipleGroup = (requestId: string, multipleId: string, _groupName: string) => {
+    const request = documentRequests.find((r) => reqId(r) === requestId)
+    const group = (request?.multipleDocuments ?? []).find((g) => g._id === multipleId)
+    const itemsToClear = (group?.multiple ?? []).filter((m: any) => m.url)
+    if (itemsToClear.length === 0) return
+    setClearModal({
+      isOpen: true,
+      title: 'Clear All Documents in Group',
+      message: 'Please provide a reason for clearing all documents in this group. This will be logged for audit purposes.',
+      onConfirm: async (reason) => {
+        for (const item of itemsToClear) {
+          const requestedDocumentId = item.id ?? item._id
+          if (requestedDocumentId) {
+            await clearDocumentRequestFile(requestId, requestedDocumentId, reason)
+          }
+        }
+        await refetch()
+        setClearSuccessOpen(true)
+      },
+    })
   }
 
-  const handleDownloadMultipleGroup = (requestId: string, multipleId: string, groupName: string, items: any[]) => {
-    // Download functionality - would need to implement file download
-    console.log(`Downloading all items for group ${groupName} in request ${requestId}`)
+  const handleDownloadMultipleGroup = (requestId: string, _multipleId: string, _groupName: string, items: any[]) => {
+    items.forEach((item) => {
+      if (item?.url) window.open(item.url, '_blank')
+    })
+  }
+
+  const handleClearAllForRequest = (requestId: string) => {
+    const request = documentRequests.find((r) => reqId(r) === requestId)
+    if (!request) return
+    const toClear: { id: string }[] = []
+    ;(request.documents ?? []).forEach((d: any) => {
+      if (d?.url ?? d?.file?.url ?? d?.fileId) toClear.push({ id: d.id ?? d._id })
+    })
+    ;(request.multipleDocuments ?? []).forEach((g: any) => {
+      ;(g.multiple ?? []).forEach((m: any) => {
+        if (m?.url ?? m?.file?.url ?? m?.fileId) toClear.push({ id: m.id ?? m._id })
+      })
+    })
+    if (toClear.length === 0) return
+    setClearModal({
+      isOpen: true,
+      title: 'Clear All Uploaded Documents',
+      message: 'Please provide a reason for clearing all uploaded documents. This will be logged for audit purposes.',
+      onConfirm: async (reason) => {
+        for (const { id } of toClear) {
+          await clearDocumentRequestFile(requestId, id, reason)
+        }
+        await refetch()
+        setClearSuccessOpen(true)
+      },
+    })
   }
 
   const getStatusBadge = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'completed':
+    switch (status?.toUpperCase()) {
+      case 'COMPLETED':
         return <Badge className="bg-green-100 text-green-700 border-green-200">Completed</Badge>
-      case 'submitted':
+      case 'UPLOADED':
+        return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Uploaded</Badge>
+      case 'SUBMITTED':
         return <Badge className="bg-blue-100 text-blue-700 border-blue-200">Submitted</Badge>
-      case 'pending':
+      case 'PENDING':
         return <Badge className="bg-amber-100 text-amber-700 border-amber-200">Pending</Badge>
-      case 'reopened':
+      case 'REJECTED':
+        return <Badge className="bg-red-100 text-red-700 border-red-200">Rejected</Badge>
+      case 'REOPENED':
         return <Badge className="bg-rose-100 text-rose-700 border-rose-200">Reopened</Badge>
       default:
         return <Badge variant="outline">{status || 'Active'}</Badge>
@@ -142,19 +244,21 @@ const DocumentRequestsTab = () => {
 
       <div className="space-y-4">
         {documentRequests.map((request) => {
-          const isExpanded = expandedRequests.has(request._id)
+          const requestIdVal = reqId(request)
+          const isExpanded = expandedRequests.has(requestIdVal)
           
           const singleDocs = (request.documents || []) as any[]
           const multipleGroups = (request.multipleDocuments || []) as any[]
+          const isUploaded = (d: any) => !!(d?.url ?? d?.file?.url ?? d?.fileId)
           
           const totalDocs = singleDocs.length + multipleGroups.reduce((acc, md) => acc + (md.multiple?.length || 0), 0)
-          const uploadedDocsCount = singleDocs.filter(d => d.url).length + 
-            multipleGroups.reduce((acc, md) => acc + (md.multiple?.filter((m: any) => m.url).length || 0), 0)
+          const uploadedDocsCount = singleDocs.filter(isUploaded).length + 
+            multipleGroups.reduce((acc, md) => acc + (md.multiple?.filter(isUploaded).length || 0), 0)
           const percentage = totalDocs > 0 ? Math.round((uploadedDocsCount / totalDocs) * 100) : 0
 
           return (
             <Card
-              key={request._id}
+              key={requestIdVal}
               className="bg-white/80 border border-gray-300 rounded-xl shadow-sm hover:bg-white/70 transition-all mb-4 overflow-hidden"
             >
               <CardContent className="p-0">
@@ -169,6 +273,11 @@ const DocumentRequestsTab = () => {
                           <h4 className="text-lg font-semibold text-gray-900">
                             {request.title || request.name || 'Document Request'}
                           </h4>
+                          {request.deadline && (
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              Deadline: {format(new Date(request.deadline), 'MMM d, yyyy')}
+                            </p>
+                          )}
                         </div>
                       </div>
                       
@@ -181,7 +290,7 @@ const DocumentRequestsTab = () => {
                         <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
                           {uploadedDocsCount}/{totalDocs} DOCUMENTS ({percentage}%)
                         </Badge>
-                        {getStatusBadge(request.status)}
+                        {getStatusBadge(request.status ?? '')}
                       </div>
 
                       <div className="flex items-center gap-4 mb-4">
@@ -204,10 +313,21 @@ const DocumentRequestsTab = () => {
                     </div>
 
                     <div className="flex flex-col items-end gap-2">
+                      {uploadedDocsCount > 0 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleClearAllForRequest(requestIdVal)}
+                          className="rounded-xl border-amber-200 text-amber-700 hover:bg-amber-50 h-9 px-4"
+                        >
+                          <Eraser className="h-4 w-4 mr-2" />
+                          Clear All Uploaded
+                        </Button>
+                      )}
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={() => toggleExpand(request._id)}
+                        onClick={() => toggleExpand(requestIdVal)}
                         className="rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50 h-9 px-4"
                       >
                         {isExpanded ? <ChevronUp size={16} className="mr-2" /> : <ChevronDown size={16} className="mr-2" />}
@@ -225,19 +345,31 @@ const DocumentRequestsTab = () => {
                     </div>
 
                     <DocumentRequestSingle 
-                      requestId={request._id}
+                      requestId={requestIdVal}
                       documents={singleDocs}
                       onUpload={handleUpload}
                       onClearDocument={handleClear}
+                      uploadingDocument={
+                        uploadingState?.docIndex != null
+                          ? { documentRequestId: uploadingState.requestId, documentIndex: uploadingState.docIndex }
+                          : undefined
+                      }
+                      isDisabled={request.status === 'REJECTED'}
                     />
 
                     <DocumentRequestDouble 
-                      requestId={request._id}
+                      requestId={requestIdVal}
                       multipleDocuments={multipleGroups}
                       onUploadMultiple={handleUploadMultiple}
                       onClearMultipleItem={handleClearMultipleItem}
                       onClearMultipleGroup={handleClearMultipleGroup}
                       onDownloadMultipleGroup={handleDownloadMultipleGroup}
+                      uploadingState={
+                        uploadingState?.multipleId
+                          ? { documentRequestId: uploadingState.requestId, multipleDocumentId: uploadingState.multipleId, itemIndex: uploadingState.itemIndex }
+                          : undefined
+                      }
+                      isDisabled={request.status === 'REJECTED'}
                     />
                   </div>
                 )}
@@ -246,6 +378,32 @@ const DocumentRequestsTab = () => {
           )
         })}
       </div>
+
+      <SuccessModal
+        isOpen={uploadSuccessOpen}
+        onClose={() => setUploadSuccessOpen(false)}
+        title="Upload Successful"
+        message="Your document has been uploaded successfully."
+        buttonText="Got it"
+      />
+
+      <SuccessModal
+        isOpen={clearSuccessOpen}
+        onClose={() => setClearSuccessOpen(false)}
+        title="Document Cleared"
+        message="The document has been cleared successfully. You can upload a new file if needed."
+        buttonText="Got it"
+      />
+
+      {clearModal && (
+        <ClearReasonModal
+          isOpen={true}
+          onClose={() => setClearModal(null)}
+          onConfirm={clearModal.onConfirm}
+          title={clearModal.title}
+          message={clearModal.message}
+        />
+      )}
     </div>
   )
 }

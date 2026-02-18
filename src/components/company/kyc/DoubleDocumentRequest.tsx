@@ -24,14 +24,14 @@ interface DocumentRequestMultipleProps {
   uploadingState?: UploadingMultipleState | null;
   /**
    * Called when user selects one or more files for a grouped document.
-   * This should typically use the backend `uploadMultipleDocuments` endpoint.
-   * itemIndex is optional - if provided, uploads to that specific item, otherwise finds first pending item.
+   * requestedDocumentId is the child document's id (for MULTIPLE type, each child has its own id).
    */
   onUploadMultiple: (
     requestId: string,
-    multipleDocumentId: string,
+    requestedDocumentId: string,
     files: FileList,
-    itemIndex?: number
+    itemIndex?: number,
+    multipleId?: string
   ) => void | Promise<void>;
   /** Called when user clicks "Clear" button to clear file only for a specific item */
   onClearMultipleItem?: (
@@ -239,11 +239,13 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                             onChange={(e) => {
                               const file = e.target.files?.[0];
                               if (file) {
-                                // Create a FileList-like object with single file for onUploadMultiple
                                 const dataTransfer = new DataTransfer();
                                 dataTransfer.items.add(file);
-                                // Pass the item index so the file is uploaded to this specific item
-                                onUploadMultiple(requestId, group._id, dataTransfer.files, index);
+                                // Use child's id as requestedDocumentId for the upload API
+                                const requestedDocumentId = item.id ?? item._id;
+                                if (requestedDocumentId) {
+                                  onUploadMultiple(requestId, requestedDocumentId, dataTransfer.files, index, group._id);
+                                }
                               }
                               e.target.value = "";
                             }}

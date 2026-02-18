@@ -2,27 +2,65 @@
 
 import React from 'react'
 import { Badge } from '@/components/ui/badge'
-import { Calendar, CheckCircle2, Clock, AlertCircle, ExternalLink, FileText, List, Calendar as CalendarIcon } from 'lucide-react'
+import { Calendar, CheckCircle2, Clock, AlertCircle, List, Calendar as CalendarIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import ParentSchedule from "@/app/dashboard/schedule/page";
-import PillTabs from '../shared/PillTabs';
-import { Button } from '../ui/button'
+import ComplianceMonthView from "./ComplianceMonthView";
+import PillTabs from '../shared/PillTabs'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useEngagement } from './hooks/useEngagement'
+import { useCompliances } from './hooks/useCompliances'
+import { updateComplianceStatus, type EngagementCompliance } from '@/api/auditService'
+import { Button } from '@/components/ui/button'
 
 export type ComplianceStatus = 'filed' | 'upcoming' | 'due_today' | 'overdue'
 
 interface ComplianceItem {
   id: string
+  complianceId: string
+  engagementId: string
   title: string
   type: string
   dueDate: string
   status: ComplianceStatus
   authority: string
   description: string
+  cta: string
+  apiStatus: string
+}
+
+function mapApiToComplianceItem(c: EngagementCompliance): ComplianceItem {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const deadline = new Date(c.deadline)
+  deadline.setHours(0, 0, 0, 0)
+  const isToday = today.getTime() === deadline.getTime()
+  const isPast = deadline.getTime() < today.getTime()
+
+  let status: ComplianceStatus = 'upcoming'
+  if (c.status === 'COMPLETED' || c.status === 'ACTION_TAKEN') status = 'filed'
+  else if (c.status === 'OVERDUE' || isPast) status = 'overdue'
+  else if (isToday) status = 'due_today'
+  else status = 'upcoming'
+
+  const authority = c.customServiceCycle?.title || c.service || 'Internal'
+  return {
+    id: c.id,
+    complianceId: c.id,
+    engagementId: c.engagementId,
+    title: c.title,
+    type: c.type || c.service,
+    dueDate: c.deadline,
+    status,
+    authority,
+    description: c.description || '',
+    cta: c.cta || 'Mark as done',
+    apiStatus: c.status,
+  }
 }
 
 const statusConfig: Record<ComplianceStatus, { label: string; color: string; icon: any; tone: "success" | "info" | "warning" | "danger" }> = {
   filed: { 
-    label: 'Filed', 
+    label: 'Completed', 
     color: 'bg-emerald-50 text-emerald-600 border-emerald-100',
     icon: CheckCircle2,
     tone: 'success'
@@ -102,173 +140,77 @@ function SummaryCard({
   );
 }
 
-const MOCK_COMPLIANCE_DATA: Record<string, ComplianceItem[]> = {
-  // ... (keeping existing mock data)
-  'Accounting & Bookkeeping': [
-    {
-      id: 'acc-1',
-      title: 'Monthly Management Accounts',
-      type: 'Financial Reporting',
-      dueDate: '2026-02-15',
-      status: 'upcoming',
-      authority: 'Internal/Bank',
-      description: 'Monthly preparation of P&L and Balance Sheet for internal review and bank compliance.'
-    },
-    {
-      id: 'acc-2',
-      title: 'Annual Return (Form 1)',
-      type: 'Statutory Filing',
-      dueDate: '2026-01-20',
-      status: 'filed',
-      authority: 'MBR',
-      description: 'Submission of company annual return including current shareholder and director details.'
-    },
-    {
-      id: 'acc-3',
-      title: 'Financial Statements 2025',
-      type: 'Statutory Audit',
-      dueDate: '2026-09-30',
-      status: 'upcoming',
-      authority: 'MBR / Tax Authority',
-      description: 'Audit and submission of the full set of financial statements for the previous fiscal year.'
-    }
-  ],
-  'Audit': [
-    {
-      id: 'aud-1',
-      title: 'Statutory Audit 2025',
-      type: 'Audit Engagement',
-      dueDate: '2026-09-30',
-      status: 'upcoming',
-      authority: 'Regulated Markets',
-      description: 'Independent examination of financial records to ensure compliance and accuracy.'
-    },
-    {
-      id: 'aud-2',
-      title: 'Tax Computation Approval',
-      type: 'Tax Compliance',
-      dueDate: '2026-03-31',
-      status: 'upcoming',
-      authority: 'Commissioner por Revenue',
-      description: 'Review and sign-off on the tax computations based on audited figures.'
-    }
-  ],
-  VAT: [
-    {
-      id: 'vat-1',
-      title: 'VAT Return Q4 2025',
-      type: 'Quarterly Filing',
-      dueDate: '2026-02-15',
-      status: 'due_today',
-      authority: 'VAT Department',
-      description: 'Quarterly submission of VAT input and output totals for the period ending Dec 2025.'
-    },
-    {
-      id: 'vat-2',
-      title: 'Recapitulative Statement',
-      type: 'EU Reporting',
-      dueDate: '2026-01-15',
-      status: 'filed',
-      authority: 'VAT Department',
-      description: 'Declaration of intra-community supplies and acquisitions for the month of December.'
-    }
-  ],
-  Tax: [
-    {
-      id: 'tax-1',
-      title: 'Corporate Tax Return 2025',
-      type: 'Annual Filing',
-      dueDate: '2026-09-30',
-      status: 'upcoming',
-      authority: 'Commissioner for Revenue',
-      description: 'Annual corporate tax return and computation for FY 2025.'
-    }
-  ],
-  'Corporate Services (CSP)': [
-    {
-      id: 'csp-1',
-      title: 'Beneficial Ownership Register',
-      type: 'Statutory Update',
-      dueDate: '2026-01-31',
-      status: 'upcoming',
-      authority: 'MBR',
-      description: 'Annual verification and update of the Register of Beneficial Owners.'
-    },
-    {
-      id: 'csp-2',
-      title: 'Resolution for Dividend',
-      type: 'Corporate Governance',
-      dueDate: '2026-02-28',
-      status: 'upcoming',
-      authority: 'Internal',
-      description: 'Drafting and filing of shareholder resolutions for the approved dividend distribution.'
-    }
-  ],
-  'Payroll': [
-    {
-      id: 'pay-1',
-      title: 'FS5 Submission - January',
-      type: 'Monthly Tax',
-      dueDate: '2026-02-28',
-      status: 'upcoming',
-      authority: 'Commissioner for Revenue',
-      description: 'Monthly submission of social security and tax contributions for employees.'
-    },
-    {
-      id: 'pay-2',
-      title: 'FS7 Annual Summary',
-      type: 'Annual Reconciliation',
-      dueDate: '2026-01-31',
-      status: 'due_today',
-      authority: 'Commissioner for Revenue',
-      description: 'Annual reconciliation of all monthly FS5 submissions for the 2025 calendar year.'
-    }
-  ],
-  'Banking & Payments': [
-    {
-      id: 'bp-1',
-      title: 'Monthly Bank Reconciliation',
-      type: 'Accounting',
-      dueDate: '2026-02-05',
-      status: 'upcoming',
-      authority: 'Internal',
-      description: 'Reconciliation of all corporate bank accounts for the previous month.'
-    },
-    {
-      id: 'bp-2',
-      title: 'Quarterly Source of Funds Update',
-      type: 'Compliance',
-      dueDate: '2026-03-31',
-      status: 'upcoming',
-      authority: 'Bank / FIAU',
-      description: 'Periodic review and update of source of funds documentation for banking partners.'
-    }
-  ]
-}
-
 interface ComplianceCalendarTabProps {
   serviceName: string
 }
-
-import { useEngagement } from './hooks/useEngagement'
 
 const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceName }) => {
   const [viewMode, setViewMode] = React.useState<'list' | 'month'>('list')
   const [activeFilter, setActiveFilter] = React.useState<ComplianceStatus | 'all'>('all')
   const { engagement } = useEngagement()
-  
-  // Use engagement context data if available (comes from service-specific mocks), otherwise fallback to local MOCK_COMPLIANCE_DATA
-  const allItems = (engagement as any)?.complianceItems || MOCK_COMPLIANCE_DATA[serviceName] || []
+  const engagementId =
+    ((engagement as any)?._id as string | undefined) ||
+    ((engagement as any)?.id as string | undefined) ||
+    null
+  const { compliances, loading, error, refetch } = useCompliances(engagementId)
+  const [updatingId, setUpdatingId] = React.useState<string | null>(null)
+
+  const allItems: ComplianceItem[] = React.useMemo(
+    () => compliances.map(mapApiToComplianceItem),
+    [compliances]
+  )
   
   const filteredItems = activeFilter === 'all' 
     ? allItems 
     : allItems.filter((item: ComplianceItem) => item.status === activeFilter)
+
+  const canMarkActionTaken = (apiStatus: string) =>
+    ['ACTION_REQUIRED', 'OVERDUE', 'PENDING', 'IN_PROGRESS'].includes(apiStatus)
+
+  const handleMarkActionTaken = async (item: ComplianceItem) => {
+    if (!engagementId || !canMarkActionTaken(item.apiStatus)) return
+    setUpdatingId(item.complianceId)
+    try {
+      await updateComplianceStatus(item.engagementId, item.complianceId, { status: 'ACTION_TAKEN' })
+      await refetch()
+    } catch (e) {
+      console.error('Failed to update compliance status:', e)
+    } finally {
+      setUpdatingId(null)
+    }
+  }
 
   const counts = {
     overdue: allItems.filter((i: ComplianceItem) => i.status === 'overdue').length,
     due_today: allItems.filter((i: ComplianceItem) => i.status === 'due_today').length,
     upcoming: allItems.filter((i: ComplianceItem) => i.status === 'upcoming').length,
     filed: allItems.filter((i: ComplianceItem) => i.status === 'filed').length,
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 rounded-0" />
+          ))}
+        </div>
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-64 rounded-0" />
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-0" />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-sm text-red-500 font-medium">Failed to load compliance calendar.</p>
+      </div>
+    )
   }
 
   return (
@@ -297,7 +239,7 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
           isActive={activeFilter === 'upcoming'}
         />
         <SummaryCard
-          label="Filed"
+          label="Completed"
           value={counts.filed}
           tone="success"
           onClick={() => setActiveFilter(activeFilter === 'filed' ? 'all' : 'filed')}
@@ -383,12 +325,19 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
                     </div>
 
                     <div className="shrink-0 flex items-center md:justify-end gap-3 mt-4 md:mt-0">
-                      <Button>
-                        Action Required
-                      </Button>
-                      <button className="h-10 w-10 border border-gray-200 flex items-center justify-center text-gray-400 hover:text-primary hover:border-primary/30 transition-all">
-                        <ExternalLink className="w-4 h-4" />
-                      </button>
+                      {canMarkActionTaken(item.apiStatus) ? (
+                        <Button
+                          size="sm"
+                          onClick={() => handleMarkActionTaken(item)}
+                          disabled={updatingId === item.complianceId}
+                        >
+                          {updatingId === item.complianceId ? 'Updating...' : item.cta}
+                        </Button>
+                      ) : (
+                        <Badge variant="outline" className="text-xs font-medium text-gray-500 border-gray-200">
+                          {item.apiStatus === 'ACTION_TAKEN' ? 'Action taken' : 'Completed'}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 )
@@ -397,7 +346,7 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
           </div>
         ) : (
           <div className="bg-white border border-gray-100 p-6 overflow-hidden">
-            <ParentSchedule />
+            <ComplianceMonthView items={allItems} />
           </div>
         )}
       </div>

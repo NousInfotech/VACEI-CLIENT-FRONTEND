@@ -319,6 +319,22 @@ export const mockLibraryData: LibraryItem[] = [
   },
 ];
 
+/** Map API mimeType to file extension for icon display */
+export const mimeToFileType = (mimeType?: string): string => {
+  if (!mimeType) return "";
+  const m = mimeType.toLowerCase();
+  if (m.includes("pdf")) return "PDF";
+  if (m.includes("png")) return "PNG";
+  if (m.includes("jpeg") || m.includes("jpg")) return "JPG";
+  if (m.includes("spreadsheet") || m.includes("excel")) return "XLSX";
+  if (m.includes("csv")) return "CSV";
+  if (m.includes("word") || m.includes("document")) return "DOCX";
+  if (m.includes("zip")) return "ZIP";
+  // Fallback: extract from mime e.g. "application/pdf" -> "PDF"
+  const part = m.split("/").pop();
+  return part ? part.toUpperCase().slice(0, 4) : "";
+};
+
 export const getFileIcon = (fileType?: string) => {
   switch (fileType?.toUpperCase()) {
     case 'PDF': return FileTextIcon;

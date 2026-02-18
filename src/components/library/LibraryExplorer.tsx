@@ -24,6 +24,7 @@ const LibraryContent: React.FC = () => {
   const { 
     viewMode, 
     isLoading, 
+    error,
     currentItems, 
     setSelectedItems, 
     closeContextMenu,
@@ -68,6 +69,11 @@ const LibraryContent: React.FC = () => {
         <div className="flex-1 flex flex-col min-w-0" onClick={() => { setSelectedItems([]); closeContextMenu(); }}>
           <ScrollArea className="flex-1">
             <div className="p-4 md:p-6" onClick={(e) => e.stopPropagation()}>
+              {error && (
+                <div className="mb-4 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm">
+                  {error}
+                </div>
+              )}
               {isLoading ? (
                 viewMode === 'list' ? <ListViewSkeleton /> : <GridViewSkeleton />
               ) : currentItems.length === 0 ? (
@@ -90,10 +96,10 @@ const LibraryContent: React.FC = () => {
   );
 };
 
-export const LibraryExplorer: React.FC<LibraryExplorerProps & { items?: any[] }> = ({ className, items }) => {
+export const LibraryExplorer: React.FC<LibraryExplorerProps & { items?: any[]; useApi?: boolean }> = ({ className, items, useApi = true }) => {
   return (
     <div className={cn("flex flex-col h-[600px] md:h-[700px] lg:h-[800px] bg-white border border-gray-200 rounded-2xl overflow-hidden", className)}>
-      <LibraryProvider initialItems={items} children={<LibraryContent />} />
+      <LibraryProvider initialItems={items} useApi={useApi} children={<LibraryContent />} />
     </div>
   );
 };

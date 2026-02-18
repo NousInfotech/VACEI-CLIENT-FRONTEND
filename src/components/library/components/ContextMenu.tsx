@@ -5,7 +5,7 @@ import { Download, Eye } from 'lucide-react';
 import { useLibrary } from '@/app/context/LibraryContext';
 
 export const ContextMenu: React.FC = () => {
-  const { contextMenu, closeContextMenu, currentItems, handleDownload, handleDoubleClick } = useLibrary();
+  const { contextMenu, closeContextMenu, currentItems, handleDownload, handleView } = useLibrary();
   
   if (!contextMenu) return null;
 
@@ -18,20 +18,22 @@ export const ContextMenu: React.FC = () => {
       style={{ left: contextMenu.x, top: contextMenu.y }}
       onClick={(e) => e.stopPropagation()}
     >
-      <button 
-        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-primary transition-colors text-left"
-        onClick={() => { handleDownload(item); closeContextMenu(); }}
-      >
-        <Download className="w-4 h-4" />
-        Download {item.type === 'folder' ? 'Folder' : ''}
-      </button>
-      {item.type === 'file' && (item.fileType === 'PDF' || ['PNG', 'JPG', 'JPEG'].includes(item.fileType || '')) && (
+      {item.type === 'file' && (
         <button 
           className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-primary transition-colors text-left"
-          onClick={() => { handleDoubleClick(item); closeContextMenu(); }}
+          onClick={() => { handleDownload(item); closeContextMenu(); }}
+        >
+          <Download className="w-4 h-4" />
+          Download
+        </button>
+      )}
+      {item.type === 'file' && (
+        <button 
+          className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-primary transition-colors text-left"
+          onClick={() => { handleView(item); closeContextMenu(); }}
         >
           <Eye className="w-4 h-4" />
-          Quick View
+          View
         </button>
       )}
     </div>

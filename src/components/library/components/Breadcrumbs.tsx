@@ -20,7 +20,7 @@ export const Breadcrumbs: React.FC = () => {
         <React.Fragment key={folder.id}>
           <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
           <button 
-            onClick={() => handleFolderClick(folder.id)}
+            onClick={() => handleFolderClick(folder.id, { fromBreadcrumb: true })}
             className={cn(
               "text-sm hover:text-primary transition-colors",
               index === breadcrumbs.length - 1 ? "text-gray-900 font-medium" : "text-gray-500"
