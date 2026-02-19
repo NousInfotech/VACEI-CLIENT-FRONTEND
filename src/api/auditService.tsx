@@ -95,7 +95,7 @@ export interface Company {
   updatedAt: string;
   __v: number;
   companyStartedAt: string | null;
-  industry?: string; 
+  industry?: string;
   incorporationDate?: string;
   id: string;
 }
@@ -131,6 +131,9 @@ export interface HierarchyData {
 
 // Engagement Types
 export interface Engagement {
+  serviceType: any;
+  serviceCategory: any;
+  id: string;
   _id: string;
   title: string;
   yearEndDate: string;
@@ -141,7 +144,10 @@ export interface Engagement {
   procedures?: Array<any>;
   trialBalanceDoc?: any;
   /** Partner/org team members - used for direct chat when engagement room access is denied */
-  orgTeam?: Array<{ userId: string; [k: string]: unknown }>;
+  orgTeam?: Array<{ userId: string;[k: string]: unknown }>;
+  createdAt?: string;
+  updatedAt?: string;
+
 }
 
 // Extended Trial Balance Types
@@ -275,31 +281,31 @@ export interface KycCycle {
 export async function getCompanies(): Promise<Pick<Company, "_id" | "name" | "registrationNumber">[]> {
   try {
     const response = await fetch(`${backendUrl}companies`, {
-    method: "GET",
-    headers: {
-      ...getAuthHeaders(),
-      "Content-Type": "application/json",
-    },
+      method: "GET",
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
       credentials: 'include',
-  });
+    });
 
-  if (!response.ok) {
+    if (!response.ok) {
       const error = await response.json().catch(() => ({}));
       throw new Error(error.error || error.message || "Failed to fetch companies");
-  }
+    }
 
     const result = await response.json();
-    
+
     // Backend returns { success: true, data: [...], message: "..." }
     // Extract the data field if present, otherwise use the whole response
     const companiesData = result.data || result || [];
-    
+
     // Ensure it's an array
     if (!Array.isArray(companiesData)) {
       console.warn('getCompanies: Expected array but got:', typeof companiesData, companiesData);
       return [];
     }
-    
+
     // Transform Supabase company format to frontend format
     return companiesData.map((company: any) => ({
       _id: company.id || company._id,
@@ -339,7 +345,7 @@ export async function getCompanyById(id: string): Promise<Company> {
   // Backend returns { success: true, data: {...}, message: "..." }
   // Extract the data field if present, otherwise use the whole response
   const companyData = result.data || result;
-  
+
   // Ensure the company data has both _id and id fields for compatibility
   if (companyData.id && !companyData._id) {
     companyData._id = companyData.id;
@@ -347,7 +353,7 @@ export async function getCompanyById(id: string): Promise<Company> {
   if (companyData._id && !companyData.id) {
     companyData.id = companyData._id;
   }
-  
+
   return companyData as Company;
 }
 /**

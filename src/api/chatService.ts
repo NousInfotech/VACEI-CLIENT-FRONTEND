@@ -81,6 +81,12 @@ class ChatService {
     }
   }
 
+  public setAccessToken(token: string) {
+    if (this.supabase) {
+      this.supabase.realtime.setAuth(token);
+    }
+  }
+
   private getCurrentUserId(): string | null {
     if (typeof window === "undefined") return null;
     const raw =
@@ -251,7 +257,9 @@ class ChatService {
           onNewMessage(payload.new as ChatMessage);
         }
       )
-      .subscribe() as RealtimeChannel;
+      .subscribe((status) => {
+        console.log(`🔥 REALTIME MSG SUBSCRIPTION STATUS: ${status} for room ${roomId}`);
+      }) as RealtimeChannel;
   }
 
   subscribeToMemberStatus(
@@ -295,7 +303,9 @@ class ChatService {
           });
         }
       )
-      .subscribe() as RealtimeChannel;
+      .subscribe((status) => {
+        console.log(`🔥 REALTIME MEMBER SUBSCRIPTION STATUS: ${status} for room ${roomId}`);
+      }) as RealtimeChannel;
   }
 }
 

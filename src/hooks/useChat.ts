@@ -40,6 +40,8 @@ export function useChat(
 ): UseChatReturn {
   const partnerId = options?.partnerId ?? null;
 
+
+
   const [roomId, setRoomId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [members, setMembers] = useState<ChatMember[]>([]);
@@ -231,6 +233,12 @@ export function useChat(
 
     setNextCursor(null);
     setHasMore(true);
+
+    // Set auth token for realtime
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (token) {
+      chatService.setAccessToken(token);
+    }
 
     (async () => {
       await Promise.all([

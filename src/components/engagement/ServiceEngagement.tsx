@@ -284,9 +284,18 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
         if (signal.aborted) return;
 
         const mappedType = SLUG_TO_SERVICE_TYPE[serviceSlug] || serviceSlug.toUpperCase().replace('-', '_');
+
+        // Sort engagements by update date (recently active first) to ensure we pick the one being worked on
+        engagements.sort((a: any, b: any) => {
+          const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+          const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+          return dateB - dateA;
+        });
+
         const match = engagements.find((e: any) =>
           e.serviceCategory === mappedType ||
           e.serviceType === mappedType ||
+          e.serviceType === 'CUSTOM' || // Allow CUSTOM/Assigned engagements to match
           e.title?.toUpperCase().includes(mappedType)
         );
 
