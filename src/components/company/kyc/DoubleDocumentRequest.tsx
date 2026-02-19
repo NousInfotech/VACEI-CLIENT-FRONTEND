@@ -4,41 +4,31 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
  
 import { Eye, Download, FileEdit, FileUp, Upload, RefreshCw, Eraser, File as FileIcon } from "lucide-react";
-import {
-  DocumentRequestDocumentMultiple,
-  MultipleDocumentItem,
-} from "./types";
+import { RequestedDocument } from "./types";
 
 interface UploadingMultipleState {
-  documentRequestId?: string;
-  multipleDocumentId?: string;
-  itemIndex?: number;
+  documentId?: string;
 }
 
 interface DocumentRequestMultipleProps {
   /** ID of the parent document request */
   requestId: string;
   /** Array of grouped (multi) documents */
-  multipleDocuments: DocumentRequestDocumentMultiple[];
+  multipleDocuments: RequestedDocument[];
   /** Uploading state coming from the parent, used to show spinners/disable inputs */
   uploadingState?: UploadingMultipleState | null;
   /**
    * Called when user selects one or more files for a grouped document.
-   * requestedDocumentId is the child document's id (for MULTIPLE type, each child has its own id).
    */
   onUploadMultiple: (
     requestId: string,
     requestedDocumentId: string,
-    files: FileList,
-    itemIndex?: number,
-    multipleId?: string
+    files: FileList
   ) => void | Promise<void>;
   /** Called when user clicks "Clear" button to clear file only for a specific item */
   onClearMultipleItem?: (
     requestId: string,
-    multipleDocumentId: string,
-    itemIndex: number,
-    itemLabel: string
+    requestedDocumentId: string
   ) => void | Promise<void>;
   /** Called when user wants to clear all files in a multiple document group */
   onClearMultipleGroup?: (
@@ -51,7 +41,7 @@ interface DocumentRequestMultipleProps {
     requestId: string,
     multipleDocumentId: string,
     groupName: string,
-    items: MultipleDocumentItem[]
+    items: RequestedDocument[]
   ) => void | Promise<void>;
   isDisabled?: boolean;
   isClientView?: boolean;
@@ -68,38 +58,14 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
   isDisabled,
   isClientView = false,
 }) => {
- 
-
   if (!multipleDocuments || multipleDocuments.length === 0) {
     return null;
   }
 
-  const renderTypeBadge = (type: string | any) => {
-    const typeStr = typeof type === "string" ? type : type?.type || "direct";
-
-    return typeStr === "template" ? (
-      <Badge
-        variant="outline"
-        className="text-gray-600 border-gray-300 bg-gray-50"
-      >
-        Template
-      </Badge>
-    ) : (
-      <Badge
-        variant="outline"
-        className="text-gray-600 border-gray-300 bg-gray-50"
-      >
-        Direct
-      </Badge>
-    );
-  };
-
-  const renderItemStatus = (item: MultipleDocumentItem) => {
+  const renderItemStatus = (item: RequestedDocument) => {
     return (
       <Badge variant="outline" className="text-gray-600 border-gray-300">
-        {typeof item.status === "string"
-          ? item.status
-          : String(item.status || "pending")}
+        {item.status}
       </Badge>
     );
   };
@@ -107,56 +73,62 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
   return (
     <div className="space-y-3 mt-4">
       {multipleDocuments.map((group) => {
-        const groupType =
-          typeof group.type === "string"
-            ? group.type
-            : (group as any).type?.type || "direct";
-
-        const isUploading =
-          uploadingState?.documentRequestId === requestId &&
-          uploadingState?.multipleDocumentId === group._id;
+        const isUploading = uploadingState?.documentId === group.id;
 
         return (
           <div
-            key={group._id}
+            key={group.id}
             className="p-3 bg-white rounded-lg border border-gray-200 space-y-3"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3 flex-1">
-                {groupType === "template" ? (
+                {group.type === "TEMPLATE" ? (
                   <FileEdit className="h-5 w-5 text-gray-600 mt-1" />
                 ) : (
                   <FileUp className="h-5 w-5 text-gray-600 mt-1" />
                 )}
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-medium text-gray-900">{group.name}</p>
-                    {renderTypeBadge(groupType)}
+                    <p className="font-medium text-gray-900">{group.documentName}</p>
+                    <Badge
+                      variant="outline"
+                      className="text-gray-600 border-gray-300 bg-gray-50 capitalize"
+                    >
+                      {group.type.toLowerCase()}
+                    </Badge>
                   </div>
-                  {group.instruction && (
-                    <div className="flex flex-col gap-1 mt-1">
-                      {group.instruction.split('\n').map((line: string, i: number) => (
-                        <p key={i} className="text-xs text-gray-600">{line}</p>
-                      ))}
-                    </div>
-                  )}
+                  {/* (group as any).instruction logic if needed */}
                 </div>
               </div>
               
               {/* Group-level action buttons */}
               <div className="flex items-center gap-1 shrink-0">
-                {/* Download All button - download all uploaded files in the group */}
-                {group.multiple && group.multiple.some((item) => item.url) && onDownloadMultipleGroup && (
+                {group.type === "TEMPLATE" && group.templateFile?.url && (
+                   <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-amber-300 text-amber-700 hover:bg-amber-700/20 hover:text-amber-700 h-8 w-8 p-0"
+                    title="Download Group Template"
+                    disabled={isDisabled}
+                    asChild
+                  >
+                    <a
+                      href={group.templateFile.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={isDisabled ? 'pointer-events-none opacity-50' : ''}
+                    >  
+                      <FileIcon className="h-4 w-4"/>
+                    </a>
+                  </Button>
+                )}
+                {group.children && group.children.some((item) => item.file?.url) && onDownloadMultipleGroup && (
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      const uploadedItems = group.multiple.filter((item) => item.url);
-                      if (uploadedItems.length > 0) {
-                        onDownloadMultipleGroup(requestId, group._id, group.name, uploadedItems);
-                      } else {
-                      
-                      }
+                      const uploadedItems = group.children!.filter((item) => item.file?.url);
+                      onDownloadMultipleGroup(requestId, group.id, group.documentName, uploadedItems);
                     }}
                     className="border-green-300 hover:bg-green-50 hover:text-green-800 text-green-700 h-8 px-3"
                     title="Download All Files"
@@ -166,59 +138,33 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                     <span className="text-xs">Download All</span>
                   </Button>
                 )}
-
-                {/* Clear All button - clear all uploaded files in the group */}
-                {group.multiple && group.multiple.some((item) => item.url) && onClearMultipleGroup && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      onClearMultipleGroup(requestId, group._id, group.name);
-                    }}
-                    className="border-yellow-300 hover:bg-yellow-50 hover:text-yellow-800 text-yellow-700 h-8 px-2 text-xs"
-                    title="Clear All Uploaded Files"
-                    disabled={isDisabled}
-                  >
-                    <Eraser className="h-4 w-4 mr-1" />
-                    <span className="text-xs">Clear All</span>
-                  </Button>
-                )}
               </div>
             </div>
           
 
             {/* Individual items */}
-            {group.multiple && group.multiple.length > 0 && (
+            {group.children && group.children.length > 0 && (
               <div className="space-y-2 pt-2 border-t border-gray-100">
-                {group.multiple.map((item, index) => {
-                  const templateUrl = (item as any).template?.url as string | undefined;
-                  const isItemUploading =
-                    uploadingState?.documentRequestId === requestId &&
-                    uploadingState?.multipleDocumentId === group._id &&
-                    uploadingState?.itemIndex === index;
+                {group.children.map((item, index) => {
+                  const itemUrl = item.file?.url;
+                  const templateUrl = item.templateFile?.url;
+                  const isItemUploading = uploadingState?.documentId === item.id;
 
                   return (
                   <div
-                    key={`${group._id}-${index}`}
+                    key={item.id}
                     className="flex items-center justify-between gap-3 border border-gray-400 p-3 rounded-md"
                   >
                     <div className="flex-1">
                       <p className="text-md">
-                        {item.label}
+                        {item.documentName}
                       </p>
-                      {item.template?.instruction && (
-                        <div className="flex flex-col gap-1 mt-1">
-                          {item.template.instruction.split('\n').map((line: string, i: number) => (
-                            <p key={i} className="text-xs text-gray-500">{line}</p>
-                          ))}
-                        </div>
-                      )}
                       <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
                         {renderItemStatus(item)}
-                        {item.url && item.uploadedAt && (
+                        {itemUrl && item.createdAt && (
                           <span className="text-xs text-gray-500">
                             Uploaded: {(() => {
-                              const date = new Date(item.uploadedAt);
+                              const date = new Date(item.createdAt);
                               return isNaN(date.getTime())
                                 ? "N/A"
                                 : format(date, "MMM dd, yyyy HH:mm");
@@ -229,8 +175,8 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                     </div>
 
                     <div className="flex items-center gap-1">
-                      {/* Single file upload input for items without uploaded file (works for both direct and template types) */}
-                      {!item.url && (
+                      {/* Single file upload input */}
+                      {!itemUrl && (
                         <label className={`cursor-pointer ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
                           <input
                             type="file"
@@ -241,11 +187,7 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                               if (file) {
                                 const dataTransfer = new DataTransfer();
                                 dataTransfer.items.add(file);
-                                // Use child's id as requestedDocumentId for the upload API
-                                const requestedDocumentId = item.id ?? item._id;
-                                if (requestedDocumentId) {
-                                  onUploadMultiple(requestId, requestedDocumentId, dataTransfer.files, index, group._id);
-                                }
+                                onUploadMultiple(requestId, item.id, dataTransfer.files);
                               }
                               e.target.value = "";
                             }}
@@ -264,7 +206,7 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                                 <RefreshCw className="h-4 w-4 animate-spin" />
                               ) : (
                                 <>
-                                  <Upload />
+                                  <Upload className="h-4 w-4 mr-1" />
                                   Upload
                                 </>
                               )}
@@ -273,13 +215,13 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                         </label>
                       )}
 
-                      {/* Uploaded file actions – only if item.url exists (works for both direct and template types) */}
-                      {item.url && (
+                      {/* Uploaded file actions */}
+                      {itemUrl && (
                         <>
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => window.open(item.url!, "_blank")}
+                            onClick={() => window.open(itemUrl!, "_blank")}
                             className="border-blue-300 hover:bg-blue-50 hover:text-blue-800 text-blue-700 h-8 w-8 p-0"
                             title="View Document"
                             disabled={isDisabled}
@@ -291,19 +233,18 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                             variant="outline"
                             onClick={async () => {
                               try {
-                                const response = await fetch(item.url!);
+                                const response = await fetch(itemUrl!);
                                 const blob = await response.blob();
                                 const url = window.URL.createObjectURL(blob);
                                 const link = document.createElement("a");
                                 link.href = url;
-                                link.download = item.uploadedFileName || item.label;
+                                link.download = item.file?.file_name || item.documentName;
                                 document.body.appendChild(link);
                                 link.click();
                                 document.body.removeChild(link);
                                 window.URL.revokeObjectURL(url);
                               } catch (error) {
                                 console.error("Download error:", error);
-                               
                               }
                             }}
                             className="border-green-300 hover:bg-green-50 hover:text-green-800 text-green-700 h-8 w-8 p-0"
@@ -315,12 +256,12 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                         </>
                       )}
 
-                      {/* Clear (reset) only the uploaded file, keep requirement row (works for both direct and template types) */}
-                      {onClearMultipleItem && item.url && (
+                      {/* Clear (reset) only the uploaded file */}
+                      {onClearMultipleItem && itemUrl && (
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => onClearMultipleItem(requestId, group._id, index, item.label)}
+                          onClick={() => onClearMultipleItem(requestId, item.id)}
                           className="border-yellow-300 hover:bg-yellow-50 hover:text-yellow-800 text-yellow-700 h-8 px-2 text-xs"
                           title="Clear Uploaded File"
                           disabled={isDisabled}
@@ -344,7 +285,7 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                             rel="noopener noreferrer"
                             className={`inline-flex items-center gap-1 text-sm ${isDisabled ? 'pointer-events-none opacity-50' : ''}`}
                           >
-                            <FileIcon/>
+                            <FileIcon className="h-4 w-4"/>
                           </a>
                         </Button>
                       )}
@@ -361,3 +302,5 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
 };
 
 export default DocumentRequestDouble;
+
+ 

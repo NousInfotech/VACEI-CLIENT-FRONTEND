@@ -1,21 +1,19 @@
-"use client"
-
-import { useState, useEffect } from 'react'
-import { KYC } from '@/api/auditService'
+import { useState, useEffect, useCallback } from 'react'
+import { getKycByCompanyId, KycCycle } from '@/api/auditService'
 
 interface UseKycReturn {
-  kyc: KYC[] | null // API returns an array of KYC workflows
+  kyc: KycCycle[] | null
   loading: boolean
   error: string | null
   refetch: () => Promise<void>
 }
 
 export const useKyc = (companyId: string | null): UseKycReturn => {
-  const [kyc, setKyc] = useState<KYC[] | null>(null)
+  const [kyc, setKyc] = useState<KycCycle[] | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchKyc = async () => {
+  const fetchKyc = useCallback(async () => {
     if (!companyId) {
       setLoading(false)
       return
@@ -24,21 +22,19 @@ export const useKyc = (companyId: string | null): UseKycReturn => {
     setLoading(true)
     setError(null)
     try {
-      const { MOCK_KYC_DATA } = await import('../mockData')
-      const data = MOCK_KYC_DATA.filter(k => k.company?._id === companyId || k.company?.id === companyId)
-      // API returns an array of KYC workflows
-      setKyc(Array.isArray(data) ? data as any : [data] as any)
+      const data = await getKycByCompanyId(companyId)
+      setKyc(data)
     } catch (err: any) {
       setError(err.message || 'Failed to fetch KYC')
       setKyc(null)
     } finally {
       setLoading(false)
     }
-  }
+  }, [companyId])
 
   useEffect(() => {
     fetchKyc()
-  }, [companyId])
+  }, [fetchKyc])
 
   const refetch = async () => {
     await fetchKyc()

@@ -190,33 +190,78 @@ export interface Reclassification {
   entries?: Array<any>;
 }
 
-// KYC Types
-export interface KYC {
-  _id: string;
-  companyId: string;
-  [key: string]: any;
+// ----------------------------------------------------------------------------
+// KYC V2 Types
+// ----------------------------------------------------------------------------
+
+export interface FileResponse {
+  id: string;
+  url: string;
+  file_name: string;
+  size: number;
+  mime_type: string;
 }
 
-// Document Request Types
-export interface DocumentRequest {
-  _id: string;
-  engagementId: string;
-  title?: string;
-  description?: string;
-  documents?: Array<any>;
-  [key: string]: any;
+export interface RequestedDocument {
+  id: string;
+  documentRequestId: string;
+  parentId?: string | null;
+  documentName: string;
+  type: 'DIRECT' | 'TEMPLATE';
+  count: 'SINGLE' | 'MULTIPLE';
+  isMandatory: boolean;
+  status: 'PENDING' | 'UPLOADED' | 'ACCEPTED' | 'REJECTED';
+  createdAt: string;
+  fileId?: string | null;
+  templateFileId?: string | null;
+  file?: FileResponse | null;
+  templateFile?: FileResponse | null;
+  children?: RequestedDocument[];
 }
+
+export interface KycDocumentRequest {
+  id: string;
+  title: string;
+  description?: string;
+  status: string;
+  requestedDocuments: RequestedDocument[];
+}
+
+export type DocumentRequest = KycDocumentRequest;
 
 export interface UploadDocumentResponse {
   success: boolean;
   message: string;
-  documentRequest: DocumentRequest;
+  data?: any;
 }
 
 export interface ClearDocumentResponse {
   success: boolean;
   message: string;
-  document: any;
+  data?: any;
+}
+
+export interface KycWorkflowItem {
+  id: string;
+  kycCycleId: string;
+  personId?: string;
+  companyId?: string;
+  status: string;
+  documentRequest: KycDocumentRequest;
+  person?: {
+    id: string;
+    name: string;
+    address?: string;
+    nationality?: string;
+  };
+}
+
+export interface KycCycle {
+  id: string;
+  companyId: string;
+  status: string;
+  workflowType: 'Shareholder' | 'Representative';
+  involvementKycs: KycWorkflowItem[];
 }
 
 // ============================================================================
@@ -340,8 +385,8 @@ export async function getCompanyHierarchy(id: string): Promise<HierarchyData> {
  * @param companyId - Company ID (query parameter)
  * @returns Promise<KYC>
  */
-export async function getKycByCompanyId(companyId: string): Promise<KYC> {
-  const response = await fetch(`${backendUrl}kyc?companyId=${companyId}`, {
+export async function getKycByCompanyId(companyId: string): Promise<any[]> {
+  const response = await fetch(`${backendUrl}companies/${companyId}/kyc`, {
     method: "GET",
     headers: {
       ...getAuthHeaders(),
@@ -350,11 +395,15 @@ export async function getKycByCompanyId(companyId: string): Promise<KYC> {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to fetch KYC");
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || error.message || "Failed to fetch KYC");
   }
 
-  return response.json();
+  const result = await response.json();
+  // V2 returns { success: true, data: {...}, message: "..." }
+  const data = result && typeof result === 'object' && 'data' in result ? result.data : result;
+  if (!data) return [];
+  return Array.isArray(data) ? data : [data];
 }
 
 // ============================================================================
@@ -759,16 +808,16 @@ export async function getDocumentRequestsByEngagementId(
 }
 
 /**
- * Upload documents to document request
- * @param requestId - Document Request ID
+ * Upload documents to a specific requested document requirement
+ * @param requestId - Document Request ID (the container)
+ * @param requestedDocumentId - The specific requirement ID
  * @param files - Array of File objects
- * @param body - Additional form data (optional)
  * @returns Promise<UploadDocumentResponse>
  */
-export async function uploadDocumentRequestDocument(
+export async function uploadRequestedDocument(
   requestId: string,
-  files: File[],
-  body?: Record<string, any>
+  requestedDocumentId: string,
+  files: File[]
 ): Promise<UploadDocumentResponse> {
   const formData = new FormData();
 
@@ -777,14 +826,7 @@ export async function uploadDocumentRequestDocument(
     formData.append("files", file);
   });
 
-  // Add additional body data if provided
-  if (body) {
-    Object.keys(body).forEach((key) => {
-      formData.append(key, typeof body[key] === "string" ? body[key] : JSON.stringify(body[key]));
-    });
-  }
-
-  const response = await fetch(`${backendUrl}document-requests/${requestId}/documents`, {
+  const response = await fetch(`${backendUrl}document-requests/${requestId}/documents/${requestedDocumentId}/upload`, {
     method: "POST",
     headers: {
       ...getAuthHeaders(),
@@ -794,11 +836,12 @@ export async function uploadDocumentRequestDocument(
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to upload documents");
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || error.message || "Failed to upload documents");
   }
 
-  return response.json();
+  const result = await response.json();
+  return result.data || result;
 }
 
 /**
@@ -807,27 +850,37 @@ export async function uploadDocumentRequestDocument(
  * @param docIndex - Document index to clear
  * @returns Promise<ClearDocumentResponse>
  */
-export async function clearDocumentRequestDocument(
+/**
+ * Clear single document from document request
+ * @param requestId - Document Request ID
+ * @param requestedDocumentId - Specific document ID to clear
+ * @param reason - Reason for clearing (required by backend)
+ * @returns Promise<ClearDocumentResponse>
+ */
+export async function clearRequestedDocument(
   requestId: string,
-  docIndex: number
+  requestedDocumentId: string,
+  reason: string = "Cleared by user"
 ): Promise<ClearDocumentResponse> {
   const response = await fetch(
-    `${backendUrl}document-requests/${requestId}/clear/${docIndex}`,
+    `${backendUrl}document-requests/${requestId}/documents/${requestedDocumentId}/clear`,
     {
-      method: "POST",
+      method: "PATCH",
       headers: {
         ...getAuthHeaders(),
         "Content-Type": "application/json",
       },
+      body: JSON.stringify({ reason }),
     }
   );
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to clear document");
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || error.message || "Failed to clear document");
   }
 
-  return response.json();
+  const result = await response.json();
+  return result.data || result;
 }
 
 // ============================================================================
@@ -861,7 +914,7 @@ export const accountingPortalApi = {
 
   // Document Requests
   getDocumentRequestsByEngagementId,
-  uploadDocumentRequestDocument,
-  clearDocumentRequestDocument,
+  uploadRequestedDocument,
+  clearRequestedDocument,
 };
 

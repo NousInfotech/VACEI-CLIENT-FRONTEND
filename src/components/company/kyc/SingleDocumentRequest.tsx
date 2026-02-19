@@ -3,17 +3,16 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
  
-import { Eye, Download, FileEdit, FileUp, Upload, RefreshCw, File as FileIcon } from "lucide-react";
-import { DocumentRequestDocumentSingle } from "./types";
+import { RefreshCw, Eye, Download, FileEdit, FileUp, Upload, FileIcon } from "lucide-react";
+import { RequestedDocument } from "./types";
 
 interface UploadingDocumentState {
-  documentRequestId?: string;
-  documentIndex?: number;
+  documentId?: string;
 }
 
 function SingleDocUploadCell({
   requestId,
-  docIndex,
+  documentId,
   isUploading,
   isDisabled,
   onUpload,
@@ -21,10 +20,10 @@ function SingleDocUploadCell({
   accept,
 }: {
   requestId: string;
-  docIndex: number;
+  documentId: string;
   isUploading: boolean;
   isDisabled: boolean;
-  onUpload: (requestId: string, docIndex: number, file: File) => void | Promise<void>;
+  onUpload: (requestId: string, documentId: string, file: File) => void | Promise<void>;
   formatFileSize: (bytes: number) => string;
   accept: string;
 }) {
@@ -39,10 +38,9 @@ function SingleDocUploadCell({
   const handleUploadClick = async () => {
     if (!selectedFile) return;
     try {
-      await onUpload(requestId, docIndex, selectedFile);
-      setSelectedFile(null); // Clear only on success (retry possible on failure)
+      await onUpload(requestId, documentId, selectedFile);
+      setSelectedFile(null);
     } catch {
-      // Keep selectedFile so user can retry
     }
   };
 
@@ -111,13 +109,13 @@ interface DocumentRequestSingleProps {
   /** ID of the parent document request */
   requestId: string;
   /** Array of single-document requirements */
-  documents: DocumentRequestDocumentSingle[];
+  documents: RequestedDocument[];
   /** Uploading state coming from the parent, used to show spinners/disable inputs */
   uploadingDocument?: UploadingDocumentState | null;
-  /** Called when user selects a file for a specific document (single file only) */
-  onUpload: (requestId: string, documentIndex: number, file: File) => void | Promise<void>;
-  /** Called when user clicks "Clear" button to clear file only */
-  onClearDocument?: (requestId: string, documentIndex: number, documentName: string) => void | Promise<void>;
+  /** Called when user selects a file for a specific document */
+  onUpload: (requestId: string, documentId: string, file: File) => void | Promise<void>;
+  /** Called when user clicks "Clear" button to clear file */
+  onClearDocument?: (requestId: string, documentId: string) => void | Promise<void>;
   isDisabled?: boolean;
   isClientView?: boolean;
 }
@@ -149,66 +147,54 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
 
   return (
     <div className="space-y-2">
-      {documents.map((doc, docIndex) => {
-        const docType =
-          typeof doc.type === "string" ? doc.type : (doc as any).type?.type || "direct";
-        const isUploading =
-          uploadingDocument?.documentRequestId === requestId &&
-          uploadingDocument?.documentIndex === docIndex;
+      {documents.map((doc) => {
+        const isUploading = uploadingDocument?.documentId === doc.id;
         const docStatus = (doc.status ?? "").toUpperCase();
-        const canUpload = docStatus !== "REJECTED";
+        const canUpload = docStatus !== "ACCEPTED"; // Client can't change accepted docs
 
-        const docUrl = doc.url ?? (doc as any)?.file?.url
+        const docUrl = doc.file?.url;
+        const templateFileUrl = doc.templateFile?.url;
+
         return (
           <div
-            key={doc._id ?? doc.id ?? `${requestId}-${docIndex}`}
+            key={doc.id}
             className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200"
           >
             <div className="flex items-center gap-3">
-              {docType === "template" ? (
+              {doc.type === "TEMPLATE" ? (
                 <FileEdit className="h-5 w-5 text-gray-600" />
               ) : (
                 <FileUp className="h-5 w-5 text-gray-600" />
               )}
               <div>
-                <p className="font-medium text-gray-900">{doc.name}</p>
-                {doc.description && (
+                <p className="font-medium text-gray-900">{doc.documentName}</p>
+                {/* Description logic (V2 doesn't have it on RequestedDocument yet, but keeping for compatibility) */}
+                {(doc as any).description && (
                   <div className="flex flex-col gap-1 mt-0.5">
-                    {doc.description.split('\n').map((line: string, i: number) => (
+                    {(doc as any).description.split('\n').map((line: string, i: number) => (
                       <p key={i} className="text-xs text-gray-600">{line}</p>
                     ))}
                   </div>
                 )}
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  {(doc as any).isMandatory && (
+                  {doc.isMandatory && (
                     <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 text-[10px]">
                       Required
                     </Badge>
                   )}
-                  {docType === "template" ? (
-                    <Badge
-                      variant="outline"
-                      className="text-gray-600 border-gray-300 bg-gray-50"
-                    >
-                      Template
-                    </Badge>
-                  ) : (
-                    <Badge
-                      variant="outline"
-                      className="text-gray-600 border-gray-300 bg-gray-50"
-                    >
-                      Direct
-                    </Badge>
-                  )}
-                  <Badge variant="outline" className="text-gray-600 border-gray-300">
-                    {typeof doc.status === "string"
-                      ? doc.status
-                      : String(doc.status || "pending")}
+                  <Badge
+                    variant="outline"
+                    className="text-gray-600 border-gray-300 bg-gray-50 capitalize"
+                  >
+                    {doc.type.toLowerCase()}
                   </Badge>
-                  {docUrl && doc.uploadedAt && (
+                  <Badge variant="outline" className="text-gray-600 border-gray-300">
+                    {doc.status}
+                  </Badge>
+                  {docUrl && doc.createdAt && (
                     <span className="text-xs text-gray-500">
                       Uploaded: {(() => {
-                        const date = new Date(doc.uploadedAt);
+                        const date = new Date(doc.createdAt);
                         return isNaN(date.getTime())
                           ? "N/A"
                           : format(date, "MMM dd, yyyy HH:mm");
@@ -223,7 +209,7 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
               {!docUrl ? (
                 <SingleDocUploadCell
                   requestId={requestId}
-                  docIndex={docIndex}
+                  documentId={doc.id}
                   isUploading={isUploading}
                   isDisabled={isDisabled || !canUpload}
                   onUpload={onUpload}
@@ -232,11 +218,11 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
                 />
               ) : (
                 <>
-                  <span className="text-xs text-gray-600 mr-1 truncate max-w-[120px]" title={(doc.uploadedFileName ?? doc.name) ?? "File"}>
-                    {(doc.uploadedFileName ?? (doc as any)?.file?.file_name ?? doc.name) ?? "File"}
-                    {(doc as any)?.file?.size != null && (
+                  <span className="text-xs text-gray-600 mr-1 truncate max-w-[120px]" title={doc.file?.file_name ?? "File"}>
+                    {doc.file?.file_name ?? "File"}
+                    {doc.file?.size != null && (
                       <span className="text-gray-400 ml-1">
-                        ({formatFileSize((doc as any).file.size)})
+                        ({formatFileSize(doc.file.size)})
                       </span>
                     )}
                   </span>
@@ -260,7 +246,7 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
                         const url = window.URL.createObjectURL(blob);
                         const link = document.createElement("a");
                         link.href = url;
-                        link.download = doc.uploadedFileName || doc.name;
+                        link.download = doc.file?.file_name || doc.documentName;
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
@@ -283,18 +269,17 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => onClearDocument(requestId, docIndex, doc.name)}
+                  onClick={() => onClearDocument(requestId, doc.id)}
                   className="border-yellow-300 hover:bg-yellow-50 hover:text-yellow-800 text-yellow-700 h-8 px-2 text-xs"
                   title="Clear Uploaded File"
-                  disabled={isDisabled}
+                  disabled={isDisabled || !canUpload}
                 >
                   Clear
                 </Button>
               )}
 
-               {/* Template download button - always available for template documents,
-                  so users can re-open the original blank template even after upload. */}
-              {docType === "template" && (doc as any).template?.url && (
+               {/* Template download button */}
+              {doc.type === "TEMPLATE" && templateFileUrl && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -304,14 +289,13 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
                   asChild
                 >
                   <a
-                    href={(doc as any).template.url}
+                    href={templateFileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`inline-flex items-center h-8 w-8 p-0 ${isDisabled ? 'pointer-events-none opacity-50' : ''}`}
                   >  
-                    <span><FileIcon/></span>
+                    <span><FileIcon className="h-4 w-4"/></span>
                   </a>
-                  
                 </Button>
               )}
             </div>

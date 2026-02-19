@@ -21,9 +21,7 @@ import DocumentRequestSingle from '../company/kyc/SingleDocumentRequest'
 import DocumentRequestDouble from '../company/kyc/DoubleDocumentRequest'
 import EmptyState from '../shared/EmptyState'
 
-type UploadingState =
-  | { requestId: string; docIndex: number; multipleId?: null; itemIndex?: null }
-  | { requestId: string; docIndex?: null; multipleId: string; itemIndex: number }
+type UploadingState = { requestId: string; documentId: string }
 
 type ClearAction = (reason: string) => Promise<void>
 
@@ -50,17 +48,10 @@ const DocumentRequestsTab = () => {
     setExpandedRequests(newSet)
   }
 
-  const handleUpload = async (requestId: string, docIndex: number, file: File) => {
-    const request = documentRequests.find((r) => reqId(r) === requestId)
-    const doc = request?.documents?.[docIndex]
-    const requestedDocumentId = doc?.id ?? doc?._id
-    if (!requestedDocumentId) {
-      alert('Document not found')
-      return
-    }
-    setUploadingState({ requestId, docIndex })
+  const handleUpload = async (requestId: string, documentId: string, file: File) => {
+    setUploadingState({ requestId, documentId })
     try {
-      await uploadDocumentRequestFile(requestId, requestedDocumentId, [file])
+      await uploadDocumentRequestFile(requestId, documentId, [file])
       await refetch()
       setUploadSuccessOpen(true)
     } catch (err: any) {
@@ -74,15 +65,13 @@ const DocumentRequestsTab = () => {
 
   const handleUploadMultiple = async (
     requestId: string,
-    requestedDocumentId: string,
-    files: FileList,
-    itemIndex?: number,
-    multipleId?: string
+    documentId: string,
+    files: FileList
   ) => {
-    setUploadingState(multipleId != null && itemIndex != null ? { requestId, multipleId, itemIndex } : null)
+    setUploadingState({ requestId, documentId })
     try {
       const fileArray = Array.from(files)
-      await uploadDocumentRequestFile(requestId, requestedDocumentId, fileArray)
+      await uploadDocumentRequestFile(requestId, documentId, fileArray)
       await refetch()
       setUploadSuccessOpen(true)
     } catch (err: any) {
@@ -94,38 +83,26 @@ const DocumentRequestsTab = () => {
     }
   }
 
-  const handleClear = (requestId: string, docIndex: number, _name: string) => {
-    const request = documentRequests.find((r) => reqId(r) === requestId)
-    const doc = request?.documents?.[docIndex]
-    const requestedDocumentId = doc?.id ?? doc?._id
-    if (!requestedDocumentId) {
-      alert('Document not found')
-      return
-    }
+  const handleClear = (requestId: string, documentId: string) => {
     setClearModal({
       isOpen: true,
       title: 'Clear Document',
       message: 'Please provide a reason for clearing this document. This will be logged for audit purposes.',
       onConfirm: async (reason) => {
-        await clearDocumentRequestFile(requestId, requestedDocumentId, reason)
+        await clearDocumentRequestFile(requestId, documentId, reason)
         await refetch()
         setClearSuccessOpen(true)
       },
     })
   }
 
-  const handleClearMultipleItem = (requestId: string, multipleId: string, itemIndex: number, _label: string) => {
-    const request = documentRequests.find((r) => reqId(r) === requestId)
-    const group = (request?.multipleDocuments ?? []).find((g) => g._id === multipleId)
-    const item = group?.multiple?.[itemIndex]
-    const requestedDocumentId = item?.id ?? item?._id
-    if (!requestedDocumentId) return
+  const handleClearMultipleItem = (requestId: string, documentId: string) => {
     setClearModal({
       isOpen: true,
       title: 'Clear Document',
       message: 'Please provide a reason for clearing this document. This will be logged for audit purposes.',
       onConfirm: async (reason) => {
-        await clearDocumentRequestFile(requestId, requestedDocumentId, reason)
+        await clearDocumentRequestFile(requestId, documentId, reason)
         await refetch()
         setClearSuccessOpen(true)
       },
@@ -350,8 +327,8 @@ const DocumentRequestsTab = () => {
                       onUpload={handleUpload}
                       onClearDocument={handleClear}
                       uploadingDocument={
-                        uploadingState?.docIndex != null
-                          ? { documentRequestId: uploadingState.requestId, documentIndex: uploadingState.docIndex }
+                        uploadingState?.documentId
+                          ? { documentId: uploadingState.documentId }
                           : undefined
                       }
                       isDisabled={request.status === 'REJECTED'}
@@ -365,8 +342,8 @@ const DocumentRequestsTab = () => {
                       onClearMultipleGroup={handleClearMultipleGroup}
                       onDownloadMultipleGroup={handleDownloadMultipleGroup}
                       uploadingState={
-                        uploadingState?.multipleId
-                          ? { documentRequestId: uploadingState.requestId, multipleDocumentId: uploadingState.multipleId, itemIndex: uploadingState.itemIndex }
+                        uploadingState?.documentId
+                          ? { documentId: uploadingState.documentId }
                           : undefined
                       }
                       isDisabled={request.status === 'REJECTED'}

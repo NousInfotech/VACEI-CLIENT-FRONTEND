@@ -24,15 +24,16 @@ import DocumentRequestSingle from './SingleDocumentRequest'
 import DocumentRequestDouble from './DoubleDocumentRequest'
 import PillTabs from '../../shared/PillTabs'
 import EmptyState from '../../shared/EmptyState'
-import { clearDocumentRequestDocument, uploadDocumentRequestDocument } from '@/api/auditService'
+import { clearRequestedDocument, uploadRequestedDocument } from '@/api/auditService'
 
 const KYCSection = () => {
-  const [activeTab, setActiveTab] = useState('Shareholder')
+  const [activeTab, setActiveTab] = useState('Company')
   const [expandedRequests, setExpandedRequests] = useState<Set<string>>(new Set())
   const { company } = useCompany()
-  const { kyc, refetch, loading, error } = useKyc(company?._id || null)
+  const { kyc, refetch, loading, error } = useKyc(company?._id || company?.id || null)
 
   const tabs = [
+    { id: 'Company', label: 'COMPANY' },
     { id: 'Shareholder', label: 'SHAREHOLDERS' },
     { id: 'Representative', label: 'REPRESENTATIVES' },
   ]
@@ -47,43 +48,30 @@ const KYCSection = () => {
     setExpandedRequests(newSet)
   }
 
-  // Real API handlers
-  const handleUpload = async (requestId: string, docIndex: number, file: File) => {
+  // Real API handlers (V2)
+  const handleUpload = async (requestId: string, requestedDocumentId: string, file: File) => {
     try {
-      // Find the document request from KYC workflows
-      let documentName = file.name
-      
-      // Search through all KYC workflows to find the matching document request
-      for (const workflow of (kyc || [])) {
-        for (const item of (workflow.documentRequests || [])) {
-          if (item.documentRequest?._id === requestId) {
-            const document = item.documentRequest?.documents?.[docIndex]
-            if (document?.name) {
-              documentName = document.name
-            }
-            break
-          }
-        }
-      }
-      
-      // Backend expects 'documentIndex' (not 'docIndex') and 'documentName'
-      await uploadDocumentRequestDocument(requestId, [file], {
-        documentIndex: docIndex,
-        documentName: documentName
-      })
+      await uploadRequestedDocument(requestId, requestedDocumentId, [file])
       await refetch()
     } catch (err: any) {
       console.error('Failed to upload document:', err)
       alert(err.message || 'Failed to upload document')
     }
   }
-  const handleUploadMultiple = (requestId: string, multipleId: string, files: FileList, itemIndex?: number) => {
-    console.log(`Uploading ${files.length} files for request ${requestId}, group ${multipleId}, item ${itemIndex}`)
+
+  const handleUploadMultiple = async (requestId: string, requestedDocumentId: string, files: FileList) => {
+    try {
+      await uploadRequestedDocument(requestId, requestedDocumentId, Array.from(files))
+      await refetch()
+    } catch (err: any) {
+      console.error('Failed to upload documents:', err)
+      alert(err.message || 'Failed to upload documents')
+    }
   }
 
-  const handleClear = async (requestId: string, docIndex: number, name: string) => {
+  const handleClear = async (requestId: string, requestedDocumentId: string) => {
     try {
-      await clearDocumentRequestDocument(requestId, docIndex)
+      await clearRequestedDocument(requestId, requestedDocumentId)
       await refetch()
     } catch (err: any) {
       console.error('Failed to clear document:', err)
@@ -91,8 +79,8 @@ const KYCSection = () => {
     }
   }
 
-  const handleClearMultipleItem = (requestId: string, multipleId: string, itemIndex: number, label: string) => {
-    console.log(`Clearing item ${label} for request ${requestId}, group ${multipleId}`)
+  const handleClearMultipleItem = async (requestId: string, requestedDocumentId: string) => {
+    await handleClear(requestId, requestedDocumentId);
   }
 
   const handleClearMultipleGroup = (requestId: string, multipleId: string, groupName: string) => {
@@ -157,34 +145,166 @@ const KYCSection = () => {
 
     // Create a map of person IDs to their KYC workflow items
     const kycMap = new Map<string, any>()
-    const filteredWorkflows = (kyc || []).filter((w: any) => w.workflowType === workflowType)
+    const kycArray = Array.isArray(kyc) ? kyc : (kyc ? [kyc] : []);
     
-    filteredWorkflows.forEach((workflow: any) => {
-      (workflow.documentRequests || []).forEach((item: any) => {
-        const personId = item.person?._id || item.person?.id
+    if (kycArray.length === 0) {
+      return (
+        <EmptyState
+          icon={Shield}
+          title="KYC Not Initiated"
+          description={`No KYC process has been initiated for ${workflowType.toLowerCase()}s by the platform admin yet.`}
+        />
+      )
+    }
+
+    if (workflowType === 'Company') {
+      const companyCycles = kycArray.filter((cycle: any) => !!cycle.documentRequest)
+      if (companyCycles.length === 0) {
+        return (
+          <EmptyState
+            icon={Shield}
+            title="KYC Not Initiated"
+            description="No company-level KYC process has been initiated by the platform admin yet."
+          />
+        )
+      }
+
+      return (
+        <div className="space-y-4">
+          {companyCycles.map((cycle: any) => {
+            const request = cycle.documentRequest
+            const isExpanded = expandedRequests.has(request.id)
+            
+            const docs = request.requestedDocuments || []
+            const singleDocs = docs.filter((d: any) => d.count === 'SINGLE')
+            const multipleGroups = docs.filter((d: any) => d.count === 'MULTIPLE')
+            const totalDocs = docs.length
+            const uploadedDocsCount = docs.filter((d: any) => d.status === 'UPLOADED' || d.status === 'ACCEPTED').length
+
+            return (
+              <Card
+                key={cycle.id}
+                className="bg-white/80 border border-gray-300 rounded-xl shadow-sm hover:bg-white/70 transition-all mb-4 overflow-hidden"
+              >
+                <CardContent className="p-0">
+                  <div className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg">
+                            <Building2 className="h-6 w-6" />
+                          </div>
+                          <div>
+                            <h4 className="text-lg font-semibold text-gray-900">
+                              {company?.name || 'Company Documents'}
+                            </h4>
+                          </div>
+                        </div>
+
+                        <div className="mb-4 flex flex-wrap gap-2">
+                          <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-100 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
+                            ENTITY KYC
+                          </Badge>
+                          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
+                            {uploadedDocsCount}/{totalDocs} DOCUMENTS
+                          </Badge>
+                          {getStatusBadge(request.status)}
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-start gap-2 text-sm text-gray-600">
+                            <MapPin className="h-4 w-4 mt-0.5 text-gray-400 shrink-0" />
+                            <span className="text-xs leading-relaxed">{company?.address || 'Company Address'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => toggleExpand(request.id)}
+                          className="rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50 h-9 px-3"
+                        >
+                          {isExpanded ? <ChevronUp size={16} className="mr-2" /> : <ChevronDown size={16} className="mr-2" />}
+                          {isExpanded ? 'Hide Documents' : 'View Documents'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {isExpanded && (
+                    <div className="bg-gray-50/50 border-t border-gray-100 p-6 animate-in slide-in-from-top-2 duration-300 space-y-4">
+                      <div className="mb-2 flex items-center justify-between">
+                        <h5 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Entity Verification Records</h5>
+                        <span className="text-[10px] text-gray-400 italic">Core identification and incorporation documents</span>
+                      </div>
+
+                      <DocumentRequestSingle
+                        requestId={request.id}
+                        documents={singleDocs}
+                        onUpload={handleUpload}
+                        onClearDocument={handleClear}
+                      />
+
+                      <DocumentRequestDouble
+                        requestId={request.id}
+                        multipleDocuments={multipleGroups}
+                        onUploadMultiple={handleUploadMultiple}
+                        onClearMultipleItem={handleClearMultipleItem}
+                        onClearMultipleGroup={handleClearMultipleGroup}
+                        onDownloadMultipleGroup={handleDownloadMultipleGroup}
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      )
+    }
+
+    kycArray.forEach((cycle: any) => {
+      (cycle.involvementKycs || []).forEach((item: any) => {
+        // Handle all possible ways the backend might return the person ID
+        const personId = 
+          item.personId || 
+          item.person?.id || 
+          item.person?._id || 
+          item.involvement?.personId || 
+          item.involvement?.person?.id || 
+          item.involvement?.person?._id;
+          
         if (personId) {
           kycMap.set(personId, item)
         }
       })
     })
 
-    if (allPersons.length === 0) {
+    const peopleWithKyc = allPersons.filter(person => {
+      const personId = person._id || person.id
+      return kycMap.has(personId)
+    })
+
+    if (peopleWithKyc.length === 0) {
       return (
         <EmptyState
           icon={Shield}
-          title={`No ${workflowType}s Found`}
-          description={`No ${workflowType.toLowerCase()}s are currently associated with this company.`}
+          title="KYC Not Initiated"
+          description={`No KYC process has been initiated for ${workflowType.toLowerCase()}s by the platform admin yet.`}
         />
       )
     }
 
     return (
       <div className="space-y-4">
-        {allPersons.map((person: any) => {
-          const kycItem = kycMap.get(person._id)
+        {peopleWithKyc.map((person: any) => {
+          const personId = person._id || person.id
+          const kycItem = kycMap.get(personId)
           const hasKycWorkflow = !!kycItem
           const request = kycItem?.documentRequest
-          const isExpanded = request ? expandedRequests.has(request._id) : false
+          const isExpanded = request ? expandedRequests.has(request.id) : false
 
           // If there's a KYC workflow, get document counts
           let totalDocs = 0
@@ -193,11 +313,11 @@ const KYCSection = () => {
           let multipleGroups: any[] = []
 
           if (request) {
-            singleDocs = (request.documents || []) as any[]
-            multipleGroups = (request.multipleDocuments || []) as any[]
-            totalDocs = singleDocs.length + multipleGroups.reduce((acc, md) => acc + (md.multiple?.length || 0), 0)
-            uploadedDocsCount = singleDocs.filter(d => d.url).length +
-              multipleGroups.reduce((acc, md) => acc + (md.multiple?.filter((m: any) => m.url).length || 0), 0)
+            const docs = request.requestedDocuments || []
+            singleDocs = docs.filter((d: any) => d.count === 'SINGLE')
+            multipleGroups = docs.filter((d: any) => d.count === 'MULTIPLE')
+            totalDocs = docs.length
+            uploadedDocsCount = docs.filter((d: any) => d.status === 'UPLOADED' || d.status === 'ACCEPTED').length
           }
 
           return (
@@ -271,7 +391,7 @@ const KYCSection = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => toggleExpand(request._id)}
+                          onClick={() => toggleExpand(request.id)}
                           className="rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50 h-9 px-3"
                         >
                           {isExpanded ? <ChevronUp size={16} className="mr-2" /> : <ChevronDown size={16} className="mr-2" />}
@@ -290,14 +410,14 @@ const KYCSection = () => {
                     </div>
 
                     <DocumentRequestSingle
-                      requestId={request._id}
+                      requestId={request.id}
                       documents={singleDocs}
                       onUpload={handleUpload}
                       onClearDocument={handleClear}
                     />
 
                     <DocumentRequestDouble
-                      requestId={request._id}
+                      requestId={request.id}
                       multipleDocuments={multipleGroups}
                       onUploadMultiple={handleUploadMultiple}
                       onClearMultipleItem={handleClearMultipleItem}
