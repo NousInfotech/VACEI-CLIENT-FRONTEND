@@ -409,21 +409,29 @@ const KYCSection = () => {
                       <span className="text-[10px] text-gray-400 italic">Manage your compliance documents here</span>
                     </div>
 
-                    <DocumentRequestSingle
-                      requestId={request.id}
-                      documents={singleDocs}
-                      onUpload={handleUpload}
-                      onClearDocument={handleClear}
-                    />
+                    {singleDocs.length === 0 && multipleGroups.length === 0 ? (
+                      <div className="text-center py-4 text-gray-500 text-sm bg-white rounded-lg">
+                        No documents in this request yet
+                      </div>
+                    ) : (
+                      <>
+                        <DocumentRequestSingle
+                          requestId={request.id}
+                          documents={singleDocs}
+                          onUpload={handleUpload}
+                          onClearDocument={handleClear}
+                        />
 
-                    <DocumentRequestDouble
-                      requestId={request.id}
-                      multipleDocuments={multipleGroups}
-                      onUploadMultiple={handleUploadMultiple}
-                      onClearMultipleItem={handleClearMultipleItem}
-                      onClearMultipleGroup={handleClearMultipleGroup}
-                      onDownloadMultipleGroup={handleDownloadMultipleGroup}
-                    />
+                        <DocumentRequestDouble
+                          requestId={request.id}
+                          multipleDocuments={multipleGroups}
+                          onUploadMultiple={handleUploadMultiple}
+                          onClearMultipleItem={handleClearMultipleItem}
+                          onClearMultipleGroup={handleClearMultipleGroup}
+                          onDownloadMultipleGroup={handleDownloadMultipleGroup}
+                        />
+                      </>
+                    )}
                   </div>
                 )}
               </CardContent>

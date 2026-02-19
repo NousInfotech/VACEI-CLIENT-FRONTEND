@@ -6,7 +6,8 @@ import Involvements from './Involvements'
 import Distribution from './Distribution'
 import CompanyHierarchy from './CompanyHierarchy'
 import Kyc from './kyc/KYCSection'
-import { LayoutGrid, Users, PieChart, Network, ShieldCheck } from 'lucide-react'
+import IncorporationSection from './incorporation/IncorporationSection'
+import { LayoutGrid, Users, PieChart, Network, ShieldCheck, ClipboardList } from 'lucide-react'
 import { useCompany } from './hooks/useCompany'
 
 import PillTabs from '../shared/PillTabs'
@@ -27,6 +28,7 @@ const Company = () => {
     { id: 'involvements', label: 'Involvements', icon: Users },
     { id: 'distribution', label: 'Distribution', icon: PieChart },
     { id: 'hierarchy', label: 'Company Hierarchy', icon: Network },
+    { id: 'incorporation', label: 'Incorporation KYC', icon: ClipboardList },
     { id: 'kyc', label: 'KYC', icon: ShieldCheck },
   ]
 
@@ -36,6 +38,7 @@ const Company = () => {
       case 'involvements': return <Involvements data={data as CompanyType} />
       case 'distribution': return <Distribution data={data as CompanyType}/>
       case 'hierarchy': return <CompanyHierarchy />
+      case 'incorporation': return <IncorporationSection />
       case 'kyc': return <Kyc />
       default: return <CompanyDetail />
     }

@@ -412,6 +412,39 @@ export async function getKycByCompanyId(companyId: string): Promise<any[]> {
   return Array.isArray(data) ? data : [data];
 }
 
+export interface IncorporationCycle {
+  id: string;
+  companyId: string;
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'REJECTED';
+  startedAt: string;
+  completedAt: string | null;
+  documentRequests?: KycDocumentRequest[];
+}
+
+/**
+ * Get Incorporation Cycle by company ID
+ * @param companyId - Company ID
+ * @returns Promise<IncorporationCycle | null>
+ */
+export async function getIncorporationByCompanyId(companyId: string): Promise<IncorporationCycle | null> {
+  const response = await fetch(`${backendUrl}incorporation/company/${companyId}`, {
+    method: "GET",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 404) return null;
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || error.message || "Failed to fetch incorporation data");
+  }
+
+  const result = await response.json();
+  return result.data || result;
+}
+
 // ============================================================================
 // 4. ENGAGEMENT APIs
 // ============================================================================

@@ -138,11 +138,7 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
   };
 
   if (!documents || documents.length === 0) {
-    return (
-      <div className="text-center py-4 text-gray-500 text-sm bg-white rounded-lg">
-        No documents in this request yet
-      </div>
-    );
+    return null;
   }
 
   return (

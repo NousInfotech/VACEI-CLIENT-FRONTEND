@@ -321,33 +321,41 @@ const DocumentRequestsTab = () => {
                       <span className="text-[10px] text-gray-400 italic">Submit supporting evidence for this category</span>
                     </div>
 
-                    <DocumentRequestSingle 
-                      requestId={requestIdVal}
-                      documents={singleDocs}
-                      onUpload={handleUpload}
-                      onClearDocument={handleClear}
-                      uploadingDocument={
-                        uploadingState?.documentId
-                          ? { documentId: uploadingState.documentId }
-                          : undefined
-                      }
-                      isDisabled={request.status === 'REJECTED'}
-                    />
+                    {singleDocs.length === 0 && multipleGroups.length === 0 ? (
+                      <div className="text-center py-4 text-gray-500 text-sm bg-white rounded-lg">
+                        No documents in this request yet
+                      </div>
+                    ) : (
+                      <>
+                        <DocumentRequestSingle 
+                          requestId={requestIdVal}
+                          documents={singleDocs}
+                          onUpload={handleUpload}
+                          onClearDocument={handleClear}
+                          uploadingDocument={
+                            uploadingState?.documentId
+                              ? { documentId: uploadingState.documentId }
+                              : undefined
+                          }
+                          isDisabled={request.status === 'REJECTED'}
+                        />
 
-                    <DocumentRequestDouble 
-                      requestId={requestIdVal}
-                      multipleDocuments={multipleGroups}
-                      onUploadMultiple={handleUploadMultiple}
-                      onClearMultipleItem={handleClearMultipleItem}
-                      onClearMultipleGroup={handleClearMultipleGroup}
-                      onDownloadMultipleGroup={handleDownloadMultipleGroup}
-                      uploadingState={
-                        uploadingState?.documentId
-                          ? { documentId: uploadingState.documentId }
-                          : undefined
-                      }
-                      isDisabled={request.status === 'REJECTED'}
-                    />
+                        <DocumentRequestDouble 
+                          requestId={requestIdVal}
+                          multipleDocuments={multipleGroups}
+                          onUploadMultiple={handleUploadMultiple}
+                          onClearMultipleItem={handleClearMultipleItem}
+                          onClearMultipleGroup={handleClearMultipleGroup}
+                          onDownloadMultipleGroup={handleDownloadMultipleGroup}
+                          uploadingState={
+                            uploadingState?.documentId
+                              ? { documentId: uploadingState.documentId }
+                              : undefined
+                          }
+                          isDisabled={request.status === 'REJECTED'}
+                        />
+                      </>
+                    )}
                   </div>
                 )}
               </CardContent>
