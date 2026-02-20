@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useActiveCompany } from "@/context/ActiveCompanyContext";
 import StatCard from "@/components/StatCard";
 import DashboardCard from "@/components/DashboardCard";
 import DashboardActionButton from "@/components/DashboardActionButton";
@@ -56,9 +57,9 @@ export default function DashboardPage() {
   const [netIncomeYTD, setNetIncomeYTD] = useState<{ amount: string; change: string } | null>(null);
   const [username, setUsername] = useState<string>(''); // State for username to avoid hydration error
   const [complianceCounts, setComplianceCounts] = useState({ overdue: 0, dueSoon: 0, waiting: 0, done: 0 });
-  const [activeCompany, setActiveCompany] = useState<string>("ACME LTD");
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loadingCompanies, setLoadingCompanies] = useState(true);
+  // Use context instead of local state
+  const { activeCompanyId, companies, setCompanies } = useActiveCompany();
+  const loadingCompanies = false; // Context handles loading implicitely or we can add it if needed
   const [stats, setStats] = useState<ProcessedDashboardStat[]>([]);
 
   // CRITICAL: Verify authentication on mount (before loading any data)
@@ -104,109 +105,33 @@ export default function DashboardPage() {
     if (authLoading) return; // Wait for auth verification
     
     const fetchCompanies = async () => {
-      setLoadingCompanies(true);
       try {
         const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
         const token = localStorage.getItem('token');
         
-        if (!token) {
-          console.warn('No token found, cannot fetch companies');
-          setLoadingCompanies(false);
-          return;
-        }
+        if (!token) return;
 
         const response = await fetch(`${backendUrl}companies`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
+          headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch companies: ${response.status} ${response.statusText}`);
-        }
-
-        const result = await response.json();
-        const companiesData = result.data || result || [];
-        
-        // Map backend response to Company interface
-        const mappedCompanies: Company[] = companiesData.map((c: any) => ({
-          id: c.id,
-          name: c.name,
-          registrationNumber: c.registrationNumber,
-        }));
-
-        setCompanies(mappedCompanies);
-        
-        // Store in localStorage
-        localStorage.setItem("vacei-companies", JSON.stringify(mappedCompanies));
-            
-        // Set active company - prioritize stored companyId, otherwise use first company
-        const storedActiveCompanyId = localStorage.getItem("vacei-active-company");
-        if (mappedCompanies.length > 0) {
-          if (storedActiveCompanyId) {
-            const company = mappedCompanies.find(c => c.id === storedActiveCompanyId);
-            if (company) {
-              setActiveCompany(company.name);
-              console.log('✅ Active company set from stored ID:', company.name);
-            } else {
-              // If stored ID doesn't exist in fetched companies, use first company
-              setActiveCompany(mappedCompanies[0].name);
-              localStorage.setItem("vacei-active-company", mappedCompanies[0].id);
-              console.log('⚠️ Stored company ID not found, using first company:', mappedCompanies[0].name);
-            }
-          } else {
-            // No stored company, use first one
-            setActiveCompany(mappedCompanies[0].name);
-            localStorage.setItem("vacei-active-company", mappedCompanies[0].id);
-            console.log('✅ Active company set to first company:', mappedCompanies[0].name);
-          }
-        } else {
-          console.warn('⚠️ No companies returned from API');
+        if (response.ok) {
+          const result = await response.json();
+          const companiesData = result.data || result || [];
+          const mappedCompanies = companiesData.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            registrationNumber: c.registrationNumber,
+          }));
+          setCompanies(mappedCompanies);
         }
       } catch (error) {
         console.error("Failed to fetch companies:", error);
-        // Fallback to localStorage if available (e.g., after onboarding completion)
-        const storedCompanies = localStorage.getItem("vacei-companies");
-        if (storedCompanies) {
-          try {
-            const parsed = JSON.parse(storedCompanies);
-            setCompanies(parsed);
-            console.log('✅ Using companies from localStorage fallback:', parsed);
-            
-            const storedCompanyId = localStorage.getItem("vacei-active-company");
-            if (parsed.length > 0) {
-              if (storedCompanyId) {
-                const company = parsed.find((c: Company) => c.id === storedCompanyId);
-              if (company) {
-                setActiveCompany(company.name);
-                  console.log('✅ Active company set from localStorage:', company.name);
-                } else {
-                  setActiveCompany(parsed[0].name);
-                  localStorage.setItem("vacei-active-company", parsed[0].id);
-                  console.log('✅ Active company set to first from localStorage:', parsed[0].name);
-                }
-              } else {
-                setActiveCompany(parsed[0].name);
-                localStorage.setItem("vacei-active-company", parsed[0].id);
-                console.log('✅ Active company set to first from localStorage:', parsed[0].name);
-              }
-            }
-          } catch (e) {
-            console.error("Failed to parse stored companies:", e);
-        }
-        } else {
-          console.warn('⚠️ No companies in localStorage and API fetch failed');
-        }
-      } finally {
-        setLoadingCompanies(false);
-    }
+      }
     };
 
     fetchCompanies();
-  }, [authLoading]);
+  }, [authLoading, setCompanies]);
 
   // Set username on client side to avoid hydration error
   useEffect(() => {
@@ -279,7 +204,7 @@ export default function DashboardPage() {
       }
     };
     loadDashboardData();
-  }, [router, authLoading]);
+  }, [router, authLoading, activeCompanyId]);
 
   useEffect(() => {
     const loadUploadSummary = async () => {
@@ -436,7 +361,7 @@ export default function DashboardPage() {
         <PageHeader 
           title={getGreeting()}
           subtitle={username ? "Here's your compliance status and what's happening with your business today." : "Welcome back! Here's what's happening with your business today."}
-          activeCompany={activeCompany}
+          activeCompany={companies.find(c => c.id === activeCompanyId)?.name || "ACME LTD"}
           badge={
             <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-700 font-bold text-xs uppercase tracking-widest shadow-sm text-white`}>
               <span className={`w-2 h-2 rounded-full animate-pulse ${

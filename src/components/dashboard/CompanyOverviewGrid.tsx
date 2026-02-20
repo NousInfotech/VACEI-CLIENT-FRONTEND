@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useActiveCompany } from "@/context/ActiveCompanyContext";
 import DashboardCard from "@/components/DashboardCard";
 import { Building2, ArrowRight, AlertCircle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ interface Company {
 export default function CompanyOverviewGrid() {
     const [companies, setCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState(true);
+    const { setActiveCompanyId } = useActiveCompany();
     const router = useRouter();
 
     useEffect(() => {
@@ -121,8 +123,8 @@ export default function CompanyOverviewGrid() {
                         <Button 
                             className="w-full justify-between rounded-xl h-11"
                             onClick={() => {
-                                localStorage.setItem("vacei-active-company", company.id);
-                                router.push(`/dashboard/company/${company.id}`);
+                                setActiveCompanyId(company.id);
+                                router.push(`/dashboard`);
                             }}
                         >
                             View Company Dashboard

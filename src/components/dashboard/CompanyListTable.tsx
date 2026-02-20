@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useActiveCompany } from "@/context/ActiveCompanyContext";
 import DashboardCard from "@/components/DashboardCard";
 import { Building2, Eye, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ export default function CompanyListTable() {
     const [companies, setCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const { setActiveCompanyId } = useActiveCompany();
     const router = useRouter();
 
     useEffect(() => {
@@ -139,8 +141,8 @@ export default function CompanyListTable() {
                                         size="sm"
                                         className="rounded-xl h-9"
                                         onClick={() => {
-                                            localStorage.setItem("vacei-active-company", company.id);
-                                            router.push(`/dashboard/company/${company.id}`);
+                                            setActiveCompanyId(company.id);
+                                            router.push(`/dashboard`);
                                         }}
                                     >
                                         <Eye className="h-4 w-4 mr-2" />

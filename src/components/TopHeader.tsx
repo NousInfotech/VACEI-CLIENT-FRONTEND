@@ -145,15 +145,6 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                 }));
                 setCompanies(mappedCompanies);
                 localStorage.setItem("vacei-companies", JSON.stringify(mappedCompanies));
-                
-                // Set active company if not already set or if current active company doesn't exist
-                if (activeCompanyId && mappedCompanies.some(c => c.id === activeCompanyId)) {
-                    // Keep current active company if it still exists
-                    // Context will handle localStorage sync
-                } else if (mappedCompanies.length > 0) {
-                    const firstCompanyId = mappedCompanies[0].id;
-                    setActiveCompanyId(firstCompanyId);
-                }
             }
         } catch (error) {
             console.error("Failed to fetch companies from API:", error);
@@ -286,7 +277,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             icon: <div className={cn("w-2 h-2 rounded-full", isActive ? "bg-success" : "bg-gray-200")} />,
             onClick: () => {
                 setActiveCompanyId(c.id);
-                router.push(`/dashboard/company/${c.id}`);
+                router.push(`/dashboard`);
             }
         };
     });

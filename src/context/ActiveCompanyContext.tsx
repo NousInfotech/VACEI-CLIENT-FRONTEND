@@ -52,6 +52,13 @@ export const ActiveCompanyProvider: React.FC<ActiveCompanyProviderProps> = ({ ch
     }
   }, [])
 
+  // Default to first company if none selected
+  useEffect(() => {
+    if (!loading && companies.length > 0 && !activeCompanyId) {
+      setActiveCompanyId(companies[0].id)
+    }
+  }, [loading, companies, activeCompanyId, setActiveCompanyId])
+
   // Listen for storage changes (from other tabs/windows or TopHeader)
   useEffect(() => {
     if (typeof window === 'undefined') return
