@@ -9,7 +9,8 @@ import { ChatList } from './dashboard/messages/components/ChatList';
 import { ChatWindow } from './dashboard/messages/components/ChatWindow';
 import { MediaPreviewModal } from './dashboard/messages/components/MediaPreviewModal';
 import { ConfirmModal } from './dashboard/messages/components/ConfirmModal';
-import { mockChats, users as mockUsers } from './dashboard/messages/mockData';
+import { useChatRooms, mapApiMessage } from '@/hooks/useChatRooms';
+import { chatService } from '@/api/chatService';
 import type { Chat, Message } from './dashboard/messages/types';
 
 interface ChatModuleProps {
@@ -20,34 +21,62 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
     const [showSidebar, setShowSidebar] = useState(true);
-    const [chats, setChats] = useState<Chat[]>(mockChats);
-    const [activeChatId, setActiveChatId] = useState<string | undefined>(mockChats[0]?.id);
+    const [activeChatId, setActiveChatId] = useState<string | undefined>(undefined);
+
+    const {
+        rooms: chats,
+        setRoomMessages,
+        appendMessage,
+    } = useChatRooms(activeChatId);
+
     const [searchQuery, setSearchQuery] = useState('');
     const [previewMessage, setPreviewMessage] = useState<Message | null>(null);
+    const [forwardingMessages, setForwardingMessages] = useState<Message[]>([]);
+    const [selectedForwardChatIds, setSelectedForwardChatIds] = useState<string[]>([]);
     const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
     const [editingMessage, setEditingMessage] = useState<Message | null>(null);
     const [isSelectMode, setIsSelectMode] = useState(false);
     const [selectedMessageIds, setSelectedMessageIds] = useState<string[]>([]);
-    const [confirmState, setConfirmState] = useState<{ 
-        isOpen: boolean; 
-        type: 'message' | 'clear-chat'; 
-        messageId?: string; 
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean;
+        type: 'message' | 'clear-chat';
+        messageId?: string;
     }>({ isOpen: false, type: 'message' });
+
+    // Auto-select first chat if embedded
+    useEffect(() => {
+        if (isEmbedded && !activeChatId && chats.length > 0) {
+            setActiveChatId(chats[0].id);
+        }
+    }, [chats, activeChatId, isEmbedded]);
 
     const activeChat = chats.find(c => c.id === activeChatId);
 
-    const handleSendMessage = (content: { 
-        text?: string; 
-        gifUrl?: string; 
-        fileUrl?: string; 
-        fileName?: string; 
+    const handleSendMessage = async (content: {
+        text?: string;
+        gifUrl?: string;
+        fileUrl?: string;
+        fileName?: string;
         fileSize?: string;
-        type: 'text' | 'gif' | 'image' | 'document' 
+        type: 'text' | 'gif' | 'image' | 'document'
     }) => {
         if (!activeChatId) return;
 
+        if (editingMessage) {
+            const text = content.text || '';
+            const activeRoom = chats.find(r => r.id === activeChatId);
+            if (activeRoom) {
+                const updated = activeRoom.messages.map(m => m.id === editingMessage.id ? { ...m, text, isEdited: true } : m);
+                setRoomMessages(activeChatId, updated);
+            }
+            chatService.editMessage(editingMessage.id, text).catch(console.error);
+            setEditingMessage(null);
+            return;
+        }
+
+        const optimisticId = `optimistic-${Date.now()}`;
         const newMessage: Message = {
-            id: `m-${Date.now()}`,
+            id: optimisticId,
             senderId: 'me',
             type: content.type,
             text: content.text,
@@ -55,30 +84,93 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
             fileUrl: content.fileUrl,
             fileName: content.fileName,
             fileSize: content.fileSize,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            replyToId: replyToMessage?.id,
+            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
             createdAt: Date.now(),
             status: 'sent',
         };
 
-        setChats(prev => prev.map(chat => 
-            chat.id === activeChatId 
-                ? { ...chat, messages: [...chat.messages, newMessage], lastMessage: newMessage }
-                : chat
-        ));
+        appendMessage(activeChatId, newMessage);
         setReplyToMessage(null);
+
+        try {
+            let mediaUrl = content.fileUrl;
+            const sent = await chatService.sendMessage(activeChatId, content.text || '', mediaUrl);
+            if (sent) {
+                const activeRoom = chats.find(r => r.id === activeChatId);
+                if (activeRoom) {
+                    const updated = activeRoom.messages.map(m => m.id === optimisticId ? mapApiMessage(sent) : m);
+                    setRoomMessages(activeChatId, updated);
+                }
+            }
+        } catch (err) {
+            console.error('Failed to send message:', err);
+        }
     };
 
     const handleToggleMute = (chatId: string) => {
-        setChats(prev => prev.map(chat => 
-            chat.id === chatId ? { ...chat, isMuted: !chat.isMuted } : chat
-        ));
+        // Mock UI state for mute
     };
 
     const handleClearChat = () => {
+        // Soft clear
+    };
+
+    const handleReactToMessage = (messageId: string, emoji: string) => {
         if (!activeChatId) return;
-        setChats(prev => prev.map(chat => 
-            chat.id === activeChatId ? { ...chat, messages: [] } : chat
-        ));
+        const room = chats.find(r => r.id === activeChatId);
+        if (!room) return;
+
+        const updated = room.messages.map(m => {
+            if (m.id !== messageId) return m;
+            const reactions = { ...(m.reactions || {}) };
+            const alreadyHas = (reactions[emoji] || []).includes('me');
+            Object.keys(reactions).forEach(key => {
+                reactions[key] = reactions[key].filter(id => id !== 'me');
+                if (reactions[key].length === 0) delete reactions[key];
+            });
+            if (!alreadyHas) reactions[emoji] = [...(reactions[emoji] || []), 'me'];
+            return { ...m, reactions };
+        });
+        setRoomMessages(activeChatId, updated);
+        chatService.addReaction(messageId, emoji).catch(console.error);
+    };
+
+    const handleDeleteMessage = async (messageId?: string) => {
+        const idsToDelete = confirmState.type === 'message' && messageId ? [messageId] : selectedMessageIds;
+        await Promise.allSettled(idsToDelete.map(id => chatService.deleteMessage(id)));
+
+        if (activeChatId) {
+            const room = chats.find(r => r.id === activeChatId);
+            if (room) {
+                const updated = room.messages.map(m =>
+                    idsToDelete.includes(m.id) ? { ...m, isDeleted: true, text: undefined, type: 'text' as const, reactions: {} } : m
+                );
+                setRoomMessages(activeChatId, updated);
+            }
+        }
+        setIsSelectMode(false);
+        setSelectedMessageIds([]);
+        setConfirmState({ isOpen: false, type: 'message' });
+    };
+
+    const handleForwardMessages = () => {
+        if (forwardingMessages.length === 0 || selectedForwardChatIds.length === 0) return;
+        selectedForwardChatIds.forEach(targetRoomId => {
+            forwardingMessages.forEach(async msg => {
+                const text = msg.text || '';
+                if (text) {
+                    try {
+                        const sent = await chatService.sendMessage(targetRoomId, text);
+                        if (sent) appendMessage(targetRoomId, mapApiMessage(sent));
+                    } catch (err) { console.error('Forward failed:', err); }
+                }
+            });
+        });
+        setForwardingMessages([]);
+        setSelectedForwardChatIds([]);
+        setIsSelectMode(false);
+        setSelectedMessageIds([]);
     };
 
     const handleBackToSidebar = () => {
@@ -102,8 +194,8 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
                         onSelectChat={handleSelectChat}
                         searchQuery={searchQuery}
                         onSearchChange={setSearchQuery}
-                        onCreateGroup={() => {}}
-                        onTogglePin={() => {}}
+                        onCreateGroup={() => { }}
+                        onTogglePin={() => { }}
                         onToggleMute={handleToggleMute}
                         hideCreateGroup={true}
                     />
@@ -113,24 +205,24 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
                         <ChatWindow
                             chat={activeChat}
                             onSendMessage={handleSendMessage}
-                            onSearchToggle={() => {}}
-                            onInfoToggle={() => {}}
+                            onSearchToggle={() => { }}
+                            onInfoToggle={() => { }}
                             onMute={() => handleToggleMute(activeChat.id)}
                             onClearChat={handleClearChat}
                             onSelectMessages={() => setIsSelectMode(true)}
                             onMediaClick={setPreviewMessage}
                             onReplyMessage={setReplyToMessage}
                             onEditMessage={setEditingMessage}
-                            onDeleteMessage={() => {}}
-                            onReactToMessage={() => {}}
-                            onForwardMessage={() => {}}
+                            onDeleteMessage={(id) => setConfirmState({ isOpen: true, type: 'message', messageId: id })}
+                            onReactToMessage={handleReactToMessage}
+                            onForwardMessage={() => setForwardingMessages(activeChat.messages.filter(m => selectedMessageIds.includes(m.id)))}
                             replyingTo={replyToMessage}
                             editingMessage={editingMessage}
                             onCancelReply={() => setReplyToMessage(null)}
                             onCancelEdit={() => setEditingMessage(null)}
                             isSelectMode={isSelectMode}
                             selectedMessageIds={selectedMessageIds}
-                            onSelectMessage={() => {}}
+                            onSelectMessage={() => { }}
                             onEnterSelectMode={() => setIsSelectMode(true)}
                             hideSearch={true}
                             hideMore={true}
@@ -162,8 +254,8 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
                     "fixed z-50 bg-white shadow-2xl transition-all duration-500 ease-in-out flex flex-col overflow-hidden origin-bottom-right",
                     !isOpen && "scale-95 opacity-0 pointer-events-none",
                     isOpen && "scale-100 opacity-100",
-                    isMaximized 
-                        ? "bottom-6 right-6 w-[calc(100%-3rem)] h-[calc(100%-3rem)] rounded-2xl" 
+                    isMaximized
+                        ? "bottom-6 right-6 w-[calc(100%-3rem)] h-[calc(100%-3rem)] rounded-2xl"
                         : "bottom-6 right-6 w-[360px] h-[550px] rounded-xl border border-gray-200"
                 )}
             >
@@ -171,7 +263,7 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
                 <div className="p-4 border-b border-border flex justify-between items-center bg-white shrink-0 h-16">
                     <div className="flex items-center gap-3 min-w-0">
                         {!showSidebar && !isMaximized && (
-                            <button 
+                            <button
                                 onClick={handleBackToSidebar}
                                 className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                             >
@@ -179,10 +271,10 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
                             </button>
                         )}
                         <h2 className="font-semibold text-lg text-primary truncate">
-                            {showSidebar && !isMaximized 
-                                ? 'Messages' 
-                                : activeChat 
-                                    ? activeChat.name 
+                            {showSidebar && !isMaximized
+                                ? 'Messages'
+                                : activeChat
+                                    ? activeChat.name
                                     : 'Chat'}
                         </h2>
                     </div>
@@ -215,10 +307,10 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
                     {/* Sidebar */}
                     <div className={cn(
                         "border-r border-gray-100 flex flex-col shrink-0 transition-all duration-300 ease-in-out bg-white",
-                        isMaximized 
-                            ? "w-80 opacity-100" 
-                            : showSidebar 
-                                ? "w-full opacity-100" 
+                        isMaximized
+                            ? "w-80 opacity-100"
+                            : showSidebar
+                                ? "w-full opacity-100"
                                 : "w-0 opacity-0 overflow-hidden text-transparent"
                     )}>
                         <ChatList
@@ -227,8 +319,8 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
                             onSelectChat={handleSelectChat}
                             searchQuery={searchQuery}
                             onSearchChange={setSearchQuery}
-                            onCreateGroup={() => {}}
-                            onTogglePin={() => {}}
+                            onCreateGroup={() => { }}
+                            onTogglePin={() => { }}
                             onToggleMute={handleToggleMute}
                             hideCreateGroup={true}
                             hideHeader={true}
@@ -244,24 +336,24 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
                             <ChatWindow
                                 chat={activeChat}
                                 onSendMessage={handleSendMessage}
-                                onSearchToggle={() => {}}
-                                onInfoToggle={() => {}}
+                                onSearchToggle={() => { }}
+                                onInfoToggle={() => { }}
                                 onMute={() => handleToggleMute(activeChat.id)}
                                 onClearChat={handleClearChat}
                                 onSelectMessages={() => setIsSelectMode(true)}
                                 onMediaClick={setPreviewMessage}
                                 onReplyMessage={setReplyToMessage}
                                 onEditMessage={setEditingMessage}
-                                onDeleteMessage={() => {}}
-                                onReactToMessage={() => {}}
-                                onForwardMessage={() => {}}
+                                onDeleteMessage={(id) => setConfirmState({ isOpen: true, type: 'message', messageId: id })}
+                                onReactToMessage={handleReactToMessage}
+                                onForwardMessage={() => setForwardingMessages(activeChat.messages.filter(m => selectedMessageIds.includes(m.id)))}
                                 replyingTo={replyToMessage}
                                 editingMessage={editingMessage}
                                 onCancelReply={() => setReplyToMessage(null)}
                                 onCancelEdit={() => setEditingMessage(null)}
                                 isSelectMode={isSelectMode}
                                 selectedMessageIds={selectedMessageIds}
-                                onSelectMessage={() => {}}
+                                onSelectMessage={() => { }}
                                 onEnterSelectMode={() => setIsSelectMode(true)}
                                 hideHeader={true}
                             />
@@ -275,20 +367,24 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
             </div>
 
             {previewMessage && (
-                <MediaPreviewModal 
-                    message={previewMessage} 
-                    onClose={() => setPreviewMessage(null)} 
+                <MediaPreviewModal
+                    message={previewMessage}
+                    onClose={() => setPreviewMessage(null)}
                 />
             )}
 
-            <ConfirmModal 
+            <ConfirmModal
                 isOpen={confirmState.isOpen}
                 title={confirmState.type === 'clear-chat' ? "Clear chat?" : "Delete message?"}
                 message="Are you sure? This action cannot be undone."
                 confirmLabel="Delete"
                 cancelLabel="Cancel"
                 variant="danger"
-                onConfirm={() => {}}
+                onConfirm={() => {
+                    if (confirmState.type === 'message' || confirmState.type === 'clear-chat') {
+                        handleDeleteMessage(confirmState.messageId);
+                    }
+                }}
                 onCancel={() => setConfirmState({ isOpen: false, type: 'message' })}
             />
         </>

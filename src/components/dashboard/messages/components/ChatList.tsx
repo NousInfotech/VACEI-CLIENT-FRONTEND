@@ -48,6 +48,13 @@ export const ChatList: React.FC<ChatListProps> = ({
     return () => window.removeEventListener('click', handleClick);
   }, []);
 
+  const filteredChats = chats.filter(chat => {
+    if (!searchQuery) return true;
+    const lowerQuery = searchQuery.toLowerCase();
+    return chat.name.toLowerCase().includes(lowerQuery) ||
+      chat.participants?.some(p => p.name.toLowerCase().includes(lowerQuery));
+  });
+
   return (
     <div className="flex flex-col h-full bg-white relative">
       {/* Sidebar Header - WhatsApp style */}
@@ -82,9 +89,9 @@ export const ChatList: React.FC<ChatListProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        {chats.length > 0 ? (
-          chats.map((chat) => (
+      <div className="flex-1 overflow-y-auto w-full">
+        {filteredChats.length > 0 ? (
+          filteredChats.map((chat) => (
             <button
               key={chat.id}
               onClick={() => onSelectChat(chat)}
