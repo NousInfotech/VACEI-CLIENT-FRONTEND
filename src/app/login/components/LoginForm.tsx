@@ -94,6 +94,9 @@ export default function LoginForm() {
             localStorage.setItem("username", btoa(`${user?.firstName || ''} ${user?.lastName || ''}`));
             localStorage.setItem("email", btoa(email));
             localStorage.setItem("user_id", btoa(user?.id || ''));
+            if (user?.role) {
+                localStorage.setItem("role", btoa(user.role.toLowerCase()));
+            }
             
             // Store client specific IDs for library and other features
             if (loginData.client?.id) {

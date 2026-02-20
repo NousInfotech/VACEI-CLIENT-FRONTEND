@@ -12,6 +12,7 @@ import Breadcrumbs from "@/components/layout/Breadcrumbs";
 import ChatWrapper from "@/components/ChatWrapper";
 import { cn } from "@/lib/utils";
 import { ActiveCompanyProvider } from "@/context/ActiveCompanyContext";
+import RoleGuard from "@/components/RoleGuard";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -22,7 +23,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
 
     return (
-        <ActiveCompanyProvider>
+        <RoleGuard allowedRole="client">
+            <ActiveCompanyProvider>
             <div className="flex h-screen bg-brand-body relative">
                 {/* Sidebar for desktop & mobile */}
                 <Suspense fallback={<div className="w-24 lg:w-84 h-screen bg-brand-body animate-pulse" />}>
@@ -113,5 +115,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <ChatWrapper />
             </div>
         </ActiveCompanyProvider>
+        </RoleGuard>
     );
 }

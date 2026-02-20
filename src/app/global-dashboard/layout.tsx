@@ -12,6 +12,7 @@ import Breadcrumbs from "@/components/layout/Breadcrumbs";
 import ChatWrapper from "@/components/ChatWrapper";
 import { cn } from "@/lib/utils";
 import { ActiveCompanyProvider } from "@/context/ActiveCompanyContext";
+import RoleGuard from "@/components/RoleGuard";
 import { usePathname } from "next/navigation";
 
 export default function GlobalDashboardLayout({ children }: { children: React.ReactNode }) {
@@ -27,7 +28,8 @@ export default function GlobalDashboardLayout({ children }: { children: React.Re
     };
 
     return (
-        <ActiveCompanyProvider>
+        <RoleGuard allowedRole="client">
+            <ActiveCompanyProvider>
             <div className="flex h-screen bg-brand-body relative">
                 <Suspense fallback={<div className="w-24 lg:w-84 h-screen bg-brand-body animate-pulse" />}>
                     <Sidebar 
@@ -108,5 +110,6 @@ export default function GlobalDashboardLayout({ children }: { children: React.Re
                 <ChatWrapper />
             </div>
         </ActiveCompanyProvider>
+        </RoleGuard>
     );
 }
