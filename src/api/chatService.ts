@@ -73,6 +73,7 @@ export interface ClientChatRoom {
     type: "TEXT" | "FILE";
     sentAt: string;
     sender: {
+      id?: string;
       firstName: string;
       lastName: string;
     };
@@ -332,7 +333,7 @@ class ChatService {
 
   subscribeToMessages(
     roomId: string,
-    onNewMessage: (message: ChatMessage) => void
+    onMessageChange: (message: ChatMessage, eventType: 'INSERT' | 'UPDATE' | 'DELETE') => void
   ): RealtimeChannel | null {
     if (!this.supabase) return null;
 
@@ -341,13 +342,16 @@ class ChatService {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*", // Listen to INSERT, UPDATE, DELETE
           schema: "public",
           table: "ChatMessage",
           filter: `roomId=eq.${roomId}`,
         },
         (payload) => {
-          onNewMessage(payload.new as ChatMessage);
+          const eventType = payload.eventType as 'INSERT' | 'UPDATE' | 'DELETE';
+          // For DELETE, there is only payload.old
+          const msg = (eventType === 'DELETE' ? payload.old : payload.new) as ChatMessage;
+          onMessageChange(msg, eventType);
         }
       )
       .subscribe((status) => {

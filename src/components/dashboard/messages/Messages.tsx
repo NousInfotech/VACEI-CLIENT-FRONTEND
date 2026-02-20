@@ -200,7 +200,7 @@ const Messages: React.FC = () => {
   const handleForwardMessages = () => {
     if (forwardingMessages.length === 0 || selectedForwardChatIds.length === 0) return;
 
-    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
     selectedForwardChatIds.forEach((targetRoomId) => {
       forwardingMessages.forEach(async (msg) => {
@@ -259,7 +259,7 @@ const Messages: React.FC = () => {
       fileName: content.fileName,
       fileSize: content.fileSize,
       replyToId: replyToMessage?.id,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
       createdAt: Date.now(),
       status: 'sent',
     };

@@ -11,6 +11,7 @@ export interface User {
 export interface Message {
   id: string;
   senderId: string;
+  senderName?: string; // resolved display name (undefined for 'me', partner name for others)
   type?: 'text' | 'gif' | 'image' | 'document';
   text?: string;
   gifUrl?: string;

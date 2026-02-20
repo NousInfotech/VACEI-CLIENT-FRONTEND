@@ -97,8 +97,8 @@ export const ChatList: React.FC<ChatListProps> = ({
               <div className="relative shrink-0">
                 <div className={cn(
                   "w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-colors",
-                  chat.type === 'GROUP' 
-                    ? "bg-[#dfe5e7] text-[#54656f]" 
+                  chat.type === 'GROUP'
+                    ? "bg-[#dfe5e7] text-[#54656f]"
                     : "bg-primary/10 text-primary font-bold"
                 )}>
                   {chat.type === 'GROUP' ? (
@@ -131,14 +131,26 @@ export const ChatList: React.FC<ChatListProps> = ({
                     </span>
                   )}
                 </div>
-                
+
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-1.5 min-w-0 flex-1">
                     {chat.isMuted && (
                       <VolumeX className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                     )}
                     <p className="text-sm text-gray-500 truncate">
-                      {chat.lastMessage?.text || 'No messages yet'}
+                      {chat.lastMessage ? (
+                        <>
+                          {chat.lastMessage.senderId === 'me' && (
+                            <span className="font-medium mr-1 text-gray-700">You:</span>
+                          )}
+                          {chat.lastMessage.senderId !== 'me' && chat.lastMessage.senderName && (
+                            <span className="font-medium mr-1 text-gray-700">{chat.lastMessage.senderName}:</span>
+                          )}
+                          {chat.lastMessage.text || 'No messages yet'}
+                        </>
+                      ) : (
+                        'No messages yet'
+                      )}
                     </p>
                   </div>
                   {chat.unreadCount > 0 && (
@@ -159,7 +171,7 @@ export const ChatList: React.FC<ChatListProps> = ({
 
       {/* Context Menu Portal-like */}
       {contextMenu && (
-        <div 
+        <div
           ref={menuRef}
           className="fixed z-50 bg-white shadow-xl rounded-lg py-1 border border-gray-100 min-w-[170px] animate-in fade-in zoom-in-95 duration-100"
           style={{ top: contextMenu.y, left: contextMenu.x }}
@@ -184,7 +196,7 @@ export const ChatList: React.FC<ChatListProps> = ({
               </>
             )}
           </button>
-          <button 
+          <button
             onClick={() => {
               onToggleMute(contextMenu.chatId);
               setContextMenu(null);

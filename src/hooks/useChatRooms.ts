@@ -15,15 +15,21 @@ import type { Chat, Message, User } from "@/components/dashboard/messages/types"
  * Map a ClientChatRoom (from GET /chat/client/rooms) → frontend Chat shape.
  */
 function mapClientRoomToChat(room: ClientChatRoom): Chat {
+    const currentUserId = getDecodedUserId() ?? "";
     let lastMsg: Message | undefined;
     if (room.lastMessage) {
         const lm = room.lastMessage;
+        const isMe = lm.sender?.id === currentUserId;
+        const resolvedName = lm.sender
+            ? `${lm.sender.firstName ?? ""} ${lm.sender.lastName ?? ""}`.trim()
+            : "";
         lastMsg = {
             id: room.id + "-last",
-            senderId: `${lm.sender.firstName} ${lm.sender.lastName}`.trim(),
+            senderId: isMe ? "me" : (lm.sender?.id ?? resolvedName),
+            senderName: isMe ? undefined : resolvedName || undefined,
             type: "text",
             text: lm.content,
-            timestamp: new Date(lm.sentAt).toLocaleTimeString([], {
+            timestamp: new Date(lm.sentAt).toLocaleTimeString('en-US', {
                 hour: "2-digit",
                 minute: "2-digit",
             }),
@@ -48,14 +54,19 @@ function mapClientRoomToChat(room: ClientChatRoom): Chat {
 /** Map a ChatMessage from the API → frontend Message shape */
 export function mapApiMessage(m: ChatMessage): Message {
     const currentUserId = getDecodedUserId() ?? "";
+    const isMe = m.senderId === currentUserId;
+    const resolvedName = m.sender
+        ? `${m.sender.firstName ?? ""} ${m.sender.lastName ?? ""}`.trim()
+        : undefined;
 
     return {
         id: m.id,
-        senderId: m.senderId === currentUserId ? "me" : m.senderId,
+        senderId: isMe ? "me" : m.senderId,
+        senderName: isMe ? undefined : resolvedName || undefined,
         type: m.type === "FILE" ? "document" : "text",
         text: m.content ?? undefined,
         fileUrl: (m as any).fileUrl ?? undefined,
-        timestamp: new Date(m.sentAt).toLocaleTimeString([], {
+        timestamp: new Date(m.sentAt).toLocaleTimeString('en-US', {
             hour: "2-digit",
             minute: "2-digit",
         }),
@@ -183,7 +194,7 @@ export function useChatRooms(activeRoomId?: string): UseChatRoomsReturn {
                 mapped.forEach((room) => {
                     const ch = chatService.subscribeToMessages(
                         room.id,
-                        (rawMsg: ChatMessage) => {
+                        (rawMsg: ChatMessage, eventType: 'INSERT' | 'UPDATE' | 'DELETE') => {
                             if (cancelled) return;
                             const msg = mapApiMessage(rawMsg);
                             const isActiveRoom = room.id === activeRoomIdRef.current;
@@ -191,18 +202,35 @@ export function useChatRooms(activeRoomId?: string): UseChatRoomsReturn {
                             setRooms((prev) =>
                                 prev.map((r) => {
                                     if (r.id !== room.id) return r;
+
+                                    let newMessages = r.messages;
+                                    let unreadDelta = 0;
+
+                                    // Realtime payloads don't include joined relations (e.g., sender: { firstName, lastName })
+                                    // So we must manually resolve the senderName from the room's participants list
+                                    const finalMsg = { ...msg };
+                                    if (finalMsg.senderId !== 'me' && !finalMsg.senderName) {
+                                        const participant = r.participants.find(p => p.id === finalMsg.senderId);
+                                        if (participant) finalMsg.senderName = participant.name;
+                                    }
+
+                                    if (eventType === 'INSERT') {
+                                        newMessages = isActiveRoom ? [...r.messages, finalMsg] : r.messages;
+                                        if (!isActiveRoom) unreadDelta = 1;
+                                    } else if (eventType === 'UPDATE') {
+                                        newMessages = r.messages.map(m => m.id === finalMsg.id ? finalMsg : m);
+                                    } else if (eventType === 'DELETE') {
+                                        newMessages = r.messages.map(m =>
+                                            m.id === finalMsg.id ? { ...m, isDeleted: true, text: undefined, type: 'text' as const, reactions: {} } : m
+                                        );
+                                    }
+
                                     return {
                                         ...r,
-                                        // Append to displayed messages only for the active room
-                                        messages: isActiveRoom
-                                            ? [...r.messages, msg]
-                                            : r.messages,
-                                        // Always update the last-message preview in the sidebar
-                                        lastMessage: msg,
-                                        // Increment badge only for non-active rooms
-                                        unreadCount: isActiveRoom
-                                            ? r.unreadCount
-                                            : r.unreadCount + 1,
+                                        messages: newMessages,
+                                        // Update last message preview if it's the one that was changed or it's a new message
+                                        lastMessage: (eventType === 'INSERT' || r.lastMessage?.id === finalMsg.id) ? finalMsg : r.lastMessage,
+                                        unreadCount: r.unreadCount + unreadDelta,
                                     };
                                 })
                             );

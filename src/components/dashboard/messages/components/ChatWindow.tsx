@@ -165,8 +165,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
           return chat.messages.map((msg) => {
             const isMe = msg.senderId === 'me';
-            const sender = chat.participants.find(p => p.id === msg.senderId);
-            const showSenderName = chat.type === 'GROUP' && !isMe;
+            const sender = chat.participants.find(p => p.id === msg.senderId) ||
+              (msg.senderName ? { id: msg.senderId, name: msg.senderName, role: 'PLATFORM_EMPLOYEE' as const, isOnline: false } : undefined);
+            const showSenderName = !isMe; // Always show partner name for non-me messages
 
             // Date divider
             const msgDate = msg.createdAt ? new Date(msg.createdAt) : null;
