@@ -63,6 +63,56 @@ export interface MessagesResponse {
   };
 }
 
+/** Shape returned by GET /chat/client/rooms */
+export interface ClientChatRoom {
+  id: string;
+  title: string;
+  contextType: "ENGAGEMENT" | "DIRECT" | "GROUP" | string;
+  lastMessage?: {
+    content: string;
+    type: "TEXT" | "FILE";
+    sentAt: string;
+    sender: {
+      firstName: string;
+      lastName: string;
+    };
+  } | null;
+}
+
+export interface ClientRoomsResponse {
+  success: boolean;
+  data: ClientChatRoom[];
+  message?: string;
+}
+
+export interface ClientMessagesResponse {
+  success: boolean;
+  data: ChatMessage[];
+  meta: {
+    nextCursor: string | null;
+    hasMore: boolean;
+  };
+  message?: string;
+}
+
+export interface ChatRoom {
+  id: string;
+  name: string;
+  type: "INDIVIDUAL" | "GROUP";
+  members: ChatMember[];
+  lastMessage?: ChatMessage | null;
+  unreadCount: number;
+  isPinned?: boolean;
+  isMuted?: boolean;
+  contextType?: string;
+  engagementId?: string | null;
+  createdAt?: string;
+}
+
+export interface RoomsResponse {
+  data: ChatRoom[];
+}
+
 export interface RoomResponse {
   data: {
     id: string;
@@ -127,6 +177,29 @@ class ChatService {
 
   // ============ REST API ============
 
+  // ── Client-specific endpoints ──────────────────────────────────────────
+
+  /** GET /chat/client/rooms — rooms list for the logged-in client */
+  async getClientRooms(): Promise<ClientRoomsResponse> {
+    return this.request<ClientRoomsResponse>("GET", "chat/client/rooms");
+  }
+
+  /** GET /chat/client/rooms/:roomId/messages?limit=N — messages for a client room */
+  async getClientRoomMessages(
+    roomId: string,
+    limit = 50,
+    cursor?: string
+  ): Promise<ClientMessagesResponse> {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (cursor) params.append("cursor", cursor);
+    return this.request<ClientMessagesResponse>(
+      "GET",
+      `chat/client/rooms/${roomId}/messages?${params}`
+    );
+  }
+
+  // ── Generic (partner / admin) endpoints ────────────────────────────────
+
   async getMessages(roomId: string, cursor?: string): Promise<MessagesResponse> {
     const params = new URLSearchParams({ limit: "50" });
     if (cursor) params.append("cursor", cursor);
@@ -144,12 +217,32 @@ class ChatService {
     return this.request("GET", "chat/unread-summary");
   }
 
-  async getRooms(): Promise<{ data: unknown[] }> {
+  async getRooms(): Promise<RoomsResponse> {
     return this.request("GET", "chat/rooms");
   }
 
   async getRoomById(roomId: string): Promise<RoomResponse> {
     return this.request("GET", `chat/rooms/${roomId}`);
+  }
+
+  async updateRoomPin(roomId: string, isPinned: boolean): Promise<void> {
+    await this.request("PATCH", `chat/rooms/${roomId}/pin`, { isPinned });
+  }
+
+  async updateRoomMute(roomId: string, isMuted: boolean): Promise<void> {
+    await this.request("PATCH", `chat/rooms/${roomId}/mute`, { isMuted });
+  }
+
+  async editMessage(messageId: string, content: string): Promise<void> {
+    await this.request("PATCH", `chat/messages/${messageId}`, { content });
+  }
+
+  async addReaction(messageId: string, emoji: string): Promise<void> {
+    await this.request("POST", `chat/messages/${messageId}/react`, { emoji });
+  }
+
+  async removeReaction(messageId: string): Promise<void> {
+    await this.request("DELETE", `chat/messages/${messageId}/react`);
   }
 
   /**

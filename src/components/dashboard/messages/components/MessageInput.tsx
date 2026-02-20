@@ -8,13 +8,13 @@ import { EmojiPicker } from './EmojiPicker';
 import { GifPicker } from './GifPicker';
 
 interface MessageInputProps {
-  onSendMessage: (content: { 
-    text?: string; 
-    gifUrl?: string; 
-    fileUrl?: string; 
-    fileName?: string; 
+  onSendMessage: (content: {
+    text?: string;
+    gifUrl?: string;
+    fileUrl?: string;
+    fileName?: string;
     fileSize?: string;
-    type: 'text' | 'gif' | 'image' | 'document' 
+    type: 'text' | 'gif' | 'image' | 'document'
   }) => void;
   replyingTo: Message | null;
   editingMessage: Message | null;
@@ -22,8 +22,8 @@ interface MessageInputProps {
   onCancelEdit: () => void;
 }
 
-export const MessageInput: React.FC<MessageInputProps> = ({ 
-  onSendMessage, 
+export const MessageInput: React.FC<MessageInputProps> = ({
+  onSendMessage,
   replyingTo,
   editingMessage,
   onCancelReply,
@@ -117,7 +117,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
               {editingMessage?.text || replyingTo?.text || replyingTo?.fileName || 'Media'}
             </p>
           </div>
-          <button 
+          <button
             onClick={editingMessage ? onCancelEdit : onCancelReply}
             className="p-1 hover:bg-gray-200 rounded-lg transition-colors"
           >
@@ -127,24 +127,25 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       )}
 
       <div className="p-2 flex items-center gap-2 shrink-0 relative">
-      <div className="flex items-center gap-1">
-        {/* Hidden File Inputs */}
-        <input 
-          type="file" 
-          ref={imageInputRef} 
-          className="hidden" 
+        <div className="flex items-center gap-1">
+          {/* Hidden File Inputs — commented out until file upload is ready */}
+          {/* <input
+          type="file"
+          ref={imageInputRef}
+          className="hidden"
           accept="image/*"
           onChange={(e) => handleFileSelect(e, 'image')}
         />
-        <input 
-          type="file" 
-          ref={docInputRef} 
-          className="hidden" 
+        <input
+          type="file"
+          ref={docInputRef}
+          className="hidden"
           accept=".pdf,.doc,.docx,.txt"
           onChange={(e) => handleFileSelect(e, 'document')}
-        />
+        /> */}
 
-        <button 
+          {/* Emoji button — commented out for now */}
+          {/* <button
           onClick={() => {
             setShowEmojiPicker(!showEmojiPicker);
             setShowGifPicker(false);
@@ -156,9 +157,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           )}
         >
           <Smile className="w-6 h-6" />
-        </button>
+        </button> */}
 
-        <button 
+          {/* GIF button — commented out for now */}
+          {/* <button
           onClick={() => {
             setShowGifPicker(!showGifPicker);
             setShowEmojiPicker(false);
@@ -170,9 +172,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           )}
         >
           GIF
-        </button>
+        </button> */}
 
-        <button 
+          {/* Attachment button — commented out for now */}
+          {/* <button
           onClick={() => {
             setShowAttachmentMenu(!showAttachmentMenu);
             setShowEmojiPicker(false);
@@ -184,57 +187,60 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           )}
         >
           <Paperclip className="w-6 h-6" />
-        </button>
+        </button> */}
 
-        {showAttachmentMenu && (
-          <AttachmentMenu 
+          {/* Attachment menu popup — commented out for now */}
+          {/* {showAttachmentMenu && (
+          <AttachmentMenu
             onSelect={(type) => {
               if (type === 'image') imageInputRef.current?.click();
               else if (type === 'document') docInputRef.current?.click();
             }}
             onClose={() => setShowAttachmentMenu(false)}
           />
-        )}
-      </div>
+        )} */}
+        </div>
 
-      {showEmojiPicker && (
-        <EmojiPicker 
-          onSelect={onSelectEmoji} 
-          onClose={() => setShowEmojiPicker(false)} 
+        {/* Emoji picker popup — commented out for now */}
+        {/* {showEmojiPicker && (
+        <EmojiPicker
+          onSelect={onSelectEmoji}
+          onClose={() => setShowEmojiPicker(false)}
         />
-      )}
+      )} */}
 
-      {showGifPicker && (
-        <GifPicker 
-          onSelect={onSelectGif} 
-          onClose={() => setShowGifPicker(false)} 
+        {/* GIF picker popup — commented out for now */}
+        {/* {showGifPicker && (
+        <GifPicker
+          onSelect={onSelectGif}
+          onClose={() => setShowGifPicker(false)}
         />
-      )}
-      
-      <div className="flex-1 relative group/input">
-        <textarea
-          ref={textareaRef}
-          rows={1}
-          placeholder="Type a message"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyPress}
-          className="w-full bg-white border border-transparent rounded-lg px-3 py-2 text-[15px] outline-none h-10 resize-none flex items-center shadow-sm placeholder:text-gray-400 transition-all focus:border-primary/20"
-        />
-      </div>
+      )} */}
 
-      <button
-        onClick={handleSend}
-        disabled={!message.trim()}
-        className={cn(
-          "p-2.5 rounded-full transition-all flex items-center justify-center",
-          message.trim() 
-            ? "bg-primary text-white shadow-sm hover:opacity-90 active:scale-95" 
-            : "text-gray-400 cursor-not-allowed"
-        )}
-      >
-        <Send className="w-5 h-5 fill-current" />
-      </button>
+        <div className="flex-1 relative group/input">
+          <textarea
+            ref={textareaRef}
+            rows={1}
+            placeholder="Type a message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyPress}
+            className="w-full bg-white border border-transparent rounded-lg px-3 py-2 text-[15px] outline-none h-10 resize-none flex items-center shadow-sm placeholder:text-gray-400 transition-all focus:border-primary/20"
+          />
+        </div>
+
+        <button
+          onClick={handleSend}
+          disabled={!message.trim()}
+          className={cn(
+            "p-2.5 rounded-full transition-all flex items-center justify-center",
+            message.trim()
+              ? "bg-primary text-white shadow-sm hover:opacity-90 active:scale-95"
+              : "text-gray-400 cursor-not-allowed"
+          )}
+        >
+          <Send className="w-5 h-5 fill-current" />
+        </button>
       </div>
     </div>
   );
