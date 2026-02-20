@@ -7,13 +7,13 @@ import { MessageInput } from './MessageInput';
 
 interface ChatWindowProps {
   chat: Chat;
-  onSendMessage: (content: { 
-    text?: string; 
-    gifUrl?: string; 
-    fileUrl?: string; 
-    fileName?: string; 
+  onSendMessage: (content: {
+    text?: string;
+    gifUrl?: string;
+    fileUrl?: string;
+    fileName?: string;
     fileSize?: string;
-    type: 'text' | 'gif' | 'image' | 'document' 
+    type: 'text' | 'gif' | 'image' | 'document'
   }) => void;
   onSearchToggle: () => void;
   onInfoToggle: () => void;
@@ -43,10 +43,26 @@ interface ChatWindowProps {
   hideAvatar?: boolean;
 }
 
-export const ChatWindow: React.FC<ChatWindowProps> = ({ 
-  chat, 
-  onSendMessage, 
-  onSearchToggle, 
+/** Format date label for the divider chip */
+function getDateLabel(date: Date): string {
+  const today = new Date();
+  const todayStr = today.toDateString();
+  const yesterdayStr = new Date(today.getTime() - 86_400_000).toDateString();
+  const dateStr = date.toDateString();
+
+  if (dateStr === todayStr) return 'Today';
+  if (dateStr === yesterdayStr) return 'Yesterday';
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined,
+  });
+}
+
+export const ChatWindow: React.FC<ChatWindowProps> = ({
+  chat,
+  onSendMessage,
+  onSearchToggle,
   onInfoToggle,
   onMute,
   onClearChat,
@@ -85,18 +101,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         setHighlightedId(scrollToMessageId);
-        
-        // Use a persistent timer that won't be cleared by onScrollComplete re-render
+
         const timer = setTimeout(() => {
           setHighlightedId(null);
-          // Only notify completion AFTER we've cleared our local highlight state
           onScrollComplete?.();
         }, 800);
-        
+
         return () => clearTimeout(timer);
       }
     }
-  }, [scrollToMessageId]); // Remove onScrollComplete from deps to prevent immediate cleanup if parent changes it
+  }, [scrollToMessageId]);
 
   // Instant scroll to bottom on chat switch or initial load
   useLayoutEffect(() => {
@@ -105,7 +119,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   }, [chat.id]);
 
-  // Effect for new message scroll (only if not searching)
+  // Scroll to bottom when new messages arrive
   useEffect(() => {
     if (chat.messages.length > lastMessagesLength.current && !scrollToMessageId) {
       if (scrollRef.current) {
@@ -117,18 +131,18 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-[#efeae2] relative overflow-hidden">
-      {/* Background Pattern - WhatsApp style */}
-      <div 
+      {/* Background Pattern */}
+      <div
         className="absolute inset-0 opacity-[0.06] pointer-events-none"
-        style={{ 
+        style={{
           backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")',
           backgroundSize: '400px'
         }}
       />
 
       {!hideHeader && (
-        <ChatHeader 
-          chat={chat} 
+        <ChatHeader
+          chat={chat}
           onSearchToggle={onSearchToggle}
           onInfoToggle={onInfoToggle}
           onMute={onMute}
@@ -140,61 +154,75 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           hideAvatar={hideAvatar}
         />
       )}
-      
+
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 relative z-10 custom-scrollbar"
+        className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-1 relative z-10 custom-scrollbar"
       >
-        <div className="flex justify-center">
-          <span className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg text-[11px] font-medium text-gray-500 shadow-sm uppercase tracking-wider">
-            Today
-          </span>
-        </div>
+        {/* ── Messages with dynamic date dividers ── */}
+        {(() => {
+          let lastDateStr = '';
 
-        {chat.messages.map((msg) => {
-          const isMe = msg.senderId === 'me';
-          const sender = chat.participants.find(p => p.id === msg.senderId);
-          const showSenderName = chat.type === 'GROUP' && !isMe;
+          return chat.messages.map((msg) => {
+            const isMe = msg.senderId === 'me';
+            const sender = chat.participants.find(p => p.id === msg.senderId);
+            const showSenderName = chat.type === 'GROUP' && !isMe;
 
-          return (
-            <div 
-              key={msg.id} 
-              id={`msg-${msg.id}`}
-              className={cn(
-                "transition-all duration-300 rounded-lg -mx-4 px-4",
-                highlightedId === msg.id && "bg-[#dfdfdf] z-20"
-              )}
-            >
-              <MessageItem
-                message={msg}
-                isMe={isMe}
-                sender={sender}
-                showSenderName={showSenderName}
-                onMediaClick={onMediaClick}
-                onReply={() => onReplyMessage(msg)}
-                onEdit={() => onEditMessage(msg)}
-                onDelete={() => onDeleteMessage(msg.id)}
-                onReact={(emoji) => onReactToMessage(msg.id, emoji)}
-                onForward={() => onForwardMessage(msg)}
-                isSelectMode={isSelectMode}
-                isSelected={selectedMessageIds.includes(msg.id)}
-                onSelect={() => onSelectMessage(msg.id)}
-                onEnterSelectMode={onEnterSelectMode}
-                showOptions={activeOptionsId === msg.id}
-                onToggleOptions={(show) => setActiveOptionsId(show ? msg.id : null)}
-                onImageLoad={() => {
-                  if (scrollRef.current) {
-                    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-                  }
-                }}
-              />
-            </div>
-          );
-        })}
+            // Date divider
+            const msgDate = msg.createdAt ? new Date(msg.createdAt) : null;
+            const dateStr = msgDate ? msgDate.toDateString() : '';
+            const showDateDivider = Boolean(dateStr && dateStr !== lastDateStr);
+            if (showDateDivider) lastDateStr = dateStr;
+
+            return (
+              <React.Fragment key={msg.id}>
+                {showDateDivider && msgDate && (
+                  <div className="flex justify-center py-2">
+                    <span className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg text-[11px] font-medium text-gray-500 shadow-sm uppercase tracking-wider">
+                      {getDateLabel(msgDate)}
+                    </span>
+                  </div>
+                )}
+
+                <div
+                  id={`msg-${msg.id}`}
+                  className={cn(
+                    "transition-all duration-300 rounded-lg -mx-4 px-4",
+                    highlightedId === msg.id && "bg-[#dfdfdf] z-20"
+                  )}
+                >
+                  <MessageItem
+                    message={msg}
+                    isMe={isMe}
+                    sender={sender}
+                    showSenderName={showSenderName}
+                    onMediaClick={onMediaClick}
+                    onReply={() => onReplyMessage(msg)}
+                    onEdit={() => onEditMessage(msg)}
+                    onDelete={() => onDeleteMessage(msg.id)}
+                    onReact={(emoji) => onReactToMessage(msg.id, emoji)}
+                    onForward={() => onForwardMessage(msg)}
+                    isSelectMode={isSelectMode}
+                    isSelected={selectedMessageIds.includes(msg.id)}
+                    onSelect={() => onSelectMessage(msg.id)}
+                    onEnterSelectMode={onEnterSelectMode}
+                    showOptions={activeOptionsId === msg.id}
+                    onToggleOptions={(show) => setActiveOptionsId(show ? msg.id : null)}
+                    onImageLoad={() => {
+                      if (scrollRef.current) {
+                        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+                      }
+                    }}
+                  />
+                </div>
+              </React.Fragment>
+            );
+          });
+        })()}
       </div>
 
-      <MessageInput 
-        onSendMessage={onSendMessage} 
+      <MessageInput
+        onSendMessage={onSendMessage}
         replyingTo={replyingTo}
         editingMessage={editingMessage}
         onCancelReply={onCancelReply}
