@@ -446,15 +446,15 @@ export default function DashboardPage() {
             </div>
           }
           riskLevel={riskLevel}
-          actions={
-            <DashboardActionButton 
-              Icon={User}
-              title="Contact Accountant"
-              subtitle="Get expert assistance"
-              onClick={handleContactAccountantClick}
-              className="bg-white/5 border border-white/10 hover:bg-white/10 text-white"
-            />
-          }
+          // actions={
+          //   <DashboardActionButton 
+          //     Icon={User}
+          //     title="Contact Accountant"
+          //     subtitle="Get expert assistance"
+          //     onClick={handleContactAccountantClick}
+          //     className="bg-white/5 border border-white/10 hover:bg-white/10 text-white"
+          //   />
+          // }
         />
 
         {/* Notice Board and Stats Row */}

@@ -1,21 +1,26 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useMemo } from "react";
 import Sidebar from "@/components/Sidebar";
 import Link from "next/link";
 import Image from "next/image";
 import SidebarMenu from "@/components/SidebarMenu";
-import { menuData } from "@/lib/menuData";
+import { menuData, globalMenuData } from "@/lib/menuData";
 import UserMenu from "@/components/UserMenu";
 import TopHeader from "@/components/TopHeader";
 import Breadcrumbs from "@/components/layout/Breadcrumbs";
 import ChatWrapper from "@/components/ChatWrapper";
 import { cn } from "@/lib/utils";
 import { ActiveCompanyProvider } from "@/context/ActiveCompanyContext";
+import { usePathname } from "next/navigation";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function GlobalDashboardLayout({ children }: { children: React.ReactNode }) {
+    const pathname = usePathname();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true); // Start collapsed by default
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+
+    const isGlobal = pathname.startsWith("/global-dashboard");
+    const activeMenu = isGlobal ? globalMenuData : menuData;
 
     const handleSidebarToggle = () => {
         setIsSidebarCollapsed(!isSidebarCollapsed);
@@ -24,17 +29,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return (
         <ActiveCompanyProvider>
             <div className="flex h-screen bg-brand-body relative">
-                {/* Sidebar for desktop & mobile */}
                 <Suspense fallback={<div className="w-24 lg:w-84 h-screen bg-brand-body animate-pulse" />}>
                     <Sidebar 
                         isOpen={isSidebarOpen}
                         onClose={() => setIsSidebarOpen(false)}
                         isCollapsed={isSidebarCollapsed}
                         onExpand={() => setIsSidebarCollapsed(false)}
+                        menu={activeMenu}
                     />
                 </Suspense>
 
-            {/* Mobile Backdrop Overlay */}
             {isSidebarOpen && (
                 <div
                     className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
@@ -42,11 +46,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 ></div>
             )}
 
-            {/* Mobile Sidebar */}
             <div className={cn("lg:hidden fixed inset-0 z-50 pointer-events-none", isSidebarOpen && "pointer-events-auto")}>
                 <Suspense fallback={null}>
                     <SidebarMenu 
-                        menu={menuData} 
+                        menu={activeMenu} 
                         isCollapsed={false} 
                         isOpen={isSidebarOpen}
                         onClose={() => setIsSidebarOpen(false)}
@@ -55,14 +58,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Suspense>
             </div>
 
-            {/* Main Content Area */}
             <div
                 className={cn(
                     "flex-1 flex flex-col transition-all duration-300 min-w-0",
                     isSidebarCollapsed ? "lg:ml-24" : "lg:ml-84"
                 )}
             >
-                {/* Mobile Header */}
                 <header
                     className="lg:hidden sticky top-0 z-10 bg-background border-b backdrop-blur-xl flex justify-between items-center px-4 py-4"
                     style={{ borderColor: `hsl(var(--border))` }}
@@ -74,7 +75,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     >
                         <i className="fi fi-rr-menu-burger block leading-0"></i>
                     </button>
-                    <Link href="/dashboard">
+                    <Link href="/global-dashboard">
                         <Image
                             src="/logo.svg"
                             alt="Logo"
@@ -86,7 +87,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <div className="w-10"></div>
                 </header>
 
-                {/* Desktop Header */}
                 <Suspense fallback={<div className="h-16">Loading header...</div>}>
                     <div className="hidden lg:block">
                         <TopHeader
@@ -96,10 +96,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </div>
                 </Suspense>
 
-                {/* Breadcrumbs (desktop only) */}
-                {/* <Breadcrumbs /> */}
-
-                {/* Main Content */}
                 <main 
                     className="flex-1 overflow-y-auto overflow-x-auto lg:overflow-x-hidden bg-brand-body p-4 lg:p-6 min-w-0"
                 >
@@ -109,7 +105,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </main>
             </div>
 
-                {/* Chat Widget - Bottom Right */}
                 <ChatWrapper />
             </div>
         </ActiveCompanyProvider>

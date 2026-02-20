@@ -178,6 +178,15 @@ export async function createClient(userData: {
           localStorage.setItem("user_id", btoa(clientData.user.id));
           localStorage.setItem("username", btoa(`${userData.firstName} ${userData.lastName}`));
           
+          // Store client specific IDs for library and other features
+          const loginClientData = loginResult.data?.client || loginResult.client;
+          if (loginClientData?.id) {
+            localStorage.setItem("client_id", btoa(loginClientData.id));
+          }
+          if (loginClientData?.folderId) {
+            localStorage.setItem("client_folder_id", btoa(loginClientData.folderId));
+          }
+          
           const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
           const cookieOptions = isHttps 
             ? 'SameSite=None; Secure; Path=/; Max-Age=86400'

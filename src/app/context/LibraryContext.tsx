@@ -120,6 +120,22 @@ function mapApiFileToItem(f: LibraryFileItem, folderId: string): LibraryItem {
   } as LibraryItem
 }
 
+const getStoredDecoded = (key: string): string | null => {
+  if (typeof window === "undefined") return null
+  const stored = localStorage.getItem(key)
+  if (!stored) return null
+  try {
+    const decoded = atob(stored)
+    // Basic UUID/ID check - UUIDs are typically 36 chars or alpha-numeric
+    if (decoded.length > 5 && (decoded.includes("-") || /^[a-z0-9]+$/i.test(decoded))) {
+      return decoded
+    }
+    return stored
+  } catch (e) {
+    return stored
+  }
+}
+
 export const LibraryProvider: React.FC<{
   children: React.ReactNode
   initialItems?: any[]
@@ -128,6 +144,16 @@ export const LibraryProvider: React.FC<{
 }> = ({ children, initialItems, useApi = true, rootType = "CLIENT" }) => {
   const [viewMode, setViewMode] = useState<ViewMode>("list")
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
+
+  // Initialize from localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
+    if (useApi) {
+      const stored = getStoredDecoded("client_folder_id")
+      if (stored) {
+        setCurrentFolderId(stored)
+      }
+    }
+  }, [useApi])
   const [folderPath, setFolderPath] = useState<BreadcrumbItem[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedItems, setSelectedItems] = useState<string[]>([])
@@ -164,10 +190,18 @@ export const LibraryProvider: React.FC<{
         if (cancelled) return
         // Backend filters roots by user access; optionally filter by rootType if present
         // Roots may have id/folder_id, name/folder_name; filter by rootType when present
-        const filtered =
-          rootType && roots.some((r) => (r as any).rootType)
-            ? roots.filter((f) => (f as any).rootType === rootType)
-            : roots
+        const storedClientFolderId = getStoredDecoded("client_folder_id")
+        
+        let filtered = roots
+        if (rootType && roots.some((r) => (r as any).rootType)) {
+          filtered = roots.filter((f) => (f as any).rootType === rootType)
+        }
+        
+        // If strictly showing CLIENT roots and we have a specific folder ID, filter to only that one
+        if (rootType === "CLIENT" && storedClientFolderId) {
+          filtered = filtered.filter((f) => (f.id === storedClientFolderId || f.folder_id === storedClientFolderId))
+        }
+
         const mapped = filtered.map((f) => mapApiFolderToItem(f as LibraryFolderView, null))
         setApiRootFolders(mapped)
       } catch (e) {
@@ -201,6 +235,12 @@ export const LibraryProvider: React.FC<{
         const childFolders = foldersRaw.map((f) => mapApiFolderToItem(f, parentId))
         const files = (content.files ?? []).map((f) => mapApiFileToItem(f, parentId))
         setApiCurrentContent([...childFolders, ...files])
+
+        // Auto-initialize folderPath if we jumped directly into a folder (initial load)
+        if (folderPath.length === 0 && currentFolderId) {
+          const folderName = content.folder?.name ?? content.folder?.folder_name ?? "Folder"
+          setFolderPath([{ id: currentFolderId, name: folderName }])
+        }
       } catch (e) {
         if (cancelled) return
         setError(e instanceof Error ? e.message : "Failed to load folder")
