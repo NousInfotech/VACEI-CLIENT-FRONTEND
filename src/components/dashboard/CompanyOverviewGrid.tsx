@@ -122,7 +122,7 @@ export default function CompanyOverviewGrid() {
                             className="w-full justify-between rounded-xl h-11"
                             onClick={() => {
                                 localStorage.setItem("vacei-active-company", company.id);
-                                router.push(`/dashboard`);
+                                router.push(`/dashboard/company/${company.id}`);
                             }}
                         >
                             View Company Dashboard

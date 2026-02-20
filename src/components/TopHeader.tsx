@@ -286,8 +286,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             icon: <div className={cn("w-2 h-2 rounded-full", isActive ? "bg-success" : "bg-gray-200")} />,
             onClick: () => {
                 setActiveCompanyId(c.id);
-                const isGlobal = pathname.startsWith("/global-dashboard");
-                router.push(isGlobal ? `/global-dashboard/dashboard/${c.id}` : `/dashboard/company/${c.id}`);
+                router.push(`/dashboard/company/${c.id}`);
             }
         };
     });

@@ -140,7 +140,7 @@ export default function CompanyListTable() {
                                         className="rounded-xl h-9"
                                         onClick={() => {
                                             localStorage.setItem("vacei-active-company", company.id);
-                                            router.push(`/dashboard`);
+                                            router.push(`/dashboard/company/${company.id}`);
                                         }}
                                     >
                                         <Eye className="h-4 w-4 mr-2" />
