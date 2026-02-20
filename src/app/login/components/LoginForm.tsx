@@ -94,6 +94,14 @@ export default function LoginForm() {
             localStorage.setItem("username", btoa(`${user?.firstName || ''} ${user?.lastName || ''}`));
             localStorage.setItem("email", btoa(email));
             localStorage.setItem("user_id", btoa(user?.id || ''));
+            
+            // Store client specific IDs for library and other features
+            if (loginData.client?.id) {
+                localStorage.setItem("client_id", btoa(loginData.client.id));
+            }
+            if (loginData.client?.folderId) {
+                localStorage.setItem("client_folder_id", btoa(loginData.client.folderId));
+            }
 
             // Set cookie for middleware access (works in production)
             // Middleware runs on server and can only access cookies, not localStorage
@@ -124,8 +132,8 @@ export default function LoginForm() {
               }
             }
             
-            // Redirect to dashboard after successful login (onboarding completed or no progress found)
-            router.push("/dashboard");
+            // Redirect to global dashboard after successful login (onboarding completed or no progress found)
+            router.push("/global-dashboard");
         } catch (err) {
             const errorMessage = (err as Error)?.message || "An unknown error occurred";
             setErrors({ email: errorMessage, password: "" });

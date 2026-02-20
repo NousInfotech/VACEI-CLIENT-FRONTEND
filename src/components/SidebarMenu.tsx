@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
@@ -69,6 +69,7 @@ export default function SidebarMenu({
   onExpand,
 }: SidebarMenuProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
   const { engagements } = useEngagements();
 
@@ -105,11 +106,12 @@ export default function SidebarMenu({
   // Find the best matching menu item for the current path
   const getBestMatch = (items: MenuItem[]): MenuItem | null => {
     let best: MenuItem | null = null;
+    const currentFullUrl = pathname + (searchParams.toString() ? "?" + searchParams.toString() : "");
 
     const traverse = (list: MenuItem[]) => {
       list.forEach((item) => {
         if (item.href && item.href !== "#") {
-          const isExact = pathname === item.href;
+          const isExact = pathname === item.href || currentFullUrl === item.href;
           const isSubPath =
             item.href !== "/dashboard" && pathname.startsWith(item.href + "/");
 

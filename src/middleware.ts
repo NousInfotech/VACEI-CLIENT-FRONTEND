@@ -47,6 +47,7 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     '/dashboard/:path*',
+    '/global-dashboard/:path*',
     '/onboarding',
     '/onboarding/:path*',
   ],

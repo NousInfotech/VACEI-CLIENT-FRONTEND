@@ -19,16 +19,6 @@ export const Sidebar: React.FC = () => {
       <ScrollArea className="flex-1">
         <div className="p-3 space-y-1">
           <p className="px-3 py-2 text-[10px] font-medium text-gray-400 uppercase tracking-widest">Navigation</p>
-          <button
-            onClick={() => onFolderClick(null)}
-            className={cn(
-              "flex items-center w-full gap-3 px-3 py-2.5 rounded-xl transition-all text-sm text-left",
-              currentFolderId === null ? "bg-primary shadow-md text-white border-0" : "text-gray-600 hover:bg-gray-100/50"
-            )}
-          >
-            <FolderIcon className={cn("w-4 h-4", currentFolderId === null ? "text-white fill-white/10" : "text-gray-400")} />
-            All Files
-          </button>
           {sidebarFolders.map(folder => (
             <button
               key={folder.id}

@@ -21,17 +21,20 @@ export const Toolbar: React.FC = () => {
     setFilterType,
     handleDownload,
     isMobileSidebarOpen,
-    setIsMobileSidebarOpen
+    setIsMobileSidebarOpen,
+    breadcrumbs
   } = useLibrary();
 
   const [isFilterOpen, setIsFilterOpen] = React.useState(false);
 
   const filterOptions = [
-    { id: 'all', label: 'All Files' },
+    { id: 'all', label: 'Show All' },
     { id: 'pdf', label: 'PDF Documents' },
     { id: 'spreadsheet', label: 'Spreadsheets' },
     { id: 'document', label: 'Word Documents' },
   ];
+
+  const isAtBaseFolder = breadcrumbs.length <= 1;
 
   return (
     <div className="relative z-20 flex items-center justify-between p-2 md:p-3 border-b border-gray-200 gap-2 bg-white/50 backdrop-blur-sm">
@@ -52,7 +55,11 @@ export const Toolbar: React.FC = () => {
             variant="outline" 
             size="sm" 
             onClick={handleBack}
-            className="h-9 w-9 p-0 border-gray-200 rounded-lg shrink-0 flex items-center justify-center"
+            disabled={isAtBaseFolder}
+            className={cn(
+                "h-9 w-9 p-0 border-gray-200 rounded-lg shrink-0 flex items-center justify-center transition-all",
+                isAtBaseFolder ? "opacity-30 cursor-not-allowed bg-gray-50" : "hover:bg-gray-100"
+            )}
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>

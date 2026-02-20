@@ -96,6 +96,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
     const [username, setUsername] = useState<string>('User'); 
     const [role, setRole] = useState<string>('Client');
     const [showUploadDrawer, setShowUploadDrawer] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
     
     // Use ActiveCompanyContext instead of local state
     const { activeCompanyId, setActiveCompanyId, companies, setCompanies } = useActiveCompany();
@@ -105,6 +106,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
     const searchParams = useSearchParams();
 
     useEffect(() => {
+        setIsMounted(true);
         const qParam = searchParams.get('q');
         if (pathname === '/dashboard/search' && qParam !== null) {
             setSearchTerm(decodeURIComponent(qParam));
@@ -284,7 +286,8 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             icon: <div className={cn("w-2 h-2 rounded-full", isActive ? "bg-success" : "bg-gray-200")} />,
             onClick: () => {
                 setActiveCompanyId(c.id);
-                router.push(`/dashboard/company/${c.id}`);
+                const isGlobal = pathname.startsWith("/global-dashboard");
+                router.push(isGlobal ? `/global-dashboard/dashboard/${c.id}` : `/dashboard/company/${c.id}`);
             }
         };
     });
@@ -359,26 +362,28 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             </div>
 
             <div className="flex items-center gap-3">
-                <div className="hidden md:flex items-center gap-2">
-                    <Dropdown
-                        align="left"
-                        label={activeCompanyName}
-                        items={companyMenuItems}
-                        searchable={true}
-                        searchPlaceholder="Search companies..."
-                        trigger={
-                            <div className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-medium text-gray-900 cursor-pointer shadow-sm hover:shadow-md hover:bg-white transition-all min-w-[160px] flex justify-between items-center group">
-                                <span className="flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-success" />
-                                    {activeCompanyName}
-                                </span>
-                                <ChevronDown className="w-3.5 h-3.5 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />
-                            </div>
-                        }
-                    />
-                </div>
+                {!pathname.startsWith("/global-dashboard") && (
+                    <div className="hidden md:flex items-center gap-2">
+                        <Dropdown
+                            align="left"
+                            label={activeCompanyName}
+                            items={companyMenuItems}
+                            searchable={true}
+                            searchPlaceholder="Search companies..."
+                            trigger={
+                                <div className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-medium text-gray-900 cursor-pointer shadow-sm hover:shadow-md hover:bg-white transition-all min-w-[160px] flex justify-between items-center group">
+                                    <span className="flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-success" />
+                                        {isMounted ? activeCompanyName : "Loading..."}
+                                    </span>
+                                    <ChevronDown className="w-3.5 h-3.5 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                            }
+                        />
+                    </div>
+                )}
 
-                <Dropdown
+                {/* <Dropdown
                     align="right"
                     items={quickActionItems}
                     trigger={
@@ -390,7 +395,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                             <span className="hidden md:inline">QUICK ACTIONS</span>
                         </Button>
                     }
-                />
+                /> */}
 
                 <Dropdown
                     align="right"
