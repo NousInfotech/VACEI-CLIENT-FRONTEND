@@ -29,13 +29,15 @@ export default function GlobalDashboardLayout({ children }: { children: React.Re
     return (
         <ActiveCompanyProvider>
             <div className="flex h-screen bg-brand-body relative">
-                <Sidebar 
-                    isOpen={isSidebarOpen}
-                    onClose={() => setIsSidebarOpen(false)}
-                    isCollapsed={isSidebarCollapsed}
-                    onExpand={() => setIsSidebarCollapsed(false)}
-                    menu={activeMenu}
-                />
+                <Suspense fallback={<div className="w-24 lg:w-84 h-screen bg-brand-body animate-pulse" />}>
+                    <Sidebar 
+                        isOpen={isSidebarOpen}
+                        onClose={() => setIsSidebarOpen(false)}
+                        isCollapsed={isSidebarCollapsed}
+                        onExpand={() => setIsSidebarCollapsed(false)}
+                        menu={activeMenu}
+                    />
+                </Suspense>
 
             {isSidebarOpen && (
                 <div
@@ -45,13 +47,15 @@ export default function GlobalDashboardLayout({ children }: { children: React.Re
             )}
 
             <div className={cn("lg:hidden fixed inset-0 z-50 pointer-events-none", isSidebarOpen && "pointer-events-auto")}>
-                <SidebarMenu 
-                    menu={activeMenu} 
-                    isCollapsed={false} 
-                    isOpen={isSidebarOpen}
-                    onClose={() => setIsSidebarOpen(false)}
-                    onExpand={() => setIsSidebarCollapsed(false)}
-                />
+                <Suspense fallback={null}>
+                    <SidebarMenu 
+                        menu={activeMenu} 
+                        isCollapsed={false} 
+                        isOpen={isSidebarOpen}
+                        onClose={() => setIsSidebarOpen(false)}
+                        onExpand={() => setIsSidebarCollapsed(false)}
+                    />
+                </Suspense>
             </div>
 
             <div
@@ -95,7 +99,9 @@ export default function GlobalDashboardLayout({ children }: { children: React.Re
                 <main 
                     className="flex-1 overflow-y-auto overflow-x-auto lg:overflow-x-hidden bg-brand-body p-4 lg:p-6 min-w-0"
                 >
-                    {children}
+                    <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+                        {children}
+                    </Suspense>
                 </main>
             </div>
 
