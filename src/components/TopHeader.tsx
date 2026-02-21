@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { GlobalUploadDrawer } from "@/components/GlobalUploadDrawer";
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Notification01Icon, Upload04Icon, Video01Icon } from '@hugeicons/core-free-icons';
-import { PanelLeft, PanelLeftClose, ChevronDown } from 'lucide-react';
+import { PanelLeft, PanelLeftClose, ChevronDown, LayoutGrid } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import Dropdown from "./Dropdown";
 
@@ -327,7 +327,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                     </button>
                 )}
 
-                <div className="flex items-center gap-2 max-w-[350px] flex-1">
+                {/* <div className="flex items-center gap-2 max-w-[350px] flex-1">
                         <div className="relative flex items-center w-full">
                             <Input
                                 type="text"
@@ -348,12 +348,24 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                                 <i className="fi fi-rr-search text-base leading-0 block" style={{ color: '#ffffff' }}></i>
                             </Button>
                         </div>
-                    </div>
+                    </div> */}
             </div>
 
             <div className="flex items-center gap-3">
                 {!pathname.startsWith("/global-dashboard") && (
                     <div className="hidden md:flex items-center gap-2">
+                        <Link href="/global-dashboard">
+                            <Button
+                                variant="outline"
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium cursor-pointer border-border bg-card shadow-sm hover:shadow-md hover:bg-white transition-all h-10 group"
+                            >
+                                <LayoutGrid className="w-4 h-4 text-gray-900 group-hover:scale-110 transition-transform" />
+                                <span className="hidden lg:inline uppercase">Global Dashboard</span>
+                            </Button>
+                        </Link>
+                        
+                        <div className="h-4 w-px bg-border mx-1" />
+
                         <Dropdown
                             align="left"
                             label={activeCompanyName}
@@ -364,7 +376,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                                 <div className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-medium text-gray-900 cursor-pointer shadow-sm hover:shadow-md hover:bg-white transition-all min-w-[160px] flex justify-between items-center group">
                                     <span className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-success" />
-                                        {isMounted ? activeCompanyName : "Loading..."}
+                                        {isMounted ? (activeCompanyName.length > 20 ? activeCompanyName.substring(0, 17) + "..." : activeCompanyName) : "Loading..."}
                                     </span>
                                     <ChevronDown className="w-3.5 h-3.5 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />
                                 </div>

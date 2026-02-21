@@ -19,7 +19,8 @@ import { fetchPayrollData, transformPayrollSubmissionsToComplianceItems } from "
 import { HugeiconsIcon } from '@hugeicons/react';
 import { AddressBookIcon, Alert02Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
-import { User, AlertCircle, CheckCircle, ArrowRight, Clock, MoreVertical, Upload, Plus, MessageCircle, Calendar, CheckSquare } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { User, AlertCircle, CheckCircle, ArrowRight, Clock, MoreVertical, Upload, Plus, MessageCircle, Calendar, CheckSquare, FileText, Search, Briefcase } from "lucide-react";
 import { getOnboardingProgress } from "@/api/onboardingService";
 import CurrentFocus, { FocusItem } from "@/components/dashboard/CurrentFocus";
 import NextComplianceDeadline from "@/components/dashboard/NextComplianceDeadline";
@@ -370,7 +371,7 @@ export default function DashboardPage() {
               {healthStatus}
             </div>
           }
-          riskLevel={riskLevel}
+          riskLevel={undefined}
           // actions={
           //   <DashboardActionButton 
           //     Icon={User}
@@ -381,6 +382,70 @@ export default function DashboardPage() {
           //   />
           // }
         />
+
+        {/* 🔴 Priority Actions (Only if needed) */}
+        {/* {complianceCounts.overdue > 0 && (
+          <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+            <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+              🔴 Priority Actions
+            </h2>
+            <DashboardCard className="bg-red-50 border-red-100 p-6 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold">
+                  <AlertCircle size={24} />
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold text-red-900">Your attention is required</h4>
+                  <p className="text-red-700">{complianceCounts.overdue} overdue filings need action.</p>
+                </div>
+              </div>
+              <Link href="/dashboard/todo-list?filter=overdue">
+                <Button className="bg-red-600 hover:bg-red-700 text-white rounded-xl px-8 py-6 h-auto text-lg font-semibold shadow-lg shadow-red-200">
+                  Review Now
+                </Button>
+              </Link>
+            </DashboardCard>
+          </div>
+        )} */}
+
+        <CurrentFocus item={(() => {
+          // Priority logic for current focus
+          // 1. Overdue
+          // 2. Due soon
+          // 3. Waiting
+          
+          if (complianceCounts.overdue > 0) {
+            return {
+              serviceName: "Compliance",
+              taskDescription: "You have overdue regulatory filings that require immediate action",
+              status: 'overdue',
+              primaryActionType: 'upload',
+              primaryActionLink: '/dashboard/todo-list?filter=overdue',
+              primaryActionLabel: "Review Now"
+            } as FocusItem;
+          } else if (complianceCounts.dueSoon > 0) {
+            return {
+              serviceName: "VAT Return",
+              taskDescription: "Upcoming deadline. Please confirm no changes for the period.",
+              status: 'due_soon',
+              primaryActionType: 'confirm',
+              primaryActionLink: '/dashboard/services/vat',
+              primaryActionLabel: "Review Now"
+            } as FocusItem;
+          } else if (complianceCounts.waiting > 0) {
+            // Find a service that is waiting
+            const focusService = activeServices.find(s => s.status.toLowerCase().includes('waiting')) || activeServices[0];
+            return {
+              serviceName: focusService.name,
+              taskDescription: focusService.next,
+              status: 'waiting_on_you',
+              primaryActionType: 'view',
+              primaryActionLink: focusService.href,
+              primaryActionLabel: "Review Now"
+            } as FocusItem;
+          }
+          return null; // All set!
+        })()} />
 
         {/* Notice Board and Stats Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
@@ -434,44 +499,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Your Current Focus */}
-        <CurrentFocus item={(() => {
-          // Priority logic for current focus
-          // 1. Overdue
-          // 2. Due soon
-          // 3. Waiting
-          
-          if (complianceCounts.overdue > 0) {
-            return {
-              serviceName: "Compliance",
-              taskDescription: "You have overdue regulatory filings that require immediate action",
-              status: 'overdue',
-              primaryActionType: 'upload',
-              primaryActionLink: '/dashboard/todo-list?filter=overdue',
-              secondaryActionLink: '/dashboard/compliance'
-            } as FocusItem;
-          } else if (complianceCounts.dueSoon > 0) {
-            return {
-              serviceName: "VAT Return",
-              taskDescription: "Upcoming deadline. Please confirm no changes for the period.",
-              status: 'due_soon',
-              primaryActionType: 'confirm',
-              primaryActionLink: '/dashboard/services/vat',
-              secondaryActionLink: '/dashboard/compliance'
-            } as FocusItem;
-          } else if (complianceCounts.waiting > 0) {
-            // Find a service that is waiting
-            const focusService = activeServices.find(s => s.status.toLowerCase().includes('waiting')) || activeServices[0];
-            return {
-              serviceName: focusService.name,
-              taskDescription: focusService.next,
-              status: 'waiting_on_you',
-              primaryActionType: 'view',
-              primaryActionLink: focusService.href,
-              secondaryActionLink: '/dashboard/todo-list'
-            } as FocusItem;
-          }
-          return null; // All set!
-        })()} />
+ 
 
         <div className="mt-6 mb-8">
           <NextComplianceDeadline />
@@ -480,58 +508,66 @@ export default function DashboardPage() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column - Priority Actions & Services */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Modern Active Services */}
-            <DashboardCard className="overflow-hidden">
-              <div className="px-8 py-6 border-b border-gray-100 flex items-center gap-4">
-                <div className="w-1 h-7 bg-gray-900 rounded-full" />
-                <div className="flex flex-col">
-                  <h3 className="text-xl font-semibold text-gray-900">Active Services</h3>
-                  <p className="text-sm text-gray-600">Manage your ongoing accounting and tax services</p>
-                </div>
-              </div>
-              <div className="p-4">
-                <div className="grid gap-4">
-                  {activeServices.map((service, idx) => (
-                    <DashboardCard key={idx} className="group/service relative rounded-xl border bg-white/50 p-5 transition-all duration-300">
-                      <div className="flex items-start justify-between mb-4 gap-3">
-                        <div className="space-y-1 min-w-0">
-                          <h4 className="font-semibold text-xl truncate">{service.name}</h4>
-                          <div className="flex items-center gap-1.5 overflow-hidden">
-                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                              service.status.includes('Done') ? 'bg-success' : 
-                              service.status.includes('soon') ? 'bg-warning' : 
-                              service.status.includes('Waiting') ? 'bg-destructive' : 'bg-gray-400'
-                            }`} />
-                            <p className="text-xs font-medium uppercase truncate">{service.status}</p>
+            {/* Redesigned Active Services */}
+            <div className="space-y-4">
+              <PageHeader 
+                title="Active Services"
+                subtitle="Manage your ongoing accounting and tax services"
+                animate={false}
+                className="p-6"
+              />
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                {activeServices.map((service, idx) => {
+                  const getIcon = (name: string) => {
+                    if (name === "Bookkeeping") return <FileText className="text-blue-600" size={24} />;
+                    if (name === "VAT") return <Briefcase className="text-amber-600" size={24} />;
+                    if (name === "Audit") return <Search className="text-rose-600" size={24} />;
+                    return <CheckCircle className="text-emerald-600" size={24} />;
+                  };
+
+                  const getIconBg = (name: string) => {
+                    if (name === "Bookkeeping") return "bg-blue-50";
+                    if (name === "VAT") return "bg-amber-50";
+                    if (name === "Audit") return "bg-rose-50";
+                    return "bg-emerald-50";
+                  };
+
+                  return (
+                    <div key={idx} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shrink-0", getIconBg(service.name))}>
+                          {getIcon(service.name)}
+                        </div>
+                        <div className="space-y-1">
+                          <h4 className="text-xl font-bold text-gray-900">{service.name}</h4>
+                          <div className="flex items-center gap-3">
+                            {service.name === "Bookkeeping" && (
+                              <span className="text-sm font-semibold text-gray-500">REG NO: REG#87777448</span>
+                            )}
+                            {service.name === "VAT" && (
+                              <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Due 30 June</span>
+                            )}
+                            {service.name === "Audit" && service.status.includes("Waiting") && (
+                              <div className="flex items-center gap-1.5 text-rose-600 font-semibold text-sm">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                                <span>Waiting for your response</span>
+                              </div>
+                            )}
+                            <span className="text-sm text-gray-500">{service.name === "Bookkeeping" ? "Month documents" : service.name === "VAT" ? "Next step: Review March documents" : service.next}</span>
                           </div>
                         </div>
-                        <Link href={service.href} className="shrink-0">
-                          <Button size="sm" className="whitespace-nowrap">
-                            Details
-                          </Button>
-                        </Link>
                       </div>
-                      <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-[10px] font-medium gap-2">
-                        <div className="flex items-center gap-2 shrink-0">
-                          {service.nextStepType === "client" ? (
-                            <>
-                              <User className="w-3 h-3 text-gray-600" />
-                              <span>Next step required from you:</span>
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle className="w-3 h-3 text-success" />
-                              <span>Next step (we're working on it):</span>
-                            </>
-                          )}
-                        </div>
-                        <span className="uppercase tracking-widest truncate font-semibold">{service.next}</span>
-                      </div>
-                    </DashboardCard>
-                  ))}
-                </div>
+                      <Link href={service.href}>
+                        <Button className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl px-5 py-2.5 h-auto flex items-center gap-2 group">
+                          View Details
+                          <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      </Link>
+                    </div>
+                  );
+                })}
               </div>
-            </DashboardCard>
+            </div>
 
             {/* Recently Completed */}
             {/* <DashboardCard className="overflow-hidden">
@@ -572,64 +608,43 @@ export default function DashboardPage() {
               </div>
               <div className="flex flex-col gap-2 p-3">
                 <Link href="/dashboard/document-organizer/document-upload">
-                  <Button variant="outline" className="w-full justify-start gap-3 h-11">
+                  <Button variant="outline" className="w-full justify-start gap-3 h-11 border-gray-100 hover:bg-gray-50 transition-colors">
                     <Upload className="w-4 h-4" />
                     <span>Upload document</span>
                   </Button>
                 </Link>
-                <Link href="/dashboard/services/request">
-                  <Button variant="outline" className="w-full justify-start gap-3 h-11">
-                    <Plus className="w-4 h-4" />
-                    <span>Request a service</span>
-                  </Button>
-                </Link>
                 <Button 
                   variant="outline" 
-                  className="w-full justify-start gap-3 h-11"
+                  className="w-full justify-start gap-3 h-11 border-gray-100 hover:bg-gray-50 transition-colors"
                   onClick={handleContactAccountantClick}
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span>Message accountant</span>
+                  <span>Message advisor</span>
                 </Button>
                 <Link href="/dashboard/compliance">
-                  <Button variant="outline" className="w-full justify-start gap-3 h-11">
+                  <Button variant="outline" className="w-full justify-start gap-3 h-11 border-gray-100 hover:bg-gray-50 transition-colors">
                     <Calendar className="w-4 h-4" />
-                    <span>View compliance calendar</span>
-                  </Button>
-                </Link>
-                <Link href="/dashboard/todo-list">
-                  <Button variant="outline" className="w-full justify-start gap-3 h-11">
-                    <CheckSquare className="w-4 h-4" />
-                    <span>To do list</span>
+                    <span>View deadlines</span>
                   </Button>
                 </Link>
               </div>
             </DashboardCard>
 
-            {/* Compliance Snapshot */}
+            {/* Refined Compliance Snapshot */}
             <DashboardCard className="overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-300 flex items-center gap-4">
                 <div className="w-1 h-6 bg-gray-900 rounded-full" />
                 <h3 className="text-lg font-medium text-gray-900">Compliance Snapshot</h3>
               </div>
-              <div className="p-4">
-                {/* Next Statutory Deadline */}
-                <div className="mb-4 p-3 rounded-lg bg-warning/5 border border-warning/20">
-                  <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest mb-1">Next Deadline:</p>
-                  <p className="text-sm font-semibold text-gray-900">VAT Return – 30 June</p>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="p-4 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
                   <Kpi label="Overdue" value={complianceCounts.overdue} tone="danger" />
                   <Kpi label="Due soon" value={complianceCounts.dueSoon} tone="warning" />
-                  <Kpi label="Waiting" value={complianceCounts.waiting} tone="info" />
-                  <Kpi label="Done" value={complianceCounts.done} tone="success" />
                 </div>
-                <Link href="/dashboard/compliance/list">
-                  <Button variant="default" className="w-full">
-                    View full list
-                  </Button>
-                </Link>
+                <DashboardCard className="border border-info/30 bg-info/5 px-4 py-3">
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1">Next Deadline</p>
+                  <p className="text-sm font-bold text-gray-900">VAT Return – 30 June</p>
+                </DashboardCard>
               </div>
             </DashboardCard>
           </div>
