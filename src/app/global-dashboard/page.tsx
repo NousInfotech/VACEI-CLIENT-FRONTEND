@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { LayoutGrid } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
-import CompanyOverviewGrid from "@/components/dashboard/CompanyOverviewGrid";
+import GlobalOverviewCards from "@/components/dashboard/GlobalOverviewCards";
 import { getDecodedUsername } from "@/utils/authUtils";
 
 export default function GlobalDashboardPage() {
@@ -39,7 +39,7 @@ export default function GlobalDashboardPage() {
             />
 
             <div className="mt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <CompanyOverviewGrid />
+                <GlobalOverviewCards />
             </div>
         </div>
     );

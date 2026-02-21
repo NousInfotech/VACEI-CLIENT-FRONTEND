@@ -327,7 +327,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                     </button>
                 )}
 
-                <div className="flex items-center gap-2 max-w-[350px] flex-1">
+                {/* <div className="flex items-center gap-2 max-w-[350px] flex-1">
                         <div className="relative flex items-center w-full">
                             <Input
                                 type="text"
@@ -348,7 +348,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                                 <i className="fi fi-rr-search text-base leading-0 block" style={{ color: '#ffffff' }}></i>
                             </Button>
                         </div>
-                    </div>
+                    </div> */}
             </div>
 
             <div className="flex items-center gap-3">
