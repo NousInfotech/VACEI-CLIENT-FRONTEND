@@ -11,6 +11,7 @@ import { fetchTasks } from "@/api/taskService";
 import type { Task } from "@/interfaces";
 import ParentSchedule from "@/app/dashboard/schedule/page";
 import { fetchPayrollData, transformPayrollSubmissionsToComplianceItems } from "@/lib/payrollComplianceIntegration";
+import ComplianceCalendarApiSection from "./ComplianceCalendarApiSection";
 
 // Compliance status types
 type ComplianceStatus = "Waiting on you" | "In progress" | "Due soon" | "Completed" | "Overdue";
@@ -436,6 +437,9 @@ export default function ComplianceCalendarPage() {
 
       {/* Payroll Service Card */}
       <PayrollServiceCard />
+
+      {/* Compliance Calendar API – client: GLOBAL + own companies; create GLOBAL only; edit/delete own */}
+      <ComplianceCalendarApiSection />
 
       {/* Main Content */}
       <DashboardCard className="overflow-visible">

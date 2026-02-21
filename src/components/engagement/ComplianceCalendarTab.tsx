@@ -207,8 +207,13 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
 
   if (error) {
     return (
-      <div className="text-center py-20">
+      <div className="text-center py-20 space-y-3">
         <p className="text-sm text-red-500 font-medium">Failed to load compliance calendar.</p>
+        <p className="text-xs text-muted-foreground">
+          {error.includes("Route not found") || error.includes("not found")
+            ? "This feature is not yet available. Please check back later."
+            : error}
+        </p>
       </div>
     )
   }

@@ -630,7 +630,16 @@ export async function getEngagementCompliances(
   });
 
   if (!response.ok) {
-    const error = await response.json();
+    // Handle 404 gracefully - route might not be implemented yet
+    if (response.status === 404) {
+      const errorData = await response.json().catch(() => ({ message: "Route not found" }));
+      if (errorData.message?.includes("Route not found") || errorData.message?.includes("not found")) {
+        // Return empty array instead of throwing for 404 - backend route not implemented yet
+        console.warn(`Compliance calendar endpoint not available: ${backendUrl}engagements/${engagementId}/compliances`);
+        return [];
+      }
+    }
+    const error = await response.json().catch(() => ({ message: "Failed to fetch compliances" }));
     throw new Error(error.message || error.error || "Failed to fetch compliances");
   }
 
