@@ -1,189 +1,42 @@
 "use client";
-import { useEffect, useState, FormEvent, ChangeEvent, useCallback, useRef } from "react"; // Import useRef
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import Link from "next/link";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { AttachmentIcon, MessageUser01Icon, WaveTriangleIcon, Unlink03Icon, Edit03Icon, ViewIcon, Delete02Icon, Cancel01Icon, Clock01FreeIcons } from "@hugeicons/core-free-icons";
-import { fetchTasks, createOrUpdateTask, fetchTaskCategories, fetchTaskStatuses, fetchChatUsers, fetchTaskById, deleteTask } from "@/api/taskService";
-import TodoListTabs from "@/components/TodoListTabs";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { getTodos, TodoItem } from "@/api/todoService";
 import AlertMessage, { AlertVariant } from "@/components/AlertMessage";
-import { Category, Status, TaskAttachment, Task, AttachedFile, Pagination } from "@/interfaces";
-import TaskForm from "./TaskForm";
-import TaskInfo, { Priority } from "./TaskInfo";
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+import { Pagination } from "@/interfaces";
 import { Button } from "@/components/ui/button";
-import Dropdown from "@/components/Dropdown";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { ChevronDown, Clock, ArrowRight } from "lucide-react";
-import DashboardCard from "@/components/DashboardCard";
-// Custom hook for debouncing a value
-function useDebounce<T>(value: T, delay: number): T {
-    const [debouncedValue, setDebouncedValue] = useState<T>(value);
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import TaskDetailModal from "./TaskDetailModal";
 
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            setDebouncedValue(value);
-        }, delay);
 
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [value, delay]);
-
-    return debouncedValue;
-}
 
 export default function TodoList() {
-    const backendUrl = process.env.NEXT_PUBLIC_UPLOAD_PATH || "";
     const router = useRouter();
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
 
-    // Create a ref for the TaskForm
-    const taskFormRef = useRef<HTMLDivElement>(null);
-
-    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
-    const [accountants, setAccountants] = useState<any[]>([]);
-
-    const [tasks, setTasks] = useState<Task[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [statuses, setStatuses] = useState<Status[]>([]);
+    const [allTasks, setAllTasks] = useState<TodoItem[]>([]);
+    const [tasks, setTasks] = useState<TodoItem[]>([]);
     const [pagination, setPagination] = useState<Pagination>({ page: 1, totalPages: 1, total: 0, limit: 10 });
 
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
-    const [assignedToIds, setAssignedToIds] = useState<number[]>([]);
-    const [statusId, setStatusId] = useState<number | null>(null);
-    const [priority, setPriority] = useState<any | null>(null);
-    const [dueDate, setDueDate] = useState<any>(null);
-    const [attachmentFiles, setAttachmentFiles] = useState<AttachedFile[]>([]);
-    const [editTaskId, setEditTaskId] = useState<number | null>(null);
-    const [errors, setErrors] = useState<string[]>([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState<string>("");
     const [alertVariant, setAlertVariant] = useState<AlertVariant | undefined>(undefined);
 
-    const categoryParam = searchParams.get("category");
-    const categoryFilterId = categoryParam ? parseInt(atob(categoryParam)) : null;
+    const [typeFilter, setTypeFilter] = useState<string>("");
+    const [serviceFilter, setServiceFilter] = useState<string>("");
+    const [statusFilter, setStatusFilter] = useState<string>("");
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Redirect to default category if no category is provided
-    useEffect(() => {
-        if (categoryParam == null) {
-            router.push(`/dashboard/todo-list?category=MQ==`);
-        }
-    }, [categoryParam, router]);
+    const [selectedTask, setSelectedTask] = useState<TodoItem | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const [existingAttachments, setExistingAttachments] = useState<TaskAttachment[]>([]);
-    const [searchText, setSearchText] = useState<string>("");
-    const [assignedToFilterId, setAssignedToFilterId] = useState<number | null>(null);
-    const [priorityFilter, setPriorityFilter] = useState<string>("");
-    const [dueDateFilter, SetdueDateFilter] = useState<string | null>(null);
-    const [statusFilterId, setStatusFilterId] = useState<number | null>(null);
-    const [isLoading, setIsLoading] = useState(true); // Default to true for initial load
-    const [pendingTasks, setPendingTasks] = useState<Task[]>([]);
-    const [topPriorityActions, setTopPriorityActions] = useState<Array<{
-        id: string | number;
-        title: string;
-        service: string;
-        reason: string;
-        action: string;
-        href: string;
-    }>>([]);
-
-    // Debounce filter values
-    const debouncedSearchText = useDebounce(searchText, 500);
-    const debouncedAssignedToFilterId = useDebounce(assignedToFilterId, 300);
-    const debouncedStatusFilterId = useDebounce(statusFilterId, 300);
-    const debouncedPriorityFilter = useDebounce(priorityFilter, 300);
-    const debounceddueDateFilter = useDebounce(dueDateFilter, 300);
-
-    useEffect(() => {
-        const encoded = localStorage.getItem("user_id");
-        if (encoded) {
-            try {
-                const decoded = atob(encoded);
-                const userId = parseInt(decoded);
-                setCurrentUserId(isNaN(userId) ? null : userId);
-            } catch (err) {
-                console.error("Failed to decode user_id from localStorage:", err);
-            }
-        }
-    }, []);
-
-    // Fetch pending tasks and top priority actions
-    useEffect(() => {
-        const loadPendingTasks = async () => {
-            try {
-                const taskResponse = await fetchTasks({ page: 1 });
-                const allTasks = taskResponse.data || [];
-                setPendingTasks(allTasks.slice(0, 5));
-            } catch (e) {
-                console.error("Failed to load pending tasks", e);
-            }
-        };
-        loadPendingTasks();
-
-        // Mock CSP renewals for top priority actions
-        const mockCspRenewals = [
-            {
-                id: "csp-renewal-1",
-                title: "Renew Company Secretary",
-                service: "Corporate Services",
-                reason: "Expires 31 Dec 2025",
-                action: "Renew now",
-                href: "/dashboard/services/csp-mbr/services/csp-2/renew"
-            },
-            {
-                id: "csp-renewal-2",
-                title: "Renew Director Services",
-                service: "Corporate Services",
-                reason: "Expires 30 Jun 2025",
-                action: "Renew now",
-                href: "/dashboard/services/csp-mbr/services/csp-3/renew"
-            }
-        ];
-
-        const mockTopPriorityActions = [
-            { id: 1, title: "Upload March bank statement", service: "Accounting", reason: "Due now", action: "Upload", href: "/dashboard/document-organizer/document-upload" },
-            { id: 2, title: "Reply to Audit Query #12", service: "Audit", reason: "Waiting on you", action: "Reply", href: "/dashboard/messages" },
-            { id: 3, title: "VAT Q2 – Missing 1 sales invoice", service: "VAT", reason: "Required for submission", action: "Upload", href: "/dashboard/document-organizer/document-upload" },
-            ...mockCspRenewals.map(renewal => ({
-                id: renewal.id,
-                title: renewal.title,
-                service: renewal.service,
-                reason: renewal.reason,
-                action: renewal.action,
-                href: renewal.href
-            }))
-        ];
-        setTopPriorityActions(mockTopPriorityActions);
-    }, []);
-
-    // Consolidated loadData function. Removed page parameter from here
-    // as it will be managed by a separate effect for pagination.
-    const loadFilteredData = useCallback(async () => {
+    const loadData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const [taskResponse, cats, stats, chatUsers] = await Promise.all([
-                fetchTasks({
-                    categoryId: categoryFilterId ?? undefined,
-                    assignedToId: debouncedAssignedToFilterId ?? undefined,
-                    statusId: debouncedStatusFilterId ?? undefined,
-                    search: debouncedSearchText,
-                    priority: debouncedPriorityFilter ?? '',
-                    dueDate: debounceddueDateFilter ?? '',
-                    page: 1 // Always load page 1 when filters change
-                }),
-                fetchTaskCategories(),
-                fetchTaskStatuses(),
-                fetchChatUsers(),
-            ]);
-            setTasks(taskResponse.data);
-            setPagination(taskResponse.pagination);
-            setCategories(cats);
-            setAccountants(chatUsers);
-            setStatuses(stats);
+            const todoResponse = await getTodos();
+            const filteredTodos = todoResponse.filter(t =>
+                t.type === 'DOCUMENT_REQUEST' || t.type === 'REQUESTED_DOCUMENT' || t.type === 'CUSTOM'
+            );
+            setAllTasks(filteredTodos);
         } catch (err) {
             console.error("Failed to load data:", err);
             setMessage("Failed to load data.");
@@ -191,208 +44,66 @@ export default function TodoList() {
         } finally {
             setIsLoading(false);
         }
-    }, [categoryFilterId, debouncedAssignedToFilterId, debouncedStatusFilterId, debouncedSearchText, debouncedPriorityFilter, debounceddueDateFilter]);
+    }, []);
 
-    // Separate function for pagination to avoid re-fetching all static data
-    const loadPaginatedTasks = useCallback(async (page: number) => {
-        setIsLoading(true);
-        try {
-            const taskResponse = await fetchTasks({
-                categoryId: categoryFilterId ?? undefined,
-                assignedToId: assignedToFilterId ?? undefined,
-                statusId: statusFilterId ?? undefined,
-                priority: priorityFilter ?? '',
-                search: searchText,
-                page
-            });
-            setTasks(taskResponse.data);
-            setPagination(taskResponse.pagination);
-        } catch (err) {
-            console.error("Failed to load paginated data:", err);
-            setMessage("Failed to load tasks for this page.");
-            setAlertVariant("danger");
-        } finally {
-            setIsLoading(false);
+    // Derive unique services from tasks for the Service dropdown
+    const serviceOptions = Array.from(new Set(allTasks.map(t => t.service).filter(Boolean))) as string[];
+
+    const filterAndPaginate = useCallback(() => {
+        let filtered = [...allTasks];
+
+        if (typeFilter) {
+            filtered = filtered.filter(t => t.type === typeFilter);
         }
-    }, [categoryFilterId, assignedToFilterId, statusFilterId, priorityFilter, searchText, dueDateFilter]); // Depend on actual filters, not debounced, for pagination
+        if (serviceFilter) {
+            filtered = filtered.filter(t => t.service === serviceFilter);
+        }
+        if (statusFilter) {
+            filtered = filtered.filter(t => (t.status || '').toUpperCase() === statusFilter);
+        }
 
-    // This effect runs only when the filters change (debounced for search and dropdowns)
-    // or when categoryFilterId changes (which isn't debounced by nature of its source).
+        const total = filtered.length;
+        const totalPages = Math.ceil(total / pagination.limit);
+        const start = (pagination.page - 1) * pagination.limit;
+        const paginated = filtered.slice(start, start + pagination.limit);
+
+        setTasks(paginated);
+        setPagination(prev => ({ ...prev, total, totalPages }));
+    }, [allTasks, typeFilter, serviceFilter, statusFilter, pagination.page, pagination.limit]);
+
     useEffect(() => {
-        loadFilteredData();
-    }, [loadFilteredData]); // loadFilteredData is now stable due to useCallback dependencies
+        loadData();
+    }, [loadData]);
 
-    function clearFilters() {
-        setAssignedToFilterId(null);
-        setPriorityFilter("");
-        setStatusFilterId(null);
-        setSearchText("");
-        // No need to explicitly call loadData here, the useEffect above will react to state changes.
-    }
+    useEffect(() => {
+        filterAndPaginate();
+    }, [filterAndPaginate]);
 
-    async function handleView(encodedTaskId: string) {
-        router.push(`/dashboard/todo-list/todo-list-view?taskId=${encodedTaskId}`);
-    }
+    const loadPaginatedTasks = (page: number) => {
+        setPagination(prev => ({ ...prev, page }));
+    };
 
-    const handleEdit = useCallback(async (encodedTaskId: string) => {
-        try {
-            const decodedId = parseInt(atob(encodedTaskId));
-            const taskData = await fetchTaskById(decodedId);
 
-            setEditTaskId(decodedId);
-            setTitle(taskData.title);
-            setPriority(taskData.priority);
-            setDueDate(taskData.dueDate);
-            setDescription(taskData.description);
 
-            const assignedIds = taskData.assignedAccountants?.map((accountant) => accountant.id) || [];
-            setAssignedToIds(assignedIds);
 
-            setStatusId(taskData.statusId);
-            setAttachmentFiles([]);
-            if (taskData.attachments && taskData.attachments.length > 0) {
-                const fullUrls = taskData.attachments.map((attachment: TaskAttachment) => ({
-                    ...attachment,
-                    filePath: `${backendUrl.replace(/\/$/, '')}/${attachment.filePath.replace(/^\//, '')}`
-                }));
-                setExistingAttachments(fullUrls);
-            } else {
-                setExistingAttachments([]);
-            }
 
-            // Scroll to the TaskForm after setting the data
-            if (taskFormRef.current) {
-                taskFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+    const clearFilters = () => {
+        setTypeFilter("");
+        setServiceFilter("");
+        setStatusFilter("");
+        setPagination(prev => ({ ...prev, page: 1 }));
+    };
 
-        } catch (err) {
-            console.error("Failed to fetch task for edit:", err);
-            setMessage("Failed to load task data.");
-            setAlertVariant("danger");
-        }
-    }, [backendUrl]);
-
-    async function handleDelete(taskId: number) {
-        if (!confirm("Are you sure you want to delete this task?")) {
-            return;
-        }
-
-        try {
-            await deleteTask(taskId);
-            setMessage("Task deleted successfully!");
-            setAlertVariant("success");
-            await loadFilteredData(); // Re-fetch based on current filters
-        } catch (err) {
-            console.error("Failed to delete task:", err);
-            setMessage("Failed to delete task.");
-            setAlertVariant("danger");
-        }
-    }
-
-    async function handleSubmit(e: FormEvent) {
-        e.preventDefault();
-        const newErrors: string[] = [];
-
-        if (!title.trim()) newErrors.push("Task title is required.");
-
-        if (!description.trim()) newErrors.push("Task description is required.");
-        if (assignedToIds.length === 0) newErrors.push("Please select at least one Accountant.");
-        if (statusId === null) newErrors.push("Please select a Status.");
-        if (!priority || !priority.trim()) newErrors.push("Please select a priority for the task.");
-        if (!dueDate || !dueDate.trim()) newErrors.push("Please select a due date for the task.");
-
-        if (newErrors.length > 0) { setErrors(newErrors); return; }
-
-        setErrors([]);
-        setIsSubmitting(true);
-
-        try {
-            const formData = new FormData();
-            formData.append("title", title);
-            formData.append("description", description);
-            formData.append("statusId", statusId!.toString());
-            formData.append("priority", priority!.toString());
-            formData.append("dueDate", dueDate);
-            assignedToIds.forEach(id => {
-                formData.append("assignedToIds[]", id.toString());
-            });
-
-            if (categoryFilterId) formData.append("categoryId", categoryFilterId.toString());
-
-            attachmentFiles.forEach((attachedFile) => {
-                formData.append("attachments", attachedFile.file);
-            });
-
-            if (editTaskId) {
-                formData.append("taskId", editTaskId.toString());
-                existingAttachments.forEach(att => {
-                    formData.append("existingAttachmentIds", att.id.toString());
-                });
-            }
-
-            await createOrUpdateTask(formData, editTaskId);
-            resetForm();
-            await loadFilteredData(); // Re-fetch based on current filters
-            setMessage(editTaskId ? "Task updated successfully!" : "Task created successfully!");
-            setAlertVariant("success");
-        } catch (error) {
-            console.error(error);
-            if ((error as any).response?.data?.message) {
-                setErrors([(error as any).response.data.message]);
-            } else {
-                setErrors(["Something went wrong while submitting the form."]);
-            }
-            setMessage("Failed to process task.");
-            setAlertVariant("danger");
-        } finally {
-            setIsSubmitting(false);
-        }
-    }
-
-    function resetForm() {
-        setTitle("");
-        setPriority("")
-        setDueDate("")
-        setDescription("");
-        setAssignedToIds([]);
-        setStatusId(null);
-        setAttachmentFiles([]);
-        setEditTaskId(null);
-        setExistingAttachments([]);
-    }
-
-    function handleCategoryClick(id: number | null) {
-        if (id === null) {
-            router.push(pathname);
+    const handleAction = (task: TodoItem) => {
+        if (task.type === 'CUSTOM') {
+            setSelectedTask(task);
+            setIsModalOpen(true);
+        } else if ((task.type === 'DOCUMENT_REQUEST' || task.type === 'REQUESTED_DOCUMENT') && task.engagementId) {
+            router.push(`/dashboard/engagements/${task.engagementId}?tab=requests&scrollTo=${task.moduleId}`);
         } else {
-            const encoded = btoa(`${id}`);
-            router.push(`${pathname}?category=${encoded}`);
+            router.push(`/dashboard/todo-list/todo-list-view?taskId=${btoa(task.id)}`);
         }
-    }
-
-    function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
-        if (e.target.files && e.target.files.length > 0) {
-            const newAttachedFiles: AttachedFile[] = Array.from(e.target.files)
-                .filter(file => file instanceof File)
-                .map(file => ({
-                    file,
-                    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`
-                }));
-
-            setAttachmentFiles(prevFiles => [...prevFiles, ...newAttachedFiles]);
-        } else {
-            console.log("No files selected, attachmentFiles remain as is unless cleared manually.");
-        }
-        e.target.value = '';
-    }
-
-    function removeAttachment(idToRemove: string) {
-        setAttachmentFiles(prevFiles => prevFiles.filter(file => file.id !== idToRemove));
-    }
-
-    function removeExistingAttachment(idToRemove: number) {
-        setExistingAttachments(prevAttachments => prevAttachments.filter(att => att.id !== idToRemove));
-    }
+    };
 
     return (
         <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-4">
@@ -401,321 +112,192 @@ export default function TodoList() {
                 subtitle="Manage your tasks, track progress, and collaborate with your team."
             />
 
-            {/* Top Priority Actions */}
-            <DashboardCard animate className="overflow-hidden group">
-                <div className="flex items-center justify-between px-8 py-6 border-b border-gray-300">
-                    <div className="flex items-center gap-4">
-                        <div className="w-1 h-7 bg-gray-900 rounded-full" />
-                        <div className="flex flex-col">
-                            <h3 className="text-xl font-semibold text-gray-900">Top Priority Actions</h3>
-                        </div>
-                    </div>
-                    <Link href="/dashboard/compliance/list">
-                        <Button variant="default">View all</Button>
-                    </Link>
-                </div>
-                <div className="p-6 space-y-2">
-                    {topPriorityActions.map((action) => (
-                        <div key={action.id} className="flex items-center justify-between gap-4 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors group/action">
-                            <div className="flex items-center gap-3 min-w-0 flex-1">
-                                <div className="w-2 h-2 rounded-full bg-gray-900 shrink-0" />
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-base font-semibold text-gray-900 truncate">{action.title}</p>
-                                    <p className="text-xs text-gray-500 mt-0.5">{action.service} · {action.reason}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                                <Link href={action.href}>
-                                    <Button size="sm" variant="default" className="whitespace-nowrap">
-                                        {action.action}
-                                    </Button>
-                                </Link>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </DashboardCard>
-
-            {/* Pending Actions */}
-            {pendingTasks.length > 0 && (
-                <DashboardCard className="overflow-hidden group">
-                    <div className="flex items-center justify-between px-8 py-6 border-b border-gray-300">
-                        <div className="flex items-center gap-4">
-                            <div className="w-1 h-7 bg-gray-900 rounded-full" />
-                            <div className="flex flex-col">
-                                <h3 className="text-xl font-medium text-gray-900">Pending Actions</h3>
-                                <p className="text-sm text-gray-600">Tasks awaiting your attention</p>
-                            </div>
-                        </div>
-                        <Link href="/dashboard/compliance/list">
-                            <Button variant="default">View all</Button>
-                        </Link>
-                    </div>
-                    <div className="p-4 space-y-4">
-                        {pendingTasks.map((task) => (
-                            <Link
-                                key={task.id}
-                                href={`/dashboard/compliance/detail?taskId=${btoa(task.id.toString())}`}
-                                className="group/task flex items-center justify-between rounded-xl border border-gray-50 bg-gray-50/50 px-6 py-5 text-sm hover:bg-white hover:shadow-md transition-all duration-300 gap-4"
-                            >
-                                <div className="space-y-1 min-w-0">
-                                    <p className="font-semibold text-gray-900 text-base truncate">{task.title}</p>
-                                    {task.dueDate && (
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] uppercase font-medium text-gray-400 tracking-widest shrink-0">Deadline:</span>
-                                            <span className="text-xs font-medium text-destructive whitespace-nowrap">{new Date(task.dueDate).toLocaleDateString()}</span>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-4 shrink-0">
-                                    <span className="text-[10px] font-medium uppercase tracking-widest rounded-lg bg-white border border-gray-200 px-3 py-1.5 text-gray-900 shadow-sm whitespace-nowrap">
-                                        {task.status || "Open"}
-                                    </span>
-                                    <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center shrink-0">
-                                        <ArrowRight className="h-4 w-4" />
-                                    </div>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                </DashboardCard>
-            )}
-
             <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
                 {message && <AlertMessage message={message} variant={alertVariant} onClose={() => setMessage("")} duration={6000} />}
-                <TodoListTabs categories={categories} onCategoryClick={handleCategoryClick} />
 
                 {/* Filters */}
-                <div className="flex flex-col md:flex-row gap-4 mb-5 items-center">
-                    <input
-                        type="text"
-                        placeholder="Search tasks..."
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                        className="flex-1 min-w-[200px] border border-border rounded-lg px-3 py-2 bg-card"
-                    />
+                <div className="flex flex-col md:flex-row gap-3 mb-5 items-center">
+                    {/* Type */}
+                    <select
+                        value={typeFilter}
+                        onChange={(e) => { setTypeFilter(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
+                        className="flex-1 min-w-[160px] border border-border rounded-lg px-3 py-2 bg-card text-sm"
+                    >
+                        <option value="">All Types</option>
+                        <option value="DOCUMENT_REQUEST">Document Request</option>
+                        <option value="REQUESTED_DOCUMENT">Requested Document</option>
+                        <option value="CUSTOM">Custom</option>
+                    </select>
 
-                    <Dropdown
-                        className="w-full md:w-auto"
-                        trigger={
-                            <Button variant="outline" className="w-full md:w-auto h-9 justify-between">
-                                {priorityFilter ? priorityFilter.charAt(0) + priorityFilter.slice(1).toLowerCase() : "Select Priority"}
-                                <ChevronDown className="h-4 w-4 opacity-50" />
-                            </Button>
-                        }
-                        items={[
-                            { id: "", label: "Select Priority", onClick: () => setPriorityFilter("") },
-                            { id: "LOW", label: "Low", onClick: () => setPriorityFilter("LOW") },
-                            { id: "MEDIUM", label: "Medium", onClick: () => setPriorityFilter("MEDIUM") },
-                            { id: "HIGH", label: "High", onClick: () => setPriorityFilter("HIGH") }
-                        ]}
-                    />
+                    {/* Service */}
+                    <select
+                        value={serviceFilter}
+                        onChange={(e) => { setServiceFilter(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
+                        className="flex-1 min-w-[160px] border border-border rounded-lg px-3 py-2 bg-card text-sm"
+                    >
+                        <option value="">All Services</option>
+                        {serviceOptions.map(s => (
+                            <option key={s} value={s}>{s}</option>
+                        ))}
+                    </select>
 
-                    <DatePicker
-                        selected={dueDateFilter ? new Date(dueDateFilter) : null}
-                        onChange={(date) => {
-                            SetdueDateFilter(date ? date.toISOString().split("T")[0] : null);
-                        }}
-                        id="dueDateFilter"
-                        popperPlacement="bottom-start"
-                        dateFormat="yyyy-MM-dd"
-                        showMonthDropdown
-                        showYearDropdown
-                        dropdownMode="select"
-                        isClearable
-                        minDate={new Date()}
-                        placeholderText="Upto Due date"
-                        onKeyDown={(e) => e.preventDefault()}
-                        withPortal
-                        className="w-full md:w-auto min-w-[150px] px-3 py-2 text-sm text-brand-body border-border bg-card border rounded-lg"
-                    />
-
-
-                    <Dropdown
-                        className="w-full md:w-auto"
-                        trigger={
-                            <Button variant="outline" className="w-full md:w-auto h-9 justify-between">
-                                {assignedToFilterId ? accountants.find(acc => acc.accountant.id === assignedToFilterId)?.accountant.name + " (" + accountants.find(acc => acc.accountant.id === assignedToFilterId)?.accountant.email + ")" || "All Accountants" : "All Accountants"}
-                                <ChevronDown className="h-4 w-4 opacity-50" />
-                            </Button>
-                        }
-                        items={[
-                            { id: "", label: "All Accountants", onClick: () => setAssignedToFilterId(null) },
-                            ...accountants.map((acc) => ({
-                                id: acc.accountant.id,
-                                label: `${acc.accountant.name} (${acc.accountant.email})`,
-                                onClick: () => setAssignedToFilterId(acc.accountant.id)
-                            }))
-                        ]}
-                    />
-
-                    <Dropdown
-                        className="w-full md:w-auto"
-                        trigger={
-                            <Button variant="outline" className="w-full md:w-auto h-9 justify-between">
-                                {statusFilterId ? statuses.find(s => s.id === statusFilterId)?.name || "All Statuses" : "All Statuses"}
-                                <ChevronDown className="h-4 w-4 opacity-50" />
-                            </Button>
-                        }
-                        items={[
-                            { id: "", label: "All Statuses", onClick: () => setStatusFilterId(null) },
-                            ...statuses.map((status) => ({
-                                id: status.id,
-                                label: status.name,
-                                onClick: () => setStatusFilterId(status.id)
-                            }))
-                        ]}
-                    />
+                    {/* Status */}
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => { setStatusFilter(e.target.value); setPagination(p => ({ ...p, page: 1 })); }}
+                        className="flex-1 min-w-[160px] border border-border rounded-lg px-3 py-2 bg-card text-sm"
+                    >
+                        <option value="">All Statuses</option>
+                        <option value="ACTION_REQUIRED">Action Required</option>
+                        <option value="ACTION_TAKEN">Action Taken</option>
+                        <option value="COMPLETED">Completed</option>
+                    </select>
 
                     <Button
                         variant="outline"
                         onClick={clearFilters}
-                        className="bg-light text-primary-color-new"
+                        className="bg-light text-primary-color-new shrink-0"
                     >
                         Clear
                     </Button>
                 </div>
 
-                {/* Listing Section */}
-                <div className="bg-card border border-border rounded-[16px] shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
-                    <h2 className="text-xl font-medium px-5 py-3 border-b border-border">Current Tasks</h2>
-                    <div className="space-y-3 p-3 max-h-96 overflow-y-auto">
-                        {isLoading ? (
-                            // Skeleton Loader
-                            <div className="space-y-3">
-                                {[...Array(3)].map((_, index) => ( // Render 3 skeleton items
-                                    <div key={index} className="bg-linear-to-l from-white/80 to-blue-100/50 backdrop-blur[10px] border border-border rounded-[16px] py-3 px-4 flex justify-between items-center animate-pulse">
-                                        <div className="flex-1">
-                                            <div className="h-4 bg-black/10 rounded w-3/4 mb-2"></div>
-                                            <div className="h-3 bg-black/10 rounded w-1/2"></div>
-                                        </div>
-                                        <div className="w-1/4 h-4 bg-black/10 rounded"></div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : tasks.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-                                <svg className="w-16 h-16 mb-4 text-sidebar-foreground" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                </svg>
-                                <p className="text-lg font-medium">No tasks found</p>
-                                <p className="text-sm text-muted-foreground">You can create a new task using the form below.</p>
-                            </div>
-                        ) : (
-                            tasks.map((task) => (
-                                <div key={task.id} className="bg-card px-4 py-3 flex justify-between items-centerbg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
-                                    <Link
-                                        href={`/dashboard/todo-list/todo-list-view?taskId=${btoa(task.id.toString())}`}
-                                        passHref
-                                        className="flex-1 cursor-pointer hover:bg-brand-body -mx-4 -my-3 px-4 py-3 rounded-lg transition-colors duration-200"
-                                    >
-                                        <div>
-                                            <TaskInfo
-                                                title={task.title}
-                                                priority={task.priority as Priority | null}
-                                                dueDate={task.dueDate}
-                                                createdAtDate={task.createdAt}
-                                            />
-                                            <div className="flex flex-wrap gap-3 mt-2">
-                                                {task.assignedAccountants && task.assignedAccountants.length > 0 ? (
-                                                    <span className="text-sm flex gap-2 items-center">
-                                                        <HugeiconsIcon icon={MessageUser01Icon} className="w-4.5 h-4.5 text-green-700" />
-                                                        {task.assignedAccountants.map(acc => `${acc.username} (${acc.email})`).join(", ")}
+                {/* Table */}
+                <div className="bg-card border border-border rounded-[16px] shadow-md w-full mx-auto overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="border-b border-border bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
+                                    <th className="px-5 py-3 text-left font-semibold">Title</th>
+                                    <th className="px-4 py-3 text-left font-semibold">Type</th>
+                                    <th className="px-4 py-3 text-left font-semibold">Service</th>
+                                    <th className="px-4 py-3 text-left font-semibold">Status</th>
+                                    <th className="px-4 py-3 text-left font-semibold">Deadline</th>
+                                    <th className="px-4 py-3 text-right font-semibold">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {isLoading ? (
+                                    [...Array(5)].map((_, i) => (
+                                        <tr key={i} className="border-b border-border animate-pulse">
+                                            {[...Array(6)].map((_, j) => (
+                                                <td key={j} className="px-5 py-4">
+                                                    <div className="h-3 bg-gray-200 rounded w-full" />
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))
+                                ) : tasks.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="text-center py-16 text-muted-foreground">
+                                            <p className="text-base font-medium">No tasks found</p>
+                                            <p className="text-xs mt-1">Try adjusting your filters</p>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    tasks.map((task, idx) => {
+                                        const typeLabel: Record<string, string> = {
+                                            DOCUMENT_REQUEST: 'Doc Request',
+                                            REQUESTED_DOCUMENT: 'Req. Doc',
+                                            CUSTOM: 'Custom',
+                                        };
+                                        const st = (task.status || 'ACTION_REQUIRED').toUpperCase();
+                                        const statusLabelMap: Record<string, string> = {
+                                            ACTION_REQUIRED: 'Action Required',
+                                            ACTION_TAKEN: 'Action Taken',
+                                            COMPLETED: 'Completed',
+                                        };
+                                        const statusColorMap: Record<string, string> = {
+                                            ACTION_REQUIRED: 'bg-amber-50 text-amber-700 border-amber-200',
+                                            ACTION_TAKEN: 'bg-green-50 text-green-700 border-green-200',
+                                            COMPLETED: 'bg-blue-50 text-blue-700 border-blue-200',
+                                        };
+                                        const statusLabel = statusLabelMap[st] || st;
+                                        const colorClass = statusColorMap[st] || 'bg-gray-50 text-gray-700 border-gray-200';
+                                        return (
+                                            <tr
+                                                key={task.id}
+                                                className={`border-b border-border transition-colors hover:bg-muted/30 ${
+                                                    idx % 2 === 0 ? '' : 'bg-muted/10'
+                                                }`}
+                                            >
+                                                <td className="px-5 py-4 max-w-[280px]">
+                                                    <p className="font-semibold text-gray-900 truncate" title={task.title}>{task.title}</p>
+                                                    {task.description && (
+                                                        <p className="text-xs text-muted-foreground mt-0.5 truncate" title={task.description}>{task.description}</p>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-4 whitespace-nowrap">
+                                                    <span className="text-xs font-medium text-gray-600 bg-gray-100 border border-gray-200 px-2.5 py-1 rounded-lg">
+                                                        {typeLabel[task.type] ?? task.type}
                                                     </span>
-                                                ) : (
-                                                    task.otherUser && (
-                                                        <span className="text-sm flex gap-2 items-center">
-                                                            <HugeiconsIcon icon={MessageUser01Icon} className="w-4.5 h-4.5 text-brand-primary700" />
-                                                            {task.otherUser.username} ({task.otherUser.email})
+                                                </td>
+                                                <td className="px-4 py-4 whitespace-nowrap text-gray-600">{task.service || '—'}</td>
+                                                <td className="px-4 py-4 whitespace-nowrap">
+                                                    <span className={`text-xs font-semibold border px-2.5 py-1 rounded-xl ${colorClass}`}>
+                                                        {statusLabel}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-4 whitespace-nowrap">
+                                                    {task.deadline ? (
+                                                        <span className="text-xs font-medium text-rose-600">
+                                                            {new Date(task.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                         </span>
-                                                    )
-                                                )}
-                                                <span className="text-sm flex gap-2 items-center text-primary">
-                                                    <HugeiconsIcon icon={WaveTriangleIcon} className="w-4.5 h-4.5 text-rose-700" />
-                                                    {task.status ?? "No Status"}
-                                                </span>
-                                                {task.category && (
-                                                    <span className="text-sm flex gap-2 items-center">
-                                                        <HugeiconsIcon icon={Unlink03Icon} className="w-4.5 h-4.5 text-amber-600" />
-                                                        {task.category}
-                                                    </span>
-                                                )}
-                                                {task.attachments && task.attachments.length > 0 && (
-                                                    <span className="text-sm flex gap-2 items-center">
-                                                        <HugeiconsIcon icon={AttachmentIcon} className="w-4.5 h-4.5 text-cyan-800" />
-                                                        {task.attachments.length} Attachment(s)
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </Link>
-
-                                    <div className="flex items-center gap-4 pl-4">
-                                        <div className="flex gap-3">
-                                            {task.createdById === currentUserId && (
-                                                <>
-                                                    <button
-                                                        className="cursor-pointer bg-sidebar-background w-7 h-7 flex items-center justify-center rounded-full shadow-md hover:bg-sidebar-hover transition-colors"
-                                                        onClick={() => handleEdit(btoa(task.id.toString()))}
-                                                        aria-label={`Edit task ${task.title}`}
+                                                    ) : (
+                                                        <span className="text-muted-foreground text-xs">—</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-4 text-right">
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => handleAction(task)}
+                                                        className="whitespace-nowrap bg-brand-primary text-white px-4 rounded-xl hover:bg-brand-active transition-all"
                                                     >
-                                                        <HugeiconsIcon icon={Edit03Icon} className="w-4.5 h-4.5 text-sidebar-foreground" />
-                                                    </button>
-                                                    <button
-                                                        className="cursor-pointer bg-rose-700 w-7 h-7 flex items-center justify-center rounded-full"
-                                                        onClick={() => handleDelete(task.id)}
-                                                        aria-label={`Delete task ${task.title}`}
-                                                    >
-                                                        <HugeiconsIcon icon={Delete02Icon} className="w-4.5 h-4.5 text-rose-100" />
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        )}
+                                                        {task.cta || 'Take Action'}
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
                     </div>
 
-                    <div className="flex justify-center items-center space-x-2 mt-5 p-5 border-t border-border">
-                        <button onClick={() => loadPaginatedTasks(pagination.page - 1)} disabled={pagination.page === 1 || isLoading} className="px-3 py-1 border rounded disabled:opacity-50">Prev</button>
-                        <span>Page {pagination.page} of {pagination.totalPages}</span>
-                        <button onClick={() => loadPaginatedTasks(pagination.page + 1)} disabled={pagination.page === pagination.totalPages || isLoading} className="px-3 py-1 border rounded disabled:opacity-50">Next</button>
+                    {/* Pagination */}
+                    <div className="flex justify-between items-center px-5 py-3 border-t border-border">
+                        <span className="text-xs text-muted-foreground">
+                            Showing {((pagination.page - 1) * pagination.limit) + 1}–{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
+                        </span>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => loadPaginatedTasks(pagination.page - 1)}
+                                disabled={pagination.page === 1 || isLoading}
+                                className="p-1.5 rounded-lg border border-border hover:bg-gray-50 disabled:opacity-40 transition-colors"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <span className="text-sm font-medium px-2">
+                                {pagination.page} / {pagination.totalPages || 1}
+                            </span>
+                            <button
+                                onClick={() => loadPaginatedTasks(pagination.page + 1)}
+                                disabled={pagination.page === pagination.totalPages || isLoading}
+                                className="p-1.5 rounded-lg border border-border hover:bg-gray-50 disabled:opacity-40 transition-colors"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                {/* Create or Edit Task Section */}
-                <div className="bg-card border border-border rounded-[16px] shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md mt-8"> {/* Added mt-8 for spacing */}
-                    <h2 className="text-xl font-medium px-5 py-3 border-b border-border">{editTaskId ? "Edit Task" : "Create New Task"}</h2>
-                    <div className="p-1" ref={taskFormRef}>
-                        <TaskForm
-                            title={title}
-                            setTitle={setTitle}
-                            description={description}
-                            setDescription={setDescription}
-                            assignedToIds={assignedToIds}
-                            setAssignedToIds={setAssignedToIds}
-                            statusId={statusId}
-                            setStatusId={setStatusId}
-                            priority={priority}
-                            dueDate={dueDate}
-                            setDueDate={setDueDate}
-                            setPriority={setPriority}
-                            accountants={accountants}
-                            statuses={statuses}
-                            attachmentFiles={attachmentFiles}
-                            existingAttachments={existingAttachments}
-                            handleFileChange={handleFileChange}
-                            removeAttachment={removeAttachment}
-                            removeExistingAttachment={removeExistingAttachment}
-                            handleSubmit={handleSubmit}
-                            resetForm={resetForm}
-                            isSubmitting={isSubmitting}
-                            editTaskId={editTaskId}
-                            errors={errors}
-                            backendUrl={backendUrl} />
-                    </div>
-                </div>
+                {/* Custom Task Detail Modal */}
+                <TaskDetailModal
+                    isOpen={isModalOpen}
+                    onClose={() => { setIsModalOpen(false); setSelectedTask(null); }}
+                    onSuccess={() => loadPaginatedTasks(pagination.page)}
+                    task={selectedTask}
+                />
             </div>
         </section>
     );

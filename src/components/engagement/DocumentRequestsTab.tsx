@@ -1,7 +1,8 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { format } from 'date-fns'
+import { useSearchParams } from 'next/navigation'
 import {
   FileText,
   ChevronDown,
@@ -35,6 +36,48 @@ const DocumentRequestsTab = () => {
   const { documentRequests, loading, error, refetch } = useDocumentRequests(
     (engagement as any)?._id ?? (engagement as any)?.id ?? null
   )
+  const searchParams = useSearchParams()
+  const scrollToId = searchParams.get('scrollTo')
+  const scrolledRef = useRef(false)
+
+  useEffect(() => {
+    if (scrollToId && documentRequests.length > 0 && !scrolledRef.current) {
+      // Find which request contains this ID (can be the request itself or a doc inside it)
+      const targetRequest = documentRequests.find(r => {
+        const requestId = r.id ?? r._id;
+        if (requestId === scrollToId) return true;
+
+        // Check single documents
+        if ((r.documents || []).some((d: any) => (d.id ?? d._id) === scrollToId)) return true;
+
+        // Check multiple document groups and their children
+        if ((r.multipleDocuments || []).some((group: any) => {
+          if ((group.id ?? group._id) === scrollToId) return true;
+          return (group.children || []).some((child: any) => (child.id ?? child._id) === scrollToId);
+        })) return true;
+
+        return false;
+      });
+
+      if (targetRequest) {
+        const targetRequestId = targetRequest.id ?? targetRequest._id;
+        setExpandedRequests(prev => new Set(prev).add(targetRequestId));
+        
+        // Wait for expansion animation/render
+        setTimeout(() => {
+          const element = document.getElementById(scrollToId);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            element.classList.add('blink-item');
+            setTimeout(() => {
+              element.classList.remove('blink-item');
+            }, 3000);
+            scrolledRef.current = true;
+          }
+        }, 500);
+      }
+    }
+  }, [scrollToId, documentRequests]);
 
   const reqId = (r: any) => r.id ?? r._id
 
@@ -47,6 +90,7 @@ const DocumentRequestsTab = () => {
     }
     setExpandedRequests(newSet)
   }
+
 
   const handleUpload = async (requestId: string, documentId: string, file: File) => {
     setUploadingState({ requestId, documentId })
@@ -236,6 +280,7 @@ const DocumentRequestsTab = () => {
           return (
             <Card
               key={requestIdVal}
+              id={requestIdVal}
               className="bg-white/80 border border-gray-300 rounded-xl shadow-sm hover:bg-white/70 transition-all mb-4 overflow-hidden"
             >
               <CardContent className="p-0">

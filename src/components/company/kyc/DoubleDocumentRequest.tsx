@@ -78,7 +78,8 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
         return (
           <div
             key={group.id}
-            className="p-3 bg-white rounded-lg border border-gray-200 space-y-3"
+            id={group.id}
+            className="p-3 bg-white rounded-lg border border-gray-200 space-y-3 transition-all duration-500"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3 flex-1">
@@ -153,7 +154,8 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                   return (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between gap-3 border border-gray-400 p-3 rounded-md"
+                    id={item.id}
+                    className="flex items-center justify-between gap-3 border border-gray-400 p-3 rounded-md transition-all duration-500"
                   >
                     <div className="flex-1">
                       <p className="text-md">
