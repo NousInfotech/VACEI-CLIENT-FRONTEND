@@ -421,7 +421,7 @@ export default function DashboardPage() {
               status: 'overdue',
               primaryActionType: 'upload',
               primaryActionLink: '/dashboard/todo-list?filter=overdue',
-              secondaryActionLink: '/dashboard/compliance'
+              primaryActionLabel: "Review Now"
             } as FocusItem;
           } else if (complianceCounts.dueSoon > 0) {
             return {
@@ -430,7 +430,7 @@ export default function DashboardPage() {
               status: 'due_soon',
               primaryActionType: 'confirm',
               primaryActionLink: '/dashboard/services/vat',
-              secondaryActionLink: '/dashboard/compliance'
+              primaryActionLabel: "Review Now"
             } as FocusItem;
           } else if (complianceCounts.waiting > 0) {
             // Find a service that is waiting
@@ -441,7 +441,7 @@ export default function DashboardPage() {
               status: 'waiting_on_you',
               primaryActionType: 'view',
               primaryActionLink: focusService.href,
-              secondaryActionLink: '/dashboard/todo-list'
+              primaryActionLabel: "Review Now"
             } as FocusItem;
           }
           return null; // All set!
@@ -510,12 +510,13 @@ export default function DashboardPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Redesigned Active Services */}
             <div className="space-y-4">
-              <div className="flex flex-col">
-                <h3 className="text-2xl font-bold text-gray-900">Active Services</h3>
-                <p className="text-sm text-gray-500">Manage your ongoing accounting and tax services</p>
-              </div>
-              
-              <div className="space-y-3">
+              <PageHeader 
+                title="Active Services"
+                subtitle="Manage your ongoing accounting and tax services"
+                animate={false}
+                className="p-6"
+              />
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {activeServices.map((service, idx) => {
                   const getIcon = (name: string) => {
                     if (name === "Bookkeeping") return <FileText className="text-blue-600" size={24} />;

@@ -18,7 +18,8 @@ export interface FocusItem {
   status: FocusStatus;
   primaryActionType: ActionType;
   primaryActionLink: string;
-  secondaryActionLink: string;
+  secondaryActionLink?: string;
+  primaryActionLabel?: string;
 }
 
 interface CurrentFocusProps {
@@ -102,15 +103,17 @@ export const CurrentFocus: React.FC<CurrentFocusProps> = ({ item, className }) =
                 isOverdue ? "bg-red-600 hover:bg-red-700 text-white" : "bg-gray-900 hover:bg-black text-white"
               )}
             >
-              {getPrimaryButtonLabel(item.primaryActionType)}
+              {item.primaryActionLabel || getPrimaryButtonLabel(item.primaryActionType)}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
-          <Link href={item.secondaryActionLink}>
-            <Button size="lg">
-              View details
-            </Button>
-          </Link>
+          {item.secondaryActionLink && (
+            <Link href={item.secondaryActionLink!}>
+              <Button size="lg">
+                View details
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </DashboardCard>
