@@ -404,7 +404,7 @@ export const menuData: MenuItem[] = [
       {
         slug: "csp",
         icon: Building01Icon,
-        label: "Corporate Services (CSP)",
+        label: "CSP",
         href: "/dashboard/services/csp-mbr",
         isActive: true,
         children: [], /* children: [
