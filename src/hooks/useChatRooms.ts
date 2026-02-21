@@ -59,7 +59,7 @@ export function mapApiMessage(m: ChatMessage): Message {
         ? `${m.sender.firstName ?? ""} ${m.sender.lastName ?? ""}`.trim()
         : undefined;
 
-    return {
+    const base: Message = {
         id: m.id,
         senderId: isMe ? "me" : m.senderId,
         senderName: isMe ? undefined : resolvedName || undefined,
@@ -77,6 +77,14 @@ export function mapApiMessage(m: ChatMessage): Message {
                 : "sent") as "sent" | "delivered" | "read",
         createdAt: new Date(m.sentAt).getTime(),
     };
+    if (m.replyToMessageId != null) {
+        base.replyToId = m.replyToMessageId;
+        base.replyToMessageId = m.replyToMessageId;
+    }
+    if (m.replyToMessage) {
+        base.replyToMessage = mapApiMessage(m.replyToMessage);
+    }
+    return base;
 }
 
 /**

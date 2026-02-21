@@ -34,6 +34,8 @@ export interface ChatMessage {
   fileUrl: string | null;
   type: "TEXT" | "FILE";
   sentAt: string;
+  replyToMessageId?: string | null;
+  replyToMessage?: ChatMessage | null;
   sender?: {
     id: string;
     firstName?: string;
@@ -274,13 +276,16 @@ class ChatService {
   async sendMessage(
     roomId: string,
     content: string,
-    fileUrl?: string
+    fileUrl?: string,
+    options?: { replyToMessageId?: string | null }
   ): Promise<ChatMessage | null> {
     const userId = this.getCurrentUserId();
     if (!userId) throw new Error("Not authenticated");
 
+    const replyToMessageId = options?.replyToMessageId ?? null;
+
     if (this.supabase) {
-      const message = {
+      const message: Record<string, unknown> = {
         roomId: this.toUuidIfBase64(roomId),
         senderId: userId,
         content: content || null,
@@ -288,6 +293,7 @@ class ChatService {
         type: fileUrl ? "FILE" : "TEXT",
         sentAt: new Date().toISOString(),
       };
+      if (replyToMessageId) message.replyToMessageId = replyToMessageId;
 
       const { data, error } = await (this.supabase as any)
         .from("ChatMessage")
@@ -299,11 +305,14 @@ class ChatService {
       return data as ChatMessage;
     }
 
-    const res = await this.request<{ data: ChatMessage }>("POST", `chat/rooms/${roomId}/messages`, {
+    const body: Record<string, unknown> = {
       content,
       fileUrl: fileUrl || null,
       type: fileUrl ? "FILE" : "TEXT",
-    });
+    };
+    if (replyToMessageId) body.replyToMessageId = replyToMessageId;
+
+    const res = await this.request<{ data: ChatMessage }>("POST", `chat/rooms/${roomId}/messages`, body);
     return res.data ?? null;
   }
 

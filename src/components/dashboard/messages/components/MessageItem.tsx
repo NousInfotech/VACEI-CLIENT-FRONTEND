@@ -105,8 +105,8 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           message.isDeleted && "bg-gray-50/50 border-gray-100 text-gray-400"
         )}
       >
-        {/* Reply Preview */}
-        {message.replyToId && (
+        {/* Reply Preview - show replyToMessage content when available */}
+        {(message.replyToId || message.replyToMessageId || message.replyToMessage) && (
           <div className={cn(
             "mb-2 p-2 rounded-lg border-l-4 bg-black/5 flex flex-col gap-0.5 min-w-[120px]",
             isMe ? "border-white/40" : "border-primary/40"
@@ -121,8 +121,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               "text-[12px] truncate opacity-70 italic",
               isMe ? "text-white" : "text-gray-600"
             )}>
-              {/* Note: ideally we'd fetch the actual message text here. Using placeholder for now */}
-              Message has been replied to
+              {message.replyToMessage?.text || message.replyToMessage?.fileName || 'Message'}
             </p>
           </div>
         )}

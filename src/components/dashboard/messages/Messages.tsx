@@ -259,11 +259,14 @@ const Messages: React.FC = () => {
       fileName: content.fileName,
       fileSize: content.fileSize,
       replyToId: replyToMessage?.id,
+      replyToMessageId: replyToMessage?.id ?? null,
+      replyToMessage: replyToMessage ?? null,
       timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
       createdAt: Date.now(),
       status: 'sent',
     };
     appendMessage(activeChatId, optimistic);
+    const replyToIdForSend = replyToMessage?.id;
     setReplyToMessage(null);
 
     try {
@@ -276,7 +279,8 @@ const Messages: React.FC = () => {
       const sent = await chatService.sendMessage(
         activeChatId,
         content.text || '',
-        fileUrl
+        fileUrl,
+        replyToIdForSend ? { replyToMessageId: replyToIdForSend } : undefined
       );
       if (sent) {
         // Replace optimistic with real message
