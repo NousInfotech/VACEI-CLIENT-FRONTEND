@@ -26,9 +26,11 @@ interface ComplianceItem {
   description: string
   cta: string
   apiStatus: string
+  /** When false, "Mark as done" is hidden (e.g. from Compliance Calendar API which has no status update) */
+  canMarkDone?: boolean
 }
 
-function mapApiToComplianceItem(c: EngagementCompliance): ComplianceItem {
+function mapApiToComplianceItem(c: EngagementCompliance & { _fromComplianceCalendar?: boolean }): ComplianceItem {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const deadline = new Date(c.deadline)
@@ -43,6 +45,7 @@ function mapApiToComplianceItem(c: EngagementCompliance): ComplianceItem {
   else status = 'upcoming'
 
   const authority = c.customServiceCycle?.title || c.service || 'Internal'
+  const canMarkDone = c._fromComplianceCalendar === true ? false : true
   return {
     id: c.id,
     complianceId: c.id,
@@ -55,6 +58,7 @@ function mapApiToComplianceItem(c: EngagementCompliance): ComplianceItem {
     description: c.description || '',
     cta: c.cta || 'Mark as done',
     apiStatus: c.status,
+    canMarkDone,
   }
 }
 
@@ -152,7 +156,11 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
     ((engagement as any)?._id as string | undefined) ||
     ((engagement as any)?.id as string | undefined) ||
     null
-  const { compliances, loading, error, refetch } = useCompliances(engagementId)
+  const companyId =
+    (engagement as any)?.companyId ??
+    (engagement as any)?.company?.id ??
+    null
+  const { compliances, loading, error, refetch } = useCompliances(engagementId, companyId)
   const [updatingId, setUpdatingId] = React.useState<string | null>(null)
 
   const allItems: ComplianceItem[] = React.useMemo(
@@ -164,11 +172,12 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
     ? allItems 
     : allItems.filter((item: ComplianceItem) => item.status === activeFilter)
 
-  const canMarkActionTaken = (apiStatus: string) =>
-    ['ACTION_REQUIRED', 'OVERDUE', 'PENDING', 'IN_PROGRESS'].includes(apiStatus)
+  const canMarkActionTaken = (item: ComplianceItem) =>
+    item.canMarkDone !== false &&
+    ['ACTION_REQUIRED', 'OVERDUE', 'PENDING', 'IN_PROGRESS'].includes(item.apiStatus)
 
   const handleMarkActionTaken = async (item: ComplianceItem) => {
-    if (!engagementId || !canMarkActionTaken(item.apiStatus)) return
+    if (!engagementId || !canMarkActionTaken(item)) return
     setUpdatingId(item.complianceId)
     try {
       await updateComplianceStatus(item.engagementId, item.complianceId, { status: 'ACTION_TAKEN' })
@@ -330,7 +339,7 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
                     </div>
 
                     <div className="shrink-0 flex items-center md:justify-end gap-3 mt-4 md:mt-0">
-                      {canMarkActionTaken(item.apiStatus) ? (
+                      {canMarkActionTaken(item) ? (
                         <Button
                           size="sm"
                           onClick={() => handleMarkActionTaken(item)}

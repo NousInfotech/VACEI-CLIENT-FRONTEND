@@ -7,7 +7,7 @@ import {
   getEngagementCompliances,
 } from "@/api/auditService";
 
-export function useCompliances(engagementId: string | null) {
+export function useCompliances(engagementId: string | null, companyId?: string | null) {
   const [compliances, setCompliances] = useState<EngagementCompliance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +17,7 @@ export function useCompliances(engagementId: string | null) {
     setLoading(true);
     setError(null);
     try {
-      const data = await getEngagementCompliances(engagementId);
+      const data = await getEngagementCompliances(engagementId, { companyId: companyId ?? undefined });
       setCompliances(Array.isArray(data) ? data : []);
     } catch (e: any) {
       setError(e?.message || "Failed to fetch compliances");
@@ -25,7 +25,7 @@ export function useCompliances(engagementId: string | null) {
     } finally {
       setLoading(false);
     }
-  }, [engagementId]);
+  }, [engagementId, companyId]);
 
   useEffect(() => {
     if (!engagementId) {
@@ -47,7 +47,7 @@ export function useCompliances(engagementId: string | null) {
       setLoading(true);
       setError(null);
       try {
-        const data = await getEngagementCompliances(engagementId, signal);
+        const data = await getEngagementCompliances(engagementId, { companyId: companyId ?? undefined, signal });
         if (signal.aborted) return;
         setCompliances(Array.isArray(data) ? data : []);
       } catch (e: any) {
@@ -61,7 +61,7 @@ export function useCompliances(engagementId: string | null) {
 
     run();
     return () => controller.abort();
-  }, [engagementId]);
+  }, [engagementId, companyId]);
 
   return { compliances, loading, error, refetch: fetchCompliances };
 }

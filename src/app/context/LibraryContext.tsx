@@ -22,6 +22,7 @@ import {
   type LibraryFileItem,
   type LibraryRootType,
 } from "@/api/libraryService"
+import { getCompanyById } from "@/api/auditService"
 
 type ViewMode = "list" | "grid"
 type SortField = "name" | "type" | "size"
@@ -141,19 +142,21 @@ export const LibraryProvider: React.FC<{
   initialItems?: any[]
   useApi?: boolean
   rootType?: LibraryRootType
-}> = ({ children, initialItems, useApi = true, rootType = "CLIENT" }) => {
+  /** When set, library shows only this company's folder (strict per-company). Fetches company.folderId and uses it as the single root. */
+  companyId?: string | null
+}> = ({ children, initialItems, useApi = true, rootType = "CLIENT", companyId }) => {
   const [viewMode, setViewMode] = useState<ViewMode>("list")
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
 
-  // Initialize from localStorage after mount to avoid hydration mismatch
+  // Initialize from localStorage only when NOT in company-scoped mode
   useEffect(() => {
-    if (useApi) {
+    if (useApi && !companyId) {
       const stored = getStoredDecoded("client_folder_id")
       if (stored) {
         setCurrentFolderId(stored)
       }
     }
-  }, [useApi])
+  }, [useApi, companyId])
   const [folderPath, setFolderPath] = useState<BreadcrumbItem[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedItems, setSelectedItems] = useState<string[]>([])
@@ -178,9 +181,51 @@ export const LibraryProvider: React.FC<{
     return () => clearTimeout(t)
   }, [useApi, currentFolderId, filterType])
 
-  // Load roots when using API (backend returns all roots user can access)
+  // Per-company: load company and use its folderId as the only root
   useEffect(() => {
-    if (!useApi) return
+    if (!useApi || !companyId) return
+    let cancelled = false
+    const load = async () => {
+      setIsLoading(true)
+      setError(null)
+      setApiRootFolders([])
+      setCurrentFolderId(null)
+      setFolderPath([])
+      try {
+        const company = await getCompanyById(companyId)
+        if (cancelled) return
+        const folderId = company.folderId ?? (company as any).folderId
+        if (!folderId) {
+          setApiRootFolders([])
+          setError("This company does not have a library folder yet.")
+          return
+        }
+        const rootItem: LibraryItem = {
+          id: folderId,
+          type: "folder",
+          folder_name: company.name || "Company Library",
+          parentId: null,
+          name: company.name || "Company Library",
+        } as LibraryItem
+        setApiRootFolders([rootItem])
+        setCurrentFolderId(folderId)
+        setFolderPath([{ id: folderId, name: company.name || "Company Library" }])
+      } catch (e) {
+        if (cancelled) return
+        setError(e instanceof Error ? e.message : "Failed to load company library")
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [useApi, companyId])
+
+  // Load roots when using API and NOT company-scoped (global/client library)
+  useEffect(() => {
+    if (!useApi || companyId) return
     let cancelled = false
     const load = async () => {
       setIsLoading(true)
@@ -188,20 +233,14 @@ export const LibraryProvider: React.FC<{
       try {
         const roots = await getRootFolders()
         if (cancelled) return
-        // Backend filters roots by user access; optionally filter by rootType if present
-        // Roots may have id/folder_id, name/folder_name; filter by rootType when present
         const storedClientFolderId = getStoredDecoded("client_folder_id")
-        
         let filtered = roots
         if (rootType && roots.some((r) => (r as any).rootType)) {
           filtered = roots.filter((f) => (f as any).rootType === rootType)
         }
-        
-        // If strictly showing CLIENT roots and we have a specific folder ID, filter to only that one
         if (rootType === "CLIENT" && storedClientFolderId) {
           filtered = filtered.filter((f) => (f.id === storedClientFolderId || f.folder_id === storedClientFolderId))
         }
-
         const mapped = filtered.map((f) => mapApiFolderToItem(f as LibraryFolderView, null))
         setApiRootFolders(mapped)
       } catch (e) {
@@ -215,7 +254,7 @@ export const LibraryProvider: React.FC<{
     return () => {
       cancelled = true
     }
-  }, [useApi, rootType])
+  }, [useApi, rootType, companyId])
 
   // Load folder content when currentFolderId changes (API mode)
   useEffect(() => {
