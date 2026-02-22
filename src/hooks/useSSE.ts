@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { getPortalRedirectUrl } from '../api/notificationService';
 
 const getBackendUrl = () => {
     return process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
@@ -40,7 +41,7 @@ export const useSSE = () => {
                     description: newNotification.content,
                     action: {
                         label: 'View',
-                        onClick: () => window.location.href = newNotification.redirectUrl || '#',
+                        onClick: () => window.location.href = getPortalRedirectUrl(newNotification.redirectUrl) || '#',
                     },
                 });
             };
