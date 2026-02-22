@@ -58,9 +58,13 @@ import {
   fetchDashboardSummary,
   ProcessedDashboardStat,
 } from "@/api/financialReportsApi";
+import { getTodos, TodoItem } from "@/api/todoService";
+import { useDocumentRequests } from "./hooks/useDocumentRequests";
+import { useEngagementUpdates } from "./hooks/useEngagementUpdates";
+import { useMilestones } from "./hooks/useMilestones";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert02Icon, Notification02Icon } from "@hugeicons/core-free-icons";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { fetchDocuments } from "@/api/documentApi";
 import {
   Tooltip,
@@ -75,6 +79,7 @@ import UpdatesTab from "./UpdatesTab";
 export type EngagementStatus =
   | "on_track"
   | "due_soon"
+  | "due_today"
   | "action_required"
   | "overdue";
 export type WorkflowStatus =
@@ -112,6 +117,10 @@ const statusConfig: Record<EngagementStatus, { label: string; color: string }> =
     label: "Due soon",
     color: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
   },
+  due_today: {
+    label: "Due today",
+    color: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+  },
   action_required: {
     label: "Your input required",
     color: "bg-orange-500/10 text-orange-500 border-orange-500/20",
@@ -144,7 +153,63 @@ const workflowStatusConfig: Record<
   },
 };
 
-export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
+export const ServiceTodoTable = ({ todos, loading }: { todos: TodoItem[], loading: boolean }) => {
+  if (loading) return <Skeleton className="h-64 w-full" />;
+  if (todos.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 bg-gray-50/50 border border-dashed border-gray-200">
+        <ClipboardList className="w-12 h-12 text-gray-300 mb-4" />
+        <p className="text-gray-500 font-medium">No todos found for this engagement.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-gray-200">
+            <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Task Title</th>
+            <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Status</th>
+            <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Deadline</th>
+            <th className="text-right py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {todos.map((todo) => (
+            <tr key={todo.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+              <td className="py-4 px-4">
+                <p className="font-medium text-gray-900">{todo.title}</p>
+                <p className="text-[10px] text-gray-500 uppercase font-medium">{todo.type || 'Engagement Task'}</p>
+              </td>
+              <td className="py-4 px-4">
+                <Badge
+                  className={cn(
+                    "rounded-0 border px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest bg-transparent",
+                    (todo.status?.toUpperCase() === 'COMPLETED' || todo.status?.toUpperCase() === 'ACTION_TAKEN') ? "text-emerald-500 border-emerald-500/20" :
+                    todo.status?.toUpperCase() === 'ACTION_REQUIRED' ? "text-amber-500 border-amber-500/20" : "text-gray-400 border-gray-200"
+                  )}
+                >
+                  {todo.status || 'Pending'}
+                </Badge>
+              </td>
+              <td className="py-4 px-4 text-gray-600">
+                {todo.deadline && todo.status?.toUpperCase() !== 'COMPLETED' && todo.status?.toUpperCase() !== 'ACTION_TAKEN' ? new Date(todo.deadline).toLocaleDateString('en-GB') : '—'}
+              </td>
+              <td className="py-4 px-4 text-right">
+                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800 text-[10px] font-bold uppercase tracking-widest p-0 h-auto">
+                  Open
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+const EngagementSummary: React.FC<EngagementSummaryProps> = ({
   serviceName,
   serviceSlug,
   description,
@@ -156,6 +221,7 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
   messages = [],
   className,
 }) => {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = React.useState("dashboard");
   const [stats, setStats] = useState<ProcessedDashboardStat[]>([]);
@@ -190,21 +256,95 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
 
   const { engagement, loading: engagementLoading } = useEngagement();
   const engagementData = engagement as any;
+  const engagementId = engagementData?._id || engagementData?.id;
+
+  const { documentRequests, loading: docsLoading } = useDocumentRequests(engagementId);
+  const { milestones, loading: milestonesLoading } = useMilestones(engagementId);
+  const { updates, loading: updatesLoading } = useEngagementUpdates(engagementId);
+  const [engagementTodos, setEngagementTodos] = useState<TodoItem[]>([]);
+  const [todosLoading, setTodosLoading] = useState(false);
+
+  useEffect(() => {
+    if (engagementId) {
+      setTodosLoading(true);
+      getTodos({ id: engagementId })
+        .then((data) => setEngagementTodos(data))
+        .catch((err) => console.error("Failed to fetch todos:", err))
+        .finally(() => setTodosLoading(false));
+    }
+  }, [engagementId]);
+
+  const allPendingItems = React.useMemo(() => {
+    const pendingDocs = (documentRequests || []).filter(r => {
+      const isStatusPending = ['PENDING', 'REOPENED', 'REJECTED'].includes(r.status?.toUpperCase() || '');
+      if (!isStatusPending) return false;
+      
+      // Check if there are actually any pending documents inside
+      const hasPendingSingleDocs = (r.documents || []).some((d: any) => 
+        !['UPLOADED', 'SUBMITTED', 'ACCEPTED'].includes(d.status?.toUpperCase() || '')
+      );
+      
+      const hasPendingMultipleDocs = (r.multipleDocuments || []).some((group: any) => 
+        (group.multiple || group.children || []).some((child: any) => 
+          !['UPLOADED', 'SUBMITTED', 'ACCEPTED'].includes(child.status?.toUpperCase() || '')
+        )
+      );
+      
+      return hasPendingSingleDocs || hasPendingMultipleDocs;
+    });
+    
+    const pendingTodos = (engagementTodos || []).filter(t => 
+      !['COMPLETED', 'ACTION_TAKEN'].includes(t.status?.toUpperCase() || '')
+    );
+
+    return [...pendingDocs, ...pendingTodos];
+  }, [documentRequests, engagementTodos]);
+
+  const overallServiceStatus: EngagementStatus = React.useMemo(() => {
+    if (docsLoading || !documentRequests) return "on_track";
+    
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    if (allPendingItems.length === 0) return "on_track";
+
+    // 1. Check for Overdue
+    const hasOverdue = allPendingItems.some(item => {
+      const deadline = item.deadline ? new Date(item.deadline) : null;
+      if (!deadline) return false;
+      const deadlineDate = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate());
+      return deadlineDate < today;
+    });
+    if (hasOverdue) return "overdue";
+
+    // 2. Check for Due Today
+    const hasDueToday = allPendingItems.some(item => {
+      const deadline = item.deadline ? new Date(item.deadline) : null;
+      if (!deadline) return false;
+      const deadlineDate = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate());
+      return deadlineDate.getTime() === today.getTime();
+    });
+    if (hasDueToday) return "due_today";
+
+    // 3. Check for Due Soon
+    const hasDueSoon = allPendingItems.some(item => {
+      const deadline = item.deadline ? new Date(item.deadline) : null;
+      return deadline && new Date(deadline) > today;
+    });
+    if (hasDueSoon) return "due_soon";
+
+    // 4. Fallback to Action Required if items exist but have no deadline
+    return "action_required";
+  }, [allPendingItems, docsLoading, documentRequests]);
 
   const apiStatus = engagementData?.status;
   const apiName = engagementData?.name || engagementData?.title;
   const displayStatus: EngagementStatus =
     engagementLoading
       ? "on_track" 
-      : apiStatus === "ACTIVE"
-      ? "on_track"
-      : apiStatus === "ASSIGNED" || apiStatus === "DRAFT" || apiStatus === "ACCEPTED"
-      ? "due_soon"
-      : apiStatus === "COMPLETED"
-      ? "on_track"
-      : apiStatus === "CANCELLED" || apiStatus === "TERMINATED"
+      : (apiStatus === "CANCELLED" || apiStatus === "TERMINATED")
       ? "overdue"
-      : status;
+      : overallServiceStatus;
   const displayCycle = engagementLoading ? "" : (apiName || cycle);
   const displayWorkflowStatus: WorkflowStatus =
     engagementLoading
@@ -213,6 +353,8 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
       ? "in_progress"
       : apiStatus === "COMPLETED"
       ? "completed"
+      : allPendingItems.length === 0
+      ? "in_progress"
       : apiStatus === "ASSIGNED" || apiStatus === "DRAFT"
       ? "waiting"
       : workflowStatus;
@@ -351,18 +493,11 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
   const tabs: Tab[] = isMBRFilings
     ? [
       { id: "dashboard", label: "Overview", icon: LayoutDashboard },
-      {
-        id: "document_requests",
-        label: "Document Requests",
-        icon: ClipboardList,
-      },
+      { id: "todo", label: "Todo", icon: ClipboardList },
+      { id: "document_requests", label: "Document Requests", icon: FileText },
       { id: "milestones", label: "Milestones", icon: Flag },
       { id: "library", label: "Library", icon: Library },
-      {
-        id: "compliance_calendar",
-        label: "Compliance Calendar",
-        icon: Calendar,
-      },
+      { id: "compliance_calendar", label: "Compliance Calendar", icon: Calendar },
       { id: "messages", label: "Updates", icon: UpdateIcon },
       { id: "chat", label: "Chat", icon: MessageSquare },
       { id: "filings", label: "Filings", icon: FileCheck },
@@ -370,36 +505,22 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
     : isVAT
       ? [
         { id: "dashboard", label: "Overview", icon: LayoutDashboard },
-        {
-          id: "document_requests",
-          label: "Document Requests",
-          icon: ClipboardList,
-        },
+        { id: "todo", label: "Todo", icon: ClipboardList },
+        { id: "document_requests", label: "Document Requests", icon: FileText },
         { id: "milestones", label: "Milestones", icon: Flag },
         { id: "library", label: "Library", icon: Library },
-        {
-          id: "compliance_calendar",
-          label: "Compliance Calendar",
-          icon: Calendar,
-        },
+        { id: "compliance_calendar", label: "Compliance Calendar", icon: Calendar },
         { id: "messages", label: "Updates", icon: UpdateIcon },
         { id: "chat", label: "Chat", icon: MessageSquare },
         { id: "vat_periods", label: "Filings", icon: FileCheck },
       ]
       : [
         { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-        {
-          id: "document_requests",
-          label: "Document Requests",
-          icon: ClipboardList,
-        },
+        { id: "todo", label: "Todo", icon: ClipboardList },
+        { id: "document_requests", label: "Document Requests", icon: FileText },
         { id: "milestones", label: "Milestones", icon: Flag },
         { id: "library", label: "Library", icon: Library },
-        {
-          id: "compliance_calendar",
-          label: "Compliance Calendar",
-          icon: Calendar,
-        },
+        { id: "compliance_calendar", label: "Compliance Calendar", icon: Calendar },
         { id: "messages", label: "Updates", icon: UpdateIcon },
         { id: "chat", label: "Chat", icon: MessageSquare },
         ...(engagementData?.filings?.length > 0 &&
@@ -418,55 +539,19 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
             },
           ]
           : []),
-        ...(isPayroll ? [
-          { id: "payroll_filings", label: "Filings", icon: FileCheck },
-        ] : []),
-        ...(isCorporate ? [
-          { id: "corporate_filings", label: "Filings", icon: FileCheck },
-        ] : []),
-        ...(isCFO ? [
-          { id: "cfo_filings", label: "Filings", icon: FileCheck },
-        ] : []),
-        ...(isAccounting ? [
-          { id: "accounting_filings", label: "Filings", icon: FileCheck },
-        ] : []),
-        ...(isAudit ? [
-          { id: "audit_filings", label: "Filings", icon: FileCheck },
-        ] : []),
-        ...(isTax ? [
-          { id: "tax_filings", label: "Filings", icon: FileCheck },
-        ] : []),
-        ...(isIncorporation ? [
-          { id: "incorporation_filings", label: "Filings", icon: FileCheck },
-        ] : []),
-        ...(isBusinessPlans ? [
-          { id: "business_plans_filings", label: "Filings", icon: FileCheck },
-        ] : []),
-        ...(isLiquidation ? [
-          { id: "liquidation_filings", label: "Filings", icon: FileCheck },
-        ] : []),
-        ...(isBankingPayments ? [
-          { id: "banking_payments_filings", label: "Filings", icon: FileCheck },
-        ] : []),
-        ...(isInternationalStructuring ? [
-          {
-            id: "international_filings",
-            label: "Filings",
-            icon: FileCheck,
-          },
-        ] : []),
-
-        ...(isCryptoAssets ? [
-          {
-            id: "crypto_filings",
-            label: "Filings",
-            icon: FileCheck,
-          },
-        ] : []),
-
-        ...(isRegulatedLicenses ? [
-          { id: "regulated_licenses_filings", label: "Filings", icon: FileCheck },
-        ] : []),
+        ...(isPayroll ? [{ id: "payroll_filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isCorporate ? [{ id: "corporate_filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isCFO ? [{ id: "cfo_filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isAccounting ? [{ id: "accounting_filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isAudit ? [{ id: "audit_filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isTax ? [{ id: "tax_filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isIncorporation ? [{ id: "incorporation_filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isBusinessPlans ? [{ id: "business_plans_filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isLiquidation ? [{ id: "liquidation_filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isBankingPayments ? [{ id: "banking_payments_filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isInternationalStructuring ? [{ id: "international_filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isCryptoAssets ? [{ id: "crypto_filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isRegulatedLicenses ? [{ id: "regulated_licenses_filings", label: "Filings", icon: FileCheck }] : []),
       ];
 
   return (
@@ -2366,10 +2451,16 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                         Last Update
                       </p>
                       <p className="text-sm font-semibold text-gray-900">
-                        {isBankingPayments ? engagementData?.lastUpdate : new Date().toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
+                        {(() => {
+                          const lastUpdateDate = (updates as any)?.[0]?.createdAt || (updates as any)?.[0]?.date || (documentRequests as any)?.[0]?.updated_at || (milestones as any)?.[0]?.completed_date;
+                          return lastUpdateDate ? new Date(lastUpdateDate).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          }) : new Date().toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          });
+                        })()}
                       </p>
                     </div>
                     <div className="space-y-1">
@@ -2479,8 +2570,8 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       </div>
                     </DashboardCard>
 
-                    {/* ROW 3: Operations (Side-by-side) */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* ROW 3: Operations (Vertical Stacking) */}
+                    <div className="flex flex-col gap-8">
                       {/* 3.1 Recent Activity */}
                       <DashboardCard className="p-6">
                         <div className="space-y-4">
@@ -2489,83 +2580,62 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                             <h3 className="text-lg font-medium tracking-tight">Recent Activity</h3>
                           </div>
                           <div className="space-y-3">
-                            {(engagementData?.recentActivity || []).map((item: any, idx: number) => (
+                            {updatesLoading ? (
+                              <Skeleton className="h-20 w-full" />
+                            ) : (updates || []).slice(0, 5).map((item: any, idx: number) => (
                               <div key={idx} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                                 <div className="flex items-center gap-3">
                                   <div className="w-2 h-2 rounded-full bg-primary" />
-                                  <span className="text-sm text-gray-900">{item.action}</span>
+                                  <span className="text-sm text-gray-900">{item.action || item.title || item.message}</span>
                                 </div>
-                                <span className="text-xs text-gray-500">{item.date}</span>
+                                <span className="text-xs text-gray-500">
+                                  {new Date(item.createdAt || item.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                                </span>
                               </div>
                             ))}
+                            {(!updates || updates.length === 0) && !updatesLoading && (
+                              <p className="text-sm text-gray-500 italic">No recent activity.</p>
+                            )}
                           </div>
                         </div>
                       </DashboardCard>
 
-                      {/* 3.2 Banking Overview */}
+                      {/* 3.2 Milestones Snapshot */}
                       <DashboardCard className="p-6">
                         <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                              <h3 className="text-lg font-medium tracking-tight">Banking Overview</h3>
-                            </div>
-                            <Button variant="outline" size="sm" className="text-[10px] h-7 uppercase tracking-wider font-bold">
-                              Add Account
-                            </Button>
+                          <div className="flex items-center gap-3">
+                            <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                            <h3 className="text-lg font-medium tracking-tight">Milestones</h3>
                           </div>
-                          <div className="space-y-2">
-                            {(engagementData?.bankAccounts || []).map((acc: any, idx: number) => (
-                              <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50">
+                          <div className="space-y-3">
+                            {milestonesLoading ? (
+                              <Skeleton className="h-20 w-full" />
+                            ) : (milestones || []).slice(0, 4).map((m: any, idx: number) => (
+                              <div key={idx} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0 text-sm">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
-                                    <Building2 className="w-4 h-4 text-blue-600" />
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-semibold text-gray-900">{acc.institution}</p>
-                                    <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">{acc.accountNo} • {acc.currency}</p>
-                                  </div>
+                                  {m.status === "Completed" ? (
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                  ) : (
+                                    <div className="w-4 h-4 rounded-full border-2 border-gray-200" />
+                                  )}
+                                  <span className="text-gray-900 font-medium">{m.title || m.label}</span>
                                 </div>
-                                <Badge className="rounded-0 border px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest bg-transparent text-emerald-600 border-emerald-500/10">
-                                  {acc.status}
+                                <Badge variant="outline" className={cn(
+                                  "text-[10px] rounded-0 uppercase tracking-widest",
+                                  m.status === "Completed" ? "text-emerald-600 border-emerald-100" : "text-gray-400 border-gray-100"
+                                )}>
+                                  {m.status}
                                 </Badge>
                               </div>
                             ))}
+                            {(!milestones || milestones.length === 0) && !milestonesLoading && (
+                              <p className="text-sm text-gray-500 italic">No milestones defined.</p>
+                            )}
                           </div>
                         </div>
                       </DashboardCard>
                     </div>
-
-                    {/* ROW 4: Documents (Full Width) */}
-                    <DashboardCard className="p-6">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                            <h3 className="text-lg font-medium tracking-tight">Quick Access Documents</h3>
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                          {(engagementData?.quickAccessDocs || []).map((doc: any, idx: number) => (
-                            <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors">
-                              <div className="flex items-center gap-3 flex-1">
-                                <FileText className="w-4 h-4 text-gray-400" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate">{doc.name}</p>
-                                  <p className="text-xs text-gray-500">{doc.date}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">View</Button>
-                                <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">Download</Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </DashboardCard>
                   </div>
-
                 ) : isInternationalStructuring ? (
                   <div className="space-y-8">
 
@@ -2961,45 +3031,121 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                         <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
                           What we need from you
                         </p>
-                        {neededFromUser ? (
-                          <div className="flex gap-3">
-                            <div className="w-1.5 h-auto bg-primary/20 rounded-full" />
-                            <p className="text-gray-900 font-medium leading-tight text-lg">
-                              {neededFromUser}
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-3 text-emerald-600 bg-emerald-50 p-4 border border-emerald-100/50">
-                            <CheckCircle2 className="w-5 h-5 shrink-0" />
-                            <p className="font-medium">
-                              Nothing required from you right now.
-                            </p>
-                          </div>
-                        )}
-                      </div>
+                        {(() => {
+                          if (allPendingItems.length === 0) {
+                            return (
+                              <div className="flex items-center gap-3 text-emerald-600 bg-emerald-50 p-4 border border-emerald-100/50">
+                                <CheckCircle2 className="w-5 h-5 shrink-0" />
+                                <p className="font-medium">
+                                  Nothing required from you right now.
+                                </p>
+                              </div>
+                            );
+                          }
 
-                      {actions.length > 0 && (
-                        <div className="flex flex-wrap gap-3 mt-8">
-                          {actions.map((action, index) => (
-                            <Button
-                              key={index}
-                              variant={action.type === "upload" ? "default" : "outline"}
-                              className={cn(
-                                "h-12 px-6 rounded-0 font-medium uppercase tracking-widest text-xs gap-3 transition-all",
-                                action.type === "upload"
-                                  ? "bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20"
-                                  : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50",
-                              )}
-                              onClick={action.onClick}
-                            >
-                              {action.type === "upload" && <Upload className="w-4 h-4" />}
-                              {action.type === "confirm" && <CheckCircle2 className="w-4 h-4" />}
-                              {action.type === "schedule" && <Phone className="w-4 h-4" />}
-                              {action.label}
-                            </Button>
-                          ))}
-                        </div>
-                      )}
+                          const now = new Date();
+                          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                          
+                          // Sort by priority: Overdue > Due Today > Due Soon > Pending
+                          const sortedItems = [...allPendingItems].sort((a, b) => {
+                            const dateA = a.deadline ? new Date(a.deadline) : new Date(8640000000000000);
+                            const dateB = b.deadline ? new Date(b.deadline) : new Date(8640000000000000);
+                            return dateA.getTime() - dateB.getTime();
+                          });
+                          const topDoc = sortedItems[0] as any;
+                          const deadline = topDoc.deadline ? new Date(topDoc.deadline) : null;
+                          const deadlineDate = deadline ? new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate()) : null;
+                          
+                          let deadlineLabel = "Pending";
+                          let labelColor = "text-gray-500";
+                          let barColor = "bg-primary/20";
+
+                          if (deadlineDate) {
+                            const diffDays = Math.ceil((deadlineDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                            
+                            if (diffDays < 0) {
+                              deadlineLabel = "Overdue";
+                              labelColor = "text-red-500";
+                              barColor = "bg-red-500";
+                            } else if (diffDays === 0) {
+                              deadlineLabel = "Due Today";
+                              labelColor = "text-amber-500";
+                              barColor = "bg-amber-500";
+                            } else if (diffDays === 1) {
+                              deadlineLabel = "Due Soon";
+                              labelColor = "text-amber-500";
+                              barColor = "bg-amber-500";
+                            } else {
+                              deadlineLabel = "Pending";
+                              labelColor = "text-gray-500";
+                              barColor = "bg-primary/20";
+                            }
+                          }
+
+                          const handleAction = (item: any) => {
+                            // If it's a doc request (has docId or similar, or we check type)
+                            // Document requests usually have 'id' and 'requestId' or similar in mock, 
+                            // but here topDoc is the request itself or a todo.
+                            const itemId = item.id || item._id;
+                            const isTodo = !documentRequests.some((r: any) => (r.id || r._id) === itemId);
+
+                            if (isTodo) {
+                              setActiveTab("todo");
+                            } else {
+                              setActiveTab("document_requests");
+                              const params = new URLSearchParams(window.location.search);
+                              params.set('scrollTo', itemId);
+                              router.push(`?${params.toString()}`, { scroll: false });
+                            }
+                          };
+
+                          return (
+                            <div className="space-y-4">
+                              <div className="flex gap-4">
+                                <div className={cn(
+                                  "w-1.5 h-auto rounded-full",
+                                  barColor
+                                )} />
+                                <div className="space-y-1">
+                                  <p className="text-gray-900 font-bold leading-tight text-lg">
+                                    {topDoc.title || topDoc.name}
+                                  </p>
+                                  {deadline && (
+                                    <p className={cn(
+                                      "text-xs font-medium uppercase tracking-wider",
+                                      labelColor
+                                    )}>
+                                      {deadlineLabel}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap gap-3 mt-4">
+                                <Button 
+                                  className="h-10 px-6 rounded-0 font-bold bg-primary text-white hover:bg-primary/90 text-[10px] uppercase tracking-widest gap-3 shadow-lg shadow-primary/20"
+                                  onClick={() => handleAction(topDoc)}
+                                >
+                                  <Upload className="w-4 h-4" />
+                                  {documentRequests.some((r: any) => (r.id || r._id) === (topDoc.id || topDoc._id)) ? "Upload Now" : "Open Task"}
+                                </Button>
+                                {allPendingItems.length > 1 && (
+                                  <Button 
+                                    variant="outline"
+                                    className="h-10 px-6 rounded-0 font-bold border-gray-200 text-gray-700 hover:bg-gray-50 text-[10px] uppercase tracking-widest shadow-sm"
+                                    onClick={() => {
+                                      const itemId = topDoc.id || topDoc._id;
+                                      const isTodo = !documentRequests.some((r: any) => (r.id || r._id) === itemId);
+                                      setActiveTab(isTodo ? "todo" : "document_requests");
+                                    }}
+                                  >
+                                    View All ({allPendingItems.length})
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
                     </div>
                   </DashboardCard>
                 )}
@@ -3063,110 +3209,72 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                   </DashboardCard>
                 )}
 
-                {/* SECTION 2: Recent Activity Feed */}
+                {/* SECTION 2: Operations (Milestones & Recent Activity for all non-banking services - Vertical Stacking) */}
                 {!isBankingPayments && (
-                  <DashboardCard className="p-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                        <h3 className="text-lg font-medium tracking-tight">
-                          Recent Activity
-                        </h3>
-                      </div>
-                      <div className="space-y-3">
-                        {(engagementData?.recentActivity || [
-                          { action: "Bank statements uploaded", date: "Jan 10" },
-                          { action: "VAT return submitted", date: "Jan 20" },
-                          { action: "Payroll processed", date: "Jan 25" },
-                        ])
-                          .slice(0, serviceName === "Payroll" ? 5 : 3)
-                          .map((item: any, idx: number) => (
-                            <div
-                              key={idx}
-                              className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="w-2 h-2 rounded-full bg-primary" />
-                                <span className="text-sm text-gray-900">
-                                  {item.action}
-                                </span>
-                              </div>
-                              <span className="text-xs text-gray-500">{item.date}</span>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  </DashboardCard>
-                )}
-
-                {/* SECTION 3: Quick Access Documents */}
-                {!isBankingPayments && (
-                  <DashboardCard className="p-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-8">
+                    {/* 2.1 Milestones Snapshot */}
+                    <DashboardCard className="p-6">
+                      <div className="space-y-4">
                         <div className="flex items-center gap-3">
                           <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                          <h3 className="text-lg font-medium tracking-tight">
-                            Quick Access Documents
-                          </h3>
+                          <h3 className="text-lg font-medium tracking-tight">Milestones</h3>
                         </div>
-                      </div>
-                      {documentsLoading ? (
-                        <div className="space-y-2">
-                          {[1, 2, 3].map((i) => (
-                            <div
-                              key={i}
-                              className="h-12 bg-gray-50 rounded animate-pulse"
-                            />
-                          ))}
-                        </div>
-                      ) : (engagementData?.quickAccessDocs?.length > 0 || recentDocuments.length > 0) ? (
-                        <div className="space-y-2">
-                          {(engagementData?.quickAccessDocs?.length > 0 ? engagementData.quickAccessDocs : recentDocuments).map((doc: any, idx: number) => (
-                            <div
-                              key={idx}
-                              className="flex items-center justify-between p-3 rounded-lg border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors"
-                            >
-                              <div className="flex items-center gap-3 flex-1">
-                                <FileText className="w-4 h-4 text-gray-400" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate">
-                                    {doc.name || doc.title || "Document"}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {doc.createdAt
-                                      ? new Date(doc.createdAt).toLocaleDateString(
-                                        "en-US",
-                                        {
-                                          month: "short",
-                                          day: "numeric",
-                                          year: "numeric",
-                                        },
-                                      )
-                                      : doc.date || "Recent"}
-                                  </p>
-                                </div>
+                        <div className="space-y-3">
+                          {milestonesLoading ? (
+                            <Skeleton className="h-32 w-full" />
+                          ) : (milestones || []).slice(0, 5).map((m: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0 text-sm">
+                              <div className="flex items-center gap-3">
+                                {m.status === "Completed" ? (
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                ) : (
+                                  <div className="w-4 h-4 rounded-full border-2 border-gray-200" />
+                                )}
+                                <span className="text-gray-900 font-medium">{m.title || m.label}</span>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">
-                                  <Eye className="w-3 h-3 mr-1" />
-                                  View
-                                </Button>
-                                <Button variant="ghost" size="sm" className="h-8 px-3 text-xs">
-                                  <Download className="w-3 h-3 mr-1" />
-                                  Download
-                                </Button>
-                              </div>
+                              <Badge variant="outline" className={cn(
+                                "text-[10px] rounded-0 uppercase tracking-widest",
+                                m.status === "Completed" ? "text-emerald-600 border-emerald-100" : "text-gray-400 border-gray-100"
+                              )}>
+                                {m.status}
+                              </Badge>
                             </div>
                           ))}
+                          {(!milestones || milestones.length === 0) && !milestonesLoading && (
+                            <p className="text-sm text-gray-500 italic">No milestones available.</p>
+                          )}
                         </div>
-                      ) : (
-                        <div className="text-center py-8 text-sm text-gray-500">
-                          No documents available yet
+                      </div>
+                    </DashboardCard>
+
+                    {/* 2.2 Recent Activity */}
+                    <DashboardCard className="p-6">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                          <h3 className="text-lg font-medium tracking-tight">Recent Activity</h3>
                         </div>
-                      )}
-                    </div>
-                  </DashboardCard>
+                        <div className="space-y-3">
+                          {updatesLoading ? (
+                            <Skeleton className="h-32 w-full" />
+                          ) : (updates || []).slice(0, 5).map((item: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                              <div className="flex items-center gap-3">
+                                <div className="w-2 h-2 rounded-full bg-primary" />
+                                <span className="text-sm text-gray-900">{item.action || item.title || item.message}</span>
+                              </div>
+                              <span className="text-xs text-gray-500">
+                                {new Date(item.createdAt || item.date).toLocaleDateString('en-GB')}
+                              </span>
+                            </div>
+                          ))}
+                          {(!updates || updates.length === 0) && !updatesLoading && (
+                            <p className="text-sm text-gray-500 italic">No recent activity.</p>
+                          )}
+                        </div>
+                      </div>
+                    </DashboardCard>
+                  </div>
                 )}
               </>
             )}
@@ -4448,6 +4556,18 @@ export const EngagementSummary: React.FC<EngagementSummaryProps> = ({
               </div>
             </div>
           </div>
+        )}
+
+        {activeTab === "todo" && (
+          <DashboardCard className="p-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                <h3 className="text-lg font-medium tracking-tight">Todos</h3>
+              </div>
+              <ServiceTodoTable todos={engagementTodos} loading={todosLoading} />
+            </div>
+          </DashboardCard>
         )}
 
         {activeTab === "messages" && <UpdatesTab />}

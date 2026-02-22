@@ -949,6 +949,6 @@ html {
 }
 
 .blink-item {
-  animation: blink-animation 0.5s ease-in-out 4;
+  animation: blink-animation 0.5s ease-in-out 2;
   border: 2px solid #3b82f6 !important;
 }

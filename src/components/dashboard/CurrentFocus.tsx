@@ -29,28 +29,9 @@ interface CurrentFocusProps {
 
 export const CurrentFocus: React.FC<CurrentFocusProps> = ({ item, className }) => {
   if (!item || item.status === 'handled') {
-    return (
-      <DashboardCard className={cn("overflow-hidden bg-white/50 border border-gray-100", className)}>
-        <div className="p-8 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
-              <CheckCircle className="h-6 w-6 text-emerald-500" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-xl font-bold text-gray-900 tracking-tight">You're all set</h3>
-              <p className="text-gray-600 font-medium">
-                We're currently handling all active services for you.
-              </p>
-            </div>
-          </div>
-          {/* Subtle decoration */}
-          <div className="hidden md:block opacity-5">
-            <CheckCircle size={80} />
-          </div>
-        </div>
-      </DashboardCard>
-    );
+    return null;
   }
+
 
   const isOverdue = item.status === 'overdue';
   const statusLabel = isOverdue ? "Overdue" : "Waiting on you";

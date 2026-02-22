@@ -12,6 +12,7 @@ import Breadcrumbs from "@/components/layout/Breadcrumbs";
 import ChatWrapper from "@/components/ChatWrapper";
 import { cn } from "@/lib/utils";
 import { ActiveCompanyProvider } from "@/context/ActiveCompanyContext";
+import { GlobalDashboardProvider } from "@/context/GlobalDashboardContext";
 import RoleGuard from "@/components/RoleGuard";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -24,6 +25,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     return (
         <RoleGuard allowedRole="client">
+            <GlobalDashboardProvider>
             <ActiveCompanyProvider>
             <div className="flex h-screen bg-brand-body relative">
                 {/* Sidebar for desktop & mobile */}
@@ -114,7 +116,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {/* Chat Widget - Bottom Right */}
                 <ChatWrapper />
             </div>
-        </ActiveCompanyProvider>
+            </ActiveCompanyProvider>
+            </GlobalDashboardProvider>
         </RoleGuard>
     );
 }

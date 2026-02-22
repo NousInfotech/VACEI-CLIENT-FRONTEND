@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import DashboardCard from "@/components/DashboardCard";
 import { Users, ArrowRight, Clock } from "lucide-react";
-import { fetchPayrollData } from "@/lib/payrollComplianceIntegration";
+import { fetchDashboardSummary } from "@/api/dashboardApi";
+import { useActiveCompany } from "@/context/ActiveCompanyContext";
 
 interface Submission {
   name: string;
@@ -16,14 +17,20 @@ interface Submission {
 export const NextComplianceDeadline = () => {
   const [payrollSubmissions, setPayrollSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
+  const { activeCompanyId } = useActiveCompany();
 
   useEffect(() => {
     const loadData = async () => {
+      if (!activeCompanyId) return;
       try {
         setLoading(true);
-        const data = await fetchPayrollData();
-        if (data) {
-          setPayrollSubmissions(data.submissions);
+        const data = await fetchDashboardSummary(activeCompanyId);
+        if (data && data.upcomingCompliance) {
+          setPayrollSubmissions(data.upcomingCompliance.map(item => ({
+            name: item.title,
+            status: 'pending', // Defaulting to pending for upcoming items
+            due_date: item.dueDate
+          })));
         }
       } catch (error) {
         console.error("Failed to fetch compliance data:", error);
@@ -32,7 +39,7 @@ export const NextComplianceDeadline = () => {
       }
     };
     loadData();
-  }, []);
+  }, [activeCompanyId]);
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "—";

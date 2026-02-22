@@ -16,6 +16,9 @@ import {
 import { TruncatedTooltip } from "@/components/ui/TruncatedTooltip";
 import { useEngagements } from "@/components/engagement/hooks/useEngagements";
 import { ENGAGEMENT_CONFIG } from "@/config/engagementConfig";
+import { getTodos, TodoItem } from "@/api/todoService";
+import { getDocumentRequests, DocumentRequest } from "@/api/documentRequestService";
+import { useActiveCompany } from "@/context/ActiveCompanyContext";
 
 interface SidebarMenuProps {
   menu: MenuItem[];
@@ -27,16 +30,6 @@ interface SidebarMenuProps {
 
 type StatusConfig = { label: string; color: string; dotColor: string; description?: string };
 
-// Map API status to sidebar display config
-const API_STATUS_TO_CONFIG: Record<string, StatusConfig> = {
-  ACTIVE: { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
-  COMPLETED: { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
-  ASSIGNED: { label: "Due soon", color: "text-yellow-500", dotColor: "bg-yellow-500" },
-  DRAFT: { label: "Due soon", color: "text-yellow-500", dotColor: "bg-yellow-500" },
-  ACCEPTED: { label: "Due soon", color: "text-yellow-500", dotColor: "bg-yellow-500" },
-  CANCELLED: { label: "Overdue", color: "text-red-500", dotColor: "bg-red-500" },
-  TERMINATED: { label: "Overdue", color: "text-red-500", dotColor: "bg-red-500" },
-};
 
 // Map menu slug to API serviceType for matching engagements
 const MENU_SLUG_TO_SERVICE_TYPE: Record<string, string> = {
@@ -58,8 +51,6 @@ const MENU_SLUG_TO_SERVICE_TYPE: Record<string, string> = {
   "grants-incentives": "CUSTOM",
 };
 
-// Fallback when no engagement or mock mode
-const DEFAULT_STATUS: StatusConfig = { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" };
 
 export default function SidebarMenu({
   menu,
@@ -72,11 +63,49 @@ export default function SidebarMenu({
   const searchParams = useSearchParams();
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
   const { engagements } = useEngagements();
+  const { activeCompanyId } = useActiveCompany();
+  const [todos, setTodos] = useState<TodoItem[]>([]);
+  const [documentRequestsMap, setDocumentRequestsMap] = useState<Record<string, DocumentRequest[]>>({});
 
-  // Build sidebar status from real API engagements (or fallback when mock)
+  useEffect(() => {
+    if (!activeCompanyId) {
+      setTodos([]);
+      setDocumentRequestsMap({});
+      return;
+    }
+    const fetchData = async () => {
+      try {
+        // Fetch todos
+        const todosData = await getTodos();
+        setTodos(Array.isArray(todosData) ? todosData : []);
+
+        // Fetch document requests if we have engagements
+        if (engagements.length > 0) {
+          const promises = engagements.map(eng => {
+            const id = eng.id || eng._id;
+            return getDocumentRequests(id).then(data => ({ id, data }));
+          });
+          const results = await Promise.all(promises);
+          const map: Record<string, DocumentRequest[]> = {};
+          results.forEach(res => {
+            map[res.id] = res.data;
+          });
+          setDocumentRequestsMap(map);
+        }
+      } catch (e) {
+        console.error("Failed to fetch sidebar status data", e);
+      }
+    };
+    fetchData();
+  }, [activeCompanyId, engagements]);
+
+  // Build sidebar status from real API engagements + real-time todos & document requests
   const serviceStatusConfig = useMemo((): Record<string, StatusConfig> => {
     const config: Record<string, StatusConfig> = {};
     const slugs = Object.keys(MENU_SLUG_TO_SERVICE_TYPE);
+    
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     for (const slug of slugs) {
       const serviceType = MENU_SLUG_TO_SERVICE_TYPE[slug];
@@ -84,17 +113,89 @@ export default function SidebarMenu({
         (e: any) =>
           e.serviceCategory === serviceType || e.serviceType === serviceType || e.title?.toUpperCase().includes(serviceType)
       );
+      
+      if (!engagement) {
+        continue;
+      }
+
+      const engId = engagement.id || engagement._id;
       const apiStatus = (engagement as any)?.status;
-      if (engagement && apiStatus && API_STATUS_TO_CONFIG[apiStatus]) {
-        config[slug] = API_STATUS_TO_CONFIG[apiStatus];
-      } else if (ENGAGEMENT_CONFIG.USE_MOCK_DATA) {
-        config[slug] = DEFAULT_STATUS;
+
+      // 1. Get Pending Todos for this service
+      const pendingTodos = todos.filter(t => 
+        (t.service?.toUpperCase() === serviceType?.toUpperCase() || 
+         t.type?.toUpperCase() === serviceType?.toUpperCase() ||
+         t.engagementId === engId) &&
+        !['COMPLETED', 'ACTION_TAKEN'].includes(t.status?.toUpperCase() || '')
+      );
+
+      // 2. Get Pending Document Requests for this engagement (Dashboard logic)
+      const engagementDocReqs = documentRequestsMap[engId] || [];
+      const pendingDocs = engagementDocReqs.filter(r => {
+        const isStatusPending = ['PENDING', 'REOPENED', 'REJECTED'].includes(r.status?.toUpperCase() || '');
+        if (!isStatusPending) return false;
+        
+        // Deep scan for actually pending files
+        const hasPendingSingleDocs = (r.documents || []).some((d: any) => 
+          !['UPLOADED', 'SUBMITTED', 'ACCEPTED'].includes(d.status?.toUpperCase() || '')
+        );
+        
+        const hasPendingMultipleDocs = (r.multipleDocuments || []).some((group: any) => 
+          (group.multiple || group.children || []).some((child: any) => 
+            !['UPLOADED', 'SUBMITTED', 'ACCEPTED'].includes(child.status?.toUpperCase() || '')
+          )
+        );
+        
+        return hasPendingSingleDocs || hasPendingMultipleDocs;
+      });
+
+      // Combine all pending items for deadline check
+      const allPendingItems = [...pendingTodos, ...pendingDocs];
+
+      if (allPendingItems.length === 0) {
+        // Fallback to API status mapping but default to "On Track" if no pending items
+        if (apiStatus === "CANCELLED" || apiStatus === "TERMINATED") {
+          config[slug] = { label: "Overdue", color: "text-red-500", dotColor: "bg-red-500" };
+        } else {
+          config[slug] = { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" };
+        }
+        continue;
+      }
+
+      // Check deadlines
+      const hasOverdue = allPendingItems.some(item => {
+        const deadline = item.deadline ? new Date(item.deadline) : null;
+        if (!deadline) return false;
+        const dDate = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate());
+        return dDate < today;
+      });
+
+      const hasDueToday = allPendingItems.some(item => {
+        const deadline = item.deadline ? new Date(item.deadline) : null;
+        if (!deadline) return false;
+        const dDate = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate());
+        return dDate.getTime() === today.getTime();
+      });
+
+      const hasDueSoon = allPendingItems.some(item => {
+        const deadline = item.deadline ? new Date(item.deadline) : null;
+        if (!deadline) return false;
+        const dDate = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate());
+        return dDate > today;
+      });
+
+      if (hasOverdue) {
+        config[slug] = { label: "Overdue", color: "text-red-500", dotColor: "bg-red-500" };
+      } else if (hasDueToday) {
+        config[slug] = { label: "Due today", color: "text-amber-500", dotColor: "bg-amber-500" };
+      } else if (hasDueSoon) {
+        config[slug] = { label: "Due soon", color: "text-yellow-500", dotColor: "bg-yellow-500" };
       } else {
-        config[slug] = DEFAULT_STATUS;
+        config[slug] = { label: "Action required", color: "text-orange-500", dotColor: "bg-orange-500" };
       }
     }
     return config;
-  }, [engagements]);
+  }, [engagements, todos, documentRequestsMap]);
 
   // User data from localStorage
   const [user, setUser] = useState({

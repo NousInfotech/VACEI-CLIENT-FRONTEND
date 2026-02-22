@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { GlobalUploadDrawer } from "@/components/GlobalUploadDrawer";
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Notification01Icon, Upload04Icon, Video01Icon } from '@hugeicons/core-free-icons';
-import { PanelLeft, PanelLeftClose, ChevronDown, LayoutGrid } from 'lucide-react';
+import { PanelLeft, PanelLeftClose, ChevronDown, LayoutGrid, ArrowLeft } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import Dropdown from "./Dropdown";
 
@@ -20,6 +20,7 @@ import {
 } from '@/api/notificationService';
 import { getCompanies } from '@/api/auditService';
 import { useActiveCompany } from '@/context/ActiveCompanyContext';
+import { useGlobalDashboard } from '@/context/GlobalDashboardContext';
 
 // NotificationItem component
 interface HeaderNotificationItemProps {
@@ -100,7 +101,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
     
     // Use ActiveCompanyContext instead of local state
     const { activeCompanyId, setActiveCompanyId, companies, setCompanies } = useActiveCompany();
-
+    const { companies: globalCompanies } = useGlobalDashboard();
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -320,12 +321,24 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                         title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
                     >
                         {isSidebarCollapsed ? (
-                            <PanelLeft className="h-5 w-5 group-hover:scale-110 transition-transform text-[hsl(var(--foreground))]" />
+                            <PanelLeft className="h-5 w-5 group-hover:scale-110 transition-transform text-foreground" />
                         ) : (
-                            <PanelLeftClose className="h-5 w-5 group-hover:scale-110 transition-transform text-[hsl(var(--foreground))]" />
+                            <PanelLeftClose className="h-5 w-5 group-hover:scale-110 transition-transform text-foreground" />
                         )}
                     </button>
                 )}
+
+                <Button
+                    onClick={() => router.back()}
+                    variant="secondary"
+                    size="sm"
+                    className="rounded-full px-4 bg-primary"
+                    aria-label="Go Back"
+                    title="Go Back"
+                >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back
+                </Button>
 
                 {/* <div className="flex items-center gap-2 max-w-[350px] flex-1">
                         <div className="relative flex items-center w-full">
@@ -375,7 +388,11 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                             trigger={
                                 <div className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-medium text-gray-900 cursor-pointer shadow-sm hover:shadow-md hover:bg-white transition-all min-w-[160px] flex justify-between items-center group">
                                     <span className="flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-success" />
+                                        <div className={cn(
+                                            "w-1.5 h-1.5 rounded-full",
+                                            globalCompanies.find(c => c.id === activeCompanyId)?.overdueCount ? "bg-destructive animate-pulse" :
+                                            globalCompanies.find(c => c.id === activeCompanyId)?.dueSoonCount ? "bg-amber-500" : "bg-success"
+                                        )} />
                                         {isMounted ? (activeCompanyName.length > 20 ? activeCompanyName.substring(0, 17) + "..." : activeCompanyName) : "Loading..."}
                                     </span>
                                     <ChevronDown className="w-3.5 h-3.5 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />

@@ -10,7 +10,10 @@ import PageHeader from "@/components/shared/PageHeader";
 import CashFlowChart from "@/components/CashFlowChart";
 import PLSummaryChart from "@/components/PLSummaryChart";
 import { getDecodedUsername, verifyAuthentication, handleAuthError } from "@/utils/authUtils";
-import { fetchDashboardSummary, ProcessedDashboardStat } from "@/api/financialReportsApi";
+import { ProcessedDashboardStat } from "@/api/financialReportsApi";
+import { fetchDashboardSummary as fetchFinancialSummary } from "@/api/financialReportsApi";
+import { fetchDashboardSummary, DashboardSummary } from "@/api/dashboardApi";
+import { getTodos } from "@/api/todoService";
 import NoticeBoard from "@/components/dashboard/NoticeBoard";
 import { fetchUploadStatusSummary } from "@/api/documentApi";
 import { fetchTasks } from "@/api/taskService";
@@ -24,6 +27,7 @@ import { User, AlertCircle, CheckCircle, ArrowRight, Clock, MoreVertical, Upload
 import { getOnboardingProgress } from "@/api/onboardingService";
 import CurrentFocus, { FocusItem } from "@/components/dashboard/CurrentFocus";
 import NextComplianceDeadline from "@/components/dashboard/NextComplianceDeadline";
+import { DashboardSkeleton } from "@/components/shared/CommonSkeletons";
 
 // Company interface
 interface Company {
@@ -58,6 +62,9 @@ export default function DashboardPage() {
   const [netIncomeYTD, setNetIncomeYTD] = useState<{ amount: string; change: string } | null>(null);
   const [username, setUsername] = useState<string>(''); // State for username to avoid hydration error
   const [complianceCounts, setComplianceCounts] = useState({ overdue: 0, dueSoon: 0, waiting: 0, done: 0 });
+  const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
+  const [activeFocus, setActiveFocus] = useState<any>(null);
+  const [upcomingDeadlines, setUpcomingDeadlines] = useState<any[]>([]);
   // Use context instead of local state
   const { activeCompanyId, companies, setCompanies } = useActiveCompany();
   const loadingCompanies = false; // Context handles loading implicitely or we can add it if needed
@@ -144,14 +151,90 @@ export default function DashboardPage() {
     }
   }, []);
 
-  // Load dashboard data (only after auth is verified)
+  useEffect(() => {
+    if (authLoading || !activeCompanyId) return;
+    
+    const loadDashboardSummary = async () => {
+      try {
+        const summary = await fetchDashboardSummary(activeCompanyId);
+        
+        // Fetch todos to calculate refined counts (only ACTION_REQUIRED)
+        const todos = await getTodos();
+        const handledStatuses = ['ACTION_TAKEN', 'COMPLETED', 'UPLOADED', 'PENDING_REVIEW', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'DONE'];
+        const actionRequiredTodos = todos.filter(t => {
+          const s = (t.status || '').toUpperCase();
+          return s === 'ACTION_REQUIRED' || (!handledStatuses.includes(s) && (s === 'OVERDUE' || s === 'DUE_SOON'));
+        });
+
+        let newFocus = summary.focus;
+        const isSummaryFocusHandled = newFocus && (
+          handledStatuses.includes((newFocus.status || '').toUpperCase()) || 
+          !actionRequiredTodos.some(t => String(t.id) === String(newFocus!.todoId))
+        );
+
+        if (!newFocus || isSummaryFocusHandled) {
+          const sortedTodos = [...actionRequiredTodos].sort((a, b) => {
+            const dateA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+            const dateB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+            return dateA - dateB;
+          });
+
+          // Also set upcoming deadlines for the compliance snapshot (top 3)
+          setUpcomingDeadlines(sortedTodos.slice(0, 3));
+
+          if (sortedTodos.length > 0) {
+            const nextTodo = sortedTodos[0];
+            const now = new Date();
+            const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            let derivedStatus = 'waiting_on_you';
+            if (nextTodo.deadline) {
+              const dl = new Date(nextTodo.deadline);
+              if (dl.toDateString() !== now.toDateString() && dl < now) derivedStatus = 'overdue';
+              else if (dl.toDateString() !== now.toDateString() && dl > now && dl <= nextWeek) derivedStatus = 'due_soon';
+            }
+            newFocus = {
+              serviceName: nextTodo.service || nextTodo.type || 'Action Required',
+              taskDescription: nextTodo.title,
+              status: derivedStatus,
+              primaryActionLabel: nextTodo.cta || 'Take Action',
+              todoId: nextTodo.id
+            };
+          } else {
+            newFocus = null;
+          }
+        }
+
+        setDashboardSummary(summary);
+        setActiveFocus(newFocus);
+        
+        const now = new Date();
+        const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        
+        const overdueCount = actionRequiredTodos.filter(t => t.deadline && new Date(t.deadline).toDateString() !== now.toDateString() && new Date(t.deadline) < now).length;
+        const dueTodayCount = actionRequiredTodos.filter(t => t.deadline && new Date(t.deadline).toDateString() === now.toDateString()).length;
+        const dueSoonCount = actionRequiredTodos.filter(t => t.deadline && new Date(t.deadline).toDateString() !== now.toDateString() && new Date(t.deadline) > now && new Date(t.deadline) <= nextWeek).length;
+
+        setComplianceCounts({
+          overdue: overdueCount,
+          dueSoon: dueSoonCount,
+          waiting: dueTodayCount, 
+          done: summary.counts.pending 
+        });
+      } catch (error) {
+        console.error("Failed to fetch dashboard summary:", error);
+      }
+    };
+    loadDashboardSummary();
+  }, [authLoading, activeCompanyId]);
+
+  // Load financial summary data (separately)
   useEffect(() => {
     if (authLoading) return; // Wait for auth verification
     
-    const loadDashboardData = async () => {
+    const loadFinancialData = async () => {
       setLoading(true);
       try {
-        const fetchedStats = await fetchDashboardSummary();
+        const fetchedStats = await fetchFinancialSummary();
         console.log(fetchedStats);
 
         if (fetchedStats.netIncomeYTD) {
@@ -167,36 +250,23 @@ export default function DashboardPage() {
         } else {
           setNetIncomeYTD(null);
         }
-        // Extract YTD data for Yearly Progress BEFORE filtering for StatCards
-        /*  const revenueYTDStat = fetchedStats.find((stat: { title: string; }) => stat.title === "Revenue YTD");
-         const netIncomeYTDStat = fetchedStats.find((stat: { title: string; }) => stat.title === "Net income YTD");
- 
-         if (revenueYTDStat) {
-           setRevenueYTD({ amount: revenueYTDStat.amount, change: revenueYTDStat.change });
-         }
-         if (netIncomeYTDStat) {
-           setNetIncomeYTD({ amount: netIncomeYTDStat.amount, change: netIncomeYTDStat.change });
-         } */
 
-        // Filter out YTD stats from the array to be displayed as cards
         const filteredStats = fetchedStats.stats.filter(
           (stat: { title: string; }) => stat.title !== "Revenue YTD" && stat.title !== "Net income YTD"
         );
         setStats(filteredStats);
 
       } catch (error: any) {
-        console.error("Failed to load dashboard summary:", error);
+        console.error("Failed to load financial summary:", error);
         
-        // Handle authentication errors
         if (error?.message?.toLowerCase().includes('authentication') || 
             error?.message?.toLowerCase().includes('unauthorized') ||
             error?.status === 401 || 
             error?.status === 403) {
           handleAuthError(error, router);
-          return; // Don't set loading to false, redirect will happen
+          return;
         }
         
-        // Other errors - show empty state
         setStats([]);
         setRevenueYTD(null);
         setNetIncomeYTD(null);
@@ -204,65 +274,8 @@ export default function DashboardPage() {
         setLoading(false);
       }
     };
-    loadDashboardData();
-  }, [router, authLoading, activeCompanyId]);
-
-  useEffect(() => {
-    const loadUploadSummary = async () => {
-      setUploadLoading(true);
-      try {
-        const summary = await fetchUploadStatusSummary();
-        setUploadSummary(summary);
-      } catch (error) {
-        console.error("Failed to load upload status summary:", error);
-        setUploadSummary(null);
-      } finally {
-        setUploadLoading(false);
-      }
-    };
-    loadUploadSummary();
-  }, []);
-
-  useEffect(() => {
-    const loadTasks = async () => {
-      try {
-        const taskResponse = await fetchTasks({ page: 1 });
-        const tasks = taskResponse.data || [];
-        const now = new Date();
-        let overdue = 0, dueSoon = 0, waiting = 0, done = 0;
-        tasks.forEach((t: any) => {
-          const status = (t.status || "").toLowerCase();
-          const due = t.dueDate ? new Date(t.dueDate) : null;
-          if (status.includes("resolved") || status.includes("done")) {
-            done += 1;
-            return;
-          }
-          if (due) {
-            const diff = (due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-            if (diff < 0) overdue += 1;
-            else if (diff <= 7) dueSoon += 1;
-          }
-          waiting += 1;
-        });
-        // Include payroll submissions in compliance counts
-        const payrollData = await fetchPayrollData();
-        if (payrollData) {
-          const payrollItems = transformPayrollSubmissionsToComplianceItems(payrollData, 1000000);
-          payrollItems.forEach((item) => {
-            if (item.status === "Overdue") overdue += 1;
-            else if (item.status === "Due soon") dueSoon += 1;
-            else if (item.status === "Waiting on you") waiting += 1;
-            else if (item.status === "Completed") done += 1;
-          });
-        }
-        
-        setComplianceCounts({ overdue, dueSoon, waiting, done });
-      } catch (e) {
-        console.error("Failed to load tasks for compliance snapshot", e);
-      }
-    };
-    loadTasks();
-  }, []);
+    loadFinancialData();
+  }, [router, authLoading]);
 
   const handleContactAccountantClick = () => {
     const chatBubbleButton = document.getElementById("openChatBubble");
@@ -291,13 +304,26 @@ export default function DashboardPage() {
   const encodedProcessedStatus = btoa('2');
   const encodedNeedCorrectionStatus = btoa('3');
 
-  const activeServices = [
-    { name: "Bookkeeping", status: "In progress", next: "Review March", nextStepType: "client", href: "/dashboard/services/bookkeeping" },
-    { name: "VAT", status: "Due soon (30 Jun)", next: "Missing docs", nextStepType: "client", href: "/dashboard/services/vat" },
-    { name: "Tax", status: "In progress", next: "Review documents", nextStepType: "client", href: "/dashboard/services/tax" },
-    { name: "Payroll", status: "Done", next: "Next run 28th", nextStepType: "vacei", href: "/dashboard/services/payroll" },
-    { name: "Audit", status: "Waiting on you", next: "Reply Q#12", nextStepType: "client", href: "/dashboard/services/audit" },
-  ];
+  const activeServices = dashboardSummary?.activeEngagements.map(e => {
+    const matchingTodos = upcomingDeadlines.filter(t => 
+      (t.service || t.type || '').toLowerCase() === e.serviceCategory.toLowerCase() ||
+      (t.title || '').toLowerCase().includes(e.serviceCategory.toLowerCase()) ||
+      (e.name || '').toLowerCase().includes((t.service || t.type || '').toLowerCase())
+    );
+    const nextDeadline = matchingTodos.length > 0 ? matchingTodos[0].deadline : null;
+    const nextStepDesc = matchingTodos.length > 0 ? matchingTodos[0].title : null;
+
+    return {
+      name: e.name || e.serviceCategory,
+      category: e.serviceCategory,
+      status: e.status,
+      nextDeadline: nextDeadline,
+      nextStepDescription: nextStepDesc,
+      next: "View Details",
+      nextStepType: "client",
+      href: `/dashboard/services/${e.serviceCategory.toLowerCase()}`
+    };
+  }) || [];
   const recentlyCompleted = [
     { text: "VAT Q1 submitted", action: "View receipt", href: "/dashboard/services/vat" },
     { text: "Payroll May filed", action: "View confirmation", href: "/dashboard/services/payroll" },
@@ -343,14 +369,11 @@ export default function DashboardPage() {
     return `${timeGreeting}!`;
   };
 
-  // Show loading state while verifying authentication (prevents page flash)
-  if (authLoading) {
+  // Show loading state while verifying authentication or fetching data
+  if (authLoading || loading || !dashboardSummary) {
     return (
-      <div className="min-h-screen bg-brand-body flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
-          <p className="text-gray-600">Verifying authentication...</p>
-        </div>
+      <div className="min-h-screen bg-brand-body">
+        <DashboardSkeleton />
       </div>
     );
   }
@@ -408,44 +431,22 @@ export default function DashboardPage() {
           </div>
         )} */}
 
-        <CurrentFocus item={(() => {
-          // Priority logic for current focus
-          // 1. Overdue
-          // 2. Due soon
-          // 3. Waiting
-          
-          if (complianceCounts.overdue > 0) {
-            return {
-              serviceName: "Compliance",
-              taskDescription: "You have overdue regulatory filings that require immediate action",
-              status: 'overdue',
-              primaryActionType: 'upload',
-              primaryActionLink: '/dashboard/todo-list?filter=overdue',
-              primaryActionLabel: "Review Now"
-            } as FocusItem;
-          } else if (complianceCounts.dueSoon > 0) {
-            return {
-              serviceName: "VAT Return",
-              taskDescription: "Upcoming deadline. Please confirm no changes for the period.",
-              status: 'due_soon',
-              primaryActionType: 'confirm',
-              primaryActionLink: '/dashboard/services/vat',
-              primaryActionLabel: "Review Now"
-            } as FocusItem;
-          } else if (complianceCounts.waiting > 0) {
-            // Find a service that is waiting
-            const focusService = activeServices.find(s => s.status.toLowerCase().includes('waiting')) || activeServices[0];
-            return {
-              serviceName: focusService.name,
-              taskDescription: focusService.next,
-              status: 'waiting_on_you',
-              primaryActionType: 'view',
-              primaryActionLink: focusService.href,
-              primaryActionLabel: "Review Now"
-            } as FocusItem;
-          }
-          return null; // All set!
-        })()} />
+        <CurrentFocus item={activeFocus ? {
+          serviceName: activeFocus.serviceName,
+          taskDescription: activeFocus.taskDescription,
+          status: (() => {
+            const s = (activeFocus.status || '').toUpperCase();
+            if (['ACTION_TAKEN', 'COMPLETED', 'UPLOADED', 'PENDING_REVIEW', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'DONE'].includes(s)) {
+              return 'handled';
+            }
+            if (s === 'OVERDUE') return 'overdue';
+            if (s === 'DUE_SOON') return 'due_soon';
+            return (activeFocus.status as any) || 'waiting_on_you';
+          })(),
+          primaryActionType: 'view',
+          primaryActionLink: `/dashboard/todo-list?id=${activeFocus.todoId}`,
+          primaryActionLabel: activeFocus.primaryActionLabel
+        } : null} />
 
         {/* Notice Board and Stats Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
@@ -457,16 +458,16 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-5 px-1 pt-2 h-[34px]">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-5 w-5 text-gray-700" />
-                <h2 className="text-lg font-semibold text-gray-900 uppercase tracking-widest">Compliance Overview</h2>
+                <h2 className="text-lg font-semibold text-gray-900 uppercase tracking-widest">Analytics</h2>
               </div>
             </div>
             
             <div className="grid grid-cols-2 gap-6" style={{ height: '280px' }}>
-              <Link href="/dashboard/todo-list?filter=overdue" className="h-[128px]">
+              <Link href="/dashboard/todo-list?filter=due-today" className="h-[128px]">
                 <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Action needed</span>
-                    <span className="text-3xl font-semibold text-destructive tabular-nums">{complianceCounts.overdue}</span>
+                    <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Due Today</span>
+                    <span className="text-3xl font-semibold text-info tabular-nums">{complianceCounts.waiting}</span>
                   </div>
                 </DashboardCard>
               </Link>
@@ -478,19 +479,19 @@ export default function DashboardPage() {
                   </div>
                 </DashboardCard>
               </Link>
-              <Link href="/dashboard/todo-list?filter=waiting" className="h-[128px]">
+              <Link href="/dashboard/todo-list?filter=overdue" className="h-[128px]">
                 <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Overdue</span>
-                    <span className="text-3xl font-semibold text-info tabular-nums">{complianceCounts.waiting}</span>
+                    <span className="text-3xl font-semibold text-destructive tabular-nums">{complianceCounts.overdue}</span>
                   </div>
                 </DashboardCard>
               </Link>
               <Link href="/dashboard/compliance?filter=completed" className="h-[128px]">
                 <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Active services</span>
-                    <span className="text-3xl font-semibold text-success tabular-nums">{complianceCounts.done}</span>
+                    <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Active Engagements</span>
+                    <span className="text-3xl font-semibold text-success tabular-nums">{dashboardSummary?.counts.activeServices || 0}</span>
                   </div>
                 </DashboardCard>
               </Link>
@@ -505,55 +506,61 @@ export default function DashboardPage() {
           <NextComplianceDeadline />
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-6 bg-gray-100 p-2 rounded-[10px]">
           {/* Left Column - Priority Actions & Services */}
           <div className="lg:col-span-2 space-y-6">
             {/* Redesigned Active Services */}
             <div className="space-y-4">
               <PageHeader 
-                title="Active Services"
+                title="Active Engagements"
                 subtitle="Manage your ongoing accounting and tax services"
                 animate={false}
                 className="p-6"
               />
               <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {activeServices.map((service, idx) => {
-                  const getIcon = (name: string) => {
-                    if (name === "Bookkeeping") return <FileText className="text-blue-600" size={24} />;
-                    if (name === "VAT") return <Briefcase className="text-amber-600" size={24} />;
-                    if (name === "Audit") return <Search className="text-rose-600" size={24} />;
+                  const getIcon = (category: string) => {
+                    if (category === "Bookkeeping") return <FileText className="text-blue-600" size={24} />;
+                    if (category === "VAT") return <Briefcase className="text-amber-600" size={24} />;
+                    if (category === "Audit") return <Search className="text-rose-600" size={24} />;
                     return <CheckCircle className="text-emerald-600" size={24} />;
                   };
 
-                  const getIconBg = (name: string) => {
-                    if (name === "Bookkeeping") return "bg-blue-50";
-                    if (name === "VAT") return "bg-amber-50";
-                    if (name === "Audit") return "bg-rose-50";
+                  const getIconBg = (category: string) => {
+                    if (category === "Bookkeeping") return "bg-blue-50";
+                    if (category === "VAT") return "bg-amber-50";
+                    if (category === "Audit") return "bg-rose-50";
                     return "bg-emerald-50";
                   };
 
                   return (
                     <div key={idx} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
                       <div className="flex items-center gap-4 flex-1">
-                        <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shrink-0", getIconBg(service.name))}>
-                          {getIcon(service.name)}
+                        <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shrink-0", getIconBg(service.category))}>
+                          {getIcon(service.category)}
                         </div>
                         <div className="space-y-1">
                           <h4 className="text-xl font-bold text-gray-900">{service.name}</h4>
                           <div className="flex items-center gap-3">
-                            {service.name === "Bookkeeping" && (
+                            {service.category === "Bookkeeping" && (
                               <span className="text-sm font-semibold text-gray-500">REG NO: REG#87777448</span>
                             )}
-                            {service.name === "VAT" && (
-                              <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Due 30 June</span>
+                            {service.nextDeadline && !['COMPLETED', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'ACTION_TAKEN', 'UPLOADED', 'PENDING_REVIEW', 'DONE'].includes(service.status.toUpperCase()) && (
+                              <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                                Due {new Date(service.nextDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                              </span>
                             )}
-                            {service.name === "Audit" && service.status.includes("Waiting") && (
+                            {service.category === "Audit" && service.status.toUpperCase().includes("WAITING") && !['COMPLETED', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'ACTION_TAKEN', 'UPLOADED', 'PENDING_REVIEW', 'DONE'].includes(service.status.toUpperCase()) && (
                               <div className="flex items-center gap-1.5 text-rose-600 font-semibold text-sm">
                                 <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
                                 <span>Waiting for your response</span>
                               </div>
                             )}
-                            <span className="text-sm text-gray-500">{service.name === "Bookkeeping" ? "Month documents" : service.name === "VAT" ? "Next step: Review March documents" : service.next}</span>
+                            <span className="text-sm text-gray-500">
+                              {service.nextStepDescription && !['COMPLETED', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'ACTION_TAKEN', 'UPLOADED', 'PENDING_REVIEW', 'DONE'].includes(service.status.toUpperCase())
+                                ? `Next step: ${service.nextStepDescription}`
+                                : service.next}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -607,24 +614,22 @@ export default function DashboardPage() {
                 <h3 className="text-lg font-medium text-gray-900">Quick Actions</h3>
               </div>
               <div className="flex flex-col gap-2 p-3">
-                <Link href="/dashboard/document-organizer/document-upload">
+                <Link href="/dashboard/todo-list">
                   <Button variant="outline" className="w-full justify-start gap-3 h-11 border-gray-100 hover:bg-gray-50 transition-colors">
-                    <Upload className="w-4 h-4" />
-                    <span>Upload document</span>
+                    <CheckSquare className="w-4 h-4" />
+                    <span>Todo</span>
                   </Button>
                 </Link>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start gap-3 h-11 border-gray-100 hover:bg-gray-50 transition-colors"
-                  onClick={handleContactAccountantClick}
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  <span>Message advisor</span>
-                </Button>
+                <Link href="/dashboard/messages">
+                  <Button variant="outline" className="w-full justify-start gap-3 h-11 border-gray-100 hover:bg-gray-50 transition-colors">
+                    <MessageCircle className="w-4 h-4" />
+                    <span>Messages</span>
+                  </Button>
+                </Link>
                 <Link href="/dashboard/compliance">
                   <Button variant="outline" className="w-full justify-start gap-3 h-11 border-gray-100 hover:bg-gray-50 transition-colors">
-                    <Calendar className="w-4 h-4" />
-                    <span>View deadlines</span>
+                    <FileText className="w-4 h-4" />
+                    <span>Compliance</span>
                   </Button>
                 </Link>
               </div>
@@ -641,10 +646,20 @@ export default function DashboardPage() {
                   <Kpi label="Overdue" value={complianceCounts.overdue} tone="danger" />
                   <Kpi label="Due soon" value={complianceCounts.dueSoon} tone="warning" />
                 </div>
-                <DashboardCard className="border border-info/30 bg-info/5 px-4 py-3">
-                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1">Next Deadline</p>
-                  <p className="text-sm font-bold text-gray-900">VAT Return – 30 June</p>
-                </DashboardCard>
+                {upcomingDeadlines.length > 0 ? (
+                  <DashboardCard className="border border-info/30 bg-info/5 px-4 py-3">
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1">Next Deadline</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {upcomingDeadlines[0].title}
+                      {upcomingDeadlines[0].deadline ? ` – ${new Date(upcomingDeadlines[0].deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}
+                    </p>
+                  </DashboardCard>
+                ) : (
+                  <DashboardCard className="border border-gray-200 bg-gray-50 px-4 py-3">
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1">Status</p>
+                    <p className="text-sm font-bold text-gray-900">No action-required deadlines</p>
+                  </DashboardCard>
+                )}
               </div>
             </DashboardCard>
           </div>
