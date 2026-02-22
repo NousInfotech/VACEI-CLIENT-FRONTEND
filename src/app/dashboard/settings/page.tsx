@@ -12,6 +12,7 @@ import { ChevronDown, Settings as SettingsIcon, Users, Bell, Shield, Wallet, Loc
 import PillTabs from "@/components/shared/PillTabs";
 import { useTabQuery } from "@/hooks/useTabQuery";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { fetchPreferencesAPI, updatePreferencesAPI, NotificationPreference } from '@/api/notificationService';
 
 // Simple textarea using Input styling
 const Textarea = (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
@@ -150,14 +151,11 @@ function SettingsContent() {
         }
         return { companyName: "", regNumber: "", address: "", contact: "" };
     });
-    const [notifications, setNotifications] = useState<{ emailEnabled: boolean; inAppEnabled: boolean; docRequests: boolean; tasks: boolean; deadlines: boolean; }>(() => {
-        if (typeof window !== "undefined") {
-            const raw = localStorage.getItem("vacei-settings-notifications");
-            if (raw) {
-                try { return JSON.parse(raw); } catch { /* ignore */ }
-            }
-        }
-        return { emailEnabled: true, inAppEnabled: true, docRequests: true, tasks: true, deadlines: true };
+    const [notifications, setNotifications] = useState<NotificationPreference>({
+        emailEnabled: true,
+        inAppEnabled: true,
+        pushEnabled: false,
+        soundEnabled: true,
     });
     const [mfaEnabled, setMfaEnabled] = useState(false);
     const [sessions, setSessions] = useState<{ id: string; device: string; location: string; lastSeen: string; }[]>(() => [
@@ -171,9 +169,33 @@ function SettingsContent() {
     useEffect(() => {
         if (typeof window !== "undefined") {
             localStorage.setItem("vacei-settings-profile", JSON.stringify(profile));
-            localStorage.setItem("vacei-settings-notifications", JSON.stringify(notifications));
         }
-    }, [profile, notifications]);
+    }, [profile]);
+
+    useEffect(() => {
+        const loadPrefs = async () => {
+            try {
+                const prefs = await fetchPreferencesAPI();
+                setNotifications(prefs);
+            } catch (err) {
+                console.error("Failed to load notification preferences", err);
+            }
+        };
+        loadPrefs();
+    }, []);
+
+    const togglePreference = async (key: keyof NotificationPreference) => {
+        const newValue = !notifications[key];
+        // Optimistic update
+        setNotifications(prev => ({ ...prev, [key]: newValue }));
+        try {
+            await updatePreferencesAPI({ [key]: newValue });
+        } catch (err) {
+            console.error("Failed to update preference", err);
+            // Revert on error
+            setNotifications(prev => ({ ...prev, [key]: !newValue }));
+        }
+    };
 
     const [activeTab, setActiveTab] = useTabQuery("general");
 
@@ -251,27 +273,35 @@ function SettingsContent() {
                 {/* Notifications */}
                 {activeTab === "notifications" && (
                     <div className="space-y-3">
-                        <h2 className="text-lg font-semibold text-brand-body">Notification preferences (UI-only)</h2>
-                        <div className="grid gap-2 md:grid-cols-2">
-                            <label className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={notifications.emailEnabled} onChange={()=>setNotifications(n=>({...n,emailEnabled:!n.emailEnabled}))}/>
-                                Email notifications
+                        <h2 className="text-lg font-semibold text-brand-body">Notification preferences</h2>
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <label className="flex items-center gap-3 text-sm p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary" checked={notifications.emailEnabled} onChange={()=>togglePreference('emailEnabled')}/>
+                                <div className="flex flex-col">
+                                    <span className="font-medium">Email Notifications</span>
+                                    <span className="text-xs text-muted-foreground">Receive important updates via email</span>
+                                </div>
                             </label>
-                            <label className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={notifications.inAppEnabled} onChange={()=>setNotifications(n=>({...n,inAppEnabled:!n.inAppEnabled}))}/>
-                                In-app notifications
+                            <label className="flex items-center gap-3 text-sm p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary" checked={notifications.inAppEnabled} onChange={()=>togglePreference('inAppEnabled')}/>
+                                <div className="flex flex-col">
+                                    <span className="font-medium">In-App Notifications</span>
+                                    <span className="text-xs text-muted-foreground">Real-time alerts while using the platform</span>
+                                </div>
                             </label>
-                            <label className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={notifications.docRequests} onChange={()=>setNotifications(n=>({...n,docRequests:!n.docRequests}))}/>
-                                Document requests
+                            <label className="flex items-center gap-3 text-sm p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary" checked={notifications.pushEnabled} onChange={()=>togglePreference('pushEnabled')}/>
+                                <div className="flex flex-col">
+                                    <span className="font-medium">Push Notifications</span>
+                                    <span className="text-xs text-muted-foreground">Get notified on your mobile or desktop</span>
+                                </div>
                             </label>
-                            <label className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={notifications.tasks} onChange={()=>setNotifications(n=>({...n,tasks:!n.tasks}))}/>
-                                Task assignments
-                            </label>
-                            <label className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={notifications.deadlines} onChange={()=>setNotifications(n=>({...n,deadlines:!n.deadlines}))}/>
-                                Deadline reminders
+                            <label className="flex items-center gap-3 text-sm p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary" checked={notifications.soundEnabled} onChange={()=>togglePreference('soundEnabled')}/>
+                                <div className="flex flex-col">
+                                    <span className="font-medium">Notification Sounds</span>
+                                    <span className="text-xs text-muted-foreground">Play a sound when a new notification arrives</span>
+                                </div>
                             </label>
                         </div>
                     </div>

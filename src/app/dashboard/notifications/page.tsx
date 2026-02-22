@@ -1,86 +1,80 @@
-'use client'; // If you're using Next.js App Router
+'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link'; // Import Link component from Next.js
+import Link from 'next/link';
 import {
     Notification,
     fetchNotificationsAPI,
     fetchUnreadCountAPI,
     markNotificationAsReadAPI,
     markAllNotificationsAsReadAPI,
-} from '@/api/notificationService'; // Adjust path as necessary
+} from '@/api/notificationService';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
+import { useSSE } from '@/hooks/useSSE';
 
-// Props interface for NotificationItem for better TypeScript clarity
 interface NotificationItemProps {
     notification: Notification;
-    onMarkAsRead: (id: number) => void;
+    onMarkAsRead: (id: string) => void;
 }
 
 const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMarkAsRead }) => {
     let bgColorClass = '';
     let textColorClass = '';
+    const isRead = notification.isRead;
 
-    // Determine background and text colors based on notification type and read status
     switch (notification.type) {
         case 'meeting_scheduled':
         case 'meeting_updated':
         case 'task_assigned':
-        case 'task_created': // Added for task creation notification
-        case 'task_status_updated': // Added for task status update notification
-        case 'task_attachment_deleted': // Added for task attachment deletion notification
-        case 'task_updated': // Added for general task update notification
-            bgColorClass = notification.read ? 'bg-brand-primary50' : 'bg-brand-primary100 border-border';
-            textColorClass = notification.read ? 'text-brand-primary' : 'text-brand-primary800';
+        case 'task_created':
+        case 'task_status_updated':
+        case 'task_attachment_deleted':
+        case 'task_updated':
+            bgColorClass = isRead ? 'bg-brand-muted' : 'bg-brand-primary/10 border-brand-primary/20';
+            textColorClass = isRead ? 'text-brand-primary' : 'text-brand-primary';
             break;
         case 'meeting_canceled':
         case 'error':
-        case 'task_deleted': // Added for task deletion notification
-            bgColorClass = notification.read ? 'bg-red-50' : 'bg-red-100 border-red-400';
-            textColorClass = notification.read ? 'text-red-600' : 'text-red-800';
+        case 'task_deleted':
+            bgColorClass = isRead ? 'bg-red-50' : 'bg-red-100 border-red-200';
+            textColorClass = isRead ? 'text-red-600' : 'text-red-800';
             break;
         case 'chat_message':
-            bgColorClass = notification.read ? 'bg-sidebar-background' : 'bg-sidebar-background border-green-400';
-            textColorClass = notification.read ? 'text-green-600' : 'text-green-800';
+            bgColorClass = isRead ? 'bg-sidebar-background' : 'bg-sidebar-background border-green-200';
+            textColorClass = isRead ? 'text-green-600' : 'text-green-800';
             break;
         default:
-            bgColorClass = notification.read ? 'bg-brand-body' : 'bg-brand-muted border-border';
-            textColorClass = notification.read ? 'text-muted-foreground' : 'text-gray-800';
+            bgColorClass = isRead ? 'bg-brand-body' : 'bg-brand-muted border-border';
+            textColorClass = isRead ? 'text-muted-foreground' : 'text-gray-800';
     }
 
-    // Determine if the notification should be wrapped in a Link component
-    const shouldBeLink = notification.link && notification.link.startsWith('/dashboard/');
-
-    // New click handler that marks as read, then (optionally) navigates
     const handleClick = () => {
-        // Only mark as read if it's currently unread
-        if (!notification.read) {
+        if (!isRead) {
             onMarkAsRead(notification.id);
         }
-        // Navigation for Link component is handled by its href prop
     };
 
     const content = (
         <div
-            className={`p-4 border-l-4 rounded-md shadow-md flex justify-between items-center ${bgColorClass} ${shouldBeLink ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
-            onClick={!shouldBeLink ? handleClick : undefined} // Only attach onClick if it's not a link
+            className={`p-4 border-l-4 rounded-md shadow-sm flex justify-between items-center ${bgColorClass} cursor-pointer hover:shadow-md transition-all`}
+            onClick={handleClick}
         >
             <div>
-                <p className={`font-semibold ${textColorClass}`}>{notification.message}</p>
-                <small className="text-muted-foreground">
+                <p className={`font-semibold ${textColorClass}`}>{notification.title}</p>
+                <p className="text-gray-600 text-sm mt-1">{notification.content}</p>
+                <small className="text-muted-foreground mt-2 block">
                     {new Date(notification.createdAt).toLocaleString()}
-                    {notification.read ? ' (Read)' : ' (Unread)'}
+                    {isRead ? ' (Read)' : ' (Unread)'}
                 </small>
             </div>
-            {/* Removed the explicit "Mark as Read" button */}
         </div>
     );
 
     return (
         <div className="mb-4">
-            {shouldBeLink ? (
-                <Link href={notification.link!} passHref onClick={handleClick}>
+            {notification.redirectUrl ? (
+                <Link href={notification.redirectUrl} passHref onClick={handleClick}>
                     {content}
                 </Link>
             ) : (
@@ -90,7 +84,6 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMar
     );
 };
 
-// --- NEW SKELETON COMPONENT ---
 const NotificationSkeleton: React.FC = () => {
     return (
         <div className="p-4 border-l-4 border-border rounded-md shadow-md mb-4 flex justify-between items-center bg-brand-muted animate-pulse">
@@ -98,12 +91,9 @@ const NotificationSkeleton: React.FC = () => {
                 <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
                 <div className="h-3 bg-gray-300 rounded w-1/2"></div>
             </div>
-            {/* Removed the placeholder for "Mark as Read" button */}
         </div>
     );
 };
-// --- END NEW SKELETON COMPONENT ---
-
 
 export default function NotificationsPage() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -114,9 +104,10 @@ export default function NotificationsPage() {
     const [totalPages, setTotalPages] = useState<number>(1);
     const [showUnreadOnly, setShowUnreadOnly] = useState<boolean>(false);
 
-    // Callback to fetch notifications from the API
+    const { notifications: sseNotifications } = useSSE();
+
     const fetchNotifications = useCallback(async () => {
-        setLoading(true); // Set loading to true before API call
+        setLoading(true);
         setError(null);
         try {
             const response = await fetchNotificationsAPI({
@@ -124,73 +115,67 @@ export default function NotificationsPage() {
                 limit: 10,
                 read: showUnreadOnly ? false : undefined,
             });
-            setNotifications(response.notifications);
-            setTotalPages(response.pagination.totalPages);
+            setNotifications(response.items);
+            setTotalPages(response.meta.totalPages);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch notifications.');
             console.error('Error fetching notifications:', err);
         } finally {
-            setLoading(false); // Set loading to false after API call (success or failure)
+            setLoading(false);
         }
     }, [currentPage, showUnreadOnly]);
 
-    // Callback to fetch unread notification count
     const fetchUnreadCount = useCallback(async () => {
         try {
             const response = await fetchUnreadCountAPI();
-            setUnreadCount(response.unreadCount);
+            setUnreadCount(response.count);
         } catch (err: any) {
             console.error('Error fetching unread count:', err);
         }
     }, []);
 
-    // useEffect to trigger data fetching on component mount or when dependencies change
     useEffect(() => {
         fetchNotifications();
         fetchUnreadCount();
     }, [fetchNotifications, fetchUnreadCount]);
 
-    // Handler for marking a single notification as read
-    const handleMarkAsRead = async (id: number) => {
+    // Handle real-time updates
+    useEffect(() => {
+        if (sseNotifications.length > 0) {
+            fetchNotifications();
+            fetchUnreadCount();
+        }
+    }, [sseNotifications, fetchNotifications, fetchUnreadCount]);
+
+    const handleMarkAsRead = async (id: string) => {
         try {
             await markNotificationAsReadAPI(id);
             setNotifications((prev) =>
-                prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif))
+                prev.map((notif) => (notif.id === id ? { ...notif, isRead: true } : notif))
             );
             fetchUnreadCount();
         } catch (err: any) {
             console.error('Error marking as read:', err);
-            alert('Failed to mark notification as read: ' + err.message);
         }
     };
 
-    // Handler for marking all unread notifications as read
     const handleMarkAllAsRead = async () => {
-        if (unreadCount === 0) {
-            alert('No unread notifications to mark.');
-            return;
-        }
-        if (!confirm('Are you sure you want to mark all notifications as read?')) {
-            return;
-        }
+        if (unreadCount === 0) return;
         try {
             await markAllNotificationsAsReadAPI();
-            setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
+            setNotifications((prev) => prev.map((notif) => ({ ...notif, isRead: true })));
             setUnreadCount(0);
         } catch (err: any) {
             console.error('Error marking all as read:', err);
-            alert('Failed to mark all notifications as read: ' + err.message);
         }
     };
 
-    // Handler for pagination page changes
     const handlePageChange = (newPage: number) => {
         if (newPage > 0 && newPage <= totalPages) {
             setCurrentPage(newPage);
         }
     };
 
-    // Handler for toggling between showing all notifications and only unread ones
     const handleToggleShowUnread = () => {
         setShowUnreadOnly(prev => !prev);
         setCurrentPage(1);
@@ -227,7 +212,6 @@ export default function NotificationsPage() {
 
                 <div className="space-y-4">
                     {loading ? (
-                        // Render 3 skeleton items while loading
                         Array.from({ length: 3 }).map((_, index) => (
                             <NotificationSkeleton key={index} />
                         ))
@@ -240,31 +224,32 @@ export default function NotificationsPage() {
                             />
                         ))
                     ) : (
-                        <p className="text-muted-foreground">
-                            No notifications found{' '}
-                            {showUnreadOnly ? ' (showing unread only).' : '.'}
-                        </p>
+                        <div className="py-12 flex flex-col items-center justify-center text-center">
+                            <p className="text-muted-foreground">
+                                No notifications found{' '}
+                                {showUnreadOnly ? ' in unread.' : '.'}
+                            </p>
+                        </div>
                     )}
                 </div>
 
-                {/* Pagination Controls */}
                 {totalPages > 1 && (
                     <div className="flex justify-center items-center mt-6 space-x-2">
-                        <button
+                        <Button
+                            variant="outline"
                             onClick={() => handlePageChange(currentPage - 1)}
                             disabled={currentPage === 1 || loading}
-                            className="px-4 py-2 border border-border rounded-md text-brand-body hover:bg-brand-muted disabled:opacity-50" // Added border for clarity
                         >
                             Previous
-                        </button>
-                        <span>Page {currentPage} of {totalPages}</span>
-                        <button
+                        </Button>
+                        <span className="text-sm font-medium">Page {currentPage} of {totalPages}</span>
+                        <Button
+                            variant="outline"
                             onClick={() => handlePageChange(currentPage + 1)}
                             disabled={currentPage === totalPages || loading}
-                            className="px-4 py-2 border border-border rounded-md text-brand-body hover:bg-brand-muted disabled:opacity-50" // Added border for clarity
                         >
                             Next
-                        </button>
+                        </Button>
                     </div>
                 )}
             </div>
