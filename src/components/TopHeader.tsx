@@ -131,7 +131,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
     const getLatestNotifications = useCallback(async () => {
         try {
             const response = await fetchNotificationsAPI({ page: 1, limit: 10 });
-            setLatestNotifications(response.items);
+            setLatestNotifications(Array.isArray(response) ? response : (response?.items || []));
         } catch (error) {
             console.error("Failed to fetch latest notifications:", error);
         }

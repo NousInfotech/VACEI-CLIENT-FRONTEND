@@ -115,8 +115,8 @@ export default function NotificationsPage() {
                 limit: 10,
                 read: showUnreadOnly ? false : undefined,
             });
-            setNotifications(response.items);
-            setTotalPages(response.meta.totalPages);
+            setNotifications(Array.isArray(response) ? response : (response?.items || []));
+            setTotalPages(response?.meta?.totalPages || 1);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch notifications.');
             console.error('Error fetching notifications:', err);
