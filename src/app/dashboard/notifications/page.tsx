@@ -215,8 +215,8 @@ export default function NotificationsPage() {
                         Array.from({ length: 3 }).map((_, index) => (
                             <NotificationSkeleton key={index} />
                         ))
-                    ) : notifications.length > 0 ? (
-                        notifications.map((notification) => (
+                    ) : notifications && notifications.length > 0 ? (
+                        notifications.map((notification: Notification) => (
                             <NotificationItem
                                 key={notification.id}
                                 notification={notification}

@@ -439,7 +439,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                             )}
                         </div>
                         <div className="p-3 overflow-y-auto">
-                            {latestNotifications.length > 0 ? (
+                            {latestNotifications && latestNotifications.length > 0 ? (
                                 latestNotifications.map((notification) => (
                                     <Link href={notification.redirectUrl || '#'} key={notification.id} passHref>
                                         <div

@@ -74,6 +74,15 @@ export const menuData: MenuItem[] = [
     section: "primary",
     description: "Company overview & status",
   },
+  {
+    slug: "company-library",
+    icon: Book02Icon,
+    label: "Library",
+    href: "/dashboard/library",
+    children: [],
+    section: "operations",
+    description: "Documents for your companies",
+  },
   // {
   //     slug: "global-library",
   //     icon: Book02Icon,
