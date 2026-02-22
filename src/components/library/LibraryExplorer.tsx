@@ -18,6 +18,8 @@ import { GridViewSkeleton } from './components/GridViewSkeleton';
 
 interface LibraryExplorerProps {
   className?: string;
+  /** When set, only this company's library folder is shown (strict per-company). */
+  companyId?: string | null;
 }
 
 const LibraryContent: React.FC = () => {
@@ -96,10 +98,10 @@ const LibraryContent: React.FC = () => {
   );
 };
 
-export const LibraryExplorer: React.FC<LibraryExplorerProps & { items?: any[]; useApi?: boolean }> = ({ className, items, useApi = true }) => {
+export const LibraryExplorer: React.FC<LibraryExplorerProps & { items?: any[]; useApi?: boolean }> = ({ className, items, useApi = true, companyId }) => {
   return (
     <div className={cn("flex flex-col h-[600px] md:h-[700px] lg:h-[800px] bg-white border border-gray-200 rounded-2xl overflow-hidden", className)}>
-      <LibraryProvider initialItems={items} useApi={useApi} children={<LibraryContent />} />
+      <LibraryProvider initialItems={items} useApi={useApi} companyId={companyId} children={<LibraryContent />} />
     </div>
   );
 };

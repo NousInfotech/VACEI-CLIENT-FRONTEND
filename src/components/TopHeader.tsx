@@ -21,54 +21,58 @@ import {
 import { getCompanies } from '@/api/auditService';
 import { useActiveCompany } from '@/context/ActiveCompanyContext';
 import { useGlobalDashboard } from '@/context/GlobalDashboardContext';
+import { useSSE } from '@/hooks/useSSE';
 
 // NotificationItem component
 interface HeaderNotificationItemProps {
     notification: Notification;
-    onMarkAsRead: (id: number) => void;
+    onMarkAsRead: (id: string) => void;
 }
 
 const HeaderNotificationItem: React.FC<HeaderNotificationItemProps> = ({ notification, onMarkAsRead }) => {
     let bgColorClass = '';
     let textColorClass = '';
 
+    const isRead = notification.isRead;
+
     switch (notification.type) {
         case 'meeting_scheduled':
         case 'meeting_updated':
         case 'task_assigned':
-            bgColorClass = notification.read ? 'bg-brand-muted' : 'bg-brand-primary/10';
-            textColorClass = notification.read ? 'text-brand-primary' : 'text-brand-body';
+            bgColorClass = isRead ? 'bg-brand-muted' : 'bg-brand-primary/10';
+            textColorClass = isRead ? 'text-brand-primary' : 'text-brand-body';
             break;
         case 'meeting_canceled':
         case 'error':
-            bgColorClass = notification.read ? 'bg-destructive/10' : 'bg-destructive/20';
-            textColorClass = notification.read ? 'text-destructive' : 'text-destructive';
+            bgColorClass = isRead ? 'bg-destructive/10' : 'bg-destructive/20';
+            textColorClass = isRead ? 'text-destructive' : 'text-destructive';
             break;
         case 'chat_message':
-            bgColorClass = notification.read ? 'bg-brand-muted' : 'bg-sidebar-hover/30';
-            textColorClass = notification.read ? 'text-brand-body' : 'text-brand-body';
+            bgColorClass = isRead ? 'bg-brand-muted' : 'bg-sidebar-hover/30';
+            textColorClass = isRead ? 'text-brand-body' : 'text-brand-body';
             break;
         default:
-            bgColorClass = notification.read ? 'bg-brand-body' : 'bg-brand-muted';
-            textColorClass = notification.read ? 'text-muted-foreground' : 'text-brand-body';
+            bgColorClass = isRead ? 'bg-brand-body' : 'bg-brand-muted';
+            textColorClass = isRead ? 'text-muted-foreground' : 'text-brand-body';
     }
 
-    const displayMessage = notification.message.length > 50
-        ? notification.message.substring(0, 47) + '...'
-        : notification.message;
+    const displayTitle = notification.title.length > 50
+        ? notification.title.substring(0, 47) + '...'
+        : notification.title;
 
     return (
         <div className={`p-3 rounded-xl mb-2 flex items-center ${bgColorClass} border border-transparent hover:border-gray-200 transition-all`}>
             <div className="flex-1 min-w-0">
                 <p className={`font-semibold text-sm ${textColorClass} overflow-hidden text-ellipsis `}>
-                    {displayMessage}
+                    {displayTitle}
                 </p>
+                <p className="text-gray-500 text-xs line-clamp-1">{notification.content}</p>
                 <small className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-1 block">
                     {new Date(notification.createdAt).toLocaleDateString()}
-                    {notification.read ? ' • Read' : ' • New'}
+                    {isRead ? ' • Read' : ' • New'}
                 </small>
             </div>
-            {!notification.read && (
+            {!isRead && (
                 <Button
                     variant="default"
                     size="sm"
@@ -119,7 +123,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
     const getUnreadCount = useCallback(async () => {
         try {
             const response = await fetchUnreadCountAPI();
-            setUnreadCount(response.unreadCount);
+            setUnreadCount(response.count);
         } catch (error) {
             console.error("Failed to fetch unread notification count:", error);
         }
@@ -127,12 +131,23 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
 
     const getLatestNotifications = useCallback(async () => {
         try {
-            const response = await fetchNotificationsAPI({ page: 1, limit: 4, read: undefined });
-            setLatestNotifications(response.notifications);
+            const response = await fetchNotificationsAPI({ page: 1, limit: 10 });
+            setLatestNotifications(Array.isArray(response) ? response : (response?.items || []));
         } catch (error) {
             console.error("Failed to fetch latest notifications:", error);
         }
     }, []);
+
+    // SSE Hook
+    const { notifications: sseNotifications, unreadCount: sseUnreadCount } = useSSE();
+
+    // Re-fetch when SSE notification arrives
+    useEffect(() => {
+        if (sseNotifications.length > 0) {
+            getUnreadCount();
+            getLatestNotifications();
+        }
+    }, [sseNotifications, getUnreadCount, getLatestNotifications]);
 
     // Fetch companies from backend API
     const fetchCompaniesFromAPI = useCallback(async () => {
@@ -180,12 +195,8 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
 
     useEffect(() => {
         getUnreadCount();
-        const REFRESH_INTERVAL = 30 * 1000;
-        const intervalId = setInterval(() => {
-            getUnreadCount();
-        }, REFRESH_INTERVAL);
-        return () => clearInterval(intervalId);
-    }, [pathname]);
+        getLatestNotifications();
+    }, [pathname, getUnreadCount, getLatestNotifications]);
 
     // Refresh companies when navigating to dashboard (after login or signup)
     useEffect(() => {
@@ -246,11 +257,11 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
         };
     }, [pathname, fetchCompaniesFromAPI]);
 
-    const handleMarkAsReadFromDropdown = async (id: number) => {
+    const handleMarkAsReadFromDropdown = async (id: string) => {
         try {
             await markNotificationAsReadAPI(id);
             setLatestNotifications(prev =>
-                prev.map(notif => (notif.id === id ? { ...notif, read: true } : notif))
+                prev.map(notif => (notif.id === id ? { ...notif, isRead: true } : notif))
             );
             await getUnreadCount();
         } catch (err: any) {
@@ -445,15 +456,15 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                             )}
                         </div>
                         <div className="p-3 overflow-y-auto">
-                            {latestNotifications.length > 0 ? (
+                            {latestNotifications && latestNotifications.length > 0 ? (
                                 latestNotifications.map((notification) => (
-                                    <Link href={notification.link || '#'} key={notification.id} passHref>
+                                    <Link href={notification.redirectUrl || '#'} key={notification.id} passHref>
                                         <div
                                             onClick={async () => {
-                                                if (!notification.read) {
+                                                if (!notification.isRead) {
                                                     await markNotificationAsReadAPI(notification.id);
                                                     setLatestNotifications(prev =>
-                                                        prev.map(notif => (notif.id === notification.id ? { ...notif, read: true } : notif))
+                                                        prev.map(notif => (notif.id === notification.id ? { ...notif, isRead: true } : notif))
                                                     );
                                                 }
                                                 await getUnreadCount();

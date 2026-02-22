@@ -98,6 +98,8 @@ export interface Company {
   industry?: string;
   incorporationDate?: string;
   id: string;
+  /** Library root folder ID for this company (when set, company library shows only this folder). */
+  folderId?: string | null;
 }
 
 
@@ -616,10 +618,54 @@ export interface EngagementCompliance {
   customServiceCycle?: { id: string; title: string } | null;
 }
 
+/**
+ * Get compliances for an engagement.
+ * When companyId is provided, uses the working Compliance Calendar API (GET /compliance-calendar?type=COMPANY&companyId=...).
+ * When companyId is not provided, tries the legacy route (404) and returns [].
+ */
 export async function getEngagementCompliances(
   engagementId: string,
-  signal?: AbortSignal,
+  options?: { companyId?: string; signal?: AbortSignal },
 ): Promise<EngagementCompliance[]> {
+  const companyId = options?.companyId;
+  const signal = options?.signal;
+
+  if (companyId) {
+    const { listComplianceCalendars } = await import("@/api/complianceCalendarService");
+    const entries = await listComplianceCalendars({ type: "COMPANY", companyId });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return entries.map((e) => {
+      const dueDate = new Date(e.dueDate);
+      dueDate.setHours(0, 0, 0, 0);
+      const isPast = dueDate.getTime() < today.getTime();
+      const isToday = dueDate.getTime() === today.getTime();
+      const status: EngagementCompliance["status"] = isPast ? "OVERDUE" : isToday ? "ACTION_REQUIRED" : "PENDING";
+      return {
+        id: e.id,
+        engagementId,
+        companyId: e.companyId ?? companyId,
+        service: e.serviceCategory,
+        type: e.type,
+        moduleId: null,
+        customServiceCycleId: e.customServiceCycleId,
+        title: e.title,
+        description: e.description,
+        customerComment: null,
+        startDate: e.startDate,
+        deadline: e.dueDate,
+        status,
+        cta: "Mark as done",
+        createdAt: e.createdAt,
+        updatedAt: e.updatedAt,
+        createdById: e.createdById,
+        role: "",
+        customServiceCycle: e.customServiceCycle,
+        _fromComplianceCalendar: true,
+      } as EngagementCompliance & { _fromComplianceCalendar?: boolean };
+    });
+  }
+
   const response = await fetch(`${backendUrl}engagements/${engagementId}/compliances`, {
     method: "GET",
     headers: {
@@ -630,15 +676,7 @@ export async function getEngagementCompliances(
   });
 
   if (!response.ok) {
-    // Handle 404 gracefully - route might not be implemented yet
-    if (response.status === 404) {
-      const errorData = await response.json().catch(() => ({ message: "Route not found" }));
-      if (errorData.message?.includes("Route not found") || errorData.message?.includes("not found")) {
-        // Return empty array instead of throwing for 404 - backend route not implemented yet
-        console.warn(`Compliance calendar endpoint not available: ${backendUrl}engagements/${engagementId}/compliances`);
-        return [];
-      }
-    }
+    if (response.status === 404) return [];
     const error = await response.json().catch(() => ({ message: "Failed to fetch compliances" }));
     throw new Error(error.message || error.error || "Failed to fetch compliances");
   }
