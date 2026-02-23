@@ -161,33 +161,34 @@ export default function ComplianceCalendarApiSection() {
     }
   };
 
-  const handleUpdate = async (id: string, payload: UpdatePayload) => {
-    setSubmitting(true);
-    setActionError(null);
-    try {
-      await updateComplianceCalendar(id, payload);
-      setEditEntry(null);
-      await loadEntries();
-    } catch (e: unknown) {
-      setActionError(e instanceof Error ? e.message : "Failed to update");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  // NOTE: Edit & delete functionality disabled for calendar deadlines in client portal.
+  // const handleUpdate = async (id: string, payload: UpdatePayload) => {
+  //   setSubmitting(true);
+  //   setActionError(null);
+  //   try {
+  //     await updateComplianceCalendar(id, payload);
+  //     setEditEntry(null);
+  //     await loadEntries();
+  //   } catch (e: unknown) {
+  //     setActionError(e instanceof Error ? e.message : "Failed to update");
+  //   } finally {
+  //     setSubmitting(false);
+  //   }
+  // };
 
-  const handleDelete = async (id: string) => {
-    setSubmitting(true);
-    setActionError(null);
-    try {
-      await deleteComplianceCalendar(id);
-      setDeleteEntry(null);
-      await loadEntries();
-    } catch (e: unknown) {
-      setActionError(e instanceof Error ? e.message : "Failed to delete");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  // const handleDelete = async (id: string) => {
+  //   setSubmitting(true);
+  //   setActionError(null);
+  //   try {
+  //     await deleteComplianceCalendar(id);
+  //     setDeleteEntry(null);
+  //     await loadEntries();
+  //   } catch (e: unknown) {
+  //     setActionError(e instanceof Error ? e.message : "Failed to delete");
+  //   } finally {
+  //     setSubmitting(false);
+  //   }
+  // };
 
   return (
     <DashboardCard className="overflow-visible">
@@ -324,7 +325,8 @@ export default function ComplianceCalendarApiSection() {
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button
+                        {/* Edit & delete actions disabled in client portal */}
+                        {/* <Button
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0"
@@ -341,7 +343,7 @@ export default function ComplianceCalendarApiSection() {
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
-                        </Button>
+                        </Button> */}
                       </div>
                     </td>
                   </tr>
@@ -373,8 +375,8 @@ export default function ComplianceCalendarApiSection() {
         />
       )}
 
-      {/* Edit modal */}
-      {editEntry && (
+      {/* Edit modal – disabled in client portal */}
+      {/* {editEntry && (
         <CreateEditForm
           mode="edit"
           initial={editEntry}
@@ -384,10 +386,10 @@ export default function ComplianceCalendarApiSection() {
           submitting={submitting}
           error={actionError}
         />
-      )}
+      )} */}
 
-      {/* Delete confirm */}
-      {deleteEntry && (
+      {/* Delete confirm – disabled in client portal */}
+      {/* {deleteEntry && (
         <Modal
           isOpen={true}
           onClose={() => { setDeleteEntry(null); setActionError(null); }}
@@ -414,7 +416,7 @@ export default function ComplianceCalendarApiSection() {
             </div>
           </div>
         </Modal>
-      )}
+      )} */}
     </DashboardCard>
   );
 }

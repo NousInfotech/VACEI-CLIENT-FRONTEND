@@ -234,11 +234,9 @@ export function useChat(
     setNextCursor(null);
     setHasMore(true);
 
-    // Set auth token for realtime
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (token) {
-      chatService.setAccessToken(token);
-    }
+    // NOTE: We are not using Supabase Auth sessions here.
+    // Do not set a custom realtime auth token based on the backend JWT,
+    // as this can cause channel errors while auth.uid() remains NULL.
 
     (async () => {
       await Promise.all([

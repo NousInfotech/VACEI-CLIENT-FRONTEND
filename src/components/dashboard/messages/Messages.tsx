@@ -9,7 +9,7 @@ import { EmojiPicker } from './components/EmojiPicker';
 import { ConfirmModal } from './components/ConfirmModal';
 import { useChatRooms, mapApiMessage, extractParticipants } from '@/hooks/useChatRooms';
 import { chatService } from '@/api/chatService';
-import type { Chat, Message } from './types';
+import type { Chat, Message, User } from './types';
 import { Inbox, X, Copy, Forward, Trash2, Check, Users, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +28,7 @@ const Messages: React.FC = () => {
     togglePin,
     toggleMute,
     setRoomMessages,
+    setRoomMessagesWithMerge,
     appendMessage,
     setUnreadCount,
   } = useChatRooms(activeChatId);
@@ -80,10 +81,15 @@ const Messages: React.FC = () => {
       .then((res) => {
         // API returns newest-first → reverse so oldest shows at top
         const rawMsgs = (res.data ?? []).reverse();
-        const msgs = rawMsgs.map(mapApiMessage);
-        // Derive participants from message senders
-        const participants = extractParticipants(res.data ?? []);
-        setRoomMessages(roomId, msgs, participants);
+        const apiMsgs = rawMsgs.map(mapApiMessage).sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
+        // Merge participants: room members (from list) + message senders (for names)
+        const fromMessages = extractParticipants(res.data ?? []);
+        const room = rooms.find((r) => r.id === roomId);
+        const mergedParticipants = new Map<string, User>();
+        (room?.participants ?? []).forEach((p) => mergedParticipants.set(p.id, { ...p, role: "PLATFORM_EMPLOYEE" as const, isOnline: false }));
+        fromMessages.forEach((p) => mergedParticipants.set(p.id, { ...p, role: "PLATFORM_EMPLOYEE" as const, isOnline: false }));
+        const participants = Array.from(mergedParticipants.values());
+        setRoomMessagesWithMerge(roomId, apiMsgs, participants);
       })
       .catch(console.error)
       .finally(() => setMessagesLoading(false));
@@ -138,6 +144,11 @@ const Messages: React.FC = () => {
     if (!activeChatId) return;
 
     if (type === 'clear-chat') {
+      try {
+        await chatService.clearRoom(activeChatId);
+      } catch (e) {
+        console.error('Failed to clear chat:', e);
+      }
       setRoomMessages(activeChatId, []);
       setConfirmState({ isOpen: false, type: 'message' });
       return;
@@ -266,7 +277,11 @@ const Messages: React.FC = () => {
       status: 'sent',
     };
     appendMessage(activeChatId, optimistic);
-    const replyToIdForSend = replyToMessage?.id;
+    // Only send replyToMessageId to backend/Supabase when it's a real UUID.
+    const replyToIdForSend =
+      replyToMessage?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(replyToMessage.id)
+        ? replyToMessage.id
+        : undefined;
     setReplyToMessage(null);
 
     try {
@@ -283,14 +298,9 @@ const Messages: React.FC = () => {
         replyToIdForSend ? { replyToMessageId: replyToIdForSend } : undefined
       );
       if (sent) {
-        // Replace optimistic with real message
-        const activeRoom = rooms.find((r) => r.id === activeChatId);
-        if (activeRoom) {
-          const updatedMessages = activeRoom.messages.map((m) =>
-            m.id === optimisticId ? mapApiMessage(sent) : m
-          );
-          setRoomMessages(activeChatId, updatedMessages);
-        }
+        // Let Supabase Realtime handle delivery of the final message.
+        // We keep the optimistic message; the realtime handler will append
+        // the canonical row and dedupe by id for future events.
       }
     } catch (err) {
       console.error('Failed to send message:', err);

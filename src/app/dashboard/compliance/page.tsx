@@ -10,7 +10,7 @@ import { ChevronDown, Calendar as CalendarIcon, List, HelpCircle, Download, Uplo
 import { fetchTasks } from "@/api/taskService";
 import type { Task } from "@/interfaces";
 import ParentSchedule from "@/app/dashboard/schedule/page";
-import { fetchPayrollData, transformPayrollSubmissionsToComplianceItems } from "@/lib/payrollComplianceIntegration";
+// import { fetchPayrollData, transformPayrollSubmissionsToComplianceItems } from "@/lib/payrollComplianceIntegration";
 import ComplianceCalendarApiSection from "./ComplianceCalendarApiSection";
 
 // Compliance status types
@@ -33,91 +33,91 @@ interface ComplianceItem {
   relatedServiceId?: number;
 }
 
-// Payroll Service Card Component
-function PayrollServiceCard() {
-  const [payrollSubmissions, setPayrollSubmissions] = useState<Array<{ name: string; status: string; due_date?: string }>>([]);
-  
-  useEffect(() => {
-    const loadPayrollData = async () => {
-      const data = await fetchPayrollData();
-      if (data) {
-        setPayrollSubmissions(data.submissions);
-      }
-    };
-    loadPayrollData();
-  }, []);
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "—";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const getStatusBadge = (status: string) => {
-    if (status === "submitted") {
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium bg-success/10 text-success border-success/30 shadow-sm">
-          Submitted
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium bg-muted text-muted-foreground border-border shadow-sm">
-        Pending
-      </span>
-    );
-  };
-
-  return (
-    <DashboardCard className="border-l-4 border-l-primary p-6 md:p-8">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
-            <Users className="h-5 w-5 text-primary" />
-          </div>
-        <div>
-            <h2 className="text-lg font-semibold text-brand-body">Payroll Service</h2>
-            <p className="text-xs text-muted-foreground">Statutory submissions and obligations</p>
-          </div>
-        </div>
-        <Link href="/dashboard/services/payroll">
-          <Button variant="default" size="sm" className="rounded-lg">
-            Go to Payroll
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        </Link>
-      </div>
-
-      <div className="space-y-3 pt-4 border-t border-border">
-        <h3 className="mt-3 text-sm font-semibold text-brand-body mb-2">STATUTORY SUBMISSIONS</h3>
-        {payrollSubmissions.map((submission, index) => (
-          <div
-            key={index}
-            className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30"
-          >
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-medium text-brand-body">
-                  • {submission.name}
-                </span>
-              </div>
-              {submission.due_date && (
-                <p className="text-xs text-muted-foreground">
-                  Due: {formatDate(submission.due_date)}
-                </p>
-              )}
-            </div>
-            {getStatusBadge(submission.status)}
-          </div>
-        ))}
-      </div>
-    </DashboardCard>
-  );
-}
+// Payroll Service Card Component (disabled on Compliance dashboard)
+// function PayrollServiceCard() {
+//   const [payrollSubmissions, setPayrollSubmissions] = useState<Array<{ name: string; status: string; due_date?: string }>>([]);
+//   
+//   useEffect(() => {
+//     const loadPayrollData = async () => {
+//       const data = await fetchPayrollData();
+//       if (data) {
+//         setPayrollSubmissions(data.submissions);
+//       }
+//     };
+//     loadPayrollData();
+//   }, []);
+//
+//   const formatDate = (dateString?: string) => {
+//     if (!dateString) return "—";
+//     const date = new Date(dateString);
+//     return date.toLocaleDateString("en-US", {
+//       month: "long",
+//       day: "numeric",
+//       year: "numeric",
+//     });
+//   };
+//
+//   const getStatusBadge = (status: string) => {
+//     if (status === "submitted") {
+//       return (
+//         <span className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium bg-success/10 text-success border-success/30 shadow-sm">
+//           Submitted
+//         </span>
+//       );
+//     }
+//     return (
+//       <span className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium bg-muted text-muted-foreground border-border shadow-sm">
+//         Pending
+//       </span>
+//     );
+//   };
+//
+//   return (
+//     <DashboardCard className="border-l-4 border-l-primary p-6 md:p-8">
+//       <div className="flex items-center justify-between mb-4">
+//         <div className="flex items-center gap-3">
+//           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
+//             <Users className="h-5 w-5 text-primary" />
+//           </div>
+//         <div>
+//             <h2 className="text-lg font-semibold text-brand-body">Payroll Service</h2>
+//             <p className="text-xs text-muted-foreground">Statutory submissions and obligations</p>
+//           </div>
+//         </div>
+//         <Link href="/dashboard/services/payroll">
+//           <Button variant="default" size="sm" className="rounded-lg">
+//             Go to Payroll
+//             <ArrowRight className="w-4 h-4 ml-2" />
+//           </Button>
+//         </Link>
+//       </div>
+//
+//       <div className="space-y-3 pt-4 border-t border-border">
+//         <h3 className="mt-3 text-sm font-semibold text-brand-body mb-2">STATUTORY SUBMISSIONS</h3>
+//         {payrollSubmissions.map((submission, index) => (
+//           <div
+//             key={index}
+//             className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30"
+//           >
+//             <div className="flex-1">
+//               <div className="flex items-center gap-2 mb-1">
+//                 <span className="text-sm font-medium text-brand-body">
+//                   • {submission.name}
+//                 </span>
+//               </div>
+//               {submission.due_date && (
+//                 <p className="text-xs text-muted-foreground">
+//                   Due: {formatDate(submission.due_date)}
+//                 </p>
+//               )}
+//             </div>
+//             {getStatusBadge(submission.status)}
+//           </div>
+//         ))}
+//       </div>
+//     </DashboardCard>
+//   );
+// }
 
 export default function ComplianceCalendarPage() {
   const [viewMode, setViewMode] = useState<"list" | "month">("list");
@@ -202,13 +202,13 @@ export default function ComplianceCalendarPage() {
           };
         });
 
-      // Fetch and add payroll submissions
-      const payrollData = await fetchPayrollData();
-      const payrollItems = payrollData 
-        ? transformPayrollSubmissionsToComplianceItems(payrollData, 1000000)
-        : [];
-      
-      const allItems = [...items, ...payrollItems];
+      // Fetch and add payroll submissions (disabled on Compliance dashboard)
+      // const payrollData = await fetchPayrollData();
+      // const payrollItems = payrollData 
+      //   ? transformPayrollSubmissionsToComplianceItems(payrollData, 1000000)
+      //   : [];
+      // const allItems = [...items, ...payrollItems];
+      const allItems = [...items];
       setComplianceItems(allItems);
       
       // Calculate summary counts
@@ -403,8 +403,8 @@ export default function ComplianceCalendarPage() {
         }
       />
 
-      {/* Summary Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Summary Strip – analytics for Overdue, Due soon, Upcoming */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <SummaryCard
           label="Overdue"
           value={summaryCounts.overdue}
@@ -412,13 +412,14 @@ export default function ComplianceCalendarPage() {
           onClick={() => handleSummaryClick("Overdue")}
           isActive={summaryFilter === "Overdue"}
         />
-        <SummaryCard
+        {/* Waiting on you analytics hidden in client portal */}
+        {/* <SummaryCard
           label="Waiting on you"
           value={summaryCounts.waitingOnYou}
           tone="info"
           onClick={() => handleSummaryClick("Waiting on you")}
           isActive={summaryFilter === "Waiting on you"}
-        />
+        /> */}
         <SummaryCard
           label="Due soon (7 days)"
           value={summaryCounts.dueSoon}
@@ -435,8 +436,8 @@ export default function ComplianceCalendarPage() {
         />
       </div>
 
-      {/* Payroll Service Card */}
-      <PayrollServiceCard />
+      {/* Payroll Service Card (disabled) */}
+      {/* <PayrollServiceCard /> */}
 
       {/* Compliance Calendar API – client: GLOBAL + own companies; create GLOBAL only; edit/delete own */}
       <ComplianceCalendarApiSection />
@@ -521,7 +522,7 @@ export default function ComplianceCalendarPage() {
               }
               items={[
                 { id: "All", label: "All", onClick: () => setStatusFilter("All") },
-                { id: "Waiting on you", label: "Waiting on you", onClick: () => setStatusFilter("Waiting on you") },
+                // { id: "Waiting on you", label: "Waiting on you", onClick: () => setStatusFilter("Waiting on you") },
                 { id: "Due soon", label: "Due soon", onClick: () => setStatusFilter("Due soon") },
                 { id: "In progress", label: "In progress", onClick: () => setStatusFilter("In progress") },
                 { id: "Completed", label: "Completed", onClick: () => setStatusFilter("Completed") },

@@ -12,6 +12,24 @@ import type { Chat, Message, User } from "@/components/dashboard/messages/types"
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /**
+ * Map room members to participants (excludes current user).
+ */
+function membersToParticipants(members?: { userId: string; user?: { id?: string; firstName?: string; lastName?: string } }[]): User[] {
+    if (!members?.length) return [];
+    const currentUserId = getDecodedUserId() ?? "";
+    return members
+        .filter((m) => m.userId !== currentUserId)
+        .map((m) => ({
+            id: m.userId,
+            name: m.user
+                ? `${m.user.firstName ?? ""} ${m.user.lastName ?? ""}`.trim() || m.userId
+                : m.userId,
+            role: "PLATFORM_EMPLOYEE" as const,
+            isOnline: false,
+        }));
+}
+
+/**
  * Map a ClientChatRoom (from GET /chat/client/rooms) → frontend Chat shape.
  */
 function mapClientRoomToChat(room: ClientChatRoom): Chat {
@@ -42,7 +60,7 @@ function mapClientRoomToChat(room: ClientChatRoom): Chat {
         id: room.id,
         type: "INDIVIDUAL",
         name: room.title,
-        participants: [],
+        participants: membersToParticipants(room.members),
         lastMessage: lastMsg,
         unreadCount: 0,
         isPinned: false,
@@ -52,21 +70,24 @@ function mapClientRoomToChat(room: ClientChatRoom): Chat {
 }
 
 /** Map a ChatMessage from the API → frontend Message shape */
-export function mapApiMessage(m: ChatMessage): Message {
+export function mapApiMessage(m: ChatMessage & { sender_id?: string; sent_at?: string; first_name?: string; last_name?: string }): Message {
     const currentUserId = getDecodedUserId() ?? "";
-    const isMe = m.senderId === currentUserId;
-    const resolvedName = m.sender
-        ? `${m.sender.firstName ?? ""} ${m.sender.lastName ?? ""}`.trim()
+    const rawSenderId = m.senderId ?? (m as any).sender_id;
+    const isMe = rawSenderId === currentUserId;
+    const sender = m.sender ?? (m as any).sender;
+    const resolvedName = sender
+        ? `${(sender as any).firstName ?? (sender as any).first_name ?? ""} ${(sender as any).lastName ?? (sender as any).last_name ?? ""}`.trim()
         : undefined;
+    const sentAt = m.sentAt ?? (m as any).sent_at ?? new Date().toISOString();
 
     const base: Message = {
         id: m.id,
-        senderId: isMe ? "me" : m.senderId,
+        senderId: isMe ? "me" : rawSenderId,
         senderName: isMe ? undefined : resolvedName || undefined,
-        type: m.type === "FILE" ? "document" : "text",
-        text: m.content ?? undefined,
-        fileUrl: (m as any).fileUrl ?? undefined,
-        timestamp: new Date(m.sentAt).toLocaleTimeString('en-US', {
+        type: (m.type ?? (m as any).type) === "FILE" ? "document" : "text",
+        text: m.content ?? (m as any).content ?? undefined,
+        fileUrl: (m as any).fileUrl ?? (m as any).file_url ?? undefined,
+        timestamp: new Date(sentAt).toLocaleTimeString('en-US', {
             hour: "2-digit",
             minute: "2-digit",
         }),
@@ -75,7 +96,7 @@ export function mapApiMessage(m: ChatMessage): Message {
             : m.participantStates?.some((s) => s.status === "DELIVERED")
                 ? "delivered"
                 : "sent") as "sent" | "delivered" | "read",
-        createdAt: new Date(m.sentAt).getTime(),
+        createdAt: new Date(sentAt).getTime(),
     };
     if (m.replyToMessageId != null) {
         base.replyToId = m.replyToMessageId;
@@ -91,19 +112,20 @@ export function mapApiMessage(m: ChatMessage): Message {
  * Build a participants array from the messages in a room (since
  * the client rooms endpoint doesn't return member info directly).
  */
-export function extractParticipants(messages: ChatMessage[]): User[] {
+export function extractParticipants(messages: (ChatMessage & { sender_id?: string; sender?: { firstName?: string; lastName?: string; first_name?: string; last_name?: string } })[]): User[] {
     const seen = new Map<string, User>();
     const currentUserId = getDecodedUserId() ?? "";
 
     messages.forEach((m) => {
-        if (seen.has(m.senderId)) return;
-        if (m.senderId === currentUserId) return;
-        const sender = m.sender;
-        seen.set(m.senderId, {
-            id: m.senderId,
-            name: sender
-                ? `${sender.firstName ?? ""} ${sender.lastName ?? ""}`.trim()
-                : m.senderId,
+        const senderId = m.senderId ?? (m as any).sender_id;
+        if (!senderId || seen.has(senderId) || senderId === currentUserId) return;
+        const sender = m.sender ?? (m as any).sender;
+        const name = sender
+            ? `${(sender as any).firstName ?? (sender as any).first_name ?? ""} ${(sender as any).lastName ?? (sender as any).last_name ?? ""}`.trim()
+            : senderId;
+        seen.set(senderId, {
+            id: senderId,
+            name: name || senderId,
             role: "PLATFORM_EMPLOYEE" as const,
             isOnline: false,
         });
@@ -122,6 +144,7 @@ export interface UseChatRoomsReturn {
     togglePin: (roomId: string) => void;
     toggleMute: (roomId: string) => void;
     setRoomMessages: (roomId: string, messages: Message[], participants?: User[]) => void;
+    setRoomMessagesWithMerge: (roomId: string, apiMessages: Message[], participants?: User[]) => void;
     appendMessage: (roomId: string, message: Message) => void;
     /** Zero-out or set unread badge for a specific room */
     setUnreadCount: (roomId: string, count: number) => void;
@@ -223,10 +246,27 @@ export function useChatRooms(activeRoomId?: string): UseChatRoomsReturn {
                                     }
 
                                     if (eventType === 'INSERT') {
-                                        newMessages = isActiveRoom ? [...r.messages, finalMsg] : r.messages;
+                                        const alreadyExists = r.messages.some(m => m.id === finalMsg.id);
+                                        if (isActiveRoom && !alreadyExists) {
+                                            // Realtime payload timestamp can be wrong (snake_case, format).
+                                            // Force new message to sort to bottom by using max of existing + 1
+                                            const maxExisting = r.messages.length
+                                                ? Math.max(...r.messages.map(m => m.createdAt ?? 0))
+                                                : 0;
+                                            const safeCreatedAt = Math.max(maxExisting + 1, Date.now());
+                                            const msgForSort = { ...finalMsg, createdAt: safeCreatedAt };
+                                            const merged = [...r.messages, msgForSort];
+                                            merged.sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
+                                            newMessages = merged;
+                                        } else if (isActiveRoom) {
+                                            newMessages = r.messages;
+                                        } else {
+                                            newMessages = r.messages;
+                                        }
                                         if (!isActiveRoom) unreadDelta = 1;
                                     } else if (eventType === 'UPDATE') {
                                         newMessages = r.messages.map(m => m.id === finalMsg.id ? finalMsg : m);
+                                        newMessages.sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
                                     } else if (eventType === 'DELETE') {
                                         newMessages = r.messages.map(m =>
                                             m.id === finalMsg.id ? { ...m, isDeleted: true, text: undefined, type: 'text' as const, reactions: {} } : m
@@ -311,6 +351,24 @@ export function useChatRooms(activeRoomId?: string): UseChatRoomsReturn {
         []
     );
 
+    /** Merge API messages with any Realtime messages that arrived during fetch (avoids overwriting them) */
+    const setRoomMessagesWithMerge = useCallback(
+        (roomId: string, apiMessages: Message[], participants?: User[]) => {
+            setRooms((prev) =>
+                prev.map((r) => {
+                    if (r.id !== roomId) return r;
+                    const apiIds = new Set(apiMessages.map((m) => m.id));
+                    const fromRealtime = r.messages.filter((m) => !apiIds.has(m.id));
+                    const merged = [...apiMessages, ...fromRealtime].sort(
+                        (a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0)
+                    );
+                    return { ...r, messages: merged, participants: participants ?? r.participants };
+                })
+            );
+        },
+        []
+    );
+
     /** Used for optimistic sends — appends a message without touching unread count */
     const appendMessage = useCallback((roomId: string, message: Message) => {
         setRooms((prev) =>
@@ -336,6 +394,7 @@ export function useChatRooms(activeRoomId?: string): UseChatRoomsReturn {
         togglePin,
         toggleMute,
         setRoomMessages,
+        setRoomMessagesWithMerge,
         appendMessage,
         setUnreadCount,
     };
