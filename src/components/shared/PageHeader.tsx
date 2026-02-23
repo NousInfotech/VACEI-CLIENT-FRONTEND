@@ -18,6 +18,7 @@ interface PageHeaderProps {
   };
   actions?: React.ReactNode;
   className?: string;
+  variant?: "dark" | "light";
   animate?: boolean;
 }
 
@@ -31,27 +32,39 @@ export const PageHeader = ({
   riskLevel,
   actions,
   className,
+  variant = "dark",
   animate = true,
 }: PageHeaderProps) => {
   const hasStatusBar = !!(activeCompany || badge || riskLevel);
+  const isLight = variant === "light";
 
   return (
-    <DashboardCard animate={animate} className={cn("p-8 bg-[#0f1729] border-white/10", className)}>
+    <DashboardCard 
+      animate={animate} 
+      className={cn(
+        "p-8 border-white/10",
+        isLight ? "bg-white border-slate-200 shadow-sm" : "bg-[#0f1729]",
+        className
+      )}
+    >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
         <div className="space-y-4">
           <div className="flex items-center gap-4">
             {Icon && (
-              <div className="w-12 h-12 rounded-lg bg-white/15 flex items-center justify-center border border-white/30 shrink-0 shadow-sm">
-                <Icon className="w-6 h-6 text-white" />
+              <div className={cn(
+                "w-12 h-12 rounded-lg flex items-center justify-center border shrink-0 shadow-sm",
+                isLight ? "bg-slate-50 border-slate-100" : "bg-white/15 border-white/30"
+              )}>
+                <Icon className={cn("w-6 h-6", isLight ? "text-primary-color-new" : "text-white")} />
               </div>
             )}
             <div className="space-y-1">
-              <h1 className="text-3xl font-semibold text-white tracking-tight">
+              <h1 className={cn("text-3xl font-semibold tracking-tight", isLight ? "text-slate-900" : "text-white")}>
                 {title}
               </h1>
-              {subtitle && <p className="text-white/60 font-medium">{subtitle}</p>}
+              {subtitle && <p className={isLight ? "text-slate-500 font-medium" : "text-white/60 font-medium"}>{subtitle}</p>}
               {description && (
-                <p className="text-white/50 text-sm max-w-2xl pt-2 leading-relaxed">
+                <p className={cn("text-sm max-w-2xl pt-2 leading-relaxed", isLight ? "text-slate-500" : "text-white/50")}>
                   {description}
                 </p>
               )}
@@ -61,10 +74,13 @@ export const PageHeader = ({
           {hasStatusBar && (
             <div className="flex flex-wrap items-center gap-4">
               {activeCompany && (
-                <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 flex items-center gap-3 shadow-sm">
-                  <span className="text-xs font-medium text-white/80 uppercase tracking-widest">Company</span>
-                  <div className="h-4 w-px bg-white/10" />
-                  <span className="text-sm font-bold text-white">{activeCompany}</span>
+                <div className={cn(
+                  "border rounded-xl px-4 py-2 flex items-center gap-3 shadow-sm",
+                  isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/10"
+                )}>
+                  <span className={cn("text-xs font-medium uppercase tracking-widest", isLight ? "text-slate-400" : "text-white/80")}>Company</span>
+                  <div className={cn("h-4 w-px", isLight ? "bg-slate-200" : "bg-white/10")} />
+                  <span className={cn("text-sm font-bold", isLight ? "text-slate-900" : "text-white")}>{activeCompany}</span>
                 </div>
               )}
               
@@ -77,7 +93,10 @@ export const PageHeader = ({
               {riskLevel && (
                 <Link 
                   href="/dashboard/compliance" 
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 bg-white/5 font-bold text-xs uppercase tracking-widest shadow-sm text-white cursor-pointer hover:opacity-80 transition-opacity"
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2 rounded-xl border font-bold text-xs uppercase tracking-widest shadow-sm cursor-pointer hover:opacity-80 transition-opacity",
+                    isLight ? "bg-slate-50 border-slate-200 text-slate-900" : "bg-white/5 border-white/10 text-white"
+                  )}
                 >
                   <span className={cn(
                     "w-2 h-2 rounded-full",

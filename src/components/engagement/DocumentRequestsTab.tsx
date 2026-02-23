@@ -20,6 +20,7 @@ import { useEngagement } from './hooks/useEngagement'
 import { uploadDocumentRequestFile, clearDocumentRequestFile } from '@/api/documentRequestService'
 import DocumentRequestSingle from '../company/kyc/SingleDocumentRequest'
 import DocumentRequestDouble from '../company/kyc/DoubleDocumentRequest'
+import { cn } from '@/lib/utils'
 import EmptyState from '../shared/EmptyState'
 
 type UploadingState = { requestId: string; documentId: string }
@@ -295,11 +296,33 @@ const DocumentRequestsTab = () => {
                           <h4 className="text-lg font-semibold text-gray-900">
                             {request.title || request.name || 'Document Request'}
                           </h4>
-                          {request.deadline && (
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              Deadline: {format(new Date(request.deadline), 'MMM d, yyyy')}
-                            </p>
-                          )}
+                          {request.deadline && (() => {
+                            const deadline = new Date(request.deadline);
+                            const now = new Date();
+                            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                            const deadlineDate = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate());
+                            const diffDays = Math.ceil((deadlineDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                            
+                            let label = `Deadline: ${format(deadline, 'MMM d, yyyy')}`;
+                            let colorClass = "text-gray-500";
+
+                            if (diffDays < 0) {
+                              label = "Overdue";
+                              colorClass = "text-red-500 font-bold";
+                            } else if (diffDays === 0) {
+                              label = "Due Today";
+                              colorClass = "text-amber-500 font-bold";
+                            } else if (diffDays === 1) {
+                              label = "Due Soon";
+                              colorClass = "text-amber-500 font-bold";
+                            }
+
+                            return (
+                              <p className={cn("text-xs mt-0.5 uppercase tracking-wider", colorClass)}>
+                                {label} {diffDays >= 0 && diffDays <= 1 ? `(${format(deadline, 'MMM d')})` : ''}
+                              </p>
+                            );
+                          })()}
                         </div>
                       </div>
                       

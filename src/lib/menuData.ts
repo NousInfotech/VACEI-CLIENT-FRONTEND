@@ -1199,6 +1199,22 @@ export const globalMenuData: MenuItem[] = [
     description: "Manage all your companies",
   },
   {
+    slug: "compliance",
+    icon: TaxesIcon,
+    label: "Compliance",
+    href: "/global-dashboard/compliance",
+    section: "primary",
+    description: "Multi-company compliance overview",
+  },
+  {
+    slug: "support",
+    icon: Message01Icon,
+    label: "Support",
+    href: "/global-dashboard/support",
+    section: "primary",
+    description: "Help and assistance",
+  },
+  {
     slug: "messages",
     icon: Message01Icon,
     label: "Messages",

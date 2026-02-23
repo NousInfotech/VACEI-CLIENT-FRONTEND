@@ -7,12 +7,14 @@ import {
   CheckCircle2, 
   AlertTriangle, 
   AlertCircle, 
-  FileText, 
+  BarChart3, 
   MessageSquare, 
   ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGlobalDashboard } from "@/context/GlobalDashboardContext";
+import { listComplianceCalendars, ComplianceCalendarEntry } from "@/api/complianceCalendarService";
+import { format, isPast, isToday, addDays } from "date-fns";
 
 export default function GlobalOverviewCards() {
   const router = useRouter();
@@ -23,6 +25,23 @@ export default function GlobalOverviewCards() {
     hasMessages, 
     pendingDocs 
   } = useGlobalDashboard();
+
+  const [calendarEntries, setCalendarEntries] = useState<ComplianceCalendarEntry[]>([]);
+  const [loadingEntries, setLoadingEntries] = useState(true);
+
+  useEffect(() => {
+    const fetchEntries = async () => {
+      try {
+        const data = await listComplianceCalendars();
+        setCalendarEntries(data);
+      } catch (error) {
+        console.error("Failed to fetch dashboard compliance data:", error);
+      } finally {
+        setLoadingEntries(false);
+      }
+    };
+    fetchEntries();
+  }, []);
 
   const CardWrapper = ({ children, bgImage, title, button }: { children: React.ReactNode, bgImage: string, title: string, button: React.ReactNode }) => (
     <div className="relative group overflow-hidden rounded-4xl h-[280px] border border-white/20 shadow-2xl transition-all duration-500">
@@ -49,6 +68,19 @@ export default function GlobalOverviewCards() {
   );
 
   const getComplianceContent = () => {
+    // Calculate real data from entries
+    const overdueEntries = calendarEntries.filter(e => isPast(new Date(e.dueDate)) && !isToday(new Date(e.dueDate)));
+    const dueSoonEntries = calendarEntries.filter(e => {
+      const due = new Date(e.dueDate);
+      return !isPast(due) && due <= addDays(new Date(), 7);
+    });
+    
+    // Most urgent item
+    const urgentEntry = overdueEntries.length > 0 ? overdueEntries[0] : 
+                        dueSoonEntries.length > 0 ? dueSoonEntries[0] : 
+                        calendarEntries.length > 0 ? [...calendarEntries].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0] : 
+                        null;
+
     let statusBadge = (
       <div className="flex items-center gap-3 text-emerald-400 font-semibold bg-emerald-950/30 w-fit px-4 py-1.5 rounded-full border border-emerald-500/30">
         <CheckCircle2 size={18} />
@@ -57,32 +89,47 @@ export default function GlobalOverviewCards() {
     );
     let description = "No immediate actions required.";
     let deadlineLabel = "Next deadline";
-    let deadlineValue = "Tesla Ltd – VAT Return – 18 Feb";
+    let deadlineValue = urgentEntry ? `${urgentEntry.company?.name || 'Global'} – ${urgentEntry.title} – ${format(new Date(urgentEntry.dueDate), "dd MMM")}` : "No upcoming deadlines";
     let buttonLabel = "View Deadlines";
 
-    if (complianceState === "overdue") {
-      const overdueCompany = companies.find(c => c.overdueCount > 0) || { name: "Tesla Ltd" };
+    if (overdueEntries.length > 0) {
       statusBadge = (
         <div className="flex items-center gap-3 text-red-400 font-semibold bg-red-950/30 w-fit px-4 py-1.5 rounded-full border border-red-500/30">
           <AlertCircle size={18} />
-          <span>1 filing is overdue.</span>
+          <span>{overdueEntries.length} {overdueEntries.length === 1 ? 'filing is' : 'filings are'} overdue.</span>
         </div>
       );
       description = "Immediate action is required.";
-      deadlineLabel = "Company: " + overdueCompany.name;
-      deadlineValue = "Filing: VAT Return";
+      deadlineLabel = "Overdue: " + (urgentEntry?.company?.name || 'Global');
+      deadlineValue = urgentEntry ? `${urgentEntry.title} – ${format(new Date(urgentEntry.dueDate), "dd MMM")}` : "";
       buttonLabel = "Resolve Now";
-    } else if (complianceState === "due") {
+    } else if (dueSoonEntries.length > 0) {
       statusBadge = (
         <div className="flex items-center gap-3 text-amber-400 font-semibold bg-amber-950/30 w-fit px-4 py-1.5 rounded-full border border-amber-500/30">
           <AlertTriangle size={18} />
-          <span>2 deadlines coming up this month.</span>
+          <span>{dueSoonEntries.length} {dueSoonEntries.length === 1 ? 'deadline' : 'deadlines'} coming up soon.</span>
         </div>
       );
       description = "Please review upcoming filings.";
       deadlineLabel = "Next deadline";
-      deadlineValue = "Gozo Ventures Ltd – Annual Return – 12 Feb";
+      deadlineValue = urgentEntry ? `${urgentEntry.company?.name || 'Global'} – ${urgentEntry.title} – ${format(new Date(urgentEntry.dueDate), "dd MMM")}` : "";
       buttonLabel = "Review Deadlines";
+    }
+
+    if (loadingEntries) {
+        return {
+            content: (
+                <div className="animate-pulse space-y-4">
+                    <div className="h-8 bg-white/10 rounded-full w-48" />
+                    <div className="h-4 bg-white/10 rounded w-32" />
+                    <div className="space-y-2 pt-2">
+                        <div className="h-2 bg-white/10 rounded w-20" />
+                        <div className="h-4 bg-white/10 rounded w-full" />
+                    </div>
+                </div>
+            ),
+            button: <div className="h-10 bg-white/10 rounded-xl w-32 animate-pulse" />
+        };
     }
 
     return {
@@ -100,7 +147,7 @@ export default function GlobalOverviewCards() {
         <Button 
           variant="outline" 
           className="bg-white/10 border-none text-white hover:bg-white hover:text-black rounded-xl backdrop-blur-xl group/btn transition-all duration-300"
-          onClick={() => router.push('/global-dashboard/companies')}
+          onClick={() => router.push('/global-dashboard/compliance')}
         >
           {buttonLabel}
           <ArrowRight size={16} className="ml-2 group-hover/btn:translate-x-1 transition-transform" />
@@ -138,18 +185,17 @@ export default function GlobalOverviewCards() {
     };
   };
 
-  const getDocumentsContent = () => {
+  const getResellerAnalyticsContent = () => {
     return {
       content: (
         <>
           <div className="flex items-center gap-3 text-white/90 font-semibold">
-            <FileText size={24} className="text-white/70" />
-            <span className="text-xl">{pendingDocs > 0 ? `${pendingDocs} Document Requests` : "All Up to Date"}</span>
+            <BarChart3 size={24} className="text-white/70" />
+            <span className="text-xl">Reseller Analytics</span>
           </div>
           <p className="text-white/80 text-sm leading-relaxed mt-2">
-            {pendingDocs > 0 
-              ? "Documents have been requested. Please review and submit via dashboard."
-              : "All required documents and certificates are currently up to date."}
+            Track your signups, referrals, and earnings in real-time. 
+            Monitor your reseller performance across all companies.
           </p>
         </>
       ),
@@ -157,9 +203,9 @@ export default function GlobalOverviewCards() {
         <Button 
           variant="outline" 
           className="bg-white/10 border-none text-white hover:bg-white hover:text-black rounded-xl backdrop-blur-xl group/btn transition-all duration-300"
-          onClick={() => router.push('/global-dashboard/companies')}
+          onClick={() => router.push('/global-dashboard/analytics')}
         >
-          {pendingDocs > 0 ? "View Requests" : "View Documents"}
+          View Analytics
           <ArrowRight size={16} className="ml-2 group-hover/btn:translate-x-1 transition-transform" />
         </Button>
       )
@@ -206,7 +252,7 @@ export default function GlobalOverviewCards() {
 
   const compliance = getComplianceContent();
   const companiesData = getCompaniesContent();
-  const docs = getDocumentsContent();
+  const analytics = getResellerAnalyticsContent();
   const support = getSupportContent();
 
   return (
@@ -228,11 +274,11 @@ export default function GlobalOverviewCards() {
       </CardWrapper>
 
       <CardWrapper 
-        title="Documents" 
+        title="Reseller Analytics" 
         bgImage="/global-dashboard/document-requests.png"
-        button={docs.button}
+        button={analytics.button}
       >
-        {docs.content}
+        {analytics.content}
       </CardWrapper>
 
       <CardWrapper 

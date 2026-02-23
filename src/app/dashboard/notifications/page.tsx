@@ -115,8 +115,8 @@ export default function NotificationsPage() {
                 limit: 10,
                 read: showUnreadOnly ? false : undefined,
             });
-            setNotifications(response.items);
-            setTotalPages(response.meta.totalPages);
+            setNotifications(Array.isArray(response) ? response : (response?.items || []));
+            setTotalPages(response?.meta?.totalPages || 1);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch notifications.');
             console.error('Error fetching notifications:', err);
@@ -215,8 +215,8 @@ export default function NotificationsPage() {
                         Array.from({ length: 3 }).map((_, index) => (
                             <NotificationSkeleton key={index} />
                         ))
-                    ) : notifications.length > 0 ? (
-                        notifications.map((notification) => (
+                    ) : notifications && notifications.length > 0 ? (
+                        notifications.map((notification: Notification) => (
                             <NotificationItem
                                 key={notification.id}
                                 notification={notification}

@@ -22,6 +22,13 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return result.data || result; // Backend wraps success response in "data"
 }
 
+export function getPortalRedirectUrl(url?: string): string {
+  if (!url) return '';
+  if (url.startsWith('/dashboard')) return url;
+  if (url.startsWith('/')) return `/dashboard${url}`;
+  return url;
+}
+
 export interface Notification {
   id: string;
   userId: string;
@@ -64,7 +71,16 @@ export async function fetchNotificationsAPI(
     headers: getAuthHeaders(),
   });
 
-  return handleResponse<FetchNotificationsResponse>(res);
+  const response = await handleResponse<FetchNotificationsResponse>(res);
+  
+  if (response && response.items) {
+    response.items = response.items.map(notif => ({
+      ...notif,
+      redirectUrl: getPortalRedirectUrl(notif.redirectUrl)
+    }));
+  }
+  
+  return response;
 }
 
 export async function fetchUnreadCountAPI(): Promise<FetchUnreadCountResponse> {
