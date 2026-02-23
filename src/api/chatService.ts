@@ -65,11 +65,18 @@ export interface MessagesResponse {
   };
 }
 
+/** Room member from backend */
+export interface ClientRoomMember {
+  userId: string;
+  user?: { id?: string; firstName?: string; lastName?: string; email?: string };
+}
+
 /** Shape returned by GET /chat/client/rooms */
 export interface ClientChatRoom {
   id: string;
   title: string;
   contextType: "ENGAGEMENT" | "DIRECT" | "GROUP" | string;
+  members?: ClientRoomMember[];
   lastMessage?: {
     content: string;
     type: "TEXT" | "FILE";
@@ -134,6 +141,10 @@ class ChatService {
     }
   }
 
+  private get hasSupabase(): boolean {
+    return !!this.supabase;
+  }
+
   public setAccessToken(token: string) {
     if (this.supabase) {
       this.supabase.realtime.setAuth(token);
@@ -193,6 +204,7 @@ class ChatService {
     limit = 50,
     cursor?: string
   ): Promise<ClientMessagesResponse> {
+    // Use backend API so we get sender { firstName, lastName } for display names.
     const params = new URLSearchParams({ limit: String(limit) });
     if (cursor) params.append("cursor", cursor);
     return this.request<ClientMessagesResponse>(
@@ -204,6 +216,27 @@ class ChatService {
   // ── Generic (partner / admin) endpoints ────────────────────────────────
 
   async getMessages(roomId: string, cursor?: string): Promise<MessagesResponse> {
+    // When Supabase is available, read directly from ChatMessage so
+    // history matches what realtime inserts into.
+    if (this.hasSupabase) {
+      const roomUuid = this.toUuidIfBase64(roomId);
+      const { data, error } = await (this.supabase as any)
+        .from("ChatMessage")
+        .select("*")
+        .eq("roomId", roomUuid)
+        .order("sentAt", { ascending: true })
+        .limit(50);
+
+      if (error) {
+        throw error;
+      }
+
+      return {
+        data: (data || []) as ChatMessage[],
+      };
+    }
+
+    // Fallback to backend API
     const params = new URLSearchParams({ limit: "50" });
     if (cursor) params.append("cursor", cursor);
     return this.request<MessagesResponse>(
@@ -302,7 +335,9 @@ class ChatService {
         .single();
 
       if (error) throw error;
-      return data as ChatMessage;
+      const msg = data as ChatMessage;
+      this.notifyRoomMembers(roomId, content || "", msg?.id).catch(() => {});
+      return msg;
     }
 
     const body: Record<string, unknown> = {
@@ -334,6 +369,19 @@ class ChatService {
     await this.request("DELETE", `chat/messages/${messageId}`);
   }
 
+  async clearRoom(roomId: string): Promise<void> {
+    await this.request("DELETE", `chat/rooms/${roomId}/messages`);
+  }
+
+  /** Notify room members of a new message (call after Supabase direct insert). */
+  async notifyRoomMembers(roomId: string, content: string, messageId?: string): Promise<void> {
+    try {
+      await this.request("POST", `chat/rooms/${roomId}/notify-members`, { content, messageId });
+    } catch (e) {
+      console.warn("Failed to notify room members:", e);
+    }
+  }
+
   async markRoomAsRead(roomId: string): Promise<void> {
     await this.request("PATCH", `chat/rooms/${roomId}/read`, {});
   }
@@ -359,7 +407,8 @@ class ChatService {
         (payload) => {
           const eventType = payload.eventType as 'INSERT' | 'UPDATE' | 'DELETE';
           // For DELETE, there is only payload.old
-          const msg = (eventType === 'DELETE' ? payload.old : payload.new) as ChatMessage;
+          const raw = (eventType === 'DELETE' ? payload.old : payload.new) as Record<string, unknown>;
+          const msg = normalizeRealtimePayload(raw) as unknown as ChatMessage;
           onMessageChange(msg, eventType);
         }
       )
@@ -413,6 +462,31 @@ class ChatService {
         console.log(`🔥 REALTIME MEMBER SUBSCRIPTION STATUS: ${status} for room ${roomId}`);
       }) as RealtimeChannel;
   }
+}
+
+/** Normalize Supabase Realtime payload to match ChatMessage shape (sentAt for correct timestamp display). */
+function normalizeRealtimePayload(raw: Record<string, unknown>): Record<string, unknown> {
+  const r = raw || {};
+  const sentAtRaw = r.sentAt ?? r.sent_at ?? (r as any).sentat;
+  let sentAt: string;
+  if (typeof sentAtRaw === 'string') {
+    sentAt = sentAtRaw.includes('T') || sentAtRaw.endsWith('Z') ? sentAtRaw : `${String(sentAtRaw).replace(' ', 'T')}Z`;
+  } else if (typeof sentAtRaw === 'number') {
+    sentAt = sentAtRaw < 1e12 ? new Date(sentAtRaw * 1000).toISOString() : new Date(sentAtRaw).toISOString();
+  } else {
+    sentAt = new Date().toISOString();
+  }
+  return {
+    ...r,
+    id: r.id ?? (r as any).id,
+    roomId: r.roomId ?? (r as any).room_id,
+    senderId: r.senderId ?? (r as any).sender_id,
+    content: r.content,
+    fileUrl: r.fileUrl ?? (r as any).file_url,
+    type: r.type,
+    sentAt,
+    replyToMessageId: r.replyToMessageId ?? (r as any).reply_to_message_id ?? null,
+  };
 }
 
 export const chatService = new ChatService();

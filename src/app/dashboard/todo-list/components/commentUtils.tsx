@@ -40,30 +40,44 @@ export function mergeComments(existing: Comment[], incoming: Comment[]): Comment
 }
 
 export function mapComments(raw: any[], userId: number): Comment[] {
-  return raw.map(c => ({
-    id: c.id,
-    comment: c.comment,
-    commentedById: c.commentedById,
-    createdAt: c.createdAt,
-    attachments: c.attachments ? c.attachments.map((att: any) => ({
-      id: att.id,
-      filename: att.filename,
-      mimetype: att.mimetype,
-      size: att.size,
-      filepath: att.filepath,
-      uploadedAt: att.uploadedAt
-    })) : [],
-    commentedBy: {
-      id: c.commentedBy.id,
-      first_name: c.commentedBy.first_name,
-      last_name: c.commentedBy.last_name,
-      username: c.commentedBy.username, // <--- ADD THIS LINE
-      email: c.commentedBy.email,       // <--- ADD THIS LINE
-      name: c.commentedBy.name,
-    },
-    sender: c.commentedById === userId ? "self" : "other",
-    taskId: c.taskId,
-    updatedAt: c.updatedAt,
-    deletedAt: c.deletedAt,
-  }));
+  return (raw ?? []).map((c) => {
+    const cb = c.commentedBy ?? {};
+
+    const username: string =
+      cb.username ??
+      cb.email ??
+      cb.name ??
+      (typeof c.commentedById === "number" ? `User ${c.commentedById}` : "Unknown user");
+
+    const name: string = cb.name ?? username;
+
+    return {
+      id: c.id,
+      comment: c.comment,
+      commentedById: c.commentedById,
+      createdAt: c.createdAt,
+      attachments: c.attachments
+        ? c.attachments.map((att: any) => ({
+            id: att.id,
+            filename: att.filename,
+            mimetype: att.mimetype,
+            size: att.size,
+            filepath: att.filepath,
+            uploadedAt: att.uploadedAt,
+          }))
+        : [],
+      commentedBy: {
+        id: cb.id ?? c.commentedById,
+        first_name: cb.first_name ?? "",
+        last_name: cb.last_name ?? "",
+        username,
+        email: cb.email ?? "",
+        name,
+      },
+      sender: c.commentedById === userId ? "self" : "other",
+      taskId: c.taskId,
+      updatedAt: c.updatedAt,
+      deletedAt: c.deletedAt,
+    };
+  });
 }

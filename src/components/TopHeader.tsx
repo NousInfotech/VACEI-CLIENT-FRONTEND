@@ -135,6 +135,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             setLatestNotifications(Array.isArray(response) ? response : (response?.items || []));
         } catch (error) {
             console.error("Failed to fetch latest notifications:", error);
+            setLatestNotifications([]);
         }
     }, []);
 
@@ -456,7 +457,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                             )}
                         </div>
                         <div className="p-3 overflow-y-auto">
-                            {latestNotifications && latestNotifications.length > 0 ? (
+                            {latestNotifications.length > 0 ? (
                                 latestNotifications.map((notification) => (
                                     <Link href={notification.redirectUrl || '#'} key={notification.id} passHref>
                                         <div
