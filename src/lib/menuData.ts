@@ -516,12 +516,60 @@ export const menuData: MenuItem[] = [
           },
         ], */
       },
-
       {
         slug: "cfo",
         icon: Wallet01Icon,
         label: "CFO",
         href: "/dashboard/services/cfo",
+        isActive: true,
+        children: [], /* children: [
+          // {
+          //   slug: "cfo-docs",
+          //   icon: DocumentValidationIcon,
+          //   label: "Document Requests",
+          //   href: "/dashboard/services/cfo?tab=document_requests",
+          //   count: cfoMock.documentRequests?.length || 0,
+          //   totalCount: cfoMock.documentRequests?.length || 0,
+          // },
+          // {
+          //   slug: "cfo-milestones",
+          //   icon: TaskDaily01Icon,
+          //   label: "Milestones",
+          //   href: "/dashboard/services/cfo?tab=milestones",
+          // },
+          // {
+          //   slug: "cfo-lib",
+          //   icon: Book02Icon,
+          //   label: "Library",
+          //   href: "/dashboard/services/cfo?tab=library",
+          // },
+          // {
+          //   slug: "cfo-compliance",
+          //   icon: TaxesIcon,
+          //   label: "Compliance Calendar",
+          //   href: "/dashboard/services/cfo?tab=compliance_calendar",
+          // },
+          // {
+          //   slug: "cfo-messages",
+          //   icon: Message01Icon,
+          //   label: "Messages",
+          //   href: "/dashboard/services/cfo?tab=messages",
+          //   count: cfoMock.messages?.filter((m) => !m.read).length || 0,
+          //   totalCount: cfoMock.messages?.length || 0,
+          // },
+          {
+            slug: "cfo-filings",
+            icon: TaskDaily01Icon,
+            label: "Filings",
+            href: "/dashboard/services/cfo?tab=cfo_filings",
+          },
+        ], */
+      },
+      {
+        slug: "project-transactions",
+        icon: Wallet01Icon,
+        label: "Project Transactions",
+        href: "/dashboard/services/project-transactions",
         isActive: true,
         children: [], /* children: [
           // {
