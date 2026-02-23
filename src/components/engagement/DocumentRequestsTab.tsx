@@ -7,7 +7,12 @@ import {
   FileText,
   ChevronDown,
   ChevronUp,
-  Eraser
+  Eraser,
+  Layers,
+  LayoutGrid,
+  Eye,
+  Trash2,
+  ExternalLink
 } from 'lucide-react'
 import { TableSkeleton } from "../shared/CommonSkeletons";
 import { Card, CardContent } from '@/components/ui/card2'
@@ -22,6 +27,7 @@ import DocumentRequestSingle from '../company/kyc/SingleDocumentRequest'
 import DocumentRequestDouble from '../company/kyc/DoubleDocumentRequest'
 import { cn } from '@/lib/utils'
 import EmptyState from '../shared/EmptyState'
+import BulkUploadZone from './BulkUploadZone'
 
 type UploadingState = { requestId: string; documentId: string }
 
@@ -29,6 +35,7 @@ type ClearAction = (reason: string) => Promise<void>
 
 const DocumentRequestsTab = () => {
   const [expandedRequests, setExpandedRequests] = useState<Set<string>>(new Set())
+  const [uploadMode, setUploadMode] = useState<Record<string, 'single' | 'bulk'>>({})
   const [uploadingState, setUploadingState] = useState<UploadingState | null>(null)
   const [uploadSuccessOpen, setUploadSuccessOpen] = useState(false)
   const [clearSuccessOpen, setClearSuccessOpen] = useState(false)
@@ -90,6 +97,10 @@ const DocumentRequestsTab = () => {
       newSet.add(id)
     }
     setExpandedRequests(newSet)
+  }
+
+  const toggleUploadMode = (requestId: string, mode: 'single' | 'bulk') => {
+    setUploadMode(prev => ({ ...prev, [requestId]: mode }))
   }
 
 
@@ -242,7 +253,9 @@ const DocumentRequestsTab = () => {
     )
   }
 
-  if (!documentRequests || documentRequests.length === 0) {
+  const visibleRequests = (documentRequests || []).filter(r => r.status?.toUpperCase() !== 'DRAFT');
+
+  if (visibleRequests.length === 0) {
     return (
       <EmptyState 
         icon={FileText}
@@ -265,7 +278,7 @@ const DocumentRequestsTab = () => {
       </div>
 
       <div className="space-y-4">
-        {documentRequests.map((request) => {
+        {visibleRequests.map((request) => {
           const requestIdVal = reqId(request)
           const isExpanded = expandedRequests.has(requestIdVal)
           
@@ -339,7 +352,7 @@ const DocumentRequestsTab = () => {
                       </div>
 
                       <div className="flex items-center gap-4 mb-4">
-                        <div className="w-64 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                           <div 
                             className="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out"
                             style={{ width: `${percentage}%` }}
@@ -383,48 +396,89 @@ const DocumentRequestsTab = () => {
                 </div>
 
                 {isExpanded && (
-                  <div className="bg-gray-50/50 border-t border-gray-100 p-6 animate-in slide-in-from-top-2 duration-300 space-y-4">
-                    <div className="mb-2 flex items-center justify-between">
-                      <h5 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Requested Items</h5>
-                      <span className="text-[10px] text-gray-400 italic">Submit supporting evidence for this category</span>
+                  <div className="bg-gray-50/50 border-t border-gray-100 p-6 animate-in slide-in-from-top-2 duration-300">
+                    <div className="flex items-center justify-between mb-6">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleUploadMode(requestIdVal, uploadMode[requestIdVal] === 'bulk' ? 'single' : 'bulk')}
+                        className={cn(
+                          "rounded-xl px-5 h-9 text-xs font-bold flex items-center gap-2 transition-all border-orange-200",
+                          uploadMode[requestIdVal] === 'bulk'
+                            ? "bg-orange-600 text-white border-orange-600 shadow-md shadow-orange-100 hover:bg-orange-700"
+                            : "bg-white text-orange-600 hover:bg-orange-50 hover:text-orange-700"
+                        )}
+                      >
+                        <Layers size={16} />
+                        {uploadMode[requestIdVal] === 'bulk' ? 'Exit Bulk Upload' : 'Bulk Upload'}
+                      </Button>
+                      <span className="text-[10px] text-gray-400 italic font-medium">
+                        {uploadMode[requestIdVal] === 'bulk' 
+                          ? 'Upload multiple files and match automatically' 
+                          : 'Click "Bulk Upload" to submit multiple documents at once'}
+                      </span>
                     </div>
 
-                    {singleDocs.length === 0 && multipleGroups.length === 0 ? (
-                      <div className="text-center py-4 text-gray-500 text-sm bg-white rounded-lg">
-                        No documents in this request yet
+                    {(uploadMode[requestIdVal] || 'single') === 'single' ? (
+                      <div className="space-y-6">
+                        <div className="mb-4 flex items-center justify-between">
+                          <h5 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Requested Items</h5>
+                          <span className="text-[10px] text-gray-400 italic">Submit supporting evidence for this category</span>
+                        </div>
+                        {singleDocs.length === 0 && multipleGroups.length === 0 ? (
+                          <div className="text-center py-4 text-gray-500 text-sm bg-white rounded-lg">
+                            No documents in this request yet
+                          </div>
+                        ) : (
+                          <>
+                            <DocumentRequestSingle 
+                              requestId={requestIdVal}
+                              documents={singleDocs}
+                              onUpload={handleUpload}
+                              onClearDocument={handleClear}
+                              uploadingDocument={
+                                uploadingState?.documentId
+                                  ? { documentId: uploadingState.documentId }
+                                  : undefined
+                              }
+                              isDisabled={request.status === 'REJECTED'}
+                            />
+
+                            <DocumentRequestDouble 
+                              requestId={requestIdVal}
+                              multipleDocuments={multipleGroups}
+                              onUploadMultiple={handleUploadMultiple}
+                              onClearMultipleItem={handleClearMultipleItem}
+                              onClearMultipleGroup={handleClearMultipleGroup}
+                              onDownloadMultipleGroup={handleDownloadMultipleGroup}
+                              uploadingState={
+                                uploadingState?.documentId
+                                  ? { documentId: uploadingState.documentId }
+                                  : undefined
+                              }
+                              isDisabled={request.status === 'REJECTED'}
+                            />
+                          </>
+                        )}
                       </div>
                     ) : (
-                      <>
-                        <DocumentRequestSingle 
+                      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <BulkUploadZone 
                           requestId={requestIdVal}
-                          documents={singleDocs}
-                          onUpload={handleUpload}
-                          onClearDocument={handleClear}
-                          uploadingDocument={
-                            uploadingState?.documentId
-                              ? { documentId: uploadingState.documentId }
-                              : undefined
-                          }
+                          onSuccess={async () => {
+                            await refetch()
+                            setUploadSuccessOpen(true)
+                          }}
+                          onClear={handleClear}
                           isDisabled={request.status === 'REJECTED'}
+                          documents={[
+                            ...singleDocs.map(d => ({ ...d, type: 'single' })),
+                            ...multipleGroups.flatMap(g => (g.multiple || []).map((m: any) => ({ ...m, type: 'multiple', groupId: g._id })))
+                          ]}
                         />
-
-                        <DocumentRequestDouble 
-                          requestId={requestIdVal}
-                          multipleDocuments={multipleGroups}
-                          onUploadMultiple={handleUploadMultiple}
-                          onClearMultipleItem={handleClearMultipleItem}
-                          onClearMultipleGroup={handleClearMultipleGroup}
-                          onDownloadMultipleGroup={handleDownloadMultipleGroup}
-                          uploadingState={
-                            uploadingState?.documentId
-                              ? { documentId: uploadingState.documentId }
-                              : undefined
-                          }
-                          isDisabled={request.status === 'REJECTED'}
-                        />
-                      </>
+                      </div>
                     )}
-                  </div>
+                    </div>
                 )}
               </CardContent>
             </Card>

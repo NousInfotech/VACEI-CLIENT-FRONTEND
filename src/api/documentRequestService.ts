@@ -171,3 +171,35 @@ export async function clearDocumentRequestFile(
   const data = result.data ?? result;
   return data;
 }
+/**
+ * POST /document-requests/{documentRequestId}/bulk-upload
+ * Body: multipart/form-data, field "files"
+ */
+export async function bulkUploadDocumentRequestFiles(
+  documentRequestId: string,
+  files: File[],
+  signal?: AbortSignal
+): Promise<any> {
+  const formData = new FormData();
+  files.forEach((f) => formData.append("files", f));
+
+  const response = await fetch(
+    `${backendUrl}document-requests/${documentRequestId}/bulk-upload`,
+    {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: formData,
+      signal,
+    }
+  );
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    const msg = err.message || err.error || getErrorMessage(response.status, "bulk upload files");
+    throw new Error(msg);
+  }
+
+  const result = await response.json();
+  const data = result.data ?? result;
+  return data;
+}
