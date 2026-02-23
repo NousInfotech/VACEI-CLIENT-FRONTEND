@@ -12,6 +12,7 @@ import type { Task } from "@/interfaces";
 import ParentSchedule from "@/app/dashboard/schedule/page";
 // import { fetchPayrollData, transformPayrollSubmissionsToComplianceItems } from "@/lib/payrollComplianceIntegration";
 import ComplianceCalendarApiSection from "./ComplianceCalendarApiSection";
+import ClientCalendarListMonth from "@/components/compliance/ClientCalendarListMonth";
 
 // Compliance status types
 type ComplianceStatus = "Waiting on you" | "In progress" | "Due soon" | "Completed" | "Overdue";
@@ -119,7 +120,7 @@ interface ComplianceItem {
 //   );
 // }
 
-export default function ComplianceCalendarPage() {
+function LegacyComplianceCalendarPage() {
   const [viewMode, setViewMode] = useState<"list" | "month">("list");
   const [complianceItems, setComplianceItems] = useState<ComplianceItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -444,101 +445,8 @@ export default function ComplianceCalendarPage() {
 
       {/* Main Content */}
       <DashboardCard className="overflow-visible">
-        {/* View Toggle & Filters */}
-        <div className="px-6 py-4 border-b border-border flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <Button
-              variant={viewMode === "list" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode("list")}
-              className="rounded-lg"
-            >
-              <List className="w-4 h-4 mr-2" />
-              List view
-            </Button>
-            <Button
-              variant={viewMode === "month" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode("month")}
-              className="rounded-lg"
-            >
-              <CalendarIcon className="w-4 h-4 mr-2" />
-              Month view
-            </Button>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            {/* Service Filter */}
-            <Dropdown
-              className="w-auto min-w-[140px]"
-              align="left"
-              side="bottom"
-              trigger={
-                <Button variant="outline" size="sm" className="w-auto min-w-[140px] h-9 justify-between">
-                  {serviceFilter}
-                  <ChevronDown className="h-4 w-4 opacity-50" />
-                </Button>
-              }
-              items={[
-                { id: "All", label: "All", onClick: () => setServiceFilter("All") },
-                { id: "VAT", label: "VAT", onClick: () => setServiceFilter("VAT") },
-                { id: "Payroll", label: "Payroll", onClick: () => setServiceFilter("Payroll") },
-                { id: "Audit", label: "Audit", onClick: () => setServiceFilter("Audit") },
-                { id: "Corporate Services", label: "Corporate Services", onClick: () => setServiceFilter("Corporate Services") },
-                { id: "Tax", label: "Tax", onClick: () => setServiceFilter("Tax") },
-                { id: "Other", label: "Other", onClick: () => setServiceFilter("Other") },
-              ]}
-            />
-
-            {/* Period Filter */}
-            <Dropdown
-              className="w-auto min-w-[140px]"
-              align="left"
-              side="bottom"
-              trigger={
-                <Button variant="outline" size="sm" className="w-auto min-w-[140px] h-9 justify-between">
-                  {periodFilter}
-                  <ChevronDown className="h-4 w-4 opacity-50" />
-                </Button>
-              }
-              items={[
-                { id: "All", label: "All", onClick: () => setPeriodFilter("All") },
-                { id: "This month", label: "This month", onClick: () => setPeriodFilter("This month") },
-                { id: "Next 3 months", label: "Next 3 months", onClick: () => setPeriodFilter("Next 3 months") },
-                { id: "This year", label: "This year", onClick: () => setPeriodFilter("This year") },
-              ]}
-            />
-
-            {/* Status Filter */}
-            <Dropdown
-              className="w-auto min-w-[140px]"
-              align="left"
-              side="bottom"
-              trigger={
-                <Button variant="outline" size="sm" className="w-auto min-w-[140px] h-9 justify-between">
-                  {statusFilter}
-                  <ChevronDown className="h-4 w-4 opacity-50" />
-                </Button>
-              }
-              items={[
-                { id: "All", label: "All", onClick: () => setStatusFilter("All") },
-                // { id: "Waiting on you", label: "Waiting on you", onClick: () => setStatusFilter("Waiting on you") },
-                { id: "Due soon", label: "Due soon", onClick: () => setStatusFilter("Due soon") },
-                { id: "In progress", label: "In progress", onClick: () => setStatusFilter("In progress") },
-                { id: "Completed", label: "Completed", onClick: () => setStatusFilter("Completed") },
-                { id: "Overdue", label: "Overdue", onClick: () => setStatusFilter("Overdue") },
-              ]}
-            />
-          </div>
-        </div>
-
-        {/* Content Area */}
         <div className="p-6">
-          {viewMode === "list" ? (
-            <ListContentView items={filteredItems} loading={loading} formatDate={formatDate} getCTAButton={getCTAButton} />
-          ) : (
-            <MonthContentView items={filteredItems} />
-          )}
+          <ClientCalendarListMonth />
         </div>
       </DashboardCard>
 
@@ -549,6 +457,8 @@ export default function ComplianceCalendarPage() {
     </section>
   );
 }
+
+export default LegacyComplianceCalendarPage;
 
 // Summary Card Component
 function SummaryCard({
