@@ -9,9 +9,9 @@ import { ChatList } from './dashboard/messages/components/ChatList';
 import { ChatWindow } from './dashboard/messages/components/ChatWindow';
 import { MediaPreviewModal } from './dashboard/messages/components/MediaPreviewModal';
 import { ConfirmModal } from './dashboard/messages/components/ConfirmModal';
-import { useChatRooms, mapApiMessage } from '@/hooks/useChatRooms';
+import { useChatRooms, mapApiMessage, extractParticipants } from '@/hooks/useChatRooms';
 import { chatService } from '@/api/chatService';
-import type { Chat, Message } from './dashboard/messages/types';
+import type { Chat, Message, User } from './dashboard/messages/types';
 
 interface ChatModuleProps {
     isEmbedded?: boolean;
@@ -26,9 +26,12 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
     const {
         rooms: chats,
         setRoomMessages,
+        setRoomMessagesWithMerge,
         appendMessage,
+        setUnreadCount,
     } = useChatRooms(activeChatId);
 
+    const [messagesLoading, setMessagesLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [previewMessage, setPreviewMessage] = useState<Message | null>(null);
     const [forwardingMessages, setForwardingMessages] = useState<Message[]>([]);
@@ -50,7 +53,37 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
         }
     }, [chats, activeChatId, isEmbedded]);
 
+    // Fetch messages for the active chat
+    useEffect(() => {
+        if (!activeChatId) return;
+
+        // Immediately clear the unread badge for this room
+        setUnreadCount(activeChatId, 0);
+
+        setMessagesLoading(true);
+        chatService
+            .getClientRoomMessages(activeChatId, 50)
+            .then((res) => {
+                const rawMsgs = (res.data ?? []).reverse();
+                const apiMsgs = rawMsgs.map(mapApiMessage).sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
+
+                const fromMessages = extractParticipants(res.data ?? []);
+                const room = chats.find((r) => r.id === activeChatId);
+                const mergedParticipants = new Map<string, User>();
+                (room?.participants ?? []).forEach((p) => mergedParticipants.set(p.id, { ...p, role: "PLATFORM_EMPLOYEE" as const, isOnline: false }));
+                fromMessages.forEach((p) => mergedParticipants.set(p.id, { ...p, role: "PLATFORM_EMPLOYEE" as const, isOnline: false }));
+                const participants = Array.from(mergedParticipants.values());
+
+                setRoomMessagesWithMerge(activeChatId, apiMsgs, participants);
+            })
+            .catch(console.error)
+            .finally(() => setMessagesLoading(false));
+
+        chatService.markRoomAsRead(activeChatId).catch(console.error);
+    }, [activeChatId, setRoomMessagesWithMerge, setUnreadCount]);
+
     const activeChat = chats.find(c => c.id === activeChatId);
+
 
     const handleSendMessage = async (content: {
         text?: string;
@@ -271,11 +304,13 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
                             </button>
                         )}
                         <h2 className="font-semibold text-lg text-primary truncate">
-                            {showSidebar && !isMaximized
+                            {isMaximized
                                 ? 'Messages'
-                                : activeChat
-                                    ? activeChat.name
-                                    : 'Chat'}
+                                : showSidebar
+                                    ? 'Messages'
+                                    : activeChat
+                                        ? activeChat.name
+                                        : 'Chat'}
                         </h2>
                     </div>
                     <div className="flex items-center gap-1 shrink-0 ml-2">
@@ -332,6 +367,11 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
                         "flex-1 min-w-0 bg-[#efeae2] relative transition-all duration-300 ease-in-out flex flex-col",
                         !isMaximized && showSidebar ? "opacity-0 invisible absolute inset-0 translate-x-10" : "opacity-100 visible relative translate-x-0"
                     )}>
+                        {messagesLoading && (
+                            <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#efeae2]/60 backdrop-blur-[1px]">
+                                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                            </div>
+                        )}
                         {activeChat ? (
                             <ChatWindow
                                 chat={activeChat}
@@ -355,7 +395,7 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
                                 selectedMessageIds={selectedMessageIds}
                                 onSelectMessage={() => { }}
                                 onEnterSelectMode={() => setIsSelectMode(true)}
-                                hideHeader={true}
+                                hideHeader={!isMaximized}
                             />
                         ) : (
                             <div className="h-full flex items-center justify-center text-gray-400 text-sm">
