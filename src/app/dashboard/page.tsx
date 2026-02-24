@@ -166,6 +166,25 @@ export default function DashboardPage() {
           return s === 'ACTION_REQUIRED' || (!handledStatuses.includes(s) && (s === 'OVERDUE' || s === 'DUE_SOON'));
         });
 
+        // Fetch compliance tasks (statutory deadlines)
+        const taskResponse = await fetchTasks({ page: 1, limit: 100 });
+        const tasks = taskResponse.data || [];
+
+        // Filter tasks that require action 
+        const actionRequiredTasks = tasks.filter((task: Task) => {
+          if (!task.dueDate) return false;
+          if (task.status?.toLowerCase().includes("completed") || task.status?.toLowerCase().includes("done")) return false;
+          return true;
+        }).map((task: Task) => ({
+          ...task,
+          deadline: task.dueDate, // map dueDate to deadline for easier sorting
+          service: task.category || 'Compliance',
+          title: task.title || 'Untitled Task',
+        }));
+
+        // Combine todos and tasks for the upcoming deadlines
+        const allPendingItems: any[] = [...actionRequiredTodos, ...actionRequiredTasks];
+
         let newFocus = summary.focus;
         const isSummaryFocusHandled = newFocus && (
           handledStatuses.includes((newFocus.status || '').toUpperCase()) ||
@@ -173,31 +192,31 @@ export default function DashboardPage() {
         );
 
         if (!newFocus || isSummaryFocusHandled) {
-          const sortedTodos = [...actionRequiredTodos].sort((a, b) => {
+          const sortedItems = [...allPendingItems].sort((a, b) => {
             const dateA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
             const dateB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
             return dateA - dateB;
           });
 
           // Also set upcoming deadlines for the compliance snapshot (top 3)
-          setUpcomingDeadlines(sortedTodos.slice(0, 3));
+          setUpcomingDeadlines(sortedItems.slice(0, 3));
 
-          if (sortedTodos.length > 0) {
-            const nextTodo = sortedTodos[0];
+          if (sortedItems.length > 0) {
+            const nextItem = sortedItems[0];
             const now = new Date();
             const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
             let derivedStatus = 'waiting_on_you';
-            if (nextTodo.deadline) {
-              const dl = new Date(nextTodo.deadline);
+            if (nextItem.deadline) {
+              const dl = new Date(nextItem.deadline);
               if (dl.toDateString() !== now.toDateString() && dl < now) derivedStatus = 'overdue';
               else if (dl.toDateString() !== now.toDateString() && dl > now && dl <= nextWeek) derivedStatus = 'due_soon';
             }
             newFocus = {
-              serviceName: nextTodo.service || nextTodo.type || 'Action Required',
-              taskDescription: nextTodo.title,
+              serviceName: nextItem.service || nextItem.type || 'Action Required',
+              taskDescription: nextItem.title,
               status: derivedStatus,
-              primaryActionLabel: nextTodo.cta || 'Take Action',
-              todoId: nextTodo.id
+              primaryActionLabel: nextItem.cta || (nextItem.category ? 'View Task' : 'Take Action'),
+              todoId: nextItem.id
             };
           } else {
             newFocus = null;
@@ -210,9 +229,9 @@ export default function DashboardPage() {
         const now = new Date();
         const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-        const overdueCount = actionRequiredTodos.filter(t => t.deadline && new Date(t.deadline).toDateString() !== now.toDateString() && new Date(t.deadline) < now).length;
-        const dueTodayCount = actionRequiredTodos.filter(t => t.deadline && new Date(t.deadline).toDateString() === now.toDateString()).length;
-        const dueSoonCount = actionRequiredTodos.filter(t => t.deadline && new Date(t.deadline).toDateString() !== now.toDateString() && new Date(t.deadline) > now && new Date(t.deadline) <= nextWeek).length;
+        const overdueCount = allPendingItems.filter(t => t.deadline && new Date(t.deadline).toDateString() !== now.toDateString() && new Date(t.deadline) < now).length;
+        const dueTodayCount = allPendingItems.filter(t => t.deadline && new Date(t.deadline).toDateString() === now.toDateString()).length;
+        const dueSoonCount = allPendingItems.filter(t => t.deadline && new Date(t.deadline).toDateString() !== now.toDateString() && new Date(t.deadline) > now && new Date(t.deadline) <= nextWeek).length;
 
         setComplianceCounts({
           overdue: overdueCount,
