@@ -46,8 +46,8 @@ export function Modal({
   if (!mounted || !isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      
+    <div className="fixed inset-0 z-9999 flex items-center justify-center p-4">
+
       {/* BACKDROP */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -56,7 +56,7 @@ export function Modal({
 
       {/* MODAL CONTAINER */}
       <div
-        className={`relative z-10 w-full h-[85vh] max-h-[calc(100vh-2rem)]
+        className={`relative z-10 w-full h-fit max-h-[calc(100vh-2rem)]
         bg-card border border-border rounded-lg shadow-2xl
         flex flex-col overflow-hidden
         ${size === "wide" ? "max-w-2xl" : "max-w-md"}`}

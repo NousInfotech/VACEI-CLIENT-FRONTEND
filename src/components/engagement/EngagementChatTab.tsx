@@ -44,17 +44,18 @@ export default function EngagementChatTab() {
     uploadFile,
     roomError,
     roomId,
+    deleteMessage,
   } = useChat(engagementId, { partnerId });
 
   const chat: Chat = useMemo(() => {
-    const memberName = (m: { firstName?: string; lastName?: string; first_name?: string; last_name?: string }) => {
-      const first = m.firstName ?? (m as { first_name?: string }).first_name ?? "";
-      const last = m.lastName ?? (m as { last_name?: string }).last_name ?? "";
+    const memberName = (m: any) => {
+      const first = m.firstName ?? m.first_name ?? m.user?.firstName ?? m.user?.first_name ?? "";
+      const last = m.lastName ?? m.last_name ?? m.user?.lastName ?? m.user?.last_name ?? "";
       return [first, last].filter(Boolean).join(" ").trim() || "Unknown";
     };
-    const participants: User[] = members.map((m) => ({
+    const participants: User[] = members.map((m: any) => ({
       id: m.userId,
-      name: memberName(m as Parameters<typeof memberName>[0]),
+      name: memberName(m),
       role: "CLIENT" as const,
       isOnline: m.isOnline,
       lastSeen: m.lastSeenAt ?? undefined,
@@ -186,6 +187,26 @@ export default function EngagementChatTab() {
           onMediaClick={(msg) => setPreviewMessage(msg)}
           scrollToMessageId={scrollToId}
           onScrollComplete={() => setScrollToId(undefined)}
+          onReplyMessage={(msg) => console.log('Reply to', msg)} // Will handle via ChatWindow state and MessageInput
+          onEditMessage={(msg) => console.log('Edit message', msg)} // Will handle via ChatWindow state and MessageInput
+          onDeleteMessage={async (msgId) => {
+            if (window.confirm("Are you sure you want to delete this message?")) {
+              try {
+                await deleteMessage(msgId);
+              } catch (err) {
+                console.error("Failed to delete message:", err);
+              }
+            }
+          }}
+          onReactToMessage={async (msgId, emoji) => {
+            try {
+              const { chatService } = await import('@/api/chatService');
+              await chatService.addReaction(msgId, emoji);
+            } catch (err) {
+              console.error("Failed to add reaction:", err);
+            }
+          }}
+          onForwardMessage={(msg) => console.log('Forward message', msg)}
         />
       </div>
 

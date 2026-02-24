@@ -103,7 +103,7 @@ export default function SidebarMenu({
   const serviceStatusConfig = useMemo((): Record<string, StatusConfig> => {
     const config: Record<string, StatusConfig> = {};
     const slugs = Object.keys(MENU_SLUG_TO_SERVICE_TYPE);
-    
+
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -113,7 +113,7 @@ export default function SidebarMenu({
         (e: any) =>
           e.serviceCategory === serviceType || e.serviceType === serviceType || e.title?.toUpperCase().includes(serviceType)
       );
-      
+
       if (!engagement) {
         continue;
       }
@@ -122,10 +122,10 @@ export default function SidebarMenu({
       const apiStatus = (engagement as any)?.status;
 
       // 1. Get Pending Todos for this service
-      const pendingTodos = todos.filter(t => 
-        (t.service?.toUpperCase() === serviceType?.toUpperCase() || 
-         t.type?.toUpperCase() === serviceType?.toUpperCase() ||
-         t.engagementId === engId) &&
+      const pendingTodos = todos.filter(t =>
+        (t.service?.toUpperCase() === serviceType?.toUpperCase() ||
+          t.type?.toUpperCase() === serviceType?.toUpperCase() ||
+          t.engagementId === engId) &&
         !['COMPLETED', 'ACTION_TAKEN'].includes(t.status?.toUpperCase() || '')
       );
 
@@ -134,18 +134,18 @@ export default function SidebarMenu({
       const pendingDocs = engagementDocReqs.filter(r => {
         const isStatusPending = ['PENDING', 'REOPENED', 'REJECTED'].includes(r.status?.toUpperCase() || '');
         if (!isStatusPending) return false;
-        
+
         // Deep scan for actually pending files
-        const hasPendingSingleDocs = (r.documents || []).some((d: any) => 
+        const hasPendingSingleDocs = (r.documents || []).some((d: any) =>
           !['UPLOADED', 'SUBMITTED', 'ACCEPTED'].includes(d.status?.toUpperCase() || '')
         );
-        
-        const hasPendingMultipleDocs = (r.multipleDocuments || []).some((group: any) => 
-          (group.multiple || group.children || []).some((child: any) => 
+
+        const hasPendingMultipleDocs = (r.multipleDocuments || []).some((group: any) =>
+          (group.multiple || group.children || []).some((child: any) =>
             !['UPLOADED', 'SUBMITTED', 'ACCEPTED'].includes(child.status?.toUpperCase() || '')
           )
         );
-        
+
         return hasPendingSingleDocs || hasPendingMultipleDocs;
       });
 
@@ -231,6 +231,33 @@ export default function SidebarMenu({
   };
 
   const bestMatch = getBestMatch(menu);
+
+  // Auto-expand parent if a child is active
+  useEffect(() => {
+    if (!bestMatch) return;
+
+    // Find the parent of bestMatch
+    let parentSlug: string | null = null;
+    const findParent = (list: MenuItem[], currentParent: MenuItem | null = null) => {
+      for (const item of list) {
+        if (item.slug === bestMatch.slug && currentParent) {
+          parentSlug = currentParent.slug;
+          return;
+        }
+        if (item.children) {
+          findParent(item.children, item);
+        }
+      }
+    };
+    findParent(menu);
+
+    if (parentSlug) {
+      setOpenItems(prev => ({
+        ...prev,
+        [parentSlug!]: true
+      }));
+    }
+  }, [bestMatch, menu]);
 
   const branding = {
     sidebar_background_color: "15, 23, 41",

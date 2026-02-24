@@ -6,13 +6,13 @@ import { AttachmentMenu } from './AttachmentMenu';
 import { EmojiPicker } from './EmojiPicker';
 
 interface MessageInputProps {
-  onSendMessage: (content: { 
-    text?: string; 
-    gifUrl?: string; 
-    fileUrl?: string; 
-    fileName?: string; 
+  onSendMessage: (content: {
+    text?: string;
+    gifUrl?: string;
+    fileUrl?: string;
+    fileName?: string;
     fileSize?: string;
-    type: 'text' | 'gif' | 'image' | 'document' 
+    type: 'text' | 'gif' | 'image' | 'document'
   }) => void;
   /** If provided, files are uploaded first and the returned URL is used. Otherwise blob URL is used (local only). */
   onFileUpload?: (file: File) => Promise<string>;
@@ -77,21 +77,22 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onFil
   return (
     <div className="p-2 bg-[#f0f2f5] flex items-center gap-2 shrink-0 relative">
       <div className="flex items-center gap-1">
-        <input 
-          type="file" 
-          ref={imageInputRef} 
-          className="hidden" 
+        <input
+          type="file"
+          ref={imageInputRef}
+          className="hidden"
           accept="image/*"
           onChange={(e) => handleFileSelect(e, 'image')}
         />
-        <input 
-          type="file" 
-          ref={docInputRef} 
-          className="hidden" 
+        <input
+          type="file"
+          ref={docInputRef}
+          className="hidden"
           accept=".pdf,.doc,.docx,.txt"
           onChange={(e) => handleFileSelect(e, 'document')}
         />
 
+        {/* Emoji Button - Disabled as per request
         <button 
           onClick={() => {
             setShowEmojiPicker(!showEmojiPicker);
@@ -103,8 +104,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onFil
           )}
         >
           <Smile className="w-6 h-6" />
-        </button>
+        </button> */}
 
+        {/* Attachment Button - Disabled as per request
         <button 
           onClick={() => {
             setShowAttachmentMenu(!showAttachmentMenu);
@@ -116,8 +118,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onFil
           )}
         >
           <Paperclip className="w-6 h-6" />
-        </button>
+        </button> */}
 
+        {/*
         {showAttachmentMenu && (
           <AttachmentMenu 
             onSelect={(type: 'image' | 'document') => {
@@ -127,14 +130,17 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onFil
             onClose={() => setShowAttachmentMenu(false)}
           />
         )}
+        */}
       </div>
 
+      {/*
       {showEmojiPicker && (
         <EmojiPicker 
           onSelect={onSelectEmoji} 
           onClose={() => setShowEmojiPicker(false)} 
         />
       )}
+      */}
 
       <div className="flex-1 relative group/input">
         <textarea
@@ -152,8 +158,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onFil
         disabled={!message.trim()}
         className={cn(
           "p-2.5 rounded-full transition-all flex items-center justify-center",
-          message.trim() 
-            ? "bg-primary text-white shadow-sm hover:opacity-90 active:scale-95" 
+          message.trim()
+            ? "bg-primary text-white shadow-sm hover:opacity-90 active:scale-95"
             : "text-gray-400 cursor-not-allowed"
         )}
       >
