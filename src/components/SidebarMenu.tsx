@@ -19,6 +19,7 @@ import { ENGAGEMENT_CONFIG } from "@/config/engagementConfig";
 import { getTodos, TodoItem } from "@/api/todoService";
 import { getDocumentRequests, DocumentRequest } from "@/api/documentRequestService";
 import { useActiveCompany } from "@/context/ActiveCompanyContext";
+import { fetchSidebarData, SidebarServiceData } from "@/api/companyService";
 
 interface SidebarMenuProps {
   menu: MenuItem[];
@@ -66,6 +67,7 @@ export default function SidebarMenu({
   const { activeCompanyId } = useActiveCompany();
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [documentRequestsMap, setDocumentRequestsMap] = useState<Record<string, DocumentRequest[]>>({});
+  const [sidebarData, setSidebarData] = useState<SidebarServiceData[]>([]);
 
   useEffect(() => {
     if (!activeCompanyId) {
@@ -74,7 +76,12 @@ export default function SidebarMenu({
       return;
     }
     const fetchData = async () => {
+      if (!activeCompanyId) return;
       try {
+        // Fetch sidebar data
+        const sidebarRes = await fetchSidebarData(activeCompanyId);
+        setSidebarData(sidebarRes);
+
         // Fetch todos
         const todosData = await getTodos();
         setTodos(Array.isArray(todosData) ? todosData : []);
@@ -98,104 +105,157 @@ export default function SidebarMenu({
     };
     fetchData();
   }, [activeCompanyId, engagements]);
+  const sections: { id: MenuSection; label: string }[] = [
+    { id: "primary", label: "Client portal" },
+    { id: "operations", label: "Operations & tools" },
+    { id: "settings", label: "Settings" },
+  ];
 
-  // Build sidebar status from real API engagements + real-time todos & document requests
-  const serviceStatusConfig = useMemo((): Record<string, StatusConfig> => {
-    const config: Record<string, StatusConfig> = {};
-    const slugs = Object.keys(MENU_SLUG_TO_SERVICE_TYPE);
-    
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const grouped: Record<MenuSection, MenuItem[]> = {
+    primary: [],
+    workspaces: [],
+    operations: [],
+    settings: [],
+  };
 
-    for (const slug of slugs) {
-      const serviceType = MENU_SLUG_TO_SERVICE_TYPE[slug];
-      const engagement = engagements.find(
-        (e: any) =>
-          e.serviceCategory === serviceType || e.serviceType === serviceType || e.title?.toUpperCase().includes(serviceType)
-      );
-      
-      if (!engagement) {
-        continue;
-      }
+  menu.forEach((item) => {
+    const section = item.section || "primary";
+    grouped[section].push(item);
+  });
 
-      const engId = engagement.id || engagement._id;
-      const apiStatus = (engagement as any)?.status;
+  // Build sidebar status from backend data
+  const serviceStatusConfig = useMemo((): {
+    items: Record<string, StatusConfig & { engagementId?: string; engagementCount: number }>;
+    sections: Record<string, StatusConfig>;
+  } => {
+    const itemStatus: Record<string, StatusConfig & { engagementId?: string; engagementCount: number }> = {};
+    const sectionStatus: Record<string, StatusConfig> = {};
+    const menuSlugs = Object.keys(MENU_SLUG_TO_SERVICE_TYPE);
 
-      // 1. Get Pending Todos for this service
-      const pendingTodos = todos.filter(t => 
-        (t.service?.toUpperCase() === serviceType?.toUpperCase() || 
-         t.type?.toUpperCase() === serviceType?.toUpperCase() ||
-         t.engagementId === engId) &&
-        !['COMPLETED', 'ACTION_TAKEN'].includes(t.status?.toUpperCase() || '')
-      );
+    const COMPLIANCE_MAP: Record<string, StatusConfig> = {
+      OVERDUE: { label: "Overdue", color: "text-red-500", dotColor: "bg-red-500" },
+      DUE_TODAY: { label: "Due today", color: "text-amber-500", dotColor: "bg-amber-500" },
+      DUE_SOON: { label: "Due soon", color: "text-yellow-500", dotColor: "bg-yellow-500" },
+      ACTION_REQUIRED: { label: "Action required", color: "text-orange-500", dotColor: "bg-orange-500" },
+      ACTION_TAKEN: { label: "Action taken", color: "text-blue-500", dotColor: "bg-blue-500" },
+      COMPLETED: { label: "Completed", color: "text-emerald-500", dotColor: "bg-emerald-500" },
+      ON_TRACK: { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" },
+    };
 
-      // 2. Get Pending Document Requests for this engagement (Dashboard logic)
-      const engagementDocReqs = documentRequestsMap[engId] || [];
-      const pendingDocs = engagementDocReqs.filter(r => {
-        const isStatusPending = ['PENDING', 'REOPENED', 'REJECTED'].includes(r.status?.toUpperCase() || '');
-        if (!isStatusPending) return false;
-        
-        // Deep scan for actually pending files
-        const hasPendingSingleDocs = (r.documents || []).some((d: any) => 
-          !['UPLOADED', 'SUBMITTED', 'ACCEPTED'].includes(d.status?.toUpperCase() || '')
-        );
-        
-        const hasPendingMultipleDocs = (r.multipleDocuments || []).some((group: any) => 
-          (group.multiple || group.children || []).some((child: any) => 
-            !['UPLOADED', 'SUBMITTED', 'ACCEPTED'].includes(child.status?.toUpperCase() || '')
-          )
-        );
-        
-        return hasPendingSingleDocs || hasPendingMultipleDocs;
-      });
+    const COMPLIANCE_ORDER = [
+      "OVERDUE",
+      "DUE_TODAY",
+      "DUE_SOON",
+      "ACTION_REQUIRED",
+      "ACTION_TAKEN",
+      "COMPLETED",
+      "ON_TRACK",
+    ];
 
-      // Combine all pending items for deadline check
-      const allPendingItems = [...pendingTodos, ...pendingDocs];
-
-      if (allPendingItems.length === 0) {
-        // Fallback to API status mapping but default to "On Track" if no pending items
-        if (apiStatus === "CANCELLED" || apiStatus === "TERMINATED") {
-          config[slug] = { label: "Overdue", color: "text-red-500", dotColor: "bg-red-500" };
-        } else {
-          config[slug] = { label: "On track", color: "text-emerald-500", dotColor: "bg-emerald-500" };
+    const pickWorst = (statuses: string[]) => {
+      if (statuses.length === 0) return null;
+      let worstIndex = COMPLIANCE_ORDER.length - 1;
+      statuses.forEach((s) => {
+        const index = COMPLIANCE_ORDER.indexOf(s);
+        if (index !== -1 && index < worstIndex) {
+          worstIndex = index;
         }
-        continue;
+      });
+      return COMPLIANCE_ORDER[worstIndex];
+    };
+
+    // Build reverse mapping from types to slugs
+    const TYPE_TO_SLUG: Record<string, string> = {
+      ACCOUNTING: "accounting-bookkeeping",
+      AUDITING: "audit",
+      VAT: "vat",
+      TAX: "tax",
+      CSP: "csp",
+      PAYROLL: "payroll",
+      CFO: "cfo",
+      MBR: "mbr-filing",
+      INCORPORATION: "incorporation",
+      ADVISORY: "business-plans",
+      PROJECTS_TRANSACTIONS: "project-transactions",
+      GRANTS_AND_INCENTIVES: "grants-incentives",
+      LEGAL: "legal-services",
+    };
+
+    // 1. Map backend data to individual items
+    sidebarData.forEach((item) => {
+      const backendName = item.serviceName.toUpperCase().replace(/[-\s]/g, "_");
+      let slug: string | undefined = TYPE_TO_SLUG[backendName];
+
+      if (!slug) {
+        const normalizedLabel = item.serviceName.toLowerCase().replace(/[^a-z0-9]/g, "");
+        slug = menuSlugs.find(s => s.toLowerCase().replace(/[^a-z0-9]/g, "") === normalizedLabel);
+        
+        if (!slug) {
+          const directSlug = item.serviceName.toLowerCase().replace(/\s+/g, "-");
+          if (menuSlugs.includes(directSlug)) {
+            slug = directSlug;
+          }
+        }
       }
 
-      // Check deadlines
-      const hasOverdue = allPendingItems.some(item => {
-        const deadline = item.deadline ? new Date(item.deadline) : null;
-        if (!deadline) return false;
-        const dDate = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate());
-        return dDate < today;
-      });
-
-      const hasDueToday = allPendingItems.some(item => {
-        const deadline = item.deadline ? new Date(item.deadline) : null;
-        if (!deadline) return false;
-        const dDate = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate());
-        return dDate.getTime() === today.getTime();
-      });
-
-      const hasDueSoon = allPendingItems.some(item => {
-        const deadline = item.deadline ? new Date(item.deadline) : null;
-        if (!deadline) return false;
-        const dDate = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate());
-        return dDate > today;
-      });
-
-      if (hasOverdue) {
-        config[slug] = { label: "Overdue", color: "text-red-500", dotColor: "bg-red-500" };
-      } else if (hasDueToday) {
-        config[slug] = { label: "Due today", color: "text-amber-500", dotColor: "bg-amber-500" };
-      } else if (hasDueSoon) {
-        config[slug] = { label: "Due soon", color: "text-yellow-500", dotColor: "bg-yellow-500" };
-      } else {
-        config[slug] = { label: "Action required", color: "text-orange-500", dotColor: "bg-orange-500" };
+      if (slug) {
+        const compliance = COMPLIANCE_MAP[item.worstCompliance] || COMPLIANCE_MAP.ON_TRACK;
+        itemStatus[slug] = {
+          ...compliance,
+          engagementCount: item.activeEngagements?.length || 0,
+          engagementId: item.activeEngagements?.length === 1 ? item.activeEngagements[0].id : undefined
+        };
       }
-    }
-    return config;
-  }, [engagements, todos, documentRequestsMap]);
+    });
+
+    // 2. Aggregate status for parent items
+    const aggregateItemStatus = (items: MenuItem[]): string | null => {
+      const childrenStatuses: string[] = [];
+      items.forEach((item) => {
+        const currentItemConfig = itemStatus[item.slug];
+        let currentStatusKey = Object.keys(COMPLIANCE_MAP).find(
+          (key) => COMPLIANCE_MAP[key].label === currentItemConfig?.label
+        ) || null;
+
+        if (item.children && item.children.length > 0) {
+          const childStatusKey = aggregateItemStatus(item.children);
+          if (childStatusKey) {
+            currentStatusKey = pickWorst([currentStatusKey, childStatusKey].filter(Boolean) as string[]);
+          }
+        }
+        
+        if (currentStatusKey) {
+          const compliance = COMPLIANCE_MAP[currentStatusKey];
+          itemStatus[item.slug] = {
+            ...compliance,
+            engagementCount: currentItemConfig?.engagementCount || 0,
+            engagementId: currentItemConfig?.engagementId
+          };
+          childrenStatuses.push(currentStatusKey);
+        }
+      });
+      return pickWorst(childrenStatuses);
+    };
+
+    aggregateItemStatus(menu);
+
+    // 3. Aggregate status for sections
+    sections.forEach(section => {
+      const sectionItems = menu.filter(item => (item.section || "primary") === section.id);
+      const statuses = sectionItems
+        .map(item => Object.keys(COMPLIANCE_MAP).find(
+          key => COMPLIANCE_MAP[key].label === itemStatus[item.slug]?.label
+        ))
+        .filter(Boolean) as string[];
+      
+      const worst = pickWorst(statuses);
+      if (worst) {
+        sectionStatus[section.id] = COMPLIANCE_MAP[worst];
+      }
+    });
+
+    return { items: itemStatus, sections: sectionStatus };
+  }, [sidebarData, MENU_SLUG_TO_SERVICE_TYPE, menu]);
 
   // User data from localStorage
   const [user, setUser] = useState({
@@ -327,23 +387,6 @@ export default function SidebarMenu({
     }
   };
 
-  const sections: { id: MenuSection; label: string }[] = [
-    { id: "primary", label: "Client portal" },
-    { id: "operations", label: "Operations & tools" },
-    { id: "settings", label: "Settings" },
-  ];
-
-  const grouped: Record<MenuSection, MenuItem[]> = {
-    primary: [],
-    workspaces: [],
-    operations: [],
-    settings: [],
-  };
-
-  menu.forEach((item) => {
-    const section = item.section || "primary";
-    grouped[section].push(item);
-  });
 
   const renderMenuItem = (item: MenuItem, level = 1) => {
     const hasChildren = !!(item.children && item.children.length > 0);
@@ -446,6 +489,14 @@ export default function SidebarMenu({
                       {item.count} Total
                     </span>
                   )}
+                  {serviceStatusConfig.items[item.slug] && (
+                    <div className="flex items-center gap-1.5 opacity-90 scale-[0.85] origin-right shrink-0">
+                      <div className={cn(
+                        "w-1.5 h-1.5 rounded-full animate-pulse",
+                        serviceStatusConfig.items[item.slug].dotColor
+                      )} />
+                    </div>
+                  )}
                   {hasChildren &&
                     !item.disabled &&
                     (isItemOpen ? (
@@ -510,8 +561,13 @@ export default function SidebarMenu({
 
     // Recursive items (Level 2+)
     const isServiceActive = item.isActive !== false; // Default to active if not specified
+    const itemConfig = serviceStatusConfig.items[item.slug];
+    const engagementId = itemConfig?.engagementId;
+
     const serviceHref = isServiceActive
-      ? item.href || "#"
+      ? engagementId 
+        ? `${item.href}/${engagementId}`
+        : item.href || "#"
       : "/dashboard/services/request";
 
     return (
@@ -585,41 +641,19 @@ export default function SidebarMenu({
                 {item.count} Total
               </span>
             )}
-            {level === 2 && serviceStatusConfig[item.slug] && (
-              serviceStatusConfig[item.slug].description ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-1.5 opacity-90 scale-[0.85] origin-right ml-2 shrink-0 cursor-help">
-                      <div className={cn(
-                        "w-1.5 h-1.5 rounded-full animate-pulse",
-                        serviceStatusConfig[item.slug].dotColor
-                      )} />
-                      <span className={cn(
-                        "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
-                        serviceStatusConfig[item.slug].color
-                      )}>
-                        {serviceStatusConfig[item.slug].label}
-                      </span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="max-w-[200px] text-xs bg-primary text-primary-foreground border-none">
-                    {serviceStatusConfig[item.slug].description}
-                  </TooltipContent>
-                </Tooltip>
-              ) : (
-                <div className="flex items-center gap-1.5 opacity-90 scale-[0.85] origin-right ml-2 shrink-0">
-                  <div className={cn(
-                    "w-1.5 h-1.5 rounded-full animate-pulse",
-                    serviceStatusConfig[item.slug].dotColor
-                  )} />
-                  <span className={cn(
-                    "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
-                    serviceStatusConfig[item.slug].color
-                  )}>
-                    {serviceStatusConfig[item.slug].label}
-                  </span>
-                </div>
-              )
+            {serviceStatusConfig.items[item.slug] && (
+              <div className="flex items-center gap-1.5 opacity-90 scale-[0.85] origin-right ml-2 shrink-0">
+                <div className={cn(
+                  "w-1.5 h-1.5 rounded-full animate-pulse",
+                  serviceStatusConfig.items[item.slug].dotColor
+                )} />
+                <span className={cn(
+                  "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
+                  serviceStatusConfig.items[item.slug].color
+                )}>
+                  {serviceStatusConfig.items[item.slug].label}
+                </span>
+              </div>
             )}
             {!isServiceActive && !hasChildren && !item.disabled && (
               <span className="text-[10px] font-medium text-white/40 uppercase tracking-wider ml-2 shrink-0">
@@ -742,9 +776,25 @@ export default function SidebarMenu({
               return (
                 <li key={section.id} className="space-y-2">
                   {!isCollapsed && (
-                    <p className="px-4 py-1 text-[11px] font-medium tracking-widest uppercase text-white/60">
-                      {section.label}
-                    </p>
+                    <div className="flex items-center justify-between px-4 py-1">
+                      <p className="text-[11px] font-medium tracking-widest uppercase text-white/60">
+                        {section.label}
+                      </p>
+                      {/* {serviceStatusConfig.sections[section.id] && (
+                        <div className="flex items-center gap-1.5 opacity-90 scale-[0.8] origin-right shrink-0">
+                          <div className={cn(
+                            "w-1.5 h-1.5 rounded-full animate-pulse",
+                            serviceStatusConfig.sections[section.id].dotColor
+                          )} />
+                          <span className={cn(
+                            "text-[9px] font-bold uppercase tracking-wider",
+                            serviceStatusConfig.sections[section.id].color
+                          )}>
+                            {serviceStatusConfig.sections[section.id].label}
+                          </span>
+                        </div>
+                      )} */}
+                    </div>
                   )}
                   <ul className="space-y-2">
                     {items.map((item) => renderMenuItem(item))}

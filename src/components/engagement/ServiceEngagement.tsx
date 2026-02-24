@@ -14,6 +14,7 @@ import { ENGAGEMENT_CONFIG } from "@/config/engagementConfig";
 import { useActiveCompany } from "@/context/ActiveCompanyContext";
 import { Spinner } from "@/components/ui/spinner";
 import Link from "next/link";
+import EngagementSelectionCards from "./EngagementSelectionCards";
 
 interface ServiceEngagementProps {
   serviceSlug: string;
@@ -259,6 +260,7 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
     actions: [],
   };
 
+  const [matchingEngagements, setMatchingEngagements] = useState<any[]>([]);
   const [activeEngagementId, setActiveEngagementId] = useState<string | null>(null);
   const [engagementLoading, setEngagementLoading] = useState(false);
   const [engagementNotFound, setEngagementNotFound] = useState(false);
@@ -285,21 +287,24 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
 
         const mappedType = SLUG_TO_SERVICE_TYPE[serviceSlug] || serviceSlug.toUpperCase().replace('-', '_');
 
-        // Sort engagements by update date (recently active first) to ensure we pick the one being worked on
-        engagements.sort((a: any, b: any) => {
+        const matches = engagements.filter((e: any) =>
+          e.serviceCategory === mappedType ||
+          e.serviceType === mappedType ||
+          e.serviceType === 'CUSTOM' || 
+          e.title?.toUpperCase().includes(mappedType)
+        );
+
+        // Sort matches by update date (recently active first)
+        matches.sort((a: any, b: any) => {
           const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
           const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
           return dateB - dateA;
         });
 
-        const match = engagements.find((e: any) =>
-          e.serviceCategory === mappedType ||
-          e.serviceType === mappedType ||
-          e.serviceType === 'CUSTOM' || // Allow CUSTOM/Assigned engagements to match
-          e.title?.toUpperCase().includes(mappedType)
-        );
+        setMatchingEngagements(matches);
 
-        if (match) {
+        if (matches.length === 1) {
+          const match = matches[0];
           const matchId: string | undefined = (match as { _id?: string; id?: string })._id || (match as { _id?: string; id?: string }).id;
           if (typeof matchId === "string") {
             setActiveEngagementId(matchId);
@@ -307,7 +312,7 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
           } else {
             setEngagementNotFound(true);
           }
-        } else {
+        } else if (matches.length === 0) {
           setEngagementNotFound(true);
         }
       } catch (err: any) {
@@ -361,6 +366,17 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
   }
 
   if (!engagementIdToUse) {
+    if (matchingEngagements.length > 1) {
+      return (
+        <div className="w-full">
+          <EngagementSelectionCards 
+            engagements={matchingEngagements} 
+            serviceSlug={serviceSlug}
+            serviceName={data.name}
+          />
+        </div>
+      );
+    }
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 p-8">
         <Spinner size={40} className="text-primary" />
@@ -370,7 +386,7 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
   }
 
   return (
-    <div className="p-8 max-w-[1600px] mx-auto min-h-screen bg-white">
+    <div className="w-full">
       <EngagementProvider engagementId={engagementIdToUse} serviceSlug={serviceSlug}>
         <EngagementSummary
           serviceName={data.name}
