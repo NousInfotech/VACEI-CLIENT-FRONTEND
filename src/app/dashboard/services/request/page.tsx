@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Dropdown from "@/components/Dropdown";
@@ -25,6 +25,8 @@ type ServiceCode =
   | "TECHNOLOGY"
   | "GRANTS_AND_INCENTIVES"
   | "INCORPORATION"
+  | "MBR"
+  | "TAX"
   | "CUSTOM";
 
 const serviceLabels: Record<ServiceCode, string> = {
@@ -38,6 +40,8 @@ const serviceLabels: Record<ServiceCode, string> = {
   TECHNOLOGY: "Technology",
   GRANTS_AND_INCENTIVES: "Grants & Incentives",
   INCORPORATION: "Incorporation",
+  MBR: "MBR",
+  TAX: "TAX",
   CUSTOM: "Custom",
 };
 
@@ -64,13 +68,46 @@ export default function ServiceRequestPage() {
   const [customServiceId, setCustomServiceId] = useState<string | "">("");
 
   // Load custom templates
-  useState(() => {
+  useEffect(() => {
+    let isMounted = true;
     import("@/api/serviceRequestTemplateService").then(({ getActiveCustomTemplates }) => {
       getActiveCustomTemplates().then(res => {
-        setCustomTemplates(res.data || []);
+        if (isMounted) {
+          setCustomTemplates(res.data || []);
+        }
+      }).catch(err => {
+        console.error("Failed to load custom templates", err);
       });
     });
-  });
+    return () => { isMounted = false; };
+  }, []);
+
+
+
+  // Main dropdown items (Standard + Custom)
+  const mainDropdownItems = useMemo(() => {
+    return Object.entries(serviceLabels).map(([code, label]) => ({
+      id: code,
+      label,
+      onClick: () => {
+        handleServiceChange(code as ServiceCode);
+      }
+    }));
+  }, []);
+
+  const selectedMainLabel = useMemo(() => {
+    return serviceCode ? serviceLabels[serviceCode as ServiceCode] : "Select a service to get started";
+  }, [serviceCode]);
+
+  const selectedCustomLabel = useMemo(() => {
+    if (customServiceId) {
+      const template = customTemplates.find(t => t.customServiceCycleId === customServiceId);
+      return template?.customServiceCycle?.title || "Select specific custom service";
+    }
+    return "Select specific custom service";
+  }, [customServiceId, customTemplates]);
+
+
 
   const activeCompanyName = companies.find(c => c.id === activeCompanyId)?.name;
 
@@ -170,17 +207,13 @@ export default function ServiceRequestPage() {
               >
                 <div className="flex items-center gap-2">
                   <span className={serviceCode ? "text-gray-900 font-semibold" : "text-gray-400 font-medium"}>
-                    {serviceCode ? serviceLabels[serviceCode as ServiceCode] : "Select a service to get started"}
+                    {selectedMainLabel}
                   </span>
                 </div>
                 <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${serviceCode ? "opacity-100" : "opacity-50"}`} />
               </Button>
             }
-            items={Object.entries(serviceLabels).map(([code, label]) => ({
-              id: code,
-              label,
-              onClick: () => handleServiceChange(code as any),
-            }))}
+            items={mainDropdownItems}
           />
         </div>
 
@@ -202,9 +235,7 @@ export default function ServiceRequestPage() {
                 >
                   <div className="flex items-center gap-2">
                     <span className={customServiceId ? "text-gray-900 font-semibold" : "text-gray-400 font-medium"}>
-                      {customServiceId 
-                        ? customTemplates.find(t => t.customServiceCycleId === customServiceId)?.customServiceCycle?.title 
-                        : "Select specific custom service"}
+                      {selectedCustomLabel}
                     </span>
                   </div>
                   <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${customServiceId ? "opacity-100" : "opacity-50"}`} />
@@ -213,37 +244,47 @@ export default function ServiceRequestPage() {
               items={customTemplates.map((t) => ({
                 id: t.customServiceCycleId,
                 label: t.customServiceCycle?.title || "Untitled Custom Service",
-                onClick: () => setCustomServiceId(t.customServiceCycleId),
+                onClick: () => {
+                  setCustomServiceId(t.customServiceCycleId);
+                  setIsFormDirty(false);
+                },
               }))}
             />
           </div>
         )}
 
-        {/* ✅ ONE Dynamic Form */}
-        {(serviceCode && (serviceCode !== "CUSTOM" || customServiceId)) ? (
-          <div className="border-t pt-6">
-            <ServiceRequestForm
-              service={serviceCode}
-              customServiceId={customServiceId || undefined}
-              companyId={activeCompanyId}
-              onDirtyChange={setIsFormDirty}
-              onSuccess={handleSuccess}
-              onDraftSave={handleDraftSave}
-            />
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
-             <div className="p-4 bg-primary/5 rounded-full text-primary/30">
-               <AlertCircle className="w-12 h-12" />
-             </div>
-             <div className="max-w-[300px]">
-               <h3 className="text-lg font-semibold text-gray-900">No Service Selected</h3>
-               <p className="text-sm text-muted-foreground mt-1">
-                 Please pick a service from the dropdown above to start your request.
-               </p>
-             </div>
-          </div>
-        )}
+
+        {/* Form area wrapped in logic */}
+        <div className="min-h-[400px]">
+          {(serviceCode && (serviceCode !== "CUSTOM" || customServiceId)) ? (
+            <div className="border-t pt-6 animate-in fade-in slide-in-from-top-4 duration-500">
+              <ServiceRequestForm
+                key={`${serviceCode}-${customServiceId}`} 
+                service={serviceCode}
+                customServiceId={customServiceId || undefined}
+                companyId={activeCompanyId}
+                onDirtyChange={setIsFormDirty}
+                onSuccess={handleSuccess}
+                onDraftSave={handleDraftSave}
+                serviceLabel={serviceCode === "CUSTOM" ? selectedCustomLabel : selectedMainLabel}
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 border-t pt-10">
+               <div className="p-4 bg-primary/5 rounded-full text-primary/30">
+                 <AlertCircle className="w-12 h-12" />
+               </div>
+               <div className="max-w-[300px]">
+                 <h3 className="text-lg font-semibold text-gray-900">Get Started</h3>
+                 <p className="text-sm text-muted-foreground mt-1">
+                   {serviceCode === "CUSTOM" 
+                    ? "Please select a specific custom service type to see the form." 
+                    : "Select a service from the dropdown above to view the request form and continue."}
+                 </p>
+               </div>
+            </div>
+          )}
+        </div>
       </DashboardCard>
 
       {/* Confirmation Modal for unsaved changes */}

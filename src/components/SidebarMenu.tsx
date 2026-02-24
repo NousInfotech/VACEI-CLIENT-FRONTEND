@@ -6,7 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
-import { MenuItem, MenuSection } from "@/lib/menuData";
+import { MenuItem, MenuSection, SERVICE_METADATA } from "@/lib/menuData";
 import {
   Tooltip,
   TooltipContent,
@@ -19,7 +19,8 @@ import { ENGAGEMENT_CONFIG } from "@/config/engagementConfig";
 import { getTodos, TodoItem } from "@/api/todoService";
 import { getDocumentRequests, DocumentRequest } from "@/api/documentRequestService";
 import { useActiveCompany } from "@/context/ActiveCompanyContext";
-import { fetchSidebarData, SidebarServiceData } from "@/api/companyService";
+import { SidebarServiceData } from "@/api/companyService";
+import { useGlobalDashboard } from "@/context/GlobalDashboardContext";
 
 interface SidebarMenuProps {
   menu: MenuItem[];
@@ -32,25 +33,7 @@ interface SidebarMenuProps {
 type StatusConfig = { label: string; color: string; dotColor: string; description?: string };
 
 
-// Map menu slug to API serviceType for matching engagements
-const MENU_SLUG_TO_SERVICE_TYPE: Record<string, string> = {
-  "accounting-bookkeeping": "ACCOUNTING",
-  audit: "AUDITING",
-  vat: "VAT",
-  tax: "TAX",
-  csp: "CSP",
-  payroll: "PAYROLL",
-  cfo: "CFO",
-  "mbr-filing": "MBR",
-  incorporation: "INCORPORATION",
-  "business-plans": "ADVISORY",
-  liquidation: "CUSTOM",
-  "regulated-licenses": "CUSTOM",
-  "banking-payments": "CUSTOM",
-  "international-structuring": "CUSTOM",
-  "crypto-digital-assets": "CUSTOM",
-  "grants-incentives": "CUSTOM",
-};
+
 
 
 export default function SidebarMenu({
@@ -65,9 +48,9 @@ export default function SidebarMenu({
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
   const { engagements } = useEngagements();
   const { activeCompanyId } = useActiveCompany();
+  const { sidebarData } = useGlobalDashboard();
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [documentRequestsMap, setDocumentRequestsMap] = useState<Record<string, DocumentRequest[]>>({});
-  const [sidebarData, setSidebarData] = useState<SidebarServiceData[]>([]);
 
   useEffect(() => {
     if (!activeCompanyId) {
@@ -78,10 +61,6 @@ export default function SidebarMenu({
     const fetchData = async () => {
       if (!activeCompanyId) return;
       try {
-        // Fetch sidebar data
-        const sidebarRes = await fetchSidebarData(activeCompanyId);
-        setSidebarData(sidebarRes);
-
         // Fetch todos
         const todosData = await getTodos();
         setTodos(Array.isArray(todosData) ? todosData : []);
@@ -105,23 +84,57 @@ export default function SidebarMenu({
     };
     fetchData();
   }, [activeCompanyId, engagements]);
-  const sections: { id: MenuSection; label: string }[] = [
+  const sections: { id: MenuSection; label: string }[] = useMemo(() => [
     { id: "primary", label: "Client portal" },
     { id: "operations", label: "Operations & tools" },
     { id: "settings", label: "Settings" },
-  ];
+  ], []);
 
-  const grouped: Record<MenuSection, MenuItem[]> = {
-    primary: [],
-    workspaces: [],
-    operations: [],
-    settings: [],
-  };
+  const dynamicMenu = useMemo(() => {
+    return menu.map((item) => {
+      if (item.slug === "services-root") {
+        const dynamicChildren = sidebarData.map((s) => {
+          // Normalize service name to match SERVICE_METADATA keys
+          const normalized = s.serviceName.toUpperCase().replace(/[-\s&]/g, "_");
+          
+          // Try to find a matching metadata key
+          const metadataKey = (Object.keys(SERVICE_METADATA).find(k => 
+            normalized === k || normalized.includes(k)
+          ) || "CUSTOM") as keyof typeof SERVICE_METADATA;
+          
+          const metadata = SERVICE_METADATA[metadataKey];
 
-  menu.forEach((item) => {
-    const section = item.section || "primary";
-    grouped[section].push(item);
-  });
+          // Check for single engagement to modify href
+          const hasSingleEngagement = s.activeEngagements && s.activeEngagements.length === 1;
+          const engagementId = hasSingleEngagement ? s.activeEngagements[0].id : undefined;
+
+          return {
+            slug: s.serviceName.toLowerCase().replace(/\s+/g, "-"),
+            icon: metadata.icon,
+            label: s.serviceName,
+            href: metadata.href, // Only use base href here, as lower down it appends engagementId again
+            isActive: true,
+          } as MenuItem;
+        });
+        return { ...item, children: dynamicChildren };
+      }
+      return item;
+    });
+  }, [menu, sidebarData]);
+
+  const grouped: Record<MenuSection, MenuItem[]> = useMemo(() => {
+    const res: Record<MenuSection, MenuItem[]> = {
+      primary: [],
+      workspaces: [],
+      operations: [],
+      settings: [],
+    };
+    dynamicMenu.forEach((item) => {
+      const section = item.section || "primary";
+      res[section].push(item);
+    });
+    return res;
+  }, [dynamicMenu]);
 
   // Build sidebar status from backend data
   const serviceStatusConfig = useMemo((): {
@@ -130,7 +143,6 @@ export default function SidebarMenu({
   } => {
     const itemStatus: Record<string, StatusConfig & { engagementId?: string; engagementCount: number }> = {};
     const sectionStatus: Record<string, StatusConfig> = {};
-    const menuSlugs = Object.keys(MENU_SLUG_TO_SERVICE_TYPE);
 
     const COMPLIANCE_MAP: Record<string, StatusConfig> = {
       OVERDUE: { label: "Overdue", color: "text-red-500", dotColor: "bg-red-500" },
@@ -164,48 +176,15 @@ export default function SidebarMenu({
       return COMPLIANCE_ORDER[worstIndex];
     };
 
-    // Build reverse mapping from types to slugs
-    const TYPE_TO_SLUG: Record<string, string> = {
-      ACCOUNTING: "accounting-bookkeeping",
-      AUDITING: "audit",
-      VAT: "vat",
-      TAX: "tax",
-      CSP: "csp",
-      PAYROLL: "payroll",
-      CFO: "cfo",
-      MBR: "mbr-filing",
-      INCORPORATION: "incorporation",
-      ADVISORY: "business-plans",
-      PROJECTS_TRANSACTIONS: "project-transactions",
-      GRANTS_AND_INCENTIVES: "grants-incentives",
-      LEGAL: "legal-services",
-    };
-
-    // 1. Map backend data to individual items
+    // 1. Map backend data to individual items using serviceName derived slugs
     sidebarData.forEach((item) => {
-      const backendName = item.serviceName.toUpperCase().replace(/[-\s]/g, "_");
-      let slug: string | undefined = TYPE_TO_SLUG[backendName];
-
-      if (!slug) {
-        const normalizedLabel = item.serviceName.toLowerCase().replace(/[^a-z0-9]/g, "");
-        slug = menuSlugs.find(s => s.toLowerCase().replace(/[^a-z0-9]/g, "") === normalizedLabel);
-        
-        if (!slug) {
-          const directSlug = item.serviceName.toLowerCase().replace(/\s+/g, "-");
-          if (menuSlugs.includes(directSlug)) {
-            slug = directSlug;
-          }
-        }
-      }
-
-      if (slug) {
-        const compliance = COMPLIANCE_MAP[item.worstCompliance] || COMPLIANCE_MAP.ON_TRACK;
-        itemStatus[slug] = {
-          ...compliance,
-          engagementCount: item.activeEngagements?.length || 0,
-          engagementId: item.activeEngagements?.length === 1 ? item.activeEngagements[0].id : undefined
-        };
-      }
+      const slug = item.serviceName.toLowerCase().replace(/\s+/g, "-");
+      const compliance = COMPLIANCE_MAP[item.worstCompliance] || COMPLIANCE_MAP.ON_TRACK;
+      itemStatus[slug] = {
+        ...compliance,
+        engagementCount: item.activeEngagements?.length || 0,
+        engagementId: item.activeEngagements?.length === 1 ? item.activeEngagements[0].id : undefined
+      };
     });
 
     // 2. Aggregate status for parent items
@@ -237,11 +216,11 @@ export default function SidebarMenu({
       return pickWorst(childrenStatuses);
     };
 
-    aggregateItemStatus(menu);
+    aggregateItemStatus(dynamicMenu);
 
     // 3. Aggregate status for sections
     sections.forEach(section => {
-      const sectionItems = menu.filter(item => (item.section || "primary") === section.id);
+      const sectionItems = dynamicMenu.filter(item => (item.section || "primary") === section.id);
       const statuses = sectionItems
         .map(item => Object.keys(COMPLIANCE_MAP).find(
           key => COMPLIANCE_MAP[key].label === itemStatus[item.slug]?.label
@@ -255,7 +234,7 @@ export default function SidebarMenu({
     });
 
     return { items: itemStatus, sections: sectionStatus };
-  }, [sidebarData, MENU_SLUG_TO_SERVICE_TYPE, menu]);
+  }, [sidebarData, dynamicMenu, sections]);
 
   // User data from localStorage
   const [user, setUser] = useState({
@@ -290,7 +269,7 @@ export default function SidebarMenu({
     return best;
   };
 
-  const bestMatch = getBestMatch(menu);
+  const bestMatch = getBestMatch(dynamicMenu);
 
   const branding = {
     sidebar_background_color: "15, 23, 41",

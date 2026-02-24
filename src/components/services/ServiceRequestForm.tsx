@@ -25,6 +25,7 @@ interface Props {
   onDirtyChange?: (isDirty: boolean) => void;
   onSuccess?: () => void;
   onDraftSave?: () => void;
+  serviceLabel?: string;
 }
 
 export default function ServiceRequestForm({
@@ -34,6 +35,7 @@ export default function ServiceRequestForm({
   onDirtyChange,
   onSuccess,
   onDraftSave,
+  serviceLabel,
 }: Props) {
   const [requestId, setRequestId] = useState<string | null>(null);
   
@@ -215,6 +217,10 @@ export default function ServiceRequestForm({
     }
   };
 
+  if (loading) {
+    return <ServiceFormSkeleton />;
+  }
+
   return (
     <div className="w-full space-y-12 animate-in fade-in duration-500">
       {/* SERVICE DETAILS */}
@@ -222,7 +228,7 @@ export default function ServiceRequestForm({
         <div className="flex items-center justify-between border-b pb-2">
           <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
             <span className="w-1.5 h-6 bg-primary rounded-full"></span>
-            {service.replace(/_/g, ' ')} Details
+            {serviceLabel || service.replace(/_/g, ' ')} Details
           </h3>
         </div>
 

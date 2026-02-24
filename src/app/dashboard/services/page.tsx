@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,208 +11,43 @@ import {
   ProfileIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useGlobalDashboard } from "@/context/GlobalDashboardContext";
+import { SERVICE_METADATA } from "@/lib/menuData";
 import { 
-  BookOpen, 
-  Receipt, 
-  Users, 
-  FileText, 
-  Briefcase, 
-  Scale, 
-  Building2, 
   CheckCircle2, 
   Clock, 
   AlertCircle, 
   Plus, 
   ArrowRight, 
   Settings,
-  Sparkles,
-  TrendingUp, AlertTriangle,
+  TrendingUp, 
+  AlertTriangle,
   Clock3,
   CheckCheck,
+  FileText,
 } from "lucide-react";
 
 import DashboardCard from "@/components/DashboardCard";
 import PageHeader from "@/components/shared/PageHeader";
 
 // Service categories
-const serviceCategories = [
-  {
-    id: "core",
-    title: "Core Services",
-    description: "Essential accounting and compliance services",
-    services: [
-      {
-        slug: "bookkeeping",
-        title: "Bookkeeping",
-        status: "Waiting docs",
-        statusTone: "warning",
-        href: "/dashboard/services/bookkeeping",
-        icon: Book02Icon,
-        description: "Monthly books, reconciliations and reports.",
-        color: "blue",
-      },
-      {
-        slug: "vat",
-        title: "VAT",
-        status: "Draft",
-        statusTone: "info",
-        href: "/dashboard/services/vat",
-        icon: TaxesIcon,
-        description: "VAT periods, submissions and returns.",
-        color: "green",
-      },
-      {
-        slug: "tax",
-        title: "Tax",
-        status: "Open",
-        statusTone: "info",
-        href: "/dashboard/services/tax",
-        icon: TaxesIcon,
-        description: "Corporate and personal tax compliance.",
-        color: "green",
-      },
-      {
-        slug: "payroll",
-        title: "Payroll",
-        status: "Done",
-        statusTone: "success",
-        href: "/dashboard/services/payroll",
-        icon: CashbackPoundIcon,
-        description: "Payslips history via invoice exports.",
-        color: "purple",
-      },
-    ],
-  },
-  {
-    id: "compliance",
-    title: "Compliance & Corporate",
-    description: "Regulatory filings and corporate services",
-    services: [
-      {
-        slug: "compliance",
-        title: "Compliance & MBR",
-        status: "Due soon",
-        statusTone: "warning",
-        href: "/dashboard/compliance",
-        icon: ProfileIcon,
-        description: "Calendar of statutory and MBR deadlines.",
-        color: "orange",
-      },
-      {
-        slug: "csp-mbr",
-        title: "CSP / MBR",
-        status: "Open",
-        statusTone: "info",
-        href: "/dashboard/services/csp-mbr",
-        icon: ProfileIcon,
-        description: "Corporate profile, filings, MBR forms.",
-        color: "teal",
-      },
-    ],
-  },
-  {
-    id: "workspaces",
-    title: "Workspaces",
-    description: "Specialized service workspaces",
-    services: [
-      {
-        slug: "audit",
-        title: "Audit",
-        status: "Open",
-        statusTone: "info",
-        href: "/dashboard/services/audit",
-        icon: ProfileIcon,
-        description: "Engagement, PBCs, queries, reports.",
-        color: "indigo",
-      },
-      {
-        slug: "banking-payments",
-        title: "Banking & Payments",
-        status: "Open",
-        statusTone: "info",
-        href: "/dashboard/services/banking-payments",
-        icon: CashbackPoundIcon,
-        description: "Bank docs, approvals, and payment workflows.",
-        color: "blue",
-      },
-      {
-        slug: "legal",
-        title: "Legal",
-        status: "Open",
-        statusTone: "info",
-        href: "/dashboard/services/legal",
-        icon: ProfileIcon,
-        description: "Matters, drafts, approvals, signed docs.",
-        color: "red",
-      },
-      {
-        slug: "projects",
-        title: "Projects & Transactions",
-        status: "Open",
-        statusTone: "info",
-        href: "/dashboard/services/projects",
-        icon: GitPullRequestIcon,
-        description: "Projects, milestones, data room.",
-        color: "pink",
-      },
-    ],
-  },
-  {
-    id: "tools",
-    title: "Tools & Resources",
-    description: "Document management and integrations",
-    services: [
-      {
-        slug: "documents",
-        title: "Documents",
-        status: "Open",
-        statusTone: "info",
-        href: "/dashboard/documents",
-        icon: DocumentValidationIcon,
-        description: "Central document vault and requests.",
-        color: "slate",
-      },
-    ],
-  },
-] as const;
+// Categories for fallback/grouping
+const FALLBACK_CATEGORIES = [
+  "Core Services",
+  "Compliance & Corporate",
+  "Workspaces",
+  "Specialized"
+];
 
- const stats = [
-    {
-      label: "Active Services",
-      value: "9",
-      color: "text-green-600",
-      bg: "bg-green-100",
-      icon: CheckCircle2,
-      active: true,
-      status: "Active",
-      cta: "View services",
-      services: ["Bookkeeping", "VAT", "Tax", "Payroll"], // Demo services
-    },
-    {
-      label: "Pending Actions",
-      value: "3",
-      color: "text-orange-600",
-      bg: "bg-orange-100",
-      icon: AlertTriangle,
-      active: false,
-    },
-    {
-      label: "Due Soon",
-      value: "2",
-      color: "text-blue-600",
-      bg: "bg-blue-100",
-      icon: Clock3,
-      active: false,
-    },
-    {
-      label: "Completed",
-      value: "5",
-      color: "text-purple-600",
-      bg: "bg-purple-100",
-      icon: CheckCheck,
-      active: false,
-    },
-  ];
+  const COMPLIANCE_STATUS_MAP: Record<string, { label: string; tone: "warning" | "info" | "success" | "muted" }> = {
+    OVERDUE: { label: "Overdue", tone: "warning" },
+    DUE_TODAY: { label: "Due Today", tone: "warning" },
+    DUE_SOON: { label: "Due Soon", tone: "warning" },
+    ACTION_REQUIRED: { label: "Action Required", tone: "info" },
+    ACTION_TAKEN: { label: "Action Taken", tone: "success" },
+    COMPLETED: { label: "Completed", tone: "success" },
+    ON_TRACK: { label: "On Track", tone: "success" },
+  };
 
 
 function StatusBadge({
@@ -318,9 +153,101 @@ function ServiceCard({ service }: { service: ServiceType }) {
 }
 
 export default function ServicesHubPage() {
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState<string[]>([]);
+  const { sidebarData, loading: sidebarLoading } = useGlobalDashboard();
+
+  const dynamicCategories = useMemo(() => {
+    const categories: Record<string, { id: string; title: string; description: string; services: ServiceType[] }> = {};
+
+    sidebarData.forEach((s) => {
+      const normalized = s.serviceName.toUpperCase().replace(/[-\s&]/g, "_");
+      const metadataKey = (Object.keys(SERVICE_METADATA).find(k => 
+        normalized === k || normalized.includes(k)
+      ) || "CUSTOM") as keyof typeof SERVICE_METADATA;
+      
+      const metadata = SERVICE_METADATA[metadataKey];
+      const statusInfo = COMPLIANCE_STATUS_MAP[s.worstCompliance] || COMPLIANCE_STATUS_MAP.ON_TRACK;
+
+      // Determine href (handle single engagement)
+      const hasSingleEngagement = s.activeEngagements && s.activeEngagements.length === 1;
+      const href = hasSingleEngagement ? `${metadata.href}/${s.activeEngagements[0].id}` : metadata.href;
+
+      const service: ServiceType = {
+        slug: s.serviceName.toLowerCase().replace(/\s+/g, "-"),
+        title: s.serviceName,
+        status: statusInfo.label,
+        statusTone: statusInfo.tone,
+        href: href,
+        icon: metadata.icon,
+        description: metadata.description || "Service workspace.",
+        color: metadata.color || "slate"
+      };
+
+      const catName = metadata.category || "Specialized";
+      if (!categories[catName]) {
+        categories[catName] = {
+          id: catName.toLowerCase().replace(/\s+/g, "-"),
+          title: catName,
+          description: `Manage your ${catName.toLowerCase()}.`,
+          services: []
+        };
+      }
+      categories[catName].services.push(service);
+    });
+
+    // Sort categories by predefined order if possible
+    return Object.values(categories).sort((a, b) => {
+      const indexA = FALLBACK_CATEGORIES.indexOf(a.title);
+      const indexB = FALLBACK_CATEGORIES.indexOf(b.title);
+      return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+    });
+  }, [sidebarData]);
+
+  const stats = useMemo(() => {
+    const activeCount = sidebarData.length;
+    const pendingCount = sidebarData.filter(s => ['ACTION_REQUIRED', 'OVERDUE', 'DUE_TODAY'].includes(s.worstCompliance)).length;
+    const dueSoonCount = sidebarData.filter(s => s.worstCompliance === 'DUE_SOON').length;
+    const completedCount = sidebarData.filter(s => s.worstCompliance === 'COMPLETED').length;
+
+    return [
+      {
+        label: "Active Services",
+        value: activeCount.toString(),
+        color: "text-green-600",
+        bg: "bg-green-100",
+        icon: CheckCircle2,
+        active: true,
+        status: "Active",
+        cta: "View services",
+        services: sidebarData.map(s => s.serviceName),
+      },
+      {
+        label: "Pending Actions",
+        value: pendingCount.toString(),
+        color: "text-orange-600",
+        bg: "bg-orange-100",
+        icon: AlertTriangle,
+        active: false,
+      },
+      {
+        label: "Due Soon",
+        value: dueSoonCount.toString(),
+        color: "text-blue-600",
+        bg: "bg-blue-100",
+        icon: Clock3,
+        active: false,
+      },
+      {
+        label: "Completed",
+        value: completedCount.toString(),
+        color: "text-purple-600",
+        bg: "bg-purple-100",
+        icon: CheckCheck,
+        active: false,
+      },
+    ];
+  }, [sidebarData]);
 
    const openModal = (services: string[]) => {
     setModalData(services);
@@ -429,24 +356,35 @@ export default function ServicesHubPage() {
     
       {/* Service Categories */}
       <div className="space-y-8">
-        {serviceCategories.map((category) => (
-          <div key={category.id} className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <h2 className="text-xl font-semibold text-brand-body flex items-center gap-2">
-                  {category.title}
-                </h2>
-                <p className="text-sm text-muted-foreground">{category.description}</p>
-              </div>
-            </div>
-
+        {sidebarLoading ? (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {category.services.map((service) => (
-                <ServiceCard key={service.slug} service={service} />
-              ))}
+                {[1,2,3].map(i => <div key={i} className="h-48 bg-muted animate-pulse rounded-card" />)}
             </div>
-          </div>
-        ))}
+        ) : dynamicCategories.length > 0 ? (
+            dynamicCategories.map((category) => (
+                <div key={category.id} className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <h2 className="text-xl font-semibold text-brand-body flex items-center gap-2">
+                        {category.title}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">{category.description}</p>
+                    </div>
+                  </div>
+      
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    {category.services.map((service) => (
+                      <ServiceCard key={service.slug} service={service} />
+                    ))}
+                  </div>
+                </div>
+              ))
+        ) : (
+            <div className="text-center py-20 bg-muted/20 rounded-card border border-dashed">
+                <p className="text-muted-foreground">No active services found for this company.</p>
+                <Link href="/dashboard/services/request" className="text-primary font-medium mt-2 inline-block">Request your first service</Link>
+            </div>
+        )}
       </div>
 
       {/* Enhanced CTA Section */}

@@ -75,7 +75,7 @@ const EngagementSelectionCards = ({
           return (
             <Link 
               key={id} 
-              href={`/dashboard/services/${serviceSlug}/${id}`}
+              href={`/dashboard/services/${serviceSlug}/engagements/${id}`}
               className="block group h-full"
             >
               <DashboardCard className="h-full p-0 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-slate-200">

@@ -7,14 +7,16 @@ import EngagementSummary, {
   WorkflowStatus,
 } from "./EngagementSummary";
 import { EngagementProvider } from "./hooks/useEngagement";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { getEngagements } from "@/api/auditService";
 import { ENGAGEMENT_CONFIG } from "@/config/engagementConfig";
 import { useActiveCompany } from "@/context/ActiveCompanyContext";
+import { useGlobalDashboard } from "@/context/GlobalDashboardContext";
 import { Spinner } from "@/components/ui/spinner";
 import Link from "next/link";
 import EngagementSelectionCards from "./EngagementSelectionCards";
+import { SERVICE_METADATA } from "@/lib/menuData";
 
 interface ServiceEngagementProps {
   serviceSlug: string;
@@ -248,8 +250,9 @@ interface ServiceEngagementProps {
 const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: ServiceEngagementProps) => {
   const searchParams = useSearchParams();
   const urlEngagementId = searchParams.get('engagementId');
-  const { activeCompanyId } = useActiveCompany();
   const router = useRouter();
+  const pathname = usePathname();
+  const { activeCompanyId } = useActiveCompany();
 
   const data = serviceData[serviceSlug] || {
     name: "Service Engagement",
@@ -264,68 +267,68 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
   const [activeEngagementId, setActiveEngagementId] = useState<string | null>(null);
   const [engagementLoading, setEngagementLoading] = useState(false);
   const [engagementNotFound, setEngagementNotFound] = useState(false);
+  const { sidebarData, loading: sidebarLoading } = useGlobalDashboard();
   const hasFetchedRef = useRef(false);
 
   const finalEngagementId = propEngagementId || urlEngagementId || activeEngagementId;
 
   useEffect(() => {
-    if (propEngagementId || urlEngagementId || ENGAGEMENT_CONFIG.USE_MOCK_DATA || !activeCompanyId) {
+    if (propEngagementId || urlEngagementId || ENGAGEMENT_CONFIG.USE_MOCK_DATA || !activeCompanyId || sidebarLoading) {
+      if (sidebarLoading) setEngagementLoading(true);
+      else setEngagementLoading(false);
       return;
     }
 
-    const controller = new AbortController();
-    const signal = controller.signal;
-
-    const fetchActiveEngagement = async () => {
+    const findMatchingEngagements = () => {
       setEngagementLoading(true);
       setEngagementNotFound(false);
-      hasFetchedRef.current = true;
 
-      try {
-        const engagements = await getEngagements(activeCompanyId, signal);
-        if (signal.aborted) return;
+      // Find metadata key for this slug
+      const metadataKey = Object.keys(SERVICE_METADATA).find(key => 
+        SERVICE_METADATA[key].href.endsWith(`/${serviceSlug}`)
+      );
 
-        const mappedType = SLUG_TO_SERVICE_TYPE[serviceSlug] || serviceSlug.toUpperCase().replace('-', '_');
-
-        const matches = engagements.filter((e: any) =>
-          e.serviceCategory === mappedType ||
-          e.serviceType === mappedType ||
-          e.serviceType === 'CUSTOM' || 
-          e.title?.toUpperCase().includes(mappedType)
-        );
-
-        // Sort matches by update date (recently active first)
-        matches.sort((a: any, b: any) => {
-          const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
-          const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
-          return dateB - dateA;
-        });
-
-        setMatchingEngagements(matches);
-
-        if (matches.length === 1) {
-          const match = matches[0];
-          const matchId: string | undefined = (match as { _id?: string; id?: string })._id || (match as { _id?: string; id?: string }).id;
-          if (typeof matchId === "string") {
-            setActiveEngagementId(matchId);
-            router.push(`/dashboard/services/${serviceSlug}/${matchId}`);
-          } else {
-            setEngagementNotFound(true);
-          }
-        } else if (matches.length === 0) {
-          setEngagementNotFound(true);
-        }
-      } catch (err: any) {
-        if (err.name === 'AbortError') return;
+      if (!metadataKey) {
         setEngagementNotFound(true);
-      } finally {
-        if (!signal.aborted) setEngagementLoading(false);
+        setEngagementLoading(false);
+        return;
       }
+
+      const metadata = SERVICE_METADATA[metadataKey];
+      
+      // Find matching item in sidebarData
+      const sidebarItem = sidebarData.find(s => {
+        const normalized = s.serviceName.toUpperCase().replace(/[-\s&]/g, "_");
+        return normalized === metadataKey || normalized.includes(metadataKey);
+      });
+
+      if (!sidebarItem || !sidebarItem.activeEngagements || sidebarItem.activeEngagements.length === 0) {
+        setEngagementNotFound(true);
+        setEngagementLoading(false);
+        return;
+      }
+
+      setMatchingEngagements(sidebarItem.activeEngagements);
+
+      if (sidebarItem.activeEngagements.length === 1) {
+        const matchId = sidebarItem.activeEngagements[0].id;
+        setActiveEngagementId(matchId);
+        // Replace current URL with the specific engagement URL
+        // Structure: /dashboard/services/[slug]/[id]
+        const targetUrl = `/dashboard/services/${serviceSlug}/${matchId}`;
+        if (pathname !== targetUrl) {
+          router.replace(targetUrl);
+        }
+      } else if (sidebarItem.activeEngagements.length > 1 && !pathname.includes('/engagements')) {
+        // Redirection to list page if multiple and not already there
+        router.replace(`/dashboard/services/${serviceSlug}/engagements`);
+      }
+      
+      setEngagementLoading(false);
     };
 
-    fetchActiveEngagement();
-    return () => controller.abort();
-  }, [propEngagementId, urlEngagementId, serviceSlug, activeCompanyId, router]);
+    findMatchingEngagements();
+  }, [propEngagementId, urlEngagementId, serviceSlug, activeCompanyId, sidebarData, sidebarLoading, router, pathname]);
 
   const engagementIdToUse = finalEngagementId || (ENGAGEMENT_CONFIG.USE_MOCK_DATA ? `mock-engagement-${serviceSlug}` : "");
 

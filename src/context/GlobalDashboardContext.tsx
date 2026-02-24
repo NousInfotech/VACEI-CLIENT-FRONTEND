@@ -1,6 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { fetchSidebarData, SidebarServiceData } from "@/api/companyService";
+import { useActiveCompany } from "./ActiveCompanyContext";
 
 interface Company {
   id: string;
@@ -15,7 +17,9 @@ interface GlobalDashboardContextType {
   complianceState: "all-good" | "due" | "overdue";
   hasMessages: boolean;
   pendingDocs: number;
+  sidebarData: SidebarServiceData[];
   refreshData: () => Promise<void>;
+  refreshSidebar: () => Promise<void>;
 }
 
 const GlobalDashboardContext = createContext<GlobalDashboardContextType | undefined>(undefined);
@@ -26,7 +30,9 @@ export function GlobalDashboardProvider({ children }: { children: React.ReactNod
   const [complianceState, setComplianceState] = useState<"all-good" | "due" | "overdue">("all-good");
   const [hasMessages, setHasMessages] = useState(false);
   const [pendingDocs, setPendingDocs] = useState(0);
+  const [sidebarData, setSidebarData] = useState<SidebarServiceData[]>([]);
   const [isFetched, setIsFetched] = useState(false);
+  const { activeCompanyId } = useActiveCompany();
 
   const fetchDashboardData = useCallback(async (force = false) => {
     if (isFetched && !force) return;
@@ -68,9 +74,26 @@ export function GlobalDashboardProvider({ children }: { children: React.ReactNod
     }
   }, [isFetched]);
 
+  const fetchSidebar = useCallback(async () => {
+    if (!activeCompanyId) {
+      setSidebarData([]);
+      return;
+    }
+    try {
+      const data = await fetchSidebarData(activeCompanyId);
+      setSidebarData(data);
+    } catch (error) {
+      console.error("Failed to fetch sidebar data:", error);
+    }
+  }, [activeCompanyId]);
+
   useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
+
+  useEffect(() => {
+    fetchSidebar();
+  }, [fetchSidebar]);
 
   const refreshData = async () => {
     await fetchDashboardData(true);
@@ -83,7 +106,9 @@ export function GlobalDashboardProvider({ children }: { children: React.ReactNod
       complianceState, 
       hasMessages, 
       pendingDocs,
-      refreshData 
+      sidebarData,
+      refreshData,
+      refreshSidebar: fetchSidebar
     }}>
       {children}
     </GlobalDashboardContext.Provider>
