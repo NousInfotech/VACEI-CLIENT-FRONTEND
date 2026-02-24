@@ -58,7 +58,10 @@ function mapClientRoomToChat(room: ClientChatRoom): Chat {
 
     return {
         id: room.id,
-        type: "INDIVIDUAL",
+        // @ts-ignore - The API may not explicitly type contextType here, but that is what we need
+        type: (room.contextType && room.contextType === 'DIRECT')
+            ? "INDIVIDUAL"
+            : (room.contextType === 'ENGAGEMENT' || (room.members && room.members.length > 2)) ? "GROUP" : "INDIVIDUAL",
         name: room.title,
         participants: membersToParticipants(room.members),
         lastMessage: lastMsg,

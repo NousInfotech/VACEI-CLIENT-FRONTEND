@@ -68,10 +68,10 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
   // Get companyId from context
   const { company } = useCompany();
   const companyId = company?._id || null;
-  
+
   // Fetch hierarchy data using the hook (fetches from backend API)
   const { hierarchyData: fetchedRootData, loading: hierarchyLoading, error: hierarchyError } = useCompanyHierarchy(companyId);
-  
+
   // Use fetched data if available, otherwise fall back to prop (for backward compatibility)
   const rootData = fetchedRootData !== null ? fetchedRootData : propRootData;
 
@@ -122,13 +122,13 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
     };
 
     // Helper to restructure data into side-by-side layout: Parent -> Left (Shareholders) | Right (Only Representatives)
-    const restructureHierarchy = (root: HierarchyTreeNode): { 
-      root: HierarchyTreeNode; 
-      shareholders: HierarchyTreeNode[]; 
-      onlyRepresentatives: HierarchyTreeNode[] 
+    const restructureHierarchy = (root: HierarchyTreeNode): {
+      root: HierarchyTreeNode;
+      shareholders: HierarchyTreeNode[];
+      onlyRepresentatives: HierarchyTreeNode[]
     } => {
       const allDescendants = root.children ?? root.shareholders ?? [];
-      
+
       if (allDescendants.length === 0) {
         return { root, shareholders: [], onlyRepresentatives: [] };
       }
@@ -142,14 +142,14 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
           descendant.sharesData.some((sd: ShareDataItem) => Number(sd.totalShares) > 0);
         const hasSharesFromTotalSharesArray = Array.isArray(descendant.totalShares) &&
           descendant.totalShares.some((sd: ShareDataItem) => Number(sd.totalShares) > 0);
-        const hasShares = (descendant.sharePercentage && descendant.sharePercentage > 0) || 
-                         (descendant.percentage && descendant.percentage > 0) ||
-                         (typeof descendant.totalShares === 'number' && descendant.totalShares > 0) ||
-                         hasSharesFromData ||
-                         hasSharesFromTotalSharesArray;
-        
+        const hasShares = (descendant.sharePercentage && descendant.sharePercentage > 0) ||
+          (descendant.percentage && descendant.percentage > 0) ||
+          (typeof descendant.totalShares === 'number' && descendant.totalShares > 0) ||
+          hasSharesFromData ||
+          hasSharesFromTotalSharesArray;
+
         // Check if this is a representative (has representative/director/secretary role)
-        const hasRepRole = descendant.roles?.some(role => 
+        const hasRepRole = descendant.roles?.some(role =>
           role.toLowerCase().includes('representative') ||
           role.toLowerCase().includes('director') ||
           role.toLowerCase().includes('secretary')
@@ -180,8 +180,8 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
           (Array.isArray(a.totalShares)
             ? (a.totalShares as ShareDataItem[]).reduce((sum, sd) => sum + (Number(sd.totalShares) || 0), 0)
             : typeof a.totalShares === "number"
-            ? a.totalShares
-            : 0);
+              ? a.totalShares
+              : 0);
 
         const totalSharesB =
           (Array.isArray(b.sharesData)
@@ -190,8 +190,8 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
           (Array.isArray(b.totalShares)
             ? (b.totalShares as ShareDataItem[]).reduce((sum, sd) => sum + (Number(sd.totalShares) || 0), 0)
             : typeof b.totalShares === "number"
-            ? b.totalShares
-            : 0);
+              ? b.totalShares
+              : 0);
 
         if (totalSharesA !== totalSharesB) return totalSharesB - totalSharesA;
 
@@ -217,7 +217,7 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
       let displayRoles = node.roles && Array.isArray(node.roles) && node.roles.length > 0
         ? [...node.roles]
         : [];
-      
+
       // Add "Shareholder" role if node has shares but not explicitly in roles
       // BUT NOT for the root/parent company
       if (!isRoot) {
@@ -225,20 +225,20 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
           node.sharesData.some((sd: ShareDataItem) => Number(sd.totalShares) > 0);
         const hasSharesFromTotalSharesArray = Array.isArray(node.totalShares) &&
           node.totalShares.some((sd: ShareDataItem) => Number(sd.totalShares) > 0);
-        const isShareholder = (node.sharePercentage !== undefined && node.sharePercentage > 0) || 
-                             (node.percentage !== undefined && node.percentage > 0) ||
-                             (typeof node.totalShares === 'number' && node.totalShares > 0) ||
-                             hasSharesFromData ||
-                             hasSharesFromTotalSharesArray;
-        
+        const isShareholder = (node.sharePercentage !== undefined && node.sharePercentage > 0) ||
+          (node.percentage !== undefined && node.percentage > 0) ||
+          (typeof node.totalShares === 'number' && node.totalShares > 0) ||
+          hasSharesFromData ||
+          hasSharesFromTotalSharesArray;
+
         if (isShareholder && !displayRoles.some(role => role.toLowerCase() === 'shareholder')) {
           displayRoles.unshift('Shareholder'); // Add at beginning
         }
       }
-      
+
       // If no roles, set to undefined to hide the roles section
       const finalRoles = displayRoles.length === 0 ? undefined : displayRoles;
-      
+
       // Use larger dimensions for parent company
       const nodeWidth = isRoot ? PARENT_NODE_WIDTH : NODE_WIDTH;
       const nameFontSize = isRoot ? 50 : 16; // Larger font for parent
@@ -263,7 +263,7 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
               backgroundColor: "#f3f4f6",
               padding: paddingSize,
               color: "#111827",
-             }}
+            }}
           >
             {/* Name */}
             <div
@@ -277,7 +277,7 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
             >
               {node.name}
             </div>
-            
+
             {/* Address */}
             {node.address && (
               <div
@@ -291,7 +291,7 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
                 <span style={{ fontWeight: 600 }}>Address: </span> {node.address}
               </div>
             )}
-            
+
             {/* Nationality (for persons and companies if available) */}
             {node.nationality && (
               <div
@@ -336,20 +336,20 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
             }}
           >
             {/* Percentage and Shares */}
-            {((node.sharePercentage !== undefined && node.sharePercentage > 0) || 
+            {((node.sharePercentage !== undefined && node.sharePercentage > 0) ||
               (node.percentage !== undefined && node.percentage > 0)) && (
-              <div
-                style={{
-                  fontSize: isRoot ? 28 : 24,
-                  fontWeight: 700,
-                  color: "#1f2937",
-                  marginBottom: 6,
-                }}
-              >
-                {((node.sharePercentage ?? node.percentage) || 0).toFixed(2)}%
-              </div>
-            )}
-            
+                <div
+                  style={{
+                    fontSize: isRoot ? 28 : 24,
+                    fontWeight: 700,
+                    color: "#1f2937",
+                    marginBottom: 6,
+                  }}
+                >
+                  {((node.sharePercentage ?? node.percentage) || 0).toFixed(2)}%
+                </div>
+              )}
+
             {/* Display shares by class */}
             {(() => {
               // Check if totalShares is an array (parent company case) or if sharesData exists (shareholder case)
@@ -372,7 +372,7 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
                   .sort(([a], [b]) => a.localeCompare(b));
 
                 return (
-                  <div style={{ 
+                  <div style={{
                     marginBottom: 4,
                     display: "flex",
                     flexDirection: "row",
@@ -493,19 +493,20 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
       onlyRepresentatives: HierarchyTreeNode[]
     ) => {
       const rootId = String(root.id);
-      
+
       // Calculate total width needed (based on the widest row)
       const maxNodesInRow = Math.max(shareholders.length, onlyRepresentatives.length);
       const totalWidth = (maxNodesInRow * NODE_WIDTH) + ((maxNodesInRow - 1) * NODE_GAP) + 200; // +200 for padding
 
       // Position parent at top center
       const parentX = (totalWidth - PARENT_NODE_WIDTH) / 2;
+      const parentY = -150; // Offset upwards to reduce top gap
       const labelContent = createLabelContent(root, true); // true = isRoot
-      
+
       nodeMap.set(rootId, {
         id: rootId,
         data: { label: labelContent },
-        position: { x: parentX, y: 0 },
+        position: { x: parentX, y: parentY },
         draggable: false,
         selectable: false,
         style: { ...baseNodeStyle, width: PARENT_NODE_WIDTH },
@@ -516,9 +517,9 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
 
       // HEADER 1: "Shareholders" grouping header
       const shareholdersHeaderId = "shareholders-header";
-      const shareholdersHeaderY = LEVEL_GAP_Y;
+      const shareholdersHeaderY = LEVEL_GAP_Y - 150;
       const shareholdersHeaderX = (totalWidth - HEADER_WIDTH) / 2;
-      
+
       if (shareholders.length > 0) {
         nodeMap.set(shareholdersHeaderId, {
           id: shareholdersHeaderId,
@@ -545,27 +546,27 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
       }
 
       // ROW 1: Position individual shareholders horizontally at Level 2 (max 3 per row)
-      const shareholdersStartY = LEVEL_GAP_Y * 2;
+      const shareholdersStartY = (LEVEL_GAP_Y * 2) - 150;
       let maxShareholdersY = shareholdersStartY;
-      
+
       shareholders.forEach((shareholder, index) => {
         const nodeId = String(shareholder.id);
         const label = createLabelContent(shareholder);
-        
+
         // Calculate row and column position
         const rowIndex = Math.floor(index / NODES_PER_ROW);
         const colIndex = index % NODES_PER_ROW;
         const nodesInThisRow = Math.min(NODES_PER_ROW, shareholders.length - rowIndex * NODES_PER_ROW);
-        
+
         // Calculate X position (centered for each row)
         const rowWidth = (nodesInThisRow * NODE_WIDTH) + ((nodesInThisRow - 1) * NODE_GAP);
         const rowStartX = (totalWidth - rowWidth) / 2;
         const xPos = rowStartX + (colIndex * (NODE_WIDTH + NODE_GAP));
-        
+
         // Calculate Y position
         const yPos = shareholdersStartY + (rowIndex * (LEVEL_GAP_Y * 1));
         maxShareholdersY = Math.max(maxShareholdersY, yPos);
-        
+
         nodeMap.set(nodeId, {
           id: nodeId,
           data: { label },
@@ -593,12 +594,12 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
       // HEADER 2: "Representatives" grouping header
       const representativesHeaderId = "representatives-header";
       // If no shareholders, move this up to where the shareholders header would have been
-      const representativesHeaderY = shareholders.length > 0 
-        ? maxShareholdersY + LEVEL_GAP_Y 
-        : LEVEL_GAP_Y;
+      const representativesHeaderY = shareholders.length > 0
+        ? maxShareholdersY + LEVEL_GAP_Y
+        : LEVEL_GAP_Y - 150;
 
       const representativesHeaderX = (totalWidth - HEADER_WIDTH) / 2;
-      
+
       if (onlyRepresentatives.length > 0) {
         nodeMap.set(representativesHeaderId, {
           id: representativesHeaderId,
@@ -629,25 +630,25 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
       // ROW 2: Position only-representatives horizontally (max 3 per row)
       const representativesStartY = representativesHeaderY + LEVEL_GAP_Y;
       let maxRepresentativesY = representativesStartY;
-      
+
       onlyRepresentatives.forEach((rep, index) => {
         const nodeId = String(rep.id);
         const label = createLabelContent(rep);
-        
+
         // Calculate row and column position
         const rowIndex = Math.floor(index / NODES_PER_ROW);
         const colIndex = index % NODES_PER_ROW;
         const nodesInThisRow = Math.min(NODES_PER_ROW, onlyRepresentatives.length - rowIndex * NODES_PER_ROW);
-        
+
         // Calculate X position (centered for each row)
         const rowWidth = (nodesInThisRow * NODE_WIDTH) + ((nodesInThisRow - 1) * NODE_GAP);
         const rowStartX = (totalWidth - rowWidth) / 2;
         const xPos = rowStartX + (colIndex * (NODE_WIDTH + NODE_GAP));
-        
+
         // Calculate Y position
         const yPos = representativesStartY + (rowIndex * (LEVEL_GAP_Y * 0.9));
         maxRepresentativesY = Math.max(maxRepresentativesY, yPos);
-        
+
         nodeMap.set(nodeId, {
           id: nodeId,
           data: { label },
@@ -687,7 +688,7 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
     return {
       initialNodes: generatedNodes,
       initialEdges: generatedEdges,
-      bounds: { width: maxX + 400, height: maxY + 400 },
+      bounds: { width: maxX + 400, height: maxY + 100 },
     };
   }, [rootData]);
 
@@ -706,9 +707,9 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
 
   const onConnect = useCallback(
     (params: Edge | Connection) =>
-      setEdges((eds) => addEdge({ 
-        ...params, 
-        type: "smoothstep", 
+      setEdges((eds) => addEdge({
+        ...params,
+        type: "smoothstep",
         style: { stroke: "#111827", strokeWidth: 1.2 },
         sourceHandle: null,
         targetHandle: null
@@ -724,62 +725,62 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
     const wrap = flowWrapperRef.current;
     const rfInstance = reactFlowRef.current;
     if (!wrap || !rfInstance) return;
-  
+
     const viewport = wrap.querySelector<HTMLElement>(".react-flow__viewport");
     if (!viewport) return;
-  
+
     // Save original state
     const originalTransform = viewport.style.transform;
     const originalWidth = wrap.style.width;
     const originalHeight = wrap.style.height;
     const originalOverflow = wrap.style.overflow;
     const originalViewport = rfInstance.getViewport();
-  
+
     try {
       // Get all nodes and calculate actual bounds with proper padding
       const allNodes = rfInstance.getNodes();
       if (allNodes.length === 0) return;
-      
+
       // Calculate bounds including node dimensions
       let minX = Infinity;
       let minY = Infinity;
       let maxX = -Infinity;
       let maxY = -Infinity;
-      
+
       allNodes.forEach((node) => {
         const pos = node.position;
         // Determine node width based on whether it's the root/parent company
         const isRootNode = node.id === String(rootData?.id);
         const width = node.width || (isRootNode ? PARENT_NODE_WIDTH : NODE_WIDTH);
         const height = node.height || 250; // Estimated node height
-        
+
         minX = Math.min(minX, pos.x);
         minY = Math.min(minY, pos.y);
         maxX = Math.max(maxX, pos.x + width);
         maxY = Math.max(maxY, pos.y + height);
       });
-      
+
       // Add extra padding to ensure edges and all content are captured
       // More padding on right side to prevent cut-off
       const paddingLeft = 150;
       const paddingRight = 250; // Extra padding on right to prevent edge cutoff
       const paddingTop = 100;
       const paddingBottom = 120;
-      
+
       const diagramWidth = maxX - minX + paddingLeft + paddingRight;
       const diagramHeight = maxY - minY + paddingTop + paddingBottom;
-      
+
       // Set wrapper to exact diagram size
       wrap.style.width = `${diagramWidth}px`;
       wrap.style.height = `${diagramHeight}px`;
       wrap.style.overflow = "visible";
-      
+
       // Reset viewport to show entire diagram from top-left with no zoom
       viewport.style.transform = `translate(${paddingLeft - minX}px, ${paddingTop - minY}px) scale(1)`;
-      
+
       // Wait for layout to stabilize
       await new Promise((r) => setTimeout(r, 500));
-      
+
       // Capture with high quality - ensure entire diagram is captured
       const canvas = await html2canvas(wrap, {
         backgroundColor: "#ffffff",
@@ -795,9 +796,9 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
         scrollX: 0,
         scrollY: 0,
       });
-      
+
       const img = canvas.toDataURL("image/png", 1.0);
-      
+
       // Determine optimal orientation
       const isLandscape = diagramWidth > diagramHeight;
       const pdf = new jsPDF({
@@ -805,28 +806,28 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
         unit: "pt",
         format: "a4",
       });
-      
+
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
-      
+
       // Calculate scaling to fit width with margins
       const margin = 20;
       const imgW = pageW - (margin * 2);
       const imgH = (canvas.height * imgW) / canvas.width;
-      
-  // Add image across multiple pages if needed
-  // Add image across multiple pages if needed
+
+      // Add image across multiple pages if needed
+      // Add image across multiple pages if needed
       let y = 0;
       while (y < imgH) {
         if (y > 0) pdf.addPage();
         pdf.addImage(
-          img, 
-          "PNG", 
-          margin, 
-          margin - y, 
-          imgW, 
-          imgH, 
-          undefined, 
+          img,
+          "PNG",
+          margin,
+          margin - y,
+          imgW,
+          imgH,
+          undefined,
           "FAST"
         );
         y += pageH - (margin * 2);
@@ -834,7 +835,7 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
 
       pdf.save(`${rootData?.name}-hierarchy.pdf`);
 
-      
+
     } finally {
       // Always restore original state
       wrap.style.width = originalWidth;
@@ -844,7 +845,7 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
       rfInstance.setViewport(originalViewport, { duration: 0 });
     }
   }, [rootData]);
-  
+
 
   // AUTO-FIT WIDTH FIX — keeps full tree visible top‑to‑bottom on screen
   // After layout is built, we force ReactFlow to fit the entire diagram vertically
@@ -878,14 +879,14 @@ export const CompanyHierarchy: React.FC<CompanyHierarchyProps> = ({ rootData: pr
 
   const wrapperStyle: React.CSSProperties = {
     width: "100%",
-    height: Math.max(bounds.height, 700), // Increased min-height
+    height: bounds.height || 500, // Reduced min-height and eliminated hardcoded massive height
     overflow: "hidden",
     position: "relative",
     border: "1px solid #e5e7eb",
     borderRadius: "0.75rem",
   };
 
-return (
+  return (
     <div>
       <div className="mb-3 flex items-center gap-2">
         <Button onClick={exportToPDF}>Download PDF</Button>
@@ -912,16 +913,16 @@ return (
           zoomOnScroll={scrollZoomEnabled}
           panOnDrag={true}
           onInit={(instance) => (reactFlowRef.current = instance)}
-          defaultEdgeOptions={{ 
-            style: { stroke: "#111827", strokeWidth: 1.2 }, 
+          defaultEdgeOptions={{
+            style: { stroke: "#111827", strokeWidth: 1.2 },
             type: "smoothstep"
           }}
         >
-          <MiniMap 
-            nodeStrokeColor={() => "#111827"} 
-            nodeColor={() => "#fff"} 
-            pannable 
-            zoomable 
+          <MiniMap
+            nodeStrokeColor={() => "#111827"}
+            nodeColor={() => "#fff"}
+            pannable
+            zoomable
           />
           <Controls showInteractive={false} />
           <Background gap={16} color="#f3f4f6" />
