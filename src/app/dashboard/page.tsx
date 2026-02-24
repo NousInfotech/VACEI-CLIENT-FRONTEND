@@ -77,7 +77,7 @@ export default function DashboardPage() {
       setAuthLoading(true);
       try {
         const isAuthenticated = await verifyAuthentication();
-        
+
         if (!isAuthenticated) {
           // Token is invalid or expired - redirect to login immediately
           // Clear auth data
@@ -85,17 +85,17 @@ export default function DashboardPage() {
           localStorage.removeItem('email');
           localStorage.removeItem('user_id');
           localStorage.removeItem('username');
-          
+
           // Clear cookie
           if (typeof document !== 'undefined') {
             document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax';
             document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=None; Secure';
           }
-          
+
           router.push('/login?message=' + encodeURIComponent('Session expired. Please login again.'));
           return; // Don't proceed with loading data
         }
-        
+
         // Authentication verified - proceed with loading dashboard data
         setAuthLoading(false);
       } catch (error) {
@@ -104,19 +104,19 @@ export default function DashboardPage() {
         handleAuthError(error, router);
       }
     };
-    
+
     checkAuthentication();
   }, [router]);
 
   // Fetch companies from backend
   useEffect(() => {
     if (authLoading) return; // Wait for auth verification
-    
+
     const fetchCompanies = async () => {
       try {
         const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
         const token = localStorage.getItem('token');
-        
+
         if (!token) return;
 
         const response = await fetch(`${backendUrl}companies`, {
@@ -153,11 +153,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (authLoading || !activeCompanyId) return;
-    
+
     const loadDashboardSummary = async () => {
       try {
         const summary = await fetchDashboardSummary(activeCompanyId);
-        
+
         // Fetch todos to calculate refined counts (only ACTION_REQUIRED)
         const todos = await getTodos();
         const handledStatuses = ['ACTION_TAKEN', 'COMPLETED', 'UPLOADED', 'PENDING_REVIEW', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'DONE'];
@@ -166,38 +166,57 @@ export default function DashboardPage() {
           return s === 'ACTION_REQUIRED' || (!handledStatuses.includes(s) && (s === 'OVERDUE' || s === 'DUE_SOON'));
         });
 
+        // Fetch compliance tasks (statutory deadlines)
+        const taskResponse = await fetchTasks({ page: 1, limit: 100 });
+        const tasks = taskResponse.data || [];
+
+        // Filter tasks that require action 
+        const actionRequiredTasks = tasks.filter((task: Task) => {
+          if (!task.dueDate) return false;
+          if (task.status?.toLowerCase().includes("completed") || task.status?.toLowerCase().includes("done")) return false;
+          return true;
+        }).map((task: Task) => ({
+          ...task,
+          deadline: task.dueDate, // map dueDate to deadline for easier sorting
+          service: task.category || 'Compliance',
+          title: task.title || 'Untitled Task',
+        }));
+
+        // Combine todos and tasks for the upcoming deadlines
+        const allPendingItems: any[] = [...actionRequiredTodos, ...actionRequiredTasks];
+
         let newFocus = summary.focus;
         const isSummaryFocusHandled = newFocus && (
-          handledStatuses.includes((newFocus.status || '').toUpperCase()) || 
+          handledStatuses.includes((newFocus.status || '').toUpperCase()) ||
           !actionRequiredTodos.some(t => String(t.id) === String(newFocus!.todoId))
         );
 
         if (!newFocus || isSummaryFocusHandled) {
-          const sortedTodos = [...actionRequiredTodos].sort((a, b) => {
+          const sortedItems = [...allPendingItems].sort((a, b) => {
             const dateA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
             const dateB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
             return dateA - dateB;
           });
 
           // Also set upcoming deadlines for the compliance snapshot (top 3)
-          setUpcomingDeadlines(sortedTodos.slice(0, 3));
+          setUpcomingDeadlines(sortedItems.slice(0, 3));
 
-          if (sortedTodos.length > 0) {
-            const nextTodo = sortedTodos[0];
+          if (sortedItems.length > 0) {
+            const nextItem = sortedItems[0];
             const now = new Date();
             const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
             let derivedStatus = 'waiting_on_you';
-            if (nextTodo.deadline) {
-              const dl = new Date(nextTodo.deadline);
+            if (nextItem.deadline) {
+              const dl = new Date(nextItem.deadline);
               if (dl.toDateString() !== now.toDateString() && dl < now) derivedStatus = 'overdue';
               else if (dl.toDateString() !== now.toDateString() && dl > now && dl <= nextWeek) derivedStatus = 'due_soon';
             }
             newFocus = {
-              serviceName: nextTodo.service || nextTodo.type || 'Action Required',
-              taskDescription: nextTodo.title,
+              serviceName: nextItem.service || nextItem.type || 'Action Required',
+              taskDescription: nextItem.title,
               status: derivedStatus,
-              primaryActionLabel: nextTodo.cta || 'Take Action',
-              todoId: nextTodo.id
+              primaryActionLabel: nextItem.cta || (nextItem.category ? 'View Task' : 'Take Action'),
+              todoId: nextItem.id
             };
           } else {
             newFocus = null;
@@ -206,19 +225,19 @@ export default function DashboardPage() {
 
         setDashboardSummary(summary);
         setActiveFocus(newFocus);
-        
+
         const now = new Date();
         const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-        
-        const overdueCount = actionRequiredTodos.filter(t => t.deadline && new Date(t.deadline).toDateString() !== now.toDateString() && new Date(t.deadline) < now).length;
-        const dueTodayCount = actionRequiredTodos.filter(t => t.deadline && new Date(t.deadline).toDateString() === now.toDateString()).length;
-        const dueSoonCount = actionRequiredTodos.filter(t => t.deadline && new Date(t.deadline).toDateString() !== now.toDateString() && new Date(t.deadline) > now && new Date(t.deadline) <= nextWeek).length;
+
+        const overdueCount = allPendingItems.filter(t => t.deadline && new Date(t.deadline).toDateString() !== now.toDateString() && new Date(t.deadline) < now).length;
+        const dueTodayCount = allPendingItems.filter(t => t.deadline && new Date(t.deadline).toDateString() === now.toDateString()).length;
+        const dueSoonCount = allPendingItems.filter(t => t.deadline && new Date(t.deadline).toDateString() !== now.toDateString() && new Date(t.deadline) > now && new Date(t.deadline) <= nextWeek).length;
 
         setComplianceCounts({
           overdue: overdueCount,
           dueSoon: dueSoonCount,
-          waiting: dueTodayCount, 
-          done: summary.counts.pending 
+          waiting: dueTodayCount,
+          done: summary.counts.pending
         });
       } catch (error) {
         console.error("Failed to fetch dashboard summary:", error);
@@ -230,7 +249,7 @@ export default function DashboardPage() {
   // Load financial summary data (separately)
   useEffect(() => {
     if (authLoading) return; // Wait for auth verification
-    
+
     const loadFinancialData = async () => {
       setLoading(true);
       try {
@@ -258,15 +277,15 @@ export default function DashboardPage() {
 
       } catch (error: any) {
         console.error("Failed to load financial summary:", error);
-        
-        if (error?.message?.toLowerCase().includes('authentication') || 
-            error?.message?.toLowerCase().includes('unauthorized') ||
-            error?.status === 401 || 
-            error?.status === 403) {
+
+        if (error?.message?.toLowerCase().includes('authentication') ||
+          error?.message?.toLowerCase().includes('unauthorized') ||
+          error?.status === 401 ||
+          error?.status === 403) {
           handleAuthError(error, router);
           return;
         }
-        
+
         setStats([]);
         setRevenueYTD(null);
         setNetIncomeYTD(null);
@@ -305,13 +324,29 @@ export default function DashboardPage() {
   const encodedNeedCorrectionStatus = btoa('3');
 
   const activeServices = dashboardSummary?.activeEngagements.map(e => {
-    const matchingTodos = upcomingDeadlines.filter(t => 
+    const matchingTodos = upcomingDeadlines.filter(t =>
       (t.service || t.type || '').toLowerCase() === e.serviceCategory.toLowerCase() ||
       (t.title || '').toLowerCase().includes(e.serviceCategory.toLowerCase()) ||
       (e.name || '').toLowerCase().includes((t.service || t.type || '').toLowerCase())
     );
     const nextDeadline = matchingTodos.length > 0 ? matchingTodos[0].deadline : null;
     const nextStepDesc = matchingTodos.length > 0 ? matchingTodos[0].title : null;
+
+    const serviceSlugMap: Record<string, string> = {
+      ACCOUNTING: "bookkeeping",
+      AUDITING: "audit",
+      VAT: "vat",
+      TAX: "tax",
+      CSP: "csp-mbr",
+      PAYROLL: "payroll",
+      CFO: "cfo",
+      MBR: "mbr-filing",
+      INCORPORATION: "incorporation",
+      PROJECTS_TRANSACTIONS: "project-transactions",
+      ADVISORY: "business-plans",
+      GRANTS_AND_INCENTIVES: "grants-incentives",
+    };
+    const slug = serviceSlugMap[e.serviceCategory] || e.serviceCategory.toLowerCase();
 
     return {
       name: e.name || e.serviceCategory,
@@ -321,7 +356,7 @@ export default function DashboardPage() {
       nextStepDescription: nextStepDesc,
       next: "View Details",
       nextStepType: "client",
-      href: `/dashboard/services/${e.serviceCategory.toLowerCase()}`
+      href: `/dashboard/services/${slug}/${e.id}`
     };
   }) || [];
   const recentlyCompleted = [
@@ -338,7 +373,7 @@ export default function DashboardPage() {
     { text: "Audit query sent", sender: "System", time: "3 hours ago" },
   ];
   const healthStatus = complianceCounts.overdue > 0 ? "Needs attention" : complianceCounts.dueSoon > 0 ? "Needs attention" : "Healthy";
-  
+
   // Calculate Risk Level
   const getRiskLevel = () => {
     if (complianceCounts.overdue > 0) return { level: "High", color: "text-destructive" };
@@ -357,14 +392,14 @@ export default function DashboardPage() {
     } else {
       timeGreeting = 'Good evening';
     }
-    
+
     // Include username if available
     if (username && username.trim()) {
       // Extract first name if full name is provided
       const firstName = username.split(' ')[0];
       return `${timeGreeting}, ${firstName}!`;
     }
-    
+
     // Fallback greeting without name
     return `${timeGreeting}!`;
   };
@@ -382,28 +417,27 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-brand-body p-4">
       <div className=" mx-auto space-y-8">
         {/* Premium Dashboard Header */}
-        <PageHeader 
+        <PageHeader
           title={getGreeting()}
           subtitle={username ? "Here's your compliance status and what's happening with your business today." : "Welcome back! Here's what's happening with your business today."}
           activeCompany={companies.find(c => c.id === activeCompanyId)?.name || "ACME LTD"}
           badge={
             <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-700 font-bold text-xs uppercase tracking-widest shadow-sm text-white`}>
-              <span className={`w-2 h-2 rounded-full animate-pulse ${
-                healthStatus === "Healthy" ? "bg-success" : "bg-warning"
-              }`}></span>
+              <span className={`w-2 h-2 rounded-full animate-pulse ${healthStatus === "Healthy" ? "bg-success" : "bg-warning"
+                }`}></span>
               {healthStatus}
             </div>
           }
           riskLevel={undefined}
-          // actions={
-          //   <DashboardActionButton 
-          //     Icon={User}
-          //     title="Contact Accountant"
-          //     subtitle="Get expert assistance"
-          //     onClick={handleContactAccountantClick}
-          //     className="bg-white/5 border border-white/10 hover:bg-white/10 text-white"
-          //   />
-          // }
+        // actions={
+        //   <DashboardActionButton 
+        //     Icon={User}
+        //     title="Contact Accountant"
+        //     subtitle="Get expert assistance"
+        //     onClick={handleContactAccountantClick}
+        //     className="bg-white/5 border border-white/10 hover:bg-white/10 text-white"
+        //   />
+        // }
         />
 
         {/* 🔴 Priority Actions (Only if needed) */}
@@ -461,7 +495,7 @@ export default function DashboardPage() {
                 <h2 className="text-lg font-semibold text-gray-900 uppercase tracking-widest">Analytics</h2>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-6" style={{ height: '280px' }}>
               <Link href="/dashboard/todo-list?filter=due-today" className="h-[128px]">
                 <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
@@ -500,7 +534,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Your Current Focus */}
- 
+
 
         <div className="mt-6 mb-8">
           <NextComplianceDeadline />
@@ -511,7 +545,7 @@ export default function DashboardPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Redesigned Active Services */}
             <div className="space-y-4">
-              <PageHeader 
+              <PageHeader
                 title="Active Engagements"
                 subtitle="Manage your ongoing accounting and tax services"
                 animate={false}
@@ -755,16 +789,16 @@ function Kpi({ label, value, tone }: { label: string; value: number; tone: "dang
   );
 }
 
-function UploadProgress({ label, value, total, color, icon, link }: { 
-  label: string; 
-  value: number; 
-  total: number; 
-  color: string; 
-  icon: string; 
+function UploadProgress({ label, value, total, color, icon, link }: {
+  label: string;
+  value: number;
+  total: number;
+  color: string;
+  icon: string;
   link: string;
 }) {
   const percentage = total > 0 ? (value / total) * 100 : 0;
-  
+
   return (
     <DashboardCard className="p-2">
       <div className="flex justify-between items-center">
@@ -783,9 +817,9 @@ function UploadProgress({ label, value, total, color, icon, link }: {
         </Link>
       </div>
       <div className="h-1.5 w-full rounded-full bg-muted/20 relative overflow-hidden">
-        <div 
-          className={`h-full rounded-full ${color} transition-all duration-1000 ease-out`} 
-          style={{ width: `${percentage}%` }} 
+        <div
+          className={`h-full rounded-full ${color} transition-all duration-1000 ease-out`}
+          style={{ width: `${percentage}%` }}
         />
       </div>
     </DashboardCard>

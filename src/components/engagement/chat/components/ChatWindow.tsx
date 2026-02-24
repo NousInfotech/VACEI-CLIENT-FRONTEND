@@ -1,20 +1,20 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { Chat, Message } from '../types';
 import { ChatHeader } from './ChatHeader';
-import { MessageItem } from './MessageItem';
+import { MessageItem } from '@/components/dashboard/messages/components/MessageItem';
 import { MessageInput } from './MessageInput';
 
 interface ChatWindowProps {
   chat: Chat;
   currentUserId?: string | null;
-  onSendMessage: (content: { 
-    text?: string; 
-    gifUrl?: string; 
-    fileUrl?: string; 
-    fileName?: string; 
+  onSendMessage: (content: {
+    text?: string;
+    gifUrl?: string;
+    fileUrl?: string;
+    fileName?: string;
     fileSize?: string;
-    type: 'text' | 'gif' | 'image' | 'document' 
+    type: 'text' | 'gif' | 'image' | 'document'
   }) => void;
   onSearchToggle: () => void;
   onInfoToggle: () => void;
@@ -26,13 +26,18 @@ interface ChatWindowProps {
   hasMore?: boolean;
   onLoadMore?: () => void;
   isLoadingMore?: boolean;
+  onReplyMessage?: (message: Message) => void;
+  onEditMessage?: (message: Message) => void;
+  onDeleteMessage?: (messageId: string) => void;
+  onReactToMessage?: (messageId: string, emoji: string) => void;
+  onForwardMessage?: (message: Message) => void;
 }
 
-export const ChatWindow: React.FC<ChatWindowProps> = ({ 
-  chat, 
-  onSendMessage, 
-  onSearchToggle, 
-  onInfoToggle, 
+export const ChatWindow: React.FC<ChatWindowProps> = ({
+  chat,
+  onSendMessage,
+  onSearchToggle,
+  onInfoToggle,
   onMediaClick,
   scrollToMessageId,
   onScrollComplete,
@@ -42,9 +47,17 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   hasMore,
   onLoadMore,
   isLoadingMore = false,
+  onReplyMessage = () => { },
+  onEditMessage = () => { },
+  onDeleteMessage = () => { },
+  onReactToMessage = () => { },
+  onForwardMessage = () => { }
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [highlightedId, setHighlightedId] = React.useState<string | null>(null);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [activeOptionsId, setActiveOptionsId] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const lastMessagesLength = useRef(chat.messages.length);
 
   // Effect for search-triggered scroll
@@ -54,12 +67,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         setHighlightedId(scrollToMessageId);
-        
+
         const timer = setTimeout(() => {
           setHighlightedId(null);
           onScrollComplete?.();
         }, 800);
-        
+
         return () => clearTimeout(timer);
       }
     }
@@ -82,23 +95,43 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   }, []);
 
+  const handleReply = (message: Message) => {
+    setReplyingTo(message);
+    setEditingMessage(null); // Cancel editing if replying
+    onReplyMessage(message);
+  };
+
+  const handleEdit = (message: Message) => {
+    setEditingMessage(message);
+    setReplyingTo(null); // Cancel replying if editing
+    onEditMessage(message);
+  };
+
+  const handleCancelReply = () => {
+    setReplyingTo(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessage(null);
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#efeae2] relative overflow-hidden">
       {/* Background Pattern - WhatsApp style */}
-      <div 
+      <div
         className="absolute inset-0 opacity-[0.06] pointer-events-none"
-        style={{ 
+        style={{
           backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")',
           backgroundSize: '400px'
         }}
       />
 
-      <ChatHeader 
-        chat={chat} 
+      <ChatHeader
+        chat={chat}
         onSearchToggle={onSearchToggle}
         onInfoToggle={onInfoToggle}
       />
-      
+
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4 relative z-10 scroll-smooth custom-scrollbar"
@@ -120,12 +153,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
         {chat.messages.map((msg) => {
           const isMe = currentUserId ? msg.senderId === currentUserId : msg.senderId === 'me';
-          const sender = chat.participants.find(p => p.id === msg.senderId);
+          const sender = chat.participants.find(p => p.id === msg.senderId) as any;
           const showSenderName = chat.type === 'GROUP' && !isMe;
 
           return (
-            <div 
-              key={msg.id} 
+            <div
+              key={msg.id}
               id={`msg-${msg.id}`}
               className={cn(
                 "transition-all duration-300 rounded-lg -mx-4 px-4",
@@ -133,11 +166,18 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               )}
             >
               <MessageItem
-                message={msg}
+                message={msg as any}
                 isMe={isMe}
                 sender={sender}
                 showSenderName={showSenderName}
                 onMediaClick={onMediaClick}
+                showOptions={activeOptionsId === msg.id}
+                onToggleOptions={(show) => setActiveOptionsId(show ? msg.id : null)}
+                onReply={() => handleReply(msg)}
+                onEdit={() => handleEdit(msg)}
+                onDelete={() => onDeleteMessage(msg.id)}
+                onReact={(emoji) => onReactToMessage(msg.id, emoji)}
+                onForward={() => onForwardMessage(msg)}
               />
             </div>
           );

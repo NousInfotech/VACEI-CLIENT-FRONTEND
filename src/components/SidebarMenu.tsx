@@ -271,6 +271,33 @@ export default function SidebarMenu({
 
   const bestMatch = getBestMatch(dynamicMenu);
 
+  // Auto-expand parent if a child is active
+  useEffect(() => {
+    if (!bestMatch) return;
+
+    // Find the parent of bestMatch
+    let parentSlug: string | null = null;
+    const findParent = (list: MenuItem[], currentParent: MenuItem | null = null) => {
+      for (const item of list) {
+        if (item.slug === bestMatch.slug && currentParent) {
+          parentSlug = currentParent.slug;
+          return;
+        }
+        if (item.children) {
+          findParent(item.children, item);
+        }
+      }
+    };
+    findParent(menu);
+
+    if (parentSlug) {
+      setOpenItems(prev => ({
+        ...prev,
+        [parentSlug!]: true
+      }));
+    }
+  }, [bestMatch, menu]);
+
   const branding = {
     sidebar_background_color: "15, 23, 41",
     sidebar_footer_color: "222 47% 16%",

@@ -518,7 +518,7 @@ export interface EngagementMilestone {
   engagementId: string;
   title: string;
   description: string | null;
-  status: "PENDING" | "ACHIEVED";
+  status: "PENDING" | "ACHIEVED" | "CANCELLED";
   createdById: string;
   markedById: string | null;
   createdAt: string;
@@ -547,6 +547,76 @@ export async function getEngagementMilestones(
 
   const result = await response.json();
   return result.data || result || [];
+}
+
+export async function updateEngagementMilestoneStatus(
+  engagementId: string,
+  milestoneId: string,
+  status: "PENDING" | "ACHIEVED" | "CANCELLED",
+  signal?: AbortSignal
+): Promise<EngagementMilestone> {
+  const response = await fetch(`${backendUrl}engagements/${engagementId}/milestones/${milestoneId}/status`, {
+    method: "PATCH",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ status }),
+    signal,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || error.error || "Failed to update milestone status");
+  }
+
+  const result = await response.json();
+  return result.data || result;
+}
+
+export async function updateEngagementMilestone(
+  engagementId: string,
+  milestoneId: string,
+  data: { title?: string; description?: string | null },
+  signal?: AbortSignal
+): Promise<EngagementMilestone> {
+  const response = await fetch(`${backendUrl}engagements/${engagementId}/milestones/${milestoneId}`, {
+    method: "PATCH",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+    signal,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || error.error || "Failed to update milestone");
+  }
+
+  const result = await response.json();
+  return result.data || result;
+}
+
+export async function deleteEngagementMilestone(
+  engagementId: string,
+  milestoneId: string,
+  signal?: AbortSignal
+): Promise<void> {
+  const response = await fetch(`${backendUrl}engagements/${engagementId}/milestones/${milestoneId}`, {
+    method: "DELETE",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    signal,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || error.error || "Failed to delete milestone");
+  }
 }
 
 export interface EngagementUpdate {
