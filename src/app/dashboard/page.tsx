@@ -505,7 +505,7 @@ export default function DashboardPage() {
                   </div>
                 </DashboardCard>
               </Link>
-              <Link href="/dashboard/compliance?filter=due-soon" className="h-[128px]">
+              <Link href="/dashboard/todo-list?filter=due-soon" className="h-[128px]">
                 <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Due soon</span>
@@ -521,7 +521,7 @@ export default function DashboardPage() {
                   </div>
                 </DashboardCard>
               </Link>
-              <Link href="/dashboard/compliance?filter=completed" className="h-[128px]">
+              <Link href="/dashboard/services" className="h-[128px]">
                 <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Active Engagements</span>
