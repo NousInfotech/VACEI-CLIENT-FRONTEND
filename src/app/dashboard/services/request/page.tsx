@@ -12,7 +12,7 @@ import { AlertModal } from "@/components/ui/modal";
 import { SuccessModal } from "@/components/ui/SuccessModal";
 import { ConfirmationModal } from "@/components/ui/ConfirmationModal";
 import ServiceRequestForm from "@/components/services/ServiceRequestForm";
-import Link from "next/link";
+import ServiceRequestHistory from "@/components/services/ServiceRequestHistory";
 
 type ServiceCode =
   | "VAT"
@@ -54,6 +54,8 @@ export default function ServiceRequestPage() {
   const searchParams = useSearchParams();
   const { activeCompanyId, companies } = useActiveCompany();
   const [serviceCode, setServiceCode] = useState<ServiceCode | "">("");
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
 
   // Handle auto-selection from query params
   useEffect(() => {
@@ -131,6 +133,7 @@ export default function ServiceRequestPage() {
   const activeCompanyName = companies.find(c => c.id === activeCompanyId)?.name;
 
   const handleServiceChange = (code: ServiceCode | "CUSTOM" | "") => {
+    setShowHistory(false);
     if (isFormDirty) {
       setPendingServiceCode(code as any);
       setShowConfirmModal(true);
@@ -154,17 +157,23 @@ export default function ServiceRequestPage() {
       setShowConfirmModal(true);
     } else {
       setServiceCode("");
+      setShowHistory(false);
     }
   };
 
   const handleSuccess = () => {
+    setHistoryRefreshKey((prev) => prev + 1);
     setModalConfig({
       title: "Request Submitted!",
       message: "Your service request has been submitted successfully. You can track its progress in the Service Request History section.",
       buttonText: "View History",
       onAction: () => {
         setOnSuccessModal(false);
-        router.push("/dashboard/services/history");
+        setShowHistory(true);
+        const el = document.getElementById("service-request-history");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
       }
     });
     setOnSuccessModal(true);
@@ -188,14 +197,19 @@ export default function ServiceRequestPage() {
         activeCompany={activeCompanyName}
         actions={
           <div className="flex gap-2">
-            <Link href="/dashboard/services/history">
-              <Button
-                variant="outline"
-                className="bg-light text-primary-color-new"
-              >
-                View Services Request
-              </Button>
-            </Link>
+            <Button
+              variant="outline"
+              className="bg-light text-primary-color-new"
+              onClick={() => {
+                setShowHistory(true);
+                const el = document.getElementById("service-request-history");
+                if (el) {
+                  el.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+              }}
+            >
+              View Service Request History
+            </Button>
             <Button
               variant="outline"
               className="bg-light text-primary-color-new"
@@ -274,8 +288,18 @@ export default function ServiceRequestPage() {
 
 
         {/* Form area wrapped in logic */}
-        <div className="min-h-[400px]">
-          {(serviceCode && (serviceCode !== "CUSTOM" || customServiceId)) ? (
+        <div className="min-h-[400px]" id="service-request-history">
+          {showHistory ? (
+            <div className="border-t pt-6 space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Service Request History
+              </h2>
+              <ServiceRequestHistory
+                companyId={activeCompanyId}
+                refreshKey={historyRefreshKey}
+              />
+            </div>
+          ) : (serviceCode && (serviceCode !== "CUSTOM" || customServiceId)) ? (
             <div className="border-t pt-6 animate-in fade-in slide-in-from-top-4 duration-500">
               <ServiceRequestForm
                 key={`${serviceCode}-${customServiceId}`} 

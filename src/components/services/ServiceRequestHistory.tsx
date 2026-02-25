@@ -6,9 +6,10 @@ import ServiceHistorySkeleton from "./ServiceHistorySkeleton";
 
 interface Props {
   companyId: string | null;
+  refreshKey?: number;
 }
 
-export default function ServiceRequestHistory({ companyId }: Props) {
+export default function ServiceRequestHistory({ companyId, refreshKey }: Props) {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -19,7 +20,7 @@ export default function ServiceRequestHistory({ companyId }: Props) {
     if (companyId) {
       loadRequests();
     }
-  }, [companyId]);
+  }, [companyId, refreshKey]);
 
   const loadRequests = async () => {
     try {

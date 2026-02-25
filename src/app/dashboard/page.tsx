@@ -52,6 +52,20 @@ interface UploadStatusSummary {
   };
 }
 
+// Module-scoped cache to prevent unnecessary refetching on client-side navigation
+const dashboardCache = {
+  activeCompanyId: null as string | null,
+  timestamp: 0,
+  dashboardSummary: null as DashboardSummary | null,
+  activeFocus: null as any,
+  upcomingDeadlines: [] as any[],
+  complianceCounts: { overdue: 0, dueSoon: 0, waiting: 0, done: 0 },
+  statsLoaded: false,
+  stats: [] as ProcessedDashboardStat[],
+  netIncomeYTD: null as { amount: string; change: string } | null,
+};
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 export default function DashboardPage() {
   const router = useRouter();
   const [uploadSummary, setUploadSummary] = useState<UploadStatusSummary | null>(null);
@@ -154,6 +168,18 @@ export default function DashboardPage() {
   useEffect(() => {
     if (authLoading || !activeCompanyId) return;
 
+    if (
+      dashboardCache.activeCompanyId === activeCompanyId &&
+      dashboardCache.dashboardSummary &&
+      Date.now() - dashboardCache.timestamp < CACHE_TTL
+    ) {
+      setDashboardSummary(dashboardCache.dashboardSummary);
+      setActiveFocus(dashboardCache.activeFocus);
+      setUpcomingDeadlines(dashboardCache.upcomingDeadlines);
+      setComplianceCounts(dashboardCache.complianceCounts);
+      return;
+    }
+
     const loadDashboardSummary = async () => {
       try {
         const summary = await fetchDashboardSummary(activeCompanyId);
@@ -185,6 +211,28 @@ export default function DashboardPage() {
         // Combine todos and tasks for the upcoming deadlines
         const allPendingItems: any[] = [...actionRequiredTodos, ...actionRequiredTasks];
 
+        const sortedItems = [...allPendingItems].sort((a, b) => {
+          const dateA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+          const dateB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+          return dateA - dateB;
+        });
+
+        const nowRaw = new Date();
+        const today = new Date(nowRaw.getFullYear(), nowRaw.getMonth(), nowRaw.getDate());
+        const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+        // Ensure we filter out only correctly identified future deadlines for the snapshot
+        const upcomingDeadlinesItems = sortedItems.filter(t => {
+          if (!t.deadline) return false;
+          const dl = new Date(t.deadline);
+          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+          return dlDate.getTime() >= today.getTime();
+        });
+        const futureDeadlines = upcomingDeadlinesItems.length > 0 ? upcomingDeadlinesItems.slice(0, 3) : sortedItems.slice(0, 3);
+
+        // Also set upcoming deadlines for the compliance snapshot (top 3)
+        setUpcomingDeadlines(futureDeadlines);
+
         let newFocus = summary.focus;
         const isSummaryFocusHandled = newFocus && (
           handledStatuses.includes((newFocus.status || '').toUpperCase()) ||
@@ -192,15 +240,6 @@ export default function DashboardPage() {
         );
 
         if (!newFocus || isSummaryFocusHandled) {
-          const sortedItems = [...allPendingItems].sort((a, b) => {
-            const dateA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
-            const dateB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
-            return dateA - dateB;
-          });
-
-          // Also set upcoming deadlines for the compliance snapshot (top 3)
-          setUpcomingDeadlines(sortedItems.slice(0, 3));
-
           if (sortedItems.length > 0) {
             const nextItem = sortedItems[0];
             const now = new Date();
@@ -226,12 +265,26 @@ export default function DashboardPage() {
         setDashboardSummary(summary);
         setActiveFocus(newFocus);
 
-        const now = new Date();
-        const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const overdueCount = allPendingItems.filter(t => {
+          if (!t.deadline) return false;
+          const dl = new Date(t.deadline);
+          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+          return dlDate.getTime() < today.getTime();
+        }).length;
 
-        const overdueCount = allPendingItems.filter(t => t.deadline && new Date(t.deadline).toDateString() !== now.toDateString() && new Date(t.deadline) < now).length;
-        const dueTodayCount = allPendingItems.filter(t => t.deadline && new Date(t.deadline).toDateString() === now.toDateString()).length;
-        const dueSoonCount = allPendingItems.filter(t => t.deadline && new Date(t.deadline).toDateString() !== now.toDateString() && new Date(t.deadline) > now && new Date(t.deadline) <= nextWeek).length;
+        const dueTodayCount = allPendingItems.filter(t => {
+          if (!t.deadline) return false;
+          const dl = new Date(t.deadline);
+          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+          return dlDate.getTime() === today.getTime();
+        }).length;
+
+        const dueSoonCount = allPendingItems.filter(t => {
+          if (!t.deadline) return false;
+          const dl = new Date(t.deadline);
+          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+          return dlDate.getTime() > today.getTime() && dlDate.getTime() <= nextWeek.getTime();
+        }).length;
 
         setComplianceCounts({
           overdue: overdueCount,
@@ -239,6 +292,19 @@ export default function DashboardPage() {
           waiting: dueTodayCount,
           done: summary.counts.pending
         });
+
+        // Update cache
+        dashboardCache.activeCompanyId = activeCompanyId;
+        dashboardCache.timestamp = Date.now();
+        dashboardCache.dashboardSummary = summary;
+        dashboardCache.activeFocus = newFocus;
+        dashboardCache.upcomingDeadlines = futureDeadlines;
+        dashboardCache.complianceCounts = {
+          overdue: overdueCount,
+          dueSoon: dueSoonCount,
+          waiting: dueTodayCount,
+          done: summary.counts.pending
+        };
       } catch (error) {
         console.error("Failed to fetch dashboard summary:", error);
       }
@@ -249,6 +315,16 @@ export default function DashboardPage() {
   // Load financial summary data (separately)
   useEffect(() => {
     if (authLoading) return; // Wait for auth verification
+
+    if (
+      dashboardCache.statsLoaded &&
+      Date.now() - dashboardCache.timestamp < CACHE_TTL
+    ) {
+      setStats(dashboardCache.stats);
+      setNetIncomeYTD(dashboardCache.netIncomeYTD);
+      setLoading(false);
+      return;
+    }
 
     const loadFinancialData = async () => {
       setLoading(true);
@@ -274,6 +350,23 @@ export default function DashboardPage() {
           (stat: { title: string; }) => stat.title !== "Revenue YTD" && stat.title !== "Net income YTD"
         );
         setStats(filteredStats);
+
+        // Update cache
+        dashboardCache.statsLoaded = true;
+        dashboardCache.stats = filteredStats;
+        if (fetchedStats.netIncomeYTD) {
+          dashboardCache.netIncomeYTD = {
+            amount: new Intl.NumberFormat("en-US", {
+              style: "currency",
+              currency: "EUR",
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }).format(fetchedStats.netIncomeYTD.value),
+            change: fetchedStats.netIncomeYTD.change,
+          };
+        } else {
+          dashboardCache.netIncomeYTD = null;
+        }
 
       } catch (error: any) {
         console.error("Failed to load financial summary:", error);
@@ -422,11 +515,19 @@ export default function DashboardPage() {
           subtitle={username ? "Here's your compliance status and what's happening with your business today." : "Welcome back! Here's what's happening with your business today."}
           activeCompany={companies.find(c => c.id === activeCompanyId)?.name || "ACME LTD"}
           badge={
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-700 font-bold text-xs uppercase tracking-widest shadow-sm text-white`}>
-              <span className={`w-2 h-2 rounded-full animate-pulse ${healthStatus === "Healthy" ? "bg-success" : "bg-warning"
-                }`}></span>
-              {healthStatus}
-            </div>
+            healthStatus === "Needs attention" ? (
+              <Link href="/dashboard/todo-list">
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-700 font-bold text-xs uppercase tracking-widest shadow-sm text-white cursor-pointer hover:bg-white/5 transition-colors`}>
+                  <span className={`w-2 h-2 rounded-full animate-pulse bg-warning`}></span>
+                  {healthStatus}
+                </div>
+              </Link>
+            ) : (
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-700 font-bold text-xs uppercase tracking-widest shadow-sm text-white`}>
+                <span className={`w-2 h-2 rounded-full animate-pulse bg-success`}></span>
+                {healthStatus}
+              </div>
+            )
           }
           riskLevel={undefined}
         // actions={
@@ -677,8 +778,12 @@ export default function DashboardPage() {
               </div>
               <div className="p-4 space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <Kpi label="Overdue" value={complianceCounts.overdue} tone="danger" />
-                  <Kpi label="Due soon" value={complianceCounts.dueSoon} tone="warning" />
+                  <Link href="/dashboard/compliance">
+                    <Kpi label="Due Today" value={complianceCounts.waiting} tone="info" />
+                  </Link>
+                  <Link href="/dashboard/compliance">
+                    <Kpi label="Due soon" value={complianceCounts.dueSoon} tone="warning" />
+                  </Link>
                 </div>
                 {upcomingDeadlines.length > 0 ? (
                   <DashboardCard className="border border-info/30 bg-info/5 px-4 py-3">
