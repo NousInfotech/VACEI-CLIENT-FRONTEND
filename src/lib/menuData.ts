@@ -112,13 +112,29 @@ export const SERVICE_METADATA: Record<string, { icon: any; label: string; href: 
     description: "Strategic financial advisory and performance analysis.",
     color: "blue",
   },
-  "PROJECTS-TRANSACTIONS": {
-    icon: GitPullRequestIcon,
+  PROJECTS_TRANSACTIONS: {
+    icon: TransactionIcon,
     label: "Project Transactions",
     href: "/dashboard/services/project-transactions",
     category: "Workspaces",
     description: "Capital projects, transactions, and data room management.",
     color: "pink",
+  },
+  TECHNOLOGY: {
+    icon: InstallingUpdates02Icon,
+    label: "Technology",
+    href: "/dashboard/services/technology",
+    category: "Workspaces",
+    description: "Technology infrastructure, software solutions and support.",
+    color: "blue",
+  },
+  GRANTS_AND_INCENTIVES: {
+    icon: GiftIcon,
+    label: "Grants & Incentives",
+    href: "/dashboard/services/grants-incentives",
+    category: "Workspaces",
+    description: "Government grants, tax incentives and funding support.",
+    color: "amber",
   },
   MBR: {
     icon: DocumentValidationIcon,
@@ -144,7 +160,7 @@ export const SERVICE_METADATA: Record<string, { icon: any; label: string; href: 
     description: "Strategic planning, financial modelling and business plans.",
     color: "indigo",
   },
-  "REGULATED-LICENSES": {
+  REGULATED_LICENSES: {
     icon: DocumentValidationIcon, 
     label: "Regulated Licenses",
     href: "/dashboard/services/regulated-licenses",
@@ -160,7 +176,7 @@ export const SERVICE_METADATA: Record<string, { icon: any; label: string; href: 
     description: "Legal matters, document drafting, and regulatory approvals.",
     color: "red",
   },
-  "BANKING-PAYMENTS": {
+  BANKING_PAYMENTS: {
     icon: CashbackPoundIcon,
     label: "Banking & Payments",
     href: "/dashboard/services/banking-payments",

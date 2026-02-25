@@ -95,12 +95,18 @@ export default function SidebarMenu({
       if (item.slug === "services-root") {
         const dynamicChildren = sidebarData.map((s) => {
           // Normalize service name to match SERVICE_METADATA keys
-          const normalized = s.serviceName.toUpperCase().replace(/[-\s&]/g, "_");
+          // Replace all non-alphanumeric with _, collapse multiple _, trim _
+          const normalized = s.serviceName.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
           
-          // Try to find a matching metadata key
-          const metadataKey = (Object.keys(SERVICE_METADATA).find(k => 
-            normalized === k || normalized.includes(k)
-          ) || "CUSTOM") as keyof typeof SERVICE_METADATA;
+          // Try to find a matching metadata key by comparing normalized name with key or label
+          const metadataKey = (Object.keys(SERVICE_METADATA).find(k => {
+            const metadata = SERVICE_METADATA[k];
+            const normalizedKey = k.replace(/[^A-Z0-9]+/g, "_");
+            const normalizedLabel = metadata.label.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+            
+            return normalized === normalizedKey || normalized === normalizedLabel || 
+                   normalizedKey.includes(normalized) || normalizedLabel.includes(normalized);
+          }) || "CUSTOM") as keyof typeof SERVICE_METADATA;
           
           const metadata = SERVICE_METADATA[metadataKey];
 
@@ -495,7 +501,7 @@ export default function SidebarMenu({
                       {item.count} Total
                     </span>
                   )}
-                  {serviceStatusConfig.items[item.slug] && (
+                  {serviceStatusConfig.items[item.slug] && serviceStatusConfig.items[item.slug].engagementCount > 0 && (
                     <div className="flex items-center gap-1.5 opacity-90 scale-[0.85] origin-right shrink-0">
                       <div className={cn(
                         "w-1.5 h-1.5 rounded-full animate-pulse",
@@ -647,7 +653,7 @@ export default function SidebarMenu({
                 {item.count} Total
               </span>
             )}
-            {serviceStatusConfig.items[item.slug] && (
+            {serviceStatusConfig.items[item.slug] && serviceStatusConfig.items[item.slug].engagementCount > 0 && (
               <div className="flex items-center gap-1.5 opacity-90 scale-[0.85] origin-right ml-2 shrink-0">
                 <div className={cn(
                   "w-1.5 h-1.5 rounded-full animate-pulse",

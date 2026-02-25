@@ -20,6 +20,7 @@ type ServiceCode =
   | "AUDITING"
   | "PAYROLL"
   | "CSP"
+  | "CFO"
   | "LEGAL"
   | "PROJECTS_TRANSACTIONS"
   | "TECHNOLOGY"
@@ -41,6 +42,7 @@ const serviceLabels: Record<ServiceCode, string> = {
   GRANTS_AND_INCENTIVES: "Grants & Incentives",
   INCORPORATION: "Incorporation",
   MBR: "MBR",
+  CFO: "CFO",
   TAX: "TAX",
   CUSTOM: "Custom",
 };

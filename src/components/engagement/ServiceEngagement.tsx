@@ -35,7 +35,11 @@ const SLUG_TO_SERVICE_TYPE: Record<string, string> = {
   'mbr-filing': 'MBR',
   'incorporation': 'INCORPORATION',
   'advisory': 'ADVISORY',
-  'legal': 'LEGAL', // Added based on API response
+  'business-plans': 'ADVISORY',
+  'legal': 'LEGAL',
+  'technology': 'TECHNOLOGY',
+  'project-transactions': 'PROJECTS_TRANSACTIONS',
+  'grants-incentives': 'GRANTS_AND_INCENTIVES',
   'custom': 'CUSTOM'
 };
 
@@ -132,17 +136,7 @@ const serviceData: Record<
     workflowStatus: "completed",
     actions: [],
   },
-  "grants-incentives": {
-    name: "Grants & Incentives",
-    description:
-      "Exploration and application for government and institutional grants.",
-    status: "due_soon",
-    cycle: "Grant: R&D Tax Credit",
-    workflowStatus: "waiting",
-    neededFromUser:
-      "Upload project technical reports for the grant application.",
-    actions: [{ type: "upload", label: "Upload Reports" }],
-  },
+
   "mbr-filing": {
     name: "Filings",
     description:
@@ -170,7 +164,7 @@ const serviceData: Record<
   "business-plans": {
     name: "Business Plans",
     description:
-      "Development of professional business plans and financial projections.",
+      "Strategic planning, financial modelling and business plans.",
     status: "action_required",
     cycle: "Project: Strategic Plan",
     workflowStatus: "waiting",
@@ -240,12 +234,32 @@ const serviceData: Record<
       { type: "confirm", label: "Review Structure" },
     ],
   },
+  "project-transactions": {
+    name: "Projects Transactions",
+    description: "Capital projects, transactions, and data room management.",
+    status: "on_track",
+    cycle: "Project 2026",
+    workflowStatus: "in_progress",
+    actions: [{ type: "schedule", label: "Project Meeting" }],
+  },
+  "technology": {
+    name: "Technology",
+    description: "Technology infrastructure, software solutions and support.",
+    status: "on_track",
+    cycle: "IT Support 2026",
+    workflowStatus: "in_progress",
+    actions: [{ type: "schedule", label: "Technical Support" }],
+  },
+  "grants-incentives": {
+    name: "Grants and Incentives",
+    description: "Government grants, tax incentives and funding support.",
+    status: "on_track",
+    cycle: "Grant Cycle 2026",
+    workflowStatus: "in_progress",
+    actions: [{ type: "schedule", label: "Grant Consultation" }],
+  },
 };
 
-interface ServiceEngagementProps {
-  serviceSlug: string;
-  engagementId?: string;
-}
 
 const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: ServiceEngagementProps) => {
   const searchParams = useSearchParams();
@@ -298,8 +312,11 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
       
       // Find matching item in sidebarData
       const sidebarItem = sidebarData.find(s => {
-        const normalized = s.serviceName.toUpperCase().replace(/[-\s&]/g, "_");
-        return normalized === metadataKey || normalized.includes(metadataKey);
+        const normalizedItem = s.serviceName.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+        const normalizedKey = metadataKey.replace(/[^A-Z0-9]+/g, "_");
+        const normalizedLabel = metadata.label.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+
+        return normalizedItem === normalizedKey || normalizedItem === normalizedLabel;
       });
 
       if (!sidebarItem || !sidebarItem.activeEngagements || sidebarItem.activeEngagements.length === 0) {
