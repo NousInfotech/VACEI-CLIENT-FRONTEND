@@ -20,6 +20,8 @@ interface LibraryExplorerProps {
   className?: string;
   /** When set, only this company's library folder is shown (strict per-company). */
   companyId?: string | null;
+  /** Optional explicit root folder id to scope the library (e.g. engagement library root). */
+  rootFolderId?: string | null;
 }
 
 const LibraryContent: React.FC = () => {
@@ -98,10 +100,10 @@ const LibraryContent: React.FC = () => {
   );
 };
 
-export const LibraryExplorer: React.FC<LibraryExplorerProps & { items?: any[]; useApi?: boolean }> = ({ className, items, useApi = true, companyId }) => {
+export const LibraryExplorer: React.FC<LibraryExplorerProps & { items?: any[]; useApi?: boolean }> = ({ className, items, useApi = true, companyId, rootFolderId }) => {
   return (
     <div className={cn("flex flex-col h-[600px] md:h-[700px] lg:h-[800px] bg-white border border-gray-200 rounded-2xl overflow-hidden", className)}>
-      <LibraryProvider initialItems={items} useApi={useApi} companyId={companyId} children={<LibraryContent />} />
+      <LibraryProvider initialItems={items} useApi={useApi} companyId={companyId} rootFolderId={rootFolderId} children={<LibraryContent />} />
     </div>
   );
 };

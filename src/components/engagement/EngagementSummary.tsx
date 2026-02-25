@@ -30,6 +30,7 @@ import {
   FileCheck,
   MessageSquare,
   Info,
+  RefreshCw,
 } from "lucide-react";
 import {
   MBR_FILINGS_MOCK,
@@ -253,14 +254,20 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
   const isInternationalStructuring = serviceName === "International Structuring";
   const isCryptoAssets = serviceName === "Crypto & Digital Assets";
 
+  const [refreshTick, setRefreshTick] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { engagement, loading: engagementLoading } = useEngagement();
+  const { engagement, loading: engagementLoading, refetch: refetchEngagement } = useEngagement();
   const engagementData = engagement as any;
   const engagementId = engagementData?._id || engagementData?.id;
+  const engagementLibraryFolderId =
+    engagementData?.libraryFolderId ||
+    engagementData?.libraryRootFolderId ||
+    null;
 
-  const { documentRequests, loading: docsLoading } = useDocumentRequests(engagementId);
-  const { milestones, loading: milestonesLoading } = useMilestones(engagementId);
-  const { updates, loading: updatesLoading } = useEngagementUpdates(engagementId);
+  const { documentRequests, loading: docsLoading, refetch: refetchDocumentRequests } = useDocumentRequests(engagementId);
+  const { milestones, loading: milestonesLoading, reload: reloadMilestones } = useMilestones(engagementId);
+  const { updates, loading: updatesLoading, refetch: refetchUpdates } = useEngagementUpdates(engagementId);
   const [engagementTodos, setEngagementTodos] = useState<TodoItem[]>([]);
   const [todosLoading, setTodosLoading] = useState(false);
 
@@ -272,7 +279,19 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
         .catch((err) => console.error("Failed to fetch todos:", err))
         .finally(() => setTodosLoading(false));
     }
-  }, [engagementId]);
+  }, [engagementId, refreshTick]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setRefreshTick((t) => t + 1);
+    await Promise.allSettled([
+      refetchEngagement(),
+      refetchDocumentRequests(),
+      refetchUpdates(),
+      Promise.resolve(reloadMilestones()),
+    ]);
+    setIsRefreshing(false);
+  };
 
   const allPendingItems = React.useMemo(() => {
     const pendingDocs = (documentRequests || []).filter(r => {
@@ -439,7 +458,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
     };
 
     loadDashboardData();
-  }, [serviceName]);
+  }, [serviceName, refreshTick]);
 
   // Set recent documents from mock data if available
   useEffect(() => {
@@ -484,7 +503,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
       }
     };
     loadRecentDocuments();
-  }, [serviceName]);
+  }, [serviceName, refreshTick]);
 
   const UpdateIcon = React.useMemo(() => (props: any) => (
     <HugeiconsIcon icon={Notification02Icon} {...props} />
@@ -595,6 +614,18 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                   We manage your bank reconciliations and payment processing. Approvals are requested when needed.
                 </p>
               )}
+            </div>
+
+            <div className="flex items-center gap-3 self-start md:self-center">
+              <Button
+                variant="secondary"
+                className="bg-white/10 text-white hover:bg-white/15 border border-white/10 rounded-0"
+                onClick={handleRefresh}
+                disabled={engagementLoading || isRefreshing}
+              >
+                <RefreshCw className={cn("h-4 w-4 mr-2", (engagementLoading || isRefreshing) && "animate-spin")} />
+                Refresh
+              </Button>
             </div>
           </div>
         </DashboardCard>
@@ -4437,7 +4468,9 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
         )}
 
         {activeTab === "library" && (
-          <LibraryExplorer items={engagementData?.libraryItems} />
+          <LibraryExplorer
+            rootFolderId={engagementLibraryFolderId}
+          />
         )}
 
         {(activeTab === "document_requests" || activeTab === "requests") && <DocumentRequestsTab />}

@@ -144,19 +144,21 @@ export const LibraryProvider: React.FC<{
   rootType?: LibraryRootType
   /** When set, library shows only this company's folder (strict per-company). Fetches company.folderId and uses it as the single root. */
   companyId?: string | null
-}> = ({ children, initialItems, useApi = true, rootType = "CLIENT", companyId }) => {
+  /** When set, library is scoped to this specific root folder (e.g. engagement library root). */
+  rootFolderId?: string | null
+}> = ({ children, initialItems, useApi = true, rootType = "CLIENT", companyId, rootFolderId }) => {
   const [viewMode, setViewMode] = useState<ViewMode>("list")
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null)
 
-  // Initialize from localStorage only when NOT in company-scoped mode
+  // Initialize from localStorage only when NOT in company-scoped or folder-scoped mode
   useEffect(() => {
-    if (useApi && !companyId) {
+    if (useApi && !companyId && !rootFolderId) {
       const stored = getStoredDecoded("client_folder_id")
       if (stored) {
         setCurrentFolderId(stored)
       }
     }
-  }, [useApi, companyId])
+  }, [useApi, companyId, rootFolderId])
   const [folderPath, setFolderPath] = useState<BreadcrumbItem[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedItems, setSelectedItems] = useState<string[]>([])
@@ -181,9 +183,42 @@ export const LibraryProvider: React.FC<{
     return () => clearTimeout(t)
   }, [useApi, currentFolderId, filterType])
 
+  // Engagement-scoped: use explicit rootFolderId as the only root
+  useEffect(() => {
+    if (!useApi || !rootFolderId) return
+    let cancelled = false
+    const load = async () => {
+      setIsLoading(true)
+      setError(null)
+      setApiRootFolders([])
+      setFolderPath([])
+      try {
+        const rootItem: LibraryItem = {
+          id: rootFolderId!,
+          type: "folder",
+          folder_name: "Engagement Library",
+          parentId: null,
+          name: "Engagement Library",
+        } as LibraryItem
+        setApiRootFolders([rootItem])
+        setCurrentFolderId(rootFolderId)
+        setFolderPath([{ id: String(rootFolderId), name: rootItem.name || "Engagement Library" }])
+      } catch (e) {
+        if (cancelled) return
+        setError(e instanceof Error ? e.message : "Failed to load engagement library")
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [useApi, rootFolderId])
+
   // Per-company: load company and use its folderId as the only root
   useEffect(() => {
-    if (!useApi || !companyId) return
+    if (!useApi || !companyId || rootFolderId) return
     let cancelled = false
     const load = async () => {
       setIsLoading(true)
@@ -225,7 +260,7 @@ export const LibraryProvider: React.FC<{
 
   // Load roots when using API and NOT company-scoped (global/client library)
   useEffect(() => {
-    if (!useApi || companyId) return
+    if (!useApi || companyId || rootFolderId) return
     let cancelled = false
     const load = async () => {
       setIsLoading(true)

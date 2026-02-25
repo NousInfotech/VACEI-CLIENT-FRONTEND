@@ -13,7 +13,7 @@ export function useCompliances(engagementId: string | null, companyId?: string |
   const [error, setError] = useState<string | null>(null);
 
   const fetchCompliances = useCallback(async () => {
-    if (!engagementId || ENGAGEMENT_CONFIG.USE_MOCK_DATA) return;
+    if (!engagementId) return;
     setLoading(true);
     setError(null);
     try {
@@ -29,12 +29,6 @@ export function useCompliances(engagementId: string | null, companyId?: string |
 
   useEffect(() => {
     if (!engagementId) {
-      setLoading(false);
-      setCompliances([]);
-      return;
-    }
-
-    if (ENGAGEMENT_CONFIG.USE_MOCK_DATA) {
       setLoading(false);
       setCompliances([]);
       return;
