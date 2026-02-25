@@ -14,19 +14,30 @@ import type { Chat, Message, User } from "@/components/dashboard/messages/types"
 /**
  * Map room members to participants (excludes current user).
  */
-function membersToParticipants(members?: { userId: string; user?: { id?: string; firstName?: string; lastName?: string } }[]): User[] {
+function membersToParticipants(members?: Array<Record<string, any>>): User[] {
     if (!members?.length) return [];
     const currentUserId = getDecodedUserId() ?? "";
     return members
         .filter((m) => m.userId !== currentUserId)
-        .map((m) => ({
-            id: m.userId,
-            name: m.user
-                ? `${m.user.firstName ?? ""} ${m.user.lastName ?? ""}`.trim() || m.userId
-                : m.userId,
-            role: "PLATFORM_EMPLOYEE" as const,
-            isOnline: false,
-        }));
+        .map((m) => {
+            const rawRole: unknown =
+                m.role ??
+                m.userRole ??
+                m.memberRole ??
+                m.user?.role ??
+                m.user?.userRole ??
+                m.user?.memberRole;
+            const roleStr = typeof rawRole === "string" ? rawRole.toUpperCase() : "";
+            const normalizedRole = roleStr.includes("ADMIN") ? "PLATFORM_ADMIN" : "PLATFORM_EMPLOYEE";
+            return {
+                id: m.userId,
+                name: m.user
+                    ? `${m.user.firstName ?? ""} ${m.user.lastName ?? ""}`.trim() || m.userId
+                    : m.userId,
+                role: normalizedRole,
+                isOnline: false,
+            };
+        });
 }
 
 /**
@@ -73,42 +84,46 @@ function mapClientRoomToChat(room: ClientChatRoom): Chat {
 }
 
 /** Map a ChatMessage from the API → frontend Message shape */
-export function mapApiMessage(m: ChatMessage & { sender_id?: string; sent_at?: string; first_name?: string; last_name?: string }): Message {
-    const currentUserId = getDecodedUserId() ?? "";
-    const rawSenderId = m.senderId ?? (m as any).sender_id;
-    const isMe = rawSenderId === currentUserId;
-    const sender = m.sender ?? (m as any).sender;
-    const resolvedName = sender
-        ? `${(sender as any).firstName ?? (sender as any).first_name ?? ""} ${(sender as any).lastName ?? (sender as any).last_name ?? ""}`.trim()
-        : undefined;
-    const sentAt = m.sentAt ?? (m as any).sent_at ?? new Date().toISOString();
+// Accept a flexible payload shape from both REST and realtime, where content may be null/undefined.
+export function mapApiMessage(
+  m: ChatMessage & Record<string, any>
+): Message {
 
-    const base: Message = {
-        id: m.id,
-        senderId: isMe ? "me" : rawSenderId,
-        senderName: isMe ? undefined : resolvedName || undefined,
-        type: (m.type ?? (m as any).type) === "FILE" ? "document" : "text",
-        text: m.content ?? (m as any).content ?? undefined,
-        fileUrl: (m as any).fileUrl ?? (m as any).file_url ?? undefined,
-        timestamp: new Date(sentAt).toLocaleTimeString('en-US', {
-            hour: "2-digit",
-            minute: "2-digit",
-        }),
-        status: (m.participantStates?.every((s) => s.status === "READ")
-            ? "read"
-            : m.participantStates?.some((s) => s.status === "DELIVERED")
-                ? "delivered"
-                : "sent") as "sent" | "delivered" | "read",
-        createdAt: new Date(sentAt).getTime(),
-    };
-    if (m.replyToMessageId != null) {
-        base.replyToId = m.replyToMessageId;
-        base.replyToMessageId = m.replyToMessageId;
-    }
-    if (m.replyToMessage) {
-        base.replyToMessage = mapApiMessage(m.replyToMessage);
-    }
-    return base;
+  const currentUserId = getDecodedUserId() ?? "";
+  const rawSenderId = m.senderId ?? m.sender_id;
+  const isMe = rawSenderId === currentUserId;
+
+  const sender = m.sender ?? (m as any).sender;
+  const resolvedName = sender
+    ? `${sender.firstName ?? sender.first_name ?? ""} ${sender.lastName ?? sender.last_name ?? ""}`.trim()
+    : undefined;
+
+  const sentAt =
+    m.sentAt ??
+    m.sent_at ??
+    m.createdAt ??
+    m.created_at ??
+    new Date().toISOString();
+
+  const createdAtMs = new Date(sentAt).getTime();
+
+  return {
+    id: m.id,
+    senderId: isMe ? "me" : rawSenderId,
+    senderName: isMe ? undefined : resolvedName || undefined,
+    type: String(m.type ?? (m as any).type).toUpperCase() === "FILE" ? "document" : "text",
+    text: (m.content ?? (m as any).content ?? undefined) ?? undefined,
+    fileUrl: m.fileUrl ?? m.file_url ?? undefined,
+    createdAt: createdAtMs, // ✅ ONLY STORE UTC
+    timestamp: new Date(sentAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+    status: (m.participantStates?.every((s: any) => s.status === "READ")
+      ? "read"
+      : m.participantStates?.some((s: any) => s.status === "DELIVERED")
+        ? "delivered"
+        : "sent") as "sent" | "delivered" | "read",
+    replyToId: m.replyToMessageId ?? undefined,
+    replyToMessageId: m.replyToMessageId ?? undefined,
+};
 }
 
 /**
@@ -126,10 +141,12 @@ export function extractParticipants(messages: (ChatMessage & { sender_id?: strin
         const name = sender
             ? `${(sender as any).firstName ?? (sender as any).first_name ?? ""} ${(sender as any).lastName ?? (sender as any).last_name ?? ""}`.trim()
             : senderId;
+        const rawRole: unknown = (sender as any)?.role ?? (sender as any)?.userRole ?? (sender as any)?.memberRole;
+        const roleStr = typeof rawRole === "string" ? rawRole.toUpperCase() : "";
         seen.set(senderId, {
             id: senderId,
             name: name || senderId,
-            role: "PLATFORM_EMPLOYEE" as const,
+            role: roleStr.includes("ADMIN") ? "PLATFORM_ADMIN" as const : "PLATFORM_EMPLOYEE" as const,
             isOnline: false,
         });
     });
@@ -249,23 +266,46 @@ export function useChatRooms(activeRoomId?: string): UseChatRoomsReturn {
                                     }
 
                                     if (eventType === 'INSERT') {
-                                        const alreadyExists = r.messages.some(m => m.id === finalMsg.id);
-                                        if (isActiveRoom && !alreadyExists) {
-                                            // Realtime payload timestamp can be wrong (snake_case, format).
-                                            // Force new message to sort to bottom by using max of existing + 1
+                                        const existingIndex = r.messages.findIndex(m => m.id === finalMsg.id);
+
+                                        // Try to match and replace an optimistic message (id starts with "optimistic-")
+                                        let optimisticIndex = -1;
+                                        if (finalMsg.senderId === 'me') {
+                                            optimisticIndex = r.messages.findIndex(
+                                                (m) =>
+                                                    m.id.startsWith('optimistic-') &&
+                                                    m.senderId === 'me' &&
+                                                    (m.text || '') === (finalMsg.text || '')
+                                            );
+                                        }
+
+                                        if (isActiveRoom) {
+                                            // Ensure the new message sorts to the bottom
                                             const maxExisting = r.messages.length
                                                 ? Math.max(...r.messages.map(m => m.createdAt ?? 0))
                                                 : 0;
-                                            const safeCreatedAt = Math.max(maxExisting + 1, Date.now());
+                                            const safeCreatedAt = Math.max(maxExisting + 1, finalMsg.createdAt ?? Date.now());
                                             const msgForSort = { ...finalMsg, createdAt: safeCreatedAt };
-                                            const merged = [...r.messages, msgForSort];
+
+                                            const merged = [...r.messages];
+                                            if (optimisticIndex !== -1) {
+                                                // Replace optimistic message with the canonical one
+                                                merged[optimisticIndex] = msgForSort;
+                                            } else if (existingIndex === -1) {
+                                                merged.push(msgForSort);
+                                            }
+
                                             merged.sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
                                             newMessages = merged;
-                                        } else if (isActiveRoom) {
-                                            newMessages = r.messages;
                                         } else {
-                                            newMessages = r.messages;
+                                            // Non‑active rooms: just append if it doesn't already exist
+                                            if (existingIndex === -1) {
+                                                newMessages = [...r.messages, finalMsg];
+                                            } else {
+                                                newMessages = r.messages;
+                                            }
                                         }
+
                                         if (!isActiveRoom) unreadDelta = 1;
                                     } else if (eventType === 'UPDATE') {
                                         newMessages = r.messages.map(m => m.id === finalMsg.id ? finalMsg : m);

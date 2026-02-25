@@ -15,6 +15,7 @@ import PillTabs from "@/components/shared/PillTabs";
 import { Badge } from "@/components/ui/badge";
 import ComplianceMonthView from "@/components/engagement/ComplianceMonthView";
 import { listComplianceCalendars, type ComplianceCalendarEntry } from "@/api/complianceCalendarService";
+import { useActiveCompany } from "@/context/ActiveCompanyContext";
 
 type ComplianceStatus = "filed" | "upcoming" | "due_today" | "overdue";
 
@@ -84,12 +85,17 @@ export default function ClientCalendarListMonth() {
   const [viewMode, setViewMode] = useState<"list" | "month">("list");
   const [items, setItems] = useState<ComplianceItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const { activeCompanyId } = useActiveCompany();
 
   useEffect(() => {
     const fetchEntries = async () => {
       setLoading(true);
       try {
-        const data = await listComplianceCalendars({});
+        const params: { companyId?: string } = {};
+        if (activeCompanyId) {
+          params.companyId = activeCompanyId;
+        }
+        const data = await listComplianceCalendars(params);
         const mapped = Array.isArray(data) ? data.map(mapApiToComplianceItem) : [];
         setItems(mapped);
       } catch (error) {
@@ -101,7 +107,7 @@ export default function ClientCalendarListMonth() {
     };
 
     fetchEntries();
-  }, []);
+  }, [activeCompanyId]);
 
   const allItems = useMemo(() => items, [items]);
 

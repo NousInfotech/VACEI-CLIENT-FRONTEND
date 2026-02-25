@@ -207,8 +207,8 @@ export default function ServicesHubPage() {
   const stats = useMemo(() => {
     const activeCount = sidebarData.length;
     const pendingCount = sidebarData.filter(s => ['ACTION_REQUIRED', 'OVERDUE', 'DUE_TODAY'].includes(s.worstCompliance)).length;
-    const dueSoonCount = sidebarData.filter(s => s.worstCompliance === 'DUE_SOON').length;
-    const completedCount = sidebarData.filter(s => s.worstCompliance === 'COMPLETED').length;
+    const dueTodayCount = sidebarData.filter(s => s.worstCompliance === 'DUE_TODAY').length;
+    const overdueCount = sidebarData.filter(s => s.worstCompliance === 'OVERDUE').length;
 
     return [
       {
@@ -223,27 +223,19 @@ export default function ServicesHubPage() {
         services: sidebarData.map(s => s.serviceName),
       },
       {
-        label: "Pending Actions",
-        value: pendingCount.toString(),
+        label: "Due Today",
+        value: dueTodayCount.toString(),
         color: "text-orange-600",
         bg: "bg-orange-100",
-        icon: AlertTriangle,
-        active: false,
-      },
-      {
-        label: "Due Soon",
-        value: dueSoonCount.toString(),
-        color: "text-blue-600",
-        bg: "bg-blue-100",
         icon: Clock3,
         active: false,
       },
       {
-        label: "Completed",
-        value: completedCount.toString(),
-        color: "text-purple-600",
-        bg: "bg-purple-100",
-        icon: CheckCheck,
+        label: "Overdue",
+        value: overdueCount.toString(),
+        color: "text-red-600",
+        bg: "bg-red-100",
+        icon: AlertTriangle,
         active: false,
       },
     ];
@@ -263,12 +255,6 @@ export default function ServicesHubPage() {
         description="Manage your services in one centralized location with real-time status tracking."
         actions={
           <div className="flex flex-wrap gap-3">
-            <Link href="/dashboard/compliance/list">
-              <Button variant="outline" className="bg-light text-primary-color-new">
-                <AlertCircle className="w-4 h-4" />
-                Pending Actions
-              </Button>
-            </Link>
             <Link href="/dashboard/services/request">
               <Button variant="outline" className="bg-light text-primary-color-new">
                 <Plus className="w-4 h-4" />
@@ -279,10 +265,15 @@ export default function ServicesHubPage() {
         }
       />
 
-{/* Status cards */}
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Status cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, i) => {
           const Icon = stat.icon;
+
+          // Filter to only show Active Services, Due Today, and Overdue
+          if (!["Active Services", "Due Today", "Overdue"].includes(stat.label)) {
+            return null;
+          }
 
           return (
             <DashboardCard
@@ -410,12 +401,6 @@ export default function ServicesHubPage() {
               <Button variant="default">
                 <Plus className="w-4 h-4 mr-2" />
                 Request Service
-              </Button>
-            </Link>
-            <Link href="/dashboard/quickbooks-sync">
-              <Button variant="outline">
-                <Settings className="w-4 h-4 mr-2" />
-                Integrations
               </Button>
             </Link>
           </div>

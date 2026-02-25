@@ -467,7 +467,15 @@ class ChatService {
 /** Normalize Supabase Realtime payload to match ChatMessage shape (sentAt for correct timestamp display). */
 function normalizeRealtimePayload(raw: Record<string, unknown>): Record<string, unknown> {
   const r = raw || {};
-  const sentAtRaw = r.sentAt ?? r.sent_at ?? (r as any).sentat;
+  const sentAtRaw =
+    r.sentAt ??
+    r.sent_at ??
+    (r as any).sentat ??
+    // Fallbacks: many tables store createdAt/created_at instead of sentAt
+    (r as any).createdAt ??
+    (r as any).created_at ??
+    (r as any).insertedAt ??
+    (r as any).inserted_at;
   let sentAt: string;
   if (typeof sentAtRaw === 'string') {
     sentAt = sentAtRaw.includes('T') || sentAtRaw.endsWith('Z') ? sentAtRaw : `${String(sentAtRaw).replace(' ', 'T')}Z`;

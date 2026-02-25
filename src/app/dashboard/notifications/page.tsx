@@ -12,6 +12,7 @@ import {
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { useSSE } from '@/hooks/useSSE';
+import { cn } from '@/lib/utils';
 
 interface NotificationItemProps {
     notification: Notification;
@@ -19,35 +20,22 @@ interface NotificationItemProps {
 }
 
 const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMarkAsRead }) => {
-    let bgColorClass = '';
-    let textColorClass = '';
     const isRead = notification.isRead;
+    const isChat = notification.type === 'chat_message';
 
-    switch (notification.type) {
-        case 'meeting_scheduled':
-        case 'meeting_updated':
-        case 'task_assigned':
-        case 'task_created':
-        case 'task_status_updated':
-        case 'task_attachment_deleted':
-        case 'task_updated':
-            bgColorClass = isRead ? 'bg-brand-muted' : 'bg-brand-primary/10 border-brand-primary/20';
-            textColorClass = isRead ? 'text-brand-primary' : 'text-brand-primary';
-            break;
-        case 'meeting_canceled':
-        case 'error':
-        case 'task_deleted':
-            bgColorClass = isRead ? 'bg-red-50' : 'bg-red-100 border-red-200';
-            textColorClass = isRead ? 'text-red-600' : 'text-red-800';
-            break;
-        case 'chat_message':
-            bgColorClass = isRead ? 'bg-sidebar-background' : 'bg-sidebar-background border-green-200';
-            textColorClass = isRead ? 'text-green-600' : 'text-green-800';
-            break;
-        default:
-            bgColorClass = isRead ? 'bg-brand-body' : 'bg-brand-muted border-border';
-            textColorClass = isRead ? 'text-muted-foreground' : 'text-gray-800';
-    }
+    const containerClasses = cn(
+        'group relative overflow-hidden rounded-2xl border transition-all duration-200',
+        isChat
+            ? cn(
+                'bg-sidebar-background text-[hsl(var(--sidebar-foreground))]',
+                isRead
+                    ? 'border-[hsl(var(--sidebar-border))] shadow-sm'
+                    : 'border-emerald-400/50 shadow-lg ring-1 ring-emerald-400/40'
+            )
+            : isRead
+                ? 'bg-muted border-border shadow-sm'
+                : 'bg-white border-amber-100 shadow-md'
+    );
 
     const handleClick = () => {
         if (!isRead) {
@@ -56,17 +44,57 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMar
     };
 
     const content = (
-        <div
-            className={`p-4 border-l-4 rounded-md shadow-sm flex justify-between items-center ${bgColorClass} cursor-pointer hover:shadow-md transition-all`}
-            onClick={handleClick}
-        >
-            <div>
-                <p className={`font-semibold ${textColorClass}`}>{notification.title}</p>
-                <p className="text-gray-600 text-sm mt-1">{notification.content}</p>
-                <small className="text-muted-foreground mt-2 block">
-                    {new Date(notification.createdAt).toLocaleString()}
-                    {isRead ? ' (Read)' : ' (Unread)'}
-                </small>
+        <div className={containerClasses} onClick={handleClick}>
+            {/* Accent strip for chat + unread */}
+            {isChat && !isRead && (
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 via-emerald-300 to-emerald-500" />
+            )}
+
+            <div className="relative flex flex-col gap-2 p-4 sm:p-5">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                        <p
+                            className={cn(
+                                'font-semibold text-sm sm:text-base',
+                                isChat
+                                    ? 'text-emerald-200'
+                                    : 'text-slate-900'
+                            )}
+                        >
+                            {notification.title}
+                        </p>
+                        {notification.content && (
+                            <p
+                                className={cn(
+                                    'text-xs sm:text-sm leading-relaxed',
+                                    isChat
+                                        ? 'text-[hsl(var(--sidebar-foreground)/0.85)]'
+                                        : 'text-muted-foreground'
+                                )}
+                            >
+                                {notification.content}
+                            </p>
+                        )}
+                    </div>
+
+                    {!isRead && (
+                        <span
+                            className={cn(
+                                'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap',
+                                isChat
+                                    ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/40'
+                                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                            )}
+                        >
+                            Unread
+                        </span>
+                    )}
+                </div>
+
+                <div className="flex items-center justify-between pt-1 text-[11px] sm:text-xs text-muted-foreground">
+                    <span>{new Date(notification.createdAt).toLocaleString()}</span>
+                    {isRead && <span className="italic">Read</span>}
+                </div>
             </div>
         </div>
     );
@@ -86,10 +114,13 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMar
 
 const NotificationSkeleton: React.FC = () => {
     return (
-        <div className="p-4 border-l-4 border-border rounded-md shadow-md mb-4 flex justify-between items-center bg-brand-muted animate-pulse">
-            <div className="flex-1">
-                <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+        <div className="mb-4">
+            <div className="rounded-2xl border border-border bg-muted/60 shadow-sm p-4 sm:p-5 animate-pulse">
+                <div className="space-y-2">
+                    <div className="h-4 bg-gray-300/70 rounded w-3/4" />
+                    <div className="h-3 bg-gray-200/80 rounded w-1/2" />
+                    <div className="h-3 bg-gray-200/60 rounded w-1/3" />
+                </div>
             </div>
         </div>
     );

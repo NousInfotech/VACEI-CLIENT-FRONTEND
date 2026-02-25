@@ -70,8 +70,21 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
                 const fromMessages = extractParticipants(res.data ?? []);
                 const room = chats.find((r) => r.id === activeChatId);
                 const mergedParticipants = new Map<string, User>();
-                (room?.participants ?? []).forEach((p) => mergedParticipants.set(p.id, { ...p, role: "PLATFORM_EMPLOYEE" as const, isOnline: false }));
-                fromMessages.forEach((p) => mergedParticipants.set(p.id, { ...p, role: "PLATFORM_EMPLOYEE" as const, isOnline: false }));
+                const mergeUser = (u: User) => {
+                    const existing = mergedParticipants.get(u.id);
+                    const incomingRole = u.role ?? 'PLATFORM_EMPLOYEE';
+                    const finalRole =
+                        existing?.role === 'PLATFORM_ADMIN' ? 'PLATFORM_ADMIN' : incomingRole;
+                    mergedParticipants.set(u.id, {
+                        ...(existing ?? u),
+                        ...u,
+                        role: finalRole,
+                        isOnline: u.isOnline ?? existing?.isOnline ?? false,
+                    });
+                };
+
+                (room?.participants ?? []).forEach(mergeUser);
+                fromMessages.forEach(mergeUser);
                 const participants = Array.from(mergedParticipants.values());
 
                 setRoomMessagesWithMerge(activeChatId, apiMsgs, participants);

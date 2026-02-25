@@ -86,8 +86,21 @@ const Messages: React.FC = () => {
         const fromMessages = extractParticipants(res.data ?? []);
         const room = rooms.find((r) => r.id === roomId);
         const mergedParticipants = new Map<string, User>();
-        (room?.participants ?? []).forEach((p) => mergedParticipants.set(p.id, { ...p, role: "PLATFORM_EMPLOYEE" as const, isOnline: false }));
-        fromMessages.forEach((p) => mergedParticipants.set(p.id, { ...p, role: "PLATFORM_EMPLOYEE" as const, isOnline: false }));
+        const mergeUser = (u: User) => {
+          const existing = mergedParticipants.get(u.id);
+          const incomingRole = u.role ?? 'PLATFORM_EMPLOYEE';
+          const finalRole =
+            existing?.role === 'PLATFORM_ADMIN' ? 'PLATFORM_ADMIN' : incomingRole;
+          mergedParticipants.set(u.id, {
+            ...(existing ?? u),
+            ...u,
+            role: finalRole,
+            isOnline: u.isOnline ?? existing?.isOnline ?? false,
+          });
+        };
+
+        (room?.participants ?? []).forEach(mergeUser);
+        fromMessages.forEach(mergeUser);
         const participants = Array.from(mergedParticipants.values());
         setRoomMessagesWithMerge(roomId, apiMsgs, participants);
       })
@@ -234,79 +247,80 @@ const Messages: React.FC = () => {
   };
 
   // ─── Send Message ─────────────────────────────────────────────────────────
-  const handleSendMessage = async (content: {
-    text?: string;
-    gifUrl?: string;
-    fileUrl?: string;
-    fileName?: string;
-    fileSize?: string;
-    type: 'text' | 'gif' | 'image' | 'document';
-  }) => {
-    if (!activeChatId) return;
+const handleSendMessage = async (content: {
+  text?: string;
+  gifUrl?: string;
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: string;
+  type: 'text' | 'gif' | 'image' | 'document';
+}) => {
+  if (!activeChatId) return;
 
-    // Handle edit
-    if (editingMessage) {
-      const text = content.text || '';
-      const activeRoom = rooms.find((r) => r.id === activeChatId);
-      if (activeRoom) {
-        const updatedMessages = activeRoom.messages.map((m) =>
-          m.id === editingMessage.id ? { ...m, text, isEdited: true } : m
-        );
-        setRoomMessages(activeChatId, updatedMessages);
-      }
-      chatService.editMessage(editingMessage.id, text).catch(console.error);
-      setEditingMessage(null);
-      return;
-    }
-
-    // Optimistic local message
-    const optimisticId = `optimistic-${Date.now()}`;
-    const optimistic: Message = {
-      id: optimisticId,
-      senderId: 'me',
-      type: content.type,
-      text: content.text,
-      fileUrl: content.fileUrl,
-      fileName: content.fileName,
-      fileSize: content.fileSize,
-      replyToId: replyToMessage?.id,
-      replyToMessageId: replyToMessage?.id ?? null,
-      replyToMessage: replyToMessage ?? null,
-      timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-      createdAt: Date.now(),
-      status: 'sent',
-    };
-    appendMessage(activeChatId, optimistic);
-    // Only send replyToMessageId to backend/Supabase when it's a real UUID.
-    const replyToIdForSend =
-      replyToMessage?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(replyToMessage.id)
-        ? replyToMessage.id
-        : undefined;
-    setReplyToMessage(null);
-
-    try {
-      let fileUrl: string | undefined;
-      if (content.type === 'image' || content.type === 'document') {
-        // fileUrl is already a blob URL from local selection —
-        // in real usage pass the uploaded URL from chatService.uploadFile
-        fileUrl = content.fileUrl;
-      }
-      const sent = await chatService.sendMessage(
-        activeChatId,
-        content.text || '',
-        fileUrl,
-        replyToIdForSend ? { replyToMessageId: replyToIdForSend } : undefined
+  // Handle edit
+  if (editingMessage) {
+    const text = content.text || '';
+    const activeRoom = rooms.find((r) => r.id === activeChatId);
+    if (activeRoom) {
+      const updatedMessages = activeRoom.messages.map((m) =>
+        m.id === editingMessage.id ? { ...m, text, isEdited: true } : m
       );
-      if (sent) {
-        // Let Supabase Realtime handle delivery of the final message.
-        // We keep the optimistic message; the realtime handler will append
-        // the canonical row and dedupe by id for future events.
-      }
-    } catch (err) {
-      console.error('Failed to send message:', err);
-      // Mark optimistic message as failed (keep it visible)
+      setRoomMessages(activeChatId, updatedMessages);
     }
+    chatService.editMessage(editingMessage.id, text).catch(console.error);
+    setEditingMessage(null);
+    return;
+  }
+
+  // ✅ CREATE UTC ISO TIME (same as backend)
+  const optimisticId = `optimistic-${Date.now()}`;
+  const createdAtISO = new Date().toISOString();
+  const createdAt = new Date(createdAtISO).getTime();
+
+  const optimistic: Message = {
+    id: optimisticId,
+    senderId: 'me',
+    type: content.type,
+    text: content.text,
+    fileUrl: content.fileUrl,
+    fileName: content.fileName,
+    fileSize: content.fileSize,
+    replyToId: replyToMessage?.id,
+    replyToMessageId: replyToMessage?.id ?? null,
+    replyToMessage: replyToMessage ?? null,
+    createdAt, // ✅ ONLY STORE THIS
+    status: 'sent',
+    timestamp: ''
   };
+
+  appendMessage(activeChatId, optimistic);
+
+  const replyToIdForSend =
+    replyToMessage?.id &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(replyToMessage.id)
+      ? replyToMessage.id
+      : undefined;
+
+  setReplyToMessage(null);
+
+  try {
+    let fileUrl: string | undefined;
+    if (content.type === 'image' || content.type === 'document') {
+      fileUrl = content.fileUrl;
+    }
+
+    await chatService.sendMessage(
+      activeChatId,
+      content.text || '',
+      fileUrl,
+      replyToIdForSend ? { replyToMessageId: replyToIdForSend } : undefined
+    );
+
+    // Supabase realtime will replace optimistic message
+  } catch (err) {
+    console.error('Failed to send message:', err);
+  }
+};
 
   // ─── Select mode helpers ──────────────────────────────────────────────────
   const handleToggleSelectMessage = (messageId: string) => {
@@ -319,7 +333,7 @@ const Messages: React.FC = () => {
     const activeRoom = rooms.find((r) => r.id === activeChatId);
     if (!activeRoom) return;
     const selectedMessages = activeRoom.messages.filter(m => selectedMessageIds.includes(m.id));
-    const text = selectedMessages.map(m => `[${m.timestamp}] ${m.senderId}: ${m.text || ''}`).join('\n');
+    const text = selectedMessages.map(m => `${m.senderId}: ${m.text || ''}`).join('\n');
     navigator.clipboard.writeText(text);
     setIsSelectMode(false);
     setSelectedMessageIds([]);

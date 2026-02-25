@@ -21,6 +21,8 @@ import { getDocumentRequests, DocumentRequest } from "@/api/documentRequestServi
 import { useActiveCompany } from "@/context/ActiveCompanyContext";
 import { SidebarServiceData } from "@/api/companyService";
 import { useGlobalDashboard } from "@/context/GlobalDashboardContext";
+import { chatService } from "@/api/chatService";
+import { fetchUnreadCountAPI } from "@/api/notificationService";
 
 interface SidebarMenuProps {
   menu: MenuItem[];
@@ -51,6 +53,71 @@ export default function SidebarMenu({
   const { sidebarData } = useGlobalDashboard();
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [documentRequestsMap, setDocumentRequestsMap] = useState<Record<string, DocumentRequest[]>>({});
+  const [messagesTotal, setMessagesTotal] = useState<number | null>(null);
+  const [notificationsUnread, setNotificationsUnread] = useState<number | null>(null);
+
+  // Load global badges for Messages & Alerts
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadMessageSummary = async () => {
+      try {
+        const res = await chatService.getUnreadSummary();
+        if (cancelled) return;
+        const data: any = res?.data ?? {};
+
+        let total: number | null = null;
+        if (typeof data.totalUnread === "number") {
+          total = data.totalUnread;
+        } else if (typeof data.total === "number") {
+          total = data.total;
+        } else if (Array.isArray((data as any).rooms)) {
+          total = (data as any).rooms.reduce(
+            (sum: number, r: any) => sum + (typeof r?.unreadCount === "number" ? r.unreadCount : 0),
+            0
+          );
+        }
+
+        if (total !== null) {
+          setMessagesTotal(total);
+        }
+      } catch (e) {
+        console.error("Failed to load messages summary", e);
+      }
+    };
+
+    const loadNotificationSummary = async () => {
+      try {
+        const res = await fetchUnreadCountAPI();
+        if (cancelled) return;
+        const count = typeof res?.count === "number" ? res.count : 0;
+        setNotificationsUnread(count);
+      } catch (e) {
+        console.error("Failed to load notifications unread count", e);
+      }
+    };
+
+    loadMessageSummary();
+    loadNotificationSummary();
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        loadMessageSummary();
+        loadNotificationSummary();
+      }
+    };
+
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", handleVisibility);
+    }
+
+    return () => {
+      cancelled = true;
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibility);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!activeCompanyId) {
@@ -92,6 +159,8 @@ export default function SidebarMenu({
 
   const dynamicMenu = useMemo(() => {
     return menu.map((item) => {
+      let nextItem: MenuItem = item;
+
       if (item.slug === "services-root") {
         const dynamicChildren = sidebarData.map((s) => {
           // Normalize service name to match SERVICE_METADATA keys
@@ -127,11 +196,20 @@ export default function SidebarMenu({
             isActive: true,
           } as MenuItem;
         });
-        return { ...item, children: dynamicChildren };
+        nextItem = { ...item, children: dynamicChildren };
       }
-      return item;
+
+      if (nextItem.slug === "messages" && messagesTotal !== null) {
+        nextItem = { ...nextItem, count: messagesTotal };
+      }
+
+      if (nextItem.slug === "notifications" && notificationsUnread !== null) {
+        nextItem = { ...nextItem, count: notificationsUnread };
+      }
+
+      return nextItem;
     });
-  }, [menu, sidebarData]);
+  }, [menu, sidebarData, messagesTotal, notificationsUnread]);
 
   const grouped: Record<MenuSection, MenuItem[]> = useMemo(() => {
     const res: Record<MenuSection, MenuItem[]> = {

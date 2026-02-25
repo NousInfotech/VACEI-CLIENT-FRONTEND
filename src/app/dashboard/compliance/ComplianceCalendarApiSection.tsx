@@ -147,6 +147,25 @@ export default function ComplianceCalendarApiSection() {
 
   const filteredEntries = entries;
 
+  const summaryCounts = (() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let overdue = 0;
+    let dueToday = 0;
+    let upcoming = 0;
+
+    filteredEntries.forEach((entry) => {
+      const due = new Date(entry.dueDate);
+      if (isNaN(due.getTime())) return;
+      const d = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+      if (d < today) overdue += 1;
+      else if (d.getTime() === today.getTime()) dueToday += 1;
+      else upcoming += 1;
+    });
+
+    return { overdue, dueToday, upcoming, completed: 0 };
+  })();
+
   const handleCreate = async (payload: CreatePayload) => {
     setSubmitting(true);
     setActionError(null);
@@ -266,91 +285,36 @@ export default function ComplianceCalendarApiSection() {
             <Loader2 className="w-6 h-6 animate-spin mr-2" />
             Loading…
           </div>
-        ) : filteredEntries.length === 0 ? (
-          <div className="py-12 text-center text-muted-foreground">
-            No calendar deadlines found. Add a global deadline to get started.
-          </div>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-border">
-            <table className="min-w-full text-left text-sm">
-              <thead className="bg-muted border-b border-border">
-                <tr>
-                  <th className="px-4 py-3 text-xs font-semibold text-brand-body uppercase tracking-wide">Due date</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-brand-body uppercase tracking-wide">Title</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-brand-body uppercase tracking-wide">Type</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-brand-body uppercase tracking-wide">Company</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-brand-body uppercase tracking-wide">Category</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-brand-body uppercase tracking-wide">Frequency</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-brand-body uppercase tracking-wide text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredEntries.map((entry) => (
-                  <tr key={entry.id} className="border-b border-border hover:bg-muted/30">
-                    <td className="px-4 py-3 font-medium text-brand-body">{formatDate(entry.dueDate)}</td>
-                    <td className="px-4 py-3">
-                      <span className="font-medium text-brand-body">{entry.title}</span>
-                      {entry.description && (
-                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{entry.description}</p>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex rounded-lg border px-2 py-0.5 text-xs font-medium ${
-                          entry.type === "GLOBAL"
-                            ? "bg-primary/10 text-primary border-primary/30"
-                            : "bg-muted text-muted-foreground border-border"
-                        }`}
-                      >
-                        {entry.type}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {entry.company?.name ?? "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{entry.serviceCategory}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {entry.frequency === "CUSTOM" && entry.customFrequencyPeriodValue != null && entry.customFrequencyPeriodUnit
-                        ? `Every ${entry.customFrequencyPeriodValue} ${entry.customFrequencyPeriodUnit.toLowerCase()}`
-                        : entry.frequency}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => setViewEntry(entry)}
-                          title="View"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        {/* Edit & delete actions disabled in client portal */}
-                        {/* <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => setEditEntry(entry)}
-                          title="Edit"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                          onClick={() => setDeleteEntry(entry)}
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button> */}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <StatusBox
+                label="Overdue"
+                value={summaryCounts.overdue}
+                tone="danger"
+              />
+              <StatusBox
+                label="Due Today"
+                value={summaryCounts.dueToday}
+                tone="warning"
+              />
+              <StatusBox
+                label="Upcoming"
+                value={summaryCounts.upcoming}
+                tone="info"
+              />
+              <StatusBox
+                label="Completed"
+                value={summaryCounts.completed}
+                tone="success"
+              />
+            </div>
+            {filteredEntries.length === 0 && (
+              <div className="py-8 text-center text-muted-foreground text-sm">
+                No calendar deadlines found. Add a global deadline to get started.
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -418,6 +382,54 @@ export default function ComplianceCalendarApiSection() {
         </Modal>
       )} */}
     </DashboardCard>
+  );
+}
+
+function StatusBox({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: "danger" | "warning" | "info" | "success";
+}) {
+  const toneClasses = {
+    danger: {
+      border: "border-red-500/30",
+      bg: "bg-red-50/50",
+      text: "text-red-500",
+    },
+    warning: {
+      border: "border-orange-500/30",
+      bg: "bg-orange-50/50",
+      text: "text-orange-500",
+    },
+    info: {
+      border: "border-blue-500/30",
+      bg: "bg-blue-50/50",
+      text: "text-blue-500",
+    },
+    success: {
+      border: "border-emerald-500/30",
+      bg: "bg-emerald-50/50",
+      text: "text-emerald-500",
+    },
+  } as const;
+
+  const classes = toneClasses[tone];
+
+  return (
+    <div
+      className={`rounded-lg border bg-white shadow-sm ${classes.border} ${classes.bg} flex flex-col justify-center px-4 py-3`}
+    >
+      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+        {label}
+      </p>
+      <p className={`text-2xl md:text-3xl font-semibold tabular-nums ${classes.text}`}>
+        {value}
+      </p>
+    </div>
   );
 }
 

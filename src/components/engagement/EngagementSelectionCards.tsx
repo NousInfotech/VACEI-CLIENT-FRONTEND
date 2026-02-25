@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import PageHeader from "@/components/shared/PageHeader";
 import DashboardCard from "@/components/DashboardCard";
+import { Button } from "../ui/button";
 
 interface Engagement {
   id: string;
@@ -97,22 +98,20 @@ const EngagementSelectionCards = ({
                     </Badge>
                   </div>
                   
-                  <div className="space-y-4">
+                  <div className="space-y-2">
                     <h3 className="text-lg font-bold text-slate-900 group-hover:text-primary transition-colors line-clamp-2">
                       {displayTitle}
                     </h3>
-                    
-                    <div className="flex items-center gap-2 text-slate-500">
-                      <Calendar size={14} className="shrink-0" />
-                      <span className="text-xs font-semibold">
-                        Last Update: {formatDate(engagement.updatedAt || engagement.createdAt)}
-                      </span>
-                    </div>
                   </div>
 
-                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-sm font-bold text-primary">
-                    <span>Open Engagement</span>
-                    <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <Button
+                      size="sm"
+                      className="bg-primary text-white hover:bg-primary/90 rounded-full px-4 py-2 h-9 text-xs font-semibold"
+                    >
+                      Open Engagement
+                      <ArrowRight size={14} className="ml-1" />
+                    </Button>
                   </div>
                 </div>
               </DashboardCard>

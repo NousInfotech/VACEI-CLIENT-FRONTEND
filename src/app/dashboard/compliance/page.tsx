@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import DashboardCard from "@/components/DashboardCard";
@@ -9,10 +9,15 @@ import Dropdown from "@/components/Dropdown";
 import { ChevronDown, Calendar as CalendarIcon, List, HelpCircle, Download, Upload, MessageSquare, CheckCircle, Eye, AlertCircle, X, ArrowRight, Users } from "lucide-react";
 import { fetchTasks } from "@/api/taskService";
 import type { Task } from "@/interfaces";
+import { useActiveCompany } from "@/context/ActiveCompanyContext";
+import {
+  listComplianceCalendars,
+  type ComplianceCalendarEntry,
+} from "@/api/complianceCalendarService";
 import ParentSchedule from "@/app/dashboard/schedule/page";
 // import { fetchPayrollData, transformPayrollSubmissionsToComplianceItems } from "@/lib/payrollComplianceIntegration";
-import ComplianceCalendarApiSection from "./ComplianceCalendarApiSection";
 import ClientCalendarListMonth from "@/components/compliance/ClientCalendarListMonth";
+import { cn } from "@/lib/utils";
 
 // Compliance status types
 type ComplianceStatus = "Waiting on you" | "In progress" | "Due soon" | "Completed" | "Overdue";
@@ -125,20 +130,14 @@ function LegacyComplianceCalendarPage() {
   const [complianceItems, setComplianceItems] = useState<ComplianceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const { activeCompanyId } = useActiveCompany();
+  const [calendarEntries, setCalendarEntries] = useState<ComplianceCalendarEntry[]>([]);
+  const [calendarLoading, setCalendarLoading] = useState<boolean>(false);
   
   // Filters
   const [serviceFilter, setServiceFilter] = useState<ServiceType>("All");
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("All");
   const [statusFilter, setStatusFilter] = useState<ComplianceStatus | "All">("All");
-  const [summaryFilter, setSummaryFilter] = useState<ComplianceStatus | "Upcoming" | null>(null);
-
-  // Summary counts
-  const [summaryCounts, setSummaryCounts] = useState({
-    overdue: 0,
-    waitingOnYou: 0,
-    dueSoon: 0,
-    upcoming: 0,
-  });
 
   // Load compliance items
   const loadComplianceItems = useCallback(async () => {
@@ -211,20 +210,6 @@ function LegacyComplianceCalendarPage() {
       // const allItems = [...items, ...payrollItems];
       const allItems = [...items];
       setComplianceItems(allItems);
-      
-      // Calculate summary counts
-      const now = new Date();
-      const counts = {
-        overdue: allItems.filter(item => item.status === "Overdue").length,
-        waitingOnYou: allItems.filter(item => item.status === "Waiting on you").length,
-        dueSoon: allItems.filter(item => item.status === "Due soon").length,
-        upcoming: allItems.filter(item => {
-          const due = new Date(item.dueDate);
-          const daysUntilDue = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-          return daysUntilDue > 7 && item.status !== "Completed" && item.status !== "Overdue";
-        }).length,
-      };
-      setSummaryCounts(counts);
     } catch (error) {
       console.error("Failed to load compliance items", error);
       setComplianceItems([]);
@@ -237,6 +222,55 @@ function LegacyComplianceCalendarPage() {
     loadComplianceItems();
   }, [loadComplianceItems]);
 
+  // Load compliance calendar entries for the active company (per-company status boxes)
+  useEffect(() => {
+    const loadCalendarEntries = async () => {
+      if (!activeCompanyId) {
+        setCalendarEntries([]);
+        return;
+      }
+      setCalendarLoading(true);
+      try {
+        const data = await listComplianceCalendars({
+          companyId: activeCompanyId,
+          type: "COMPANY",
+        } as any);
+        setCalendarEntries(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Failed to load compliance calendar entries:", error);
+        setCalendarEntries([]);
+      } finally {
+        setCalendarLoading(false);
+      }
+    };
+    loadCalendarEntries();
+  }, [activeCompanyId]);
+
+  const statusCounts = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let overdue = 0;
+    let dueToday = 0;
+    let upcoming = 0;
+
+    calendarEntries.forEach((entry) => {
+      if (entry.type !== "COMPANY") return;
+      const due = new Date(entry.dueDate);
+      if (Number.isNaN(due.getTime())) return;
+      const normalized = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+      if (normalized < today) overdue += 1;
+      else if (normalized.getTime() === today.getTime()) dueToday += 1;
+      else upcoming += 1;
+    });
+
+    return {
+      overdue,
+      dueToday,
+      upcoming,
+      completed: 0,
+    };
+  }, [calendarEntries]);
+
   // Apply filters
   const filteredItems = complianceItems.filter((item) => {
     // Service filter
@@ -244,16 +278,6 @@ function LegacyComplianceCalendarPage() {
 
     // Status filter
     if (statusFilter !== "All" && item.status !== statusFilter) return false;
-
-    // Summary filter (from clicking summary cards)
-    if (summaryFilter) {
-      if (summaryFilter === "Upcoming") {
-        const due = new Date(item.dueDate);
-        const now = new Date();
-        const daysUntilDue = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        if (daysUntilDue <= 7 || item.status === "Completed" || item.status === "Overdue") return false;
-      } else if (item.status !== summaryFilter) return false;
-    }
 
     // Period filter
     if (periodFilter !== "All") {
@@ -304,15 +328,6 @@ function LegacyComplianceCalendarPage() {
         </Button>
       </Link>
     );
-  };
-
-  // Handle summary card click
-  const handleSummaryClick = (filter: ComplianceStatus | "Upcoming") => {
-    if (summaryFilter === filter) {
-      setSummaryFilter(null);
-    } else {
-      setSummaryFilter(filter);
-    }
   };
 
   // Handle download calendar (.ics)
@@ -408,10 +423,10 @@ function LegacyComplianceCalendarPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <SummaryCard
           label="Overdue"
-          value={summaryCounts.overdue}
+          value={statusCounts.overdue}
           tone="danger"
-          onClick={() => handleSummaryClick("Overdue")}
-          isActive={summaryFilter === "Overdue"}
+          onClick={() => {}}
+          isActive={false}
         />
         {/* Waiting on you analytics hidden in client portal */}
         {/* <SummaryCard
@@ -422,26 +437,30 @@ function LegacyComplianceCalendarPage() {
           isActive={summaryFilter === "Waiting on you"}
         /> */}
         <SummaryCard
-          label="Due soon (7 days)"
-          value={summaryCounts.dueSoon}
+          label="Due Today"
+          value={statusCounts.dueToday}
           tone="warning"
-          onClick={() => handleSummaryClick("Due soon")}
-          isActive={summaryFilter === "Due soon"}
+          onClick={() => {}}
+          isActive={false}
         />
         <SummaryCard
           label="Upcoming"
-          value={summaryCounts.upcoming}
+          value={statusCounts.upcoming}
           tone="success"
-          onClick={() => handleSummaryClick("Upcoming")}
-          isActive={summaryFilter === "Upcoming"}
+          onClick={() => {}}
+          isActive={false}
+        />
+        <SummaryCard
+          label="Completed"
+          value={statusCounts.completed}
+          tone="info"
+          onClick={() => {}}
+          isActive={false}
         />
       </div>
 
       {/* Payroll Service Card (disabled) */}
       {/* <PayrollServiceCard /> */}
-
-      {/* Compliance Calendar API – client: GLOBAL + own companies; create GLOBAL only; edit/delete own */}
-      <ComplianceCalendarApiSection />
 
       {/* Main Content */}
       <DashboardCard className="overflow-visible">
@@ -476,24 +495,24 @@ function SummaryCard({
 }) {
   const toneClasses = {
     danger: {
-      border: "border-destructive/30",
-      bg: "bg-destructive/5",
-      text: "text-destructive",
+      border: "border-red-500/30",
+      bg: "bg-red-50/50",
+      text: "text-red-500",
     },
     warning: {
-      border: "border-warning/30",
-      bg: "bg-warning/5",
-      text: "text-warning",
+      border: "border-orange-500/30",
+      bg: "bg-orange-50/50",
+      text: "text-orange-500",
     },
     info: {
-      border: "border-info/30",
-      bg: "bg-info/5",
-      text: "text-info",
+      border: "border-blue-500/30",
+      bg: "bg-blue-50/50",
+      text: "text-blue-500",
     },
     success: {
-      border: "border-success/30",
-      bg: "bg-success/5",
-      text: "text-success",
+      border: "border-emerald-500/30",
+      bg: "bg-emerald-50/50",
+      text: "text-emerald-500",
     },
   };
 
@@ -501,15 +520,20 @@ function SummaryCard({
 
   return (
     <div
-      className={`cursor-pointer transition-all hover:shadow-lg ${classes.border} ${classes.bg} ${
-        isActive ? "ring-2 ring-primary" : ""
-      } rounded-lg border bg-card shadow-sm`}
+      className={cn(
+        "cursor-pointer transition-all rounded-0 border p-4",
+        classes.border,
+        classes.bg,
+        isActive ? "ring-2 ring-primary" : "bg-white"
+      )}
       onClick={onClick}
     >
-      <div className="p-4">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-2">{label}</p>
-        <p className={`text-3xl font-bold ${classes.text} tabular-nums`}>{value}</p>
-      </div>
+      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+        {label}
+      </p>
+      <p className={cn("text-2xl font-bold tabular-nums", classes.text)}>
+        {value}
+      </p>
     </div>
   );
 }
