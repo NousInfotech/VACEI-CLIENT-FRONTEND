@@ -10,6 +10,7 @@ function getAuthHeaders(): Record<string, string> {
 
 export interface SidebarServiceData {
   serviceName: string;
+  customServiceCycleId?: string | null;
   activeEngagements: { id: string; name: string | null }[];
   worstCompliance:
     | "OVERDUE"

@@ -114,11 +114,16 @@ export default function SidebarMenu({
           const hasSingleEngagement = s.activeEngagements && s.activeEngagements.length === 1;
           const engagementId = hasSingleEngagement ? s.activeEngagements[0].id : undefined;
 
+          const isCustom = metadataKey === "CUSTOM";
+          const serviceHref = isCustom && s.customServiceCycleId 
+            ? `${metadata.href}?customServiceId=${s.customServiceCycleId}`
+            : metadata.href;
+
           return {
             slug: s.serviceName.toLowerCase().replace(/\s+/g, "-"),
             icon: metadata.icon,
             label: s.serviceName,
-            href: metadata.href, // Only use base href here, as lower down it appends engagementId again
+            href: serviceHref,
             isActive: true,
           } as MenuItem;
         });

@@ -376,7 +376,7 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
           You don&apos;t have an active engagement for this service yet. Request the service to get started.
         </p>
         <Link
-          href="/dashboard/services/request"
+          href={`/dashboard/services/request?service=${SLUG_TO_SERVICE_TYPE[serviceSlug] || ''}${serviceSlug === 'custom' && searchParams.get('customServiceId') ? `&customServiceId=${searchParams.get('customServiceId')}` : ''}`}
           className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
           Request service

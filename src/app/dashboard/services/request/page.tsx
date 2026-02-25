@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Dropdown from "@/components/Dropdown";
 import { ChevronDown, AlertCircle } from "lucide-react";
@@ -28,6 +28,7 @@ type ServiceCode =
   | "INCORPORATION"
   | "MBR"
   | "TAX"
+  | "ADVISORY"
   | "CUSTOM";
 
 const serviceLabels: Record<ServiceCode, string> = {
@@ -44,13 +45,29 @@ const serviceLabels: Record<ServiceCode, string> = {
   MBR: "MBR",
   CFO: "CFO",
   TAX: "TAX",
+  ADVISORY: "Advisory",
   CUSTOM: "Custom",
 };
 
 export default function ServiceRequestPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { activeCompanyId, companies } = useActiveCompany();
   const [serviceCode, setServiceCode] = useState<ServiceCode | "">("");
+
+  // Handle auto-selection from query params
+  useEffect(() => {
+    const serviceFromParam = searchParams.get("service") as ServiceCode;
+    if (serviceFromParam && serviceLabels[serviceFromParam]) {
+      setServiceCode(serviceFromParam);
+    }
+
+    const customIdFromParam = searchParams.get("customServiceId");
+    if (customIdFromParam) {
+      setCustomServiceId(customIdFromParam);
+    }
+  }, [searchParams]);
+
   const [pendingServiceCode, setPendingServiceCode] = useState<ServiceCode | "">("");
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
