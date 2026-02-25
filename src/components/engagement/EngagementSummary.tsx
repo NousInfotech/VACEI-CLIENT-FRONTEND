@@ -983,62 +983,68 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                 <div className="w-1 h-6 bg-gray-900 rounded-full" />
                 <h3 className="text-lg font-medium tracking-tight">Filings</h3>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Period</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Frequency</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Period Status</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Service Status</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Completed On</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Deliverables</th>
-                      <th className="text-right py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Open</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(engagementData?.accountingFilings || []).map((f: any) => (
-                      <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                        <td className="py-4 px-4 font-medium text-gray-900">{f.period}</td>
-                        <td className="py-4 px-4 text-gray-600">{f.frequency}</td>
-                        <td className="py-4 px-4">
-                          <Badge
-                            className={cn(
-                              "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
-                              f.periodStatus === "In progress" && "text-blue-500 border-blue-500/20",
-                              f.periodStatus === "Completed" && "text-green-500 border-green-500/20"
-                            )}
-                          >
-                            {f.periodStatus}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4">
-                          <Badge variant="outline" className="text-xs font-medium text-emerald-600 border-emerald-100">
-                            {f.serviceStatus === "on_track" ? "On track" : f.serviceStatus}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4 text-gray-600">{f.completedOn}</td>
-                        <td className="py-4 px-4">
-                          <div className="flex gap-1 items-center">
-                            {f.deliverables?.map((d: string, i: number) => (
-                              <React.Fragment key={i}>
-                                <button className="text-blue-600 hover:underline text-[10px] font-medium">{d}</button>
-                                {i < f.deliverables.length - 1 && <span className="text-gray-300 mx-0.5">·</span>}
-                              </React.Fragment>
-                            ))}
-                            {(!f.deliverables || f.deliverables.length === 0) && <span className="text-gray-400">—</span>}
-                          </div>
-                        </td>
-                        <td className="py-4 px-4 text-right">
-                          <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto font-medium">
-                            Open
-                          </Button>
-                        </td>
+              {(engagementData?.accountingFilings || []).length === 0 ? (
+                <div className="py-12 text-center text-sm text-muted-foreground">
+                  No filings available yet for this engagement.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Period</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Frequency</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Period Status</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Service Status</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Completed On</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Deliverables</th>
+                        <th className="text-right py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Open</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {(engagementData?.accountingFilings || []).map((f: any) => (
+                        <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="py-4 px-4 font-medium text-gray-900">{f.period}</td>
+                          <td className="py-4 px-4 text-gray-600">{f.frequency}</td>
+                          <td className="py-4 px-4">
+                            <Badge
+                              className={cn(
+                                "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
+                                f.periodStatus === "In progress" && "text-blue-500 border-blue-500/20",
+                                f.periodStatus === "Completed" && "text-green-500 border-green-500/20"
+                              )}
+                            >
+                              {f.periodStatus}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4">
+                            <Badge variant="outline" className="text-xs font-medium text-emerald-600 border-emerald-100">
+                              {f.serviceStatus === "on_track" ? "On track" : f.serviceStatus}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4 text-gray-600">{f.completedOn}</td>
+                          <td className="py-4 px-4">
+                            <div className="flex gap-1 items-center">
+                              {f.deliverables?.map((d: string, i: number) => (
+                                <React.Fragment key={i}>
+                                  <button className="text-blue-600 hover:underline text-[10px] font-medium">{d}</button>
+                                  {i < f.deliverables.length - 1 && <span className="text-gray-300 mx-0.5">·</span>}
+                                </React.Fragment>
+                              ))}
+                              {(!f.deliverables || f.deliverables.length === 0) && <span className="text-gray-400">—</span>}
+                            </div>
+                          </td>
+                          <td className="py-4 px-4 text-right">
+                            <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto font-medium">
+                              Open
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </DashboardCard>
         )}
@@ -1050,62 +1056,68 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                 <div className="w-1 h-6 bg-gray-900 rounded-full" />
                 <h3 className="text-lg font-medium tracking-tight">Filings</h3>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Engagement</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Financial Year</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Status</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Service Status</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Report Date</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Deliverables</th>
-                      <th className="text-right py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Open</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(engagementData?.auditFilings || []).map((f: any) => (
-                      <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                        <td className="py-4 px-4 font-medium text-gray-900">{f.engagement}</td>
-                        <td className="py-4 px-4 text-gray-600">{f.financialYear}</td>
-                        <td className="py-4 px-4">
-                          <Badge
-                            className={cn(
-                              "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
-                              f.status === "In progress" && "text-blue-500 border-blue-500/20",
-                              f.status === "Completed" && "text-green-500 border-green-500/20"
-                            )}
-                          >
-                            {f.status}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4">
-                          <Badge variant="outline" className="text-xs font-medium text-emerald-600 border-emerald-100">
-                            {f.serviceStatus === "on_track" ? "On track" : f.serviceStatus}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4 text-gray-600">{f.reportDate}</td>
-                        <td className="py-4 px-4">
-                          <div className="flex gap-1 items-center">
-                            {f.deliverables?.map((d: string, i: number) => (
-                              <React.Fragment key={i}>
-                                <button className="text-blue-600 hover:underline text-[10px] font-medium">{d}</button>
-                                {i < f.deliverables.length - 1 && <span className="text-gray-300 mx-0.5">·</span>}
-                              </React.Fragment>
-                            ))}
-                            {(!f.deliverables || f.deliverables.length === 0) && <span className="text-gray-400">—</span>}
-                          </div>
-                        </td>
-                        <td className="py-4 px-4 text-right">
-                          <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto font-medium">
-                            Open
-                          </Button>
-                        </td>
+              {(engagementData?.auditFilings || []).length === 0 ? (
+                <div className="py-12 text-center text-sm text-muted-foreground">
+                  No filings available yet for this engagement.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Engagement</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Financial Year</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Status</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Service Status</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Report Date</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Deliverables</th>
+                        <th className="text-right py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Open</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {(engagementData?.auditFilings || []).map((f: any) => (
+                        <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="py-4 px-4 font-medium text-gray-900">{f.engagement}</td>
+                          <td className="py-4 px-4 text-gray-600">{f.financialYear}</td>
+                          <td className="py-4 px-4">
+                            <Badge
+                              className={cn(
+                                "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
+                                f.status === "In progress" && "text-blue-500 border-blue-500/20",
+                                f.status === "Completed" && "text-green-500 border-green-500/20"
+                              )}
+                            >
+                              {f.status}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4">
+                            <Badge variant="outline" className="text-xs font-medium text-emerald-600 border-emerald-100">
+                              {f.serviceStatus === "on_track" ? "On track" : f.serviceStatus}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4 text-gray-600">{f.reportDate}</td>
+                          <td className="py-4 px-4">
+                            <div className="flex gap-1 items-center">
+                              {f.deliverables?.map((d: string, i: number) => (
+                                <React.Fragment key={i}>
+                                  <button className="text-blue-600 hover:underline text-[10px] font-medium">{d}</button>
+                                  {i < f.deliverables.length - 1 && <span className="text-gray-300 mx-0.5">·</span>}
+                                </React.Fragment>
+                              ))}
+                              {(!f.deliverables || f.deliverables.length === 0) && <span className="text-gray-400">—</span>}
+                            </div>
+                          </td>
+                          <td className="py-4 px-4 text-right">
+                            <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto font-medium">
+                              Open
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </DashboardCard>
         )}
@@ -1117,70 +1129,76 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                 <div className="w-1 h-6 bg-gray-900 rounded-full" />
                 <h3 className="text-lg font-medium tracking-tight">Filings</h3>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Tax Type</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Period / Year</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Due Date</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Filing Status</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Service Status</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Filed On</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Documents</th>
-                      <th className="text-right py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Open</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(engagementData?.taxFilings || []).map((f: any) => (
-                      <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                        <td className="py-4 px-4 font-medium text-gray-900">{f.taxType}</td>
-                        <td className="py-4 px-4 text-gray-600">{f.periodYear}</td>
-                        <td className="py-4 px-4 text-gray-600">{f.dueDate}</td>
-                        <td className="py-4 px-4">
-                          <Badge
-                            className={cn(
-                              "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
-                              f.filingStatus === "In progress" && "text-blue-500 border-blue-500/20",
-                              f.filingStatus === "Filed" && "text-green-500 border-green-500/20",
-                              f.filingStatus === "Waiting on you" && "text-orange-500 border-orange-500/20"
-                            )}
-                          >
-                            {f.filingStatus}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4">
-                          <Badge
-                            className={cn(
-                              "rounded-0 border px-2 py-0.5 text-[10px] font-bold uppercase tracking-tighter bg-transparent h-5",
-                              f.serviceStatus === "on_track" || f.serviceStatus === "On track" ? "text-emerald-600 border-emerald-100" : "text-amber-600 border-amber-100"
-                            )}
-                          >
-                            {f.serviceStatus === "on_track" || f.serviceStatus === "On track" ? "On track" : "Action required"}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4 text-gray-600">{f.filedOn}</td>
-                        <td className="py-4 px-4">
-                          <div className="flex gap-1 items-center">
-                            {f.documents?.map((d: string, i: number) => (
-                              <React.Fragment key={i}>
-                                <button className="text-blue-600 hover:underline text-[10px] font-medium">{d}</button>
-                                {i < f.documents.length - 1 && <span className="text-gray-300 mx-0.5">·</span>}
-                              </React.Fragment>
-                            ))}
-                            {(!f.documents || f.documents.length === 0) && <span className="text-gray-400">—</span>}
-                          </div>
-                        </td>
-                        <td className="py-4 px-4 text-right">
-                          <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto font-medium">
-                            Open
-                          </Button>
-                        </td>
+              {(engagementData?.taxFilings || []).length === 0 ? (
+                <div className="py-12 text-center text-sm text-muted-foreground">
+                  No filings available yet for this engagement.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Tax Type</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Period / Year</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Due Date</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Filing Status</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Service Status</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Filed On</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Documents</th>
+                        <th className="text-right py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Open</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {(engagementData?.taxFilings || []).map((f: any) => (
+                        <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="py-4 px-4 font-medium text-gray-900">{f.taxType}</td>
+                          <td className="py-4 px-4 text-gray-600">{f.periodYear}</td>
+                          <td className="py-4 px-4 text-gray-600">{f.dueDate}</td>
+                          <td className="py-4 px-4">
+                            <Badge
+                              className={cn(
+                                "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
+                                f.filingStatus === "In progress" && "text-blue-500 border-blue-500/20",
+                                f.filingStatus === "Filed" && "text-green-500 border-green-500/20",
+                                f.filingStatus === "Waiting on you" && "text-orange-500 border-orange-500/20"
+                              )}
+                            >
+                              {f.filingStatus}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4">
+                            <Badge
+                              className={cn(
+                                "rounded-0 border px-2 py-0.5 text-[10px] font-bold uppercase tracking-tighter bg-transparent h-5",
+                                f.serviceStatus === "on_track" || f.serviceStatus === "On track" ? "text-emerald-600 border-emerald-100" : "text-amber-600 border-amber-100"
+                              )}
+                            >
+                              {f.serviceStatus === "on_track" || f.serviceStatus === "On track" ? "On track" : "Action required"}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4 text-gray-600">{f.filedOn}</td>
+                          <td className="py-4 px-4">
+                            <div className="flex gap-1 items-center">
+                              {f.documents?.map((d: string, i: number) => (
+                                <React.Fragment key={i}>
+                                  <button className="text-blue-600 hover:underline text-[10px] font-medium">{d}</button>
+                                  {i < f.documents.length - 1 && <span className="text-gray-300 mx-0.5">·</span>}
+                                </React.Fragment>
+                              ))}
+                              {(!f.documents || f.documents.length === 0) && <span className="text-gray-400">—</span>}
+                            </div>
+                          </td>
+                          <td className="py-4 px-4 text-right">
+                            <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto font-medium">
+                              Open
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </DashboardCard>
         )}
@@ -1192,69 +1210,75 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                 <div className="w-1 h-6 bg-gray-900 rounded-full" />
                 <h3 className="text-lg font-medium tracking-tight">Filings</h3>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Stage</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Description</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Status</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Service Status</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Completed On</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Documents</th>
-                      <th className="text-right py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Open</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(engagementData?.incorporationFilings || []).map((f: any) => (
-                      <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                        <td className="py-4 px-4 font-medium text-gray-900">{f.stage}</td>
-                        <td className="py-4 px-4 text-gray-600">{f.description}</td>
-                        <td className="py-4 px-4">
-                          <Badge
-                            className={cn(
-                              "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
-                              f.status === "Completed" && "text-green-500 border-green-500/20",
-                              f.status === "Waiting on you" && "text-orange-500 border-orange-500/20",
-                              f.status === "In progress" && "text-blue-500 border-blue-500/20",
-                              f.status === "Not started" && "text-gray-400 border-gray-200"
-                            )}
-                          >
-                            {f.status}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4">
-                          <Badge
-                            className={cn(
-                              "rounded-0 border px-2 py-0.5 text-[10px] font-bold uppercase tracking-tighter bg-transparent h-5",
-                              f.serviceStatus === "on_track" || f.serviceStatus === "On track" ? "text-emerald-600 border-emerald-100" : "text-amber-600 border-amber-100"
-                            )}
-                          >
-                            {f.serviceStatus === "on_track" || f.serviceStatus === "On track" ? "On track" : "Action required"}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4 text-gray-600">{f.completedOn}</td>
-                        <td className="py-4 px-4">
-                          <div className="flex gap-1 items-center">
-                            {f.documents?.map((d: string, i: number) => (
-                              <React.Fragment key={i}>
-                                <button className="text-blue-600 hover:underline text-[10px] font-medium">{d}</button>
-                                {i < f.documents.length - 1 && <span className="text-gray-300 mx-0.5">·</span>}
-                              </React.Fragment>
-                            ))}
-                            {(!f.documents || f.documents.length === 0) && <span className="text-gray-400">—</span>}
-                          </div>
-                        </td>
-                        <td className="py-4 px-4 text-right">
-                          <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto font-medium">
-                            Open
-                          </Button>
-                        </td>
+              {(engagementData?.incorporationFilings || []).length === 0 ? (
+                <div className="py-12 text-center text-sm text-muted-foreground">
+                  No filings available yet for this engagement.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Stage</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Description</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Status</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Service Status</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Completed On</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Documents</th>
+                        <th className="text-right py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Open</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {(engagementData?.incorporationFilings || []).map((f: any) => (
+                        <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="py-4 px-4 font-medium text-gray-900">{f.stage}</td>
+                          <td className="py-4 px-4 text-gray-600">{f.description}</td>
+                          <td className="py-4 px-4">
+                            <Badge
+                              className={cn(
+                                "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
+                                f.status === "Completed" && "text-green-500 border-green-500/20",
+                                f.status === "Waiting on you" && "text-orange-500 border-orange-500/20",
+                                f.status === "In progress" && "text-blue-500 border-blue-500/20",
+                                f.status === "Not started" && "text-gray-400 border-gray-200"
+                              )}
+                            >
+                              {f.status}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4">
+                            <Badge
+                              className={cn(
+                                "rounded-0 border px-2 py-0.5 text-[10px] font-bold uppercase tracking-tighter bg-transparent h-5",
+                                f.serviceStatus === "on_track" || f.serviceStatus === "On track" ? "text-emerald-600 border-emerald-100" : "text-amber-600 border-amber-100"
+                              )}
+                            >
+                              {f.serviceStatus === "on_track" || f.serviceStatus === "On track" ? "On track" : "Action required"}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4 text-gray-600">{f.completedOn}</td>
+                          <td className="py-4 px-4">
+                            <div className="flex gap-1 items-center">
+                              {f.documents?.map((d: string, i: number) => (
+                                <React.Fragment key={i}>
+                                  <button className="text-blue-600 hover:underline text-[10px] font-medium">{d}</button>
+                                  {i < f.documents.length - 1 && <span className="text-gray-300 mx-0.5">·</span>}
+                                </React.Fragment>
+                              ))}
+                              {(!f.documents || f.documents.length === 0) && <span className="text-gray-400">—</span>}
+                            </div>
+                          </td>
+                          <td className="py-4 px-4 text-right">
+                            <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto font-medium">
+                              Open
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </DashboardCard>
         )}
@@ -1266,68 +1290,74 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                 <div className="w-1 h-6 bg-gray-900 rounded-full" />
                 <h3 className="text-lg font-medium tracking-tight">Filings</h3>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Stage / Version</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Description</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Status</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Service Status</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Completed On</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Documents</th>
-                      <th className="text-right py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Open</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(engagementData?.businessPlansFilings || []).map((f: any) => (
-                      <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                        <td className="py-4 px-4 font-medium text-gray-900">{f.stageVersion}</td>
-                        <td className="py-4 px-4 text-gray-600">{f.description}</td>
-                        <td className="py-4 px-4">
-                          <Badge
-                            className={cn(
-                              "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
-                              f.status === "Completed" && "text-green-500 border-green-500/20",
-                              f.status === "In progress" && "text-blue-500 border-blue-500/20",
-                              f.status === "Not started" && "text-gray-400 border-gray-200"
-                            )}
-                          >
-                            {f.status}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4">
-                          <Badge
-                            className={cn(
-                              "rounded-0 border px-2 py-0.5 text-[10px] font-bold uppercase tracking-tighter bg-transparent h-5",
-                              f.serviceStatus === "on_track" || f.serviceStatus === "On track" ? "text-emerald-600 border-emerald-100" : "text-amber-600 border-amber-100"
-                            )}
-                          >
-                            {f.serviceStatus === "on_track" || f.serviceStatus === "On track" ? "On track" : "Action required"}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4 text-gray-600">{f.completedOn}</td>
-                        <td className="py-4 px-4">
-                          <div className="flex gap-1 items-center">
-                            {f.documents?.map((d: string, i: number) => (
-                              <React.Fragment key={i}>
-                                <button className="text-blue-600 hover:underline text-[10px] font-medium">{d}</button>
-                                {i < f.documents.length - 1 && <span className="text-gray-300 mx-0.5">·</span>}
-                              </React.Fragment>
-                            ))}
-                            {(!f.documents || f.documents.length === 0) && <span className="text-gray-400">—</span>}
-                          </div>
-                        </td>
-                        <td className="py-4 px-4 text-right">
-                          <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto font-medium">
-                            Open
-                          </Button>
-                        </td>
+              {(engagementData?.businessPlansFilings || []).length === 0 ? (
+                <div className="py-12 text-center text-sm text-muted-foreground">
+                  No filings available yet for this engagement.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Stage / Version</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Description</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Status</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Service Status</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Completed On</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Documents</th>
+                        <th className="text-right py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Open</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {(engagementData?.businessPlansFilings || []).map((f: any) => (
+                        <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="py-4 px-4 font-medium text-gray-900">{f.stageVersion}</td>
+                          <td className="py-4 px-4 text-gray-600">{f.description}</td>
+                          <td className="py-4 px-4">
+                            <Badge
+                              className={cn(
+                                "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
+                                f.status === "Completed" && "text-green-500 border-green-500/20",
+                                f.status === "In progress" && "text-blue-500 border-blue-500/20",
+                                f.status === "Not started" && "text-gray-400 border-gray-200"
+                              )}
+                            >
+                              {f.status}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4">
+                            <Badge
+                              className={cn(
+                                "rounded-0 border px-2 py-0.5 text-[10px] font-bold uppercase tracking-tighter bg-transparent h-5",
+                                f.serviceStatus === "on_track" || f.serviceStatus === "On track" ? "text-emerald-600 border-emerald-100" : "text-amber-600 border-amber-100"
+                              )}
+                            >
+                              {f.serviceStatus === "on_track" || f.serviceStatus === "On track" ? "On track" : "Action required"}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4 text-gray-600">{f.completedOn}</td>
+                          <td className="py-4 px-4">
+                            <div className="flex gap-1 items-center">
+                              {f.documents?.map((d: string, i: number) => (
+                                <React.Fragment key={i}>
+                                  <button className="text-blue-600 hover:underline text-[10px] font-medium">{d}</button>
+                                  {i < f.documents.length - 1 && <span className="text-gray-300 mx-0.5">·</span>}
+                                </React.Fragment>
+                              ))}
+                              {(!f.documents || f.documents.length === 0) && <span className="text-gray-400">—</span>}
+                            </div>
+                          </td>
+                          <td className="py-4 px-4 text-right">
+                            <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto font-medium">
+                              Open
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </DashboardCard>
         )}
@@ -1339,69 +1369,75 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                 <div className="w-1 h-6 bg-gray-900 rounded-full" />
                 <h3 className="text-lg font-medium tracking-tight">Filings</h3>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Stage / Filing</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Description</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Status</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Service Status</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Completed On</th>
-                      <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Documents</th>
-                      <th className="text-right py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Open</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(engagementData?.liquidationFilings || []).map((f: any) => (
-                      <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                        <td className="py-4 px-4 font-medium text-gray-900">{f.stageFiling}</td>
-                        <td className="py-4 px-4 text-gray-600">{f.description}</td>
-                        <td className="py-4 px-4">
-                          <Badge
-                            className={cn(
-                              "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
-                              f.status === "Completed" && "text-green-500 border-green-500/20",
-                              f.status === "Waiting on you" && "text-orange-500 border-orange-500/20",
-                              f.status === "In progress" && "text-blue-500 border-blue-500/20",
-                              f.status === "Not started" && "text-gray-400 border-gray-200"
-                            )}
-                          >
-                            {f.status}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4">
-                          <Badge
-                            className={cn(
-                              "rounded-0 border px-2 py-0.5 text-[10px] font-bold uppercase tracking-tighter bg-transparent h-5",
-                              f.serviceStatus === "on_track" || f.serviceStatus === "On track" ? "text-emerald-600 border-emerald-100" : "text-amber-600 border-amber-100"
-                            )}
-                          >
-                            {f.serviceStatus === "on_track" || f.serviceStatus === "On track" ? "On track" : "Action required"}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-4 text-gray-600">{f.completedOn}</td>
-                        <td className="py-4 px-4">
-                          <div className="flex gap-1 items-center">
-                            {f.documents?.map((d: string, i: number) => (
-                              <React.Fragment key={i}>
-                                <button className="text-blue-600 hover:underline text-[10px] font-medium">{d}</button>
-                                {i < f.documents.length - 1 && <span className="text-gray-300 mx-0.5">·</span>}
-                              </React.Fragment>
-                            ))}
-                            {(!f.documents || f.documents.length === 0) && <span className="text-gray-400">—</span>}
-                          </div>
-                        </td>
-                        <td className="py-4 px-4 text-right">
-                          <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto font-medium">
-                            Open
-                          </Button>
-                        </td>
+              {(engagementData?.liquidationFilings || []).length === 0 ? (
+                <div className="py-12 text-center text-sm text-muted-foreground">
+                  No filings available yet for this engagement.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Stage / Filing</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Description</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Status</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Service Status</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Completed On</th>
+                        <th className="text-left py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Documents</th>
+                        <th className="text-right py-3 px-4 text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">Open</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {(engagementData?.liquidationFilings || []).map((f: any) => (
+                        <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="py-4 px-4 font-medium text-gray-900">{f.stageFiling}</td>
+                          <td className="py-4 px-4 text-gray-600">{f.description}</td>
+                          <td className="py-4 px-4">
+                            <Badge
+                              className={cn(
+                                "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent",
+                                f.status === "Completed" && "text-green-500 border-green-500/20",
+                                f.status === "Waiting on you" && "text-orange-500 border-orange-500/20",
+                                f.status === "In progress" && "text-blue-500 border-blue-500/20",
+                                f.status === "Not started" && "text-gray-400 border-gray-200"
+                              )}
+                            >
+                              {f.status}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4">
+                            <Badge
+                              className={cn(
+                                "rounded-0 border px-2 py-0.5 text-[10px] font-bold uppercase tracking-tighter bg-transparent h-5",
+                                f.serviceStatus === "on_track" || f.serviceStatus === "On track" ? "text-emerald-600 border-emerald-100" : "text-amber-600 border-amber-100"
+                              )}
+                            >
+                              {f.serviceStatus === "on_track" || f.serviceStatus === "On track" ? "On track" : "Action required"}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4 text-gray-600">{f.completedOn}</td>
+                          <td className="py-4 px-4">
+                            <div className="flex gap-1 items-center">
+                              {f.documents?.map((d: string, i: number) => (
+                                <React.Fragment key={i}>
+                                  <button className="text-blue-600 hover:underline text-[10px] font-medium">{d}</button>
+                                  {i < f.documents.length - 1 && <span className="text-gray-300 mx-0.5">·</span>}
+                                </React.Fragment>
+                              ))}
+                              {(!f.documents || f.documents.length === 0) && <span className="text-gray-400">—</span>}
+                            </div>
+                          </td>
+                          <td className="py-4 px-4 text-right">
+                            <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-800 p-0 h-auto font-medium">
+                              Open
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </DashboardCard>
         )}
