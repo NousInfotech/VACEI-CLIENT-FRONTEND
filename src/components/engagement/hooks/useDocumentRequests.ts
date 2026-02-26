@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { getDocumentRequests, type DocumentRequest } from '@/api/documentRequestService'
 import { ENGAGEMENT_CONFIG } from '@/config/engagementConfig'
 import { MOCK_ENGAGEMENT_DATA } from '../mockEngagementData'
@@ -17,7 +17,7 @@ export const useDocumentRequests = (engagementId: string | null): UseDocumentReq
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchDocumentRequests = async () => {
+  const fetchDocumentRequests = useCallback(async () => {
     if (!engagementId) {
       setLoading(false)
       return
@@ -92,15 +92,15 @@ export const useDocumentRequests = (engagementId: string | null): UseDocumentReq
     } finally {
       setLoading(false)
     }
-  }
+  }, [engagementId])
 
   useEffect(() => {
     fetchDocumentRequests()
-  }, [engagementId])
+  }, [fetchDocumentRequests])
 
-  const refetch = async () => {
+  const refetch = useCallback(async () => {
     await fetchDocumentRequests()
-  }
+  }, [fetchDocumentRequests])
 
   return { documentRequests, loading, error, refetch }
 }

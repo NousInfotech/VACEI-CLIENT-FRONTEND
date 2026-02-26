@@ -4552,21 +4552,23 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           </div>
         )}
 
-        {activeTab === "library" && (
-          <LibraryExplorer
-            rootFolderId={engagementLibraryFolderId}
-          />
-        )}
+        <div className={cn(activeTab === "library" ? "" : "hidden")}>
+          <LibraryExplorer rootFolderId={engagementLibraryFolderId} />
+        </div>
 
-        {(activeTab === "document_requests" || activeTab === "requests") && (
+        <div className={cn(
+          activeTab === "document_requests" || activeTab === "requests" ? "" : "hidden"
+        )}>
           <DocumentRequestsTab refreshKey={refreshTick} />
-        )}
+        </div>
 
-        {activeTab === "milestones" && <MilestonesTab refreshKey={refreshTick} />}
+        <div className={cn(activeTab === "milestones" ? "" : "hidden")}>
+          <MilestonesTab refreshKey={refreshTick} />
+        </div>
 
-        {activeTab === "compliance_calendar" && (
+        <div className={cn(activeTab === "compliance_calendar" ? "" : "hidden")}>
           <ComplianceCalendarTab serviceName={serviceName} refreshKey={refreshTick} />
-        )}
+        </div>
 
         {activeTab === "filings" && isMBRFilings && (
           <div className="space-y-6">
@@ -4726,9 +4728,13 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           </DashboardCard>
         )}
 
-        {activeTab === "messages" && <UpdatesTab />}
+        <div className={cn(activeTab === "messages" ? "" : "hidden")}>
+          <UpdatesTab />
+        </div>
 
-        {activeTab === "chat" && <EngagementChatTab />}
+        <div className={cn(activeTab === "chat" ? "" : "hidden")}>
+          <EngagementChatTab />
+        </div>
       </div>
     </TooltipProvider>
   );
