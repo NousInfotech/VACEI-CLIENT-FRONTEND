@@ -15,7 +15,7 @@ export interface UseChatReturn {
   roomId: string | null;
   loadMessages: (cursor?: string | null) => Promise<void>;
   loadMore: () => Promise<void>;
-  sendMessage: (content: string, fileUrl?: string) => Promise<ChatMessage | null>;
+  sendMessage: (content: string, fileUrl?: string, replyToMessageId?: string | null) => Promise<ChatMessage | null>;
   markAsRead: () => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
   uploadFile: (file: File) => Promise<string>;
@@ -128,10 +128,15 @@ export function useChat(
   }, [roomId]);
 
   const sendMessage = useCallback(
-    async (content: string, fileUrl?: string) => {
+    async (content: string, fileUrl?: string, replyToMessageId?: string | null) => {
       if (!roomId) return null;
       try {
-        const msg = await chatService.sendMessage(roomId, content, fileUrl);
+        const msg = await chatService.sendMessage(
+          roomId,
+          content,
+          fileUrl,
+          replyToMessageId ? { replyToMessageId } : undefined
+        );
         if (msg) {
           setMessages((prev) => {
             if (prev.some((m) => m.id === msg.id)) return prev;

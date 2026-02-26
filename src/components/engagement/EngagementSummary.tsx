@@ -154,10 +154,23 @@ const workflowStatusConfig: Record<
   },
 };
 
-export const ServiceTodoTable = ({ todos, loading }: { todos: TodoItem[], loading: boolean }) => {
+export const ServiceTodoTable = ({
+  todos,
+  loading,
+  onOpen,
+}: {
+  todos: TodoItem[];
+  loading: boolean;
+  onOpen?: (todo: TodoItem) => void;
+}) => {
   const router = useRouter();
 
   const handleOpen = (todo: TodoItem) => {
+    if (onOpen) {
+      onOpen(todo);
+      return;
+    }
+
     if (todo.type === "CUSTOM") {
       router.push(`/dashboard/todo-list/todo-list-view?taskId=${btoa(todo.id)}`);
     } else if (
@@ -4723,7 +4736,41 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                 <div className="w-1 h-6 bg-gray-900 rounded-full" />
                 <h3 className="text-lg font-medium tracking-tight">Todos</h3>
               </div>
-              <ServiceTodoTable todos={engagementTodos} loading={todosLoading} />
+              <ServiceTodoTable
+                todos={engagementTodos}
+                loading={todosLoading}
+                onOpen={(todo) => {
+                  const type = (todo.type || "").toUpperCase();
+
+                  // Document requests → Document Requests tab
+                  if (
+                    (type === "DOCUMENT_REQUEST" || type === "REQUESTED_DOCUMENT") &&
+                    todo.engagementId
+                  ) {
+                    setActiveTab("document_requests");
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.set("tab", "document_requests");
+                    if (todo.moduleId) params.set("scrollTo", todo.moduleId);
+                    const qs = params.toString();
+                    router.push(qs ? `?${qs}` : "?", { scroll: false });
+                    return;
+                  }
+
+                  // Chat todos → Chat tab
+                  if (type === "CHAT") {
+                    setActiveTab("chat");
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.set("tab", "chat");
+                    if (todo.moduleId) params.set("messageId", todo.moduleId);
+                    const qs = params.toString();
+                    router.push(qs ? `?${qs}` : "?", { scroll: false });
+                    return;
+                  }
+
+                  // Fallback: open todo detail
+                  router.push(`/dashboard/todo-list/todo-list-view?taskId=${btoa(todo.id)}`);
+                }}
+              />
             </div>
           </DashboardCard>
         )}

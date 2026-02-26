@@ -27,6 +27,8 @@ interface ChatWindowProps {
   onLoadMore?: () => void;
   isLoadingMore?: boolean;
   onReplyMessage?: (message: Message) => void;
+  replyingTo?: Message | null;
+  onCancelReply?: () => void;
   onEditMessage?: (message: Message) => void;
   onDeleteMessage?: (messageId: string) => void;
   onReactToMessage?: (messageId: string, emoji: string) => void;
@@ -48,6 +50,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onLoadMore,
   isLoadingMore = false,
   onReplyMessage = () => { },
+  replyingTo: replyingToProp,
+  onCancelReply: onCancelReplyProp,
   onEditMessage = () => { },
   onDeleteMessage = () => { },
   onReactToMessage = () => { },
@@ -56,7 +60,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [activeOptionsId, setActiveOptionsId] = useState<string | null>(null);
-  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [internalReplyingTo, setInternalReplyingTo] = useState<Message | null>(null);
+  const replyingTo = replyingToProp !== undefined ? replyingToProp : internalReplyingTo;
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const lastMessagesLength = useRef(chat.messages.length);
 
@@ -96,19 +101,21 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   }, []);
 
   const handleReply = (message: Message) => {
-    setReplyingTo(message);
+    if (replyingToProp === undefined) setInternalReplyingTo(message);
     setEditingMessage(null); // Cancel editing if replying
     onReplyMessage(message);
   };
 
   const handleEdit = (message: Message) => {
     setEditingMessage(message);
-    setReplyingTo(null); // Cancel replying if editing
+    if (replyingToProp !== undefined && onCancelReplyProp) onCancelReplyProp();
+    else if (replyingToProp === undefined) setInternalReplyingTo(null);
     onEditMessage(message);
   };
 
   const handleCancelReply = () => {
-    setReplyingTo(null);
+    if (onCancelReplyProp) onCancelReplyProp();
+    else setInternalReplyingTo(null);
   };
 
   const handleCancelEdit = () => {
@@ -184,7 +191,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         })}
       </div>
 
-      <MessageInput onSendMessage={onSendMessage} onFileUpload={onFileUpload} isUploading={isUploading} />
+      <MessageInput
+        onSendMessage={onSendMessage}
+        onFileUpload={onFileUpload}
+        isUploading={isUploading}
+        replyingTo={replyingTo}
+        onCancelReply={handleCancelReply}
+        currentUserId={currentUserId}
+      />
     </div>
   );
 };
