@@ -23,20 +23,15 @@ function membersToParticipants(members?: Array<Record<string, any>>): User[] {
             const rawRole =
                 m.role ||
                 m.organizationMember?.role ||
-                m.user?.organizationMember?.role;
+                m.user?.organizationMember?.role ||
+                m.user?.role;
             const roleStr = typeof rawRole === "string" ? rawRole : "";
-            let normalizedRole = "Member";
-            if (roleStr === "ORG_ADMIN" || roleStr === "PLATFORM_ADMIN" || roleStr === "ADMIN" || roleStr === "OWNER") {
-                normalizedRole = "Platform Admin";
-            } else if (roleStr === "PLATFORM_EMPLOYEE" || roleStr === "ORG_EMPLOYEE" || roleStr === "EMPLOYEE") {
-                normalizedRole = "Platform Employee";
-            }
             return {
                 id: m.userId,
                 name: m.user
                     ? `${m.user.firstName ?? ""} ${m.user.lastName ?? ""}`.trim() || m.userId
                     : m.userId,
-                role: normalizedRole,
+                role: roleStr,
                 isOnline: false,
             };
         });
@@ -143,18 +138,16 @@ export function extractParticipants(messages: (ChatMessage & { sender_id?: strin
         const name = sender
             ? `${(sender as any).firstName ?? (sender as any).first_name ?? ""} ${(sender as any).lastName ?? (sender as any).last_name ?? ""}`.trim()
             : senderId;
-        const rawRole: unknown = (sender as any)?.role || (sender as any)?.user?.role || (sender as any)?.organizationMember?.role || (sender as any)?.user?.organizationMember?.role;
+        const rawRole: unknown =
+            (sender as any)?.role ||
+            (sender as any)?.user?.role ||
+            (sender as any)?.organizationMember?.role ||
+            (sender as any)?.user?.organizationMember?.role;
         const roleStr = typeof rawRole === "string" ? rawRole : "";
-        let normalizedRole = "Member";
-        if (roleStr === "ORG_ADMIN" || roleStr === "PLATFORM_ADMIN" || roleStr === "ADMIN" || roleStr === "OWNER") {
-            normalizedRole = "Platform Admin";
-        } else if (roleStr === "PLATFORM_EMPLOYEE" || roleStr === "ORG_EMPLOYEE" || roleStr === "EMPLOYEE") {
-            normalizedRole = "Platform Employee";
-        }
         seen.set(senderId, {
             id: senderId,
             name: name || senderId,
-            role: normalizedRole,
+            role: roleStr,
             isOnline: false,
         });
     });

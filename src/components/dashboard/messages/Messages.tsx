@@ -95,18 +95,16 @@ const Messages: React.FC = () => {
       const room = rooms.find((r) => r.id === roomId);
 
       const detailedMembers = (resRoom.data?.members ?? []).map((m: any) => {
-        const rawRole = m?.user?.role || m?.role || m?.user?.organizationMember?.role || m?.organizationMember?.role;
+        const rawRole =
+          m?.user?.role ||
+          m?.role ||
+          m?.user?.organizationMember?.role ||
+          m?.organizationMember?.role;
         const roleStr = typeof rawRole === "string" ? rawRole : "";
-        let normalizedRole = "Member";
-        if (roleStr === "ORG_ADMIN" || roleStr === "PLATFORM_ADMIN" || roleStr === "ADMIN" || roleStr === "OWNER") {
-          normalizedRole = "Platform Admin";
-        } else if (roleStr === "PLATFORM_EMPLOYEE" || roleStr === "ORG_EMPLOYEE" || roleStr === "EMPLOYEE") {
-          normalizedRole = "Platform Employee";
-        }
 
         return {
           id: m.userId || m.user?.id,
-          role: normalizedRole
+          role: roleStr
         };
       });
 
@@ -115,10 +113,9 @@ const Messages: React.FC = () => {
         const existing = mergedParticipants.get(u.id);
         const detailed = detailedMembers.find((dm: any) => dm.id === u.id);
 
-        const incomingRole = detailed?.role && detailed.role !== 'Member' ? detailed.role :
-          (u.role && u.role !== 'Member' ? u.role : 'Member');
+        const incomingRole = detailed?.role || u.role || "";
 
-        const finalRole = existing?.role && existing.role !== 'Member' ? existing.role : incomingRole;
+        const finalRole = existing?.role && existing.role !== '' ? existing.role : incomingRole;
         mergedParticipants.set(u.id, {
           ...(existing ?? u),
           ...u,

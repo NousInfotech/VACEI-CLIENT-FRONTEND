@@ -55,6 +55,7 @@ export default function ServiceRequestPage() {
   const { activeCompanyId, companies } = useActiveCompany();
   const [serviceCode, setServiceCode] = useState<ServiceCode | "">("");
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
+  const [showHistory, setShowHistory] = useState(false);
 
   // Handle auto-selection from query params
   useEffect(() => {
@@ -160,13 +161,19 @@ export default function ServiceRequestPage() {
 
   const handleSuccess = () => {
     setHistoryRefreshKey((prev) => prev + 1);
+    setShowHistory(true);
     setModalConfig({
       title: "Request Submitted!",
       message: "Your service request has been submitted successfully. You can track its progress in the Service Request History section.",
       buttonText: "View History",
       onAction: () => {
         setOnSuccessModal(false);
-        window.open('/dashboard/services/request/history', '_blank');
+        setShowHistory(true);
+        setTimeout(() => {
+          if (typeof document !== "undefined") {
+            document.getElementById("service-request-history")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 0);
       }
     });
     setOnSuccessModal(true);
@@ -185,129 +192,165 @@ export default function ServiceRequestPage() {
   return (
     <section className="mx-auto w-full p-5 space-y-6">
       <PageHeader
-        title="Request a Service"
-        subtitle="Select the service and complete the form."
+        title={showHistory ? "Service Request History" : "Request a Service"}
+        subtitle={
+          showHistory
+            ? "View and track your previous service requests."
+            : "Select the service and complete the form."
+        }
         activeCompany={activeCompanyName}
         actions={
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="bg-light text-primary-color-new"
-              onClick={() => {
-                window.open('/dashboard/services/request/history', '_blank');
-              }}
-            >
-              View Service Request History
-            </Button>
-            <Button
-              variant="outline"
-              className="bg-light text-primary-color-new"
-              onClick={handleClearDraft}
-            >
-              Clear draft
-            </Button>
+            {showHistory ? (
+              <Button
+                variant="outline"
+                className="bg-light text-primary-color-new"
+                onClick={() => setShowHistory(false)}
+              >
+                Back to Request a Service
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  className="bg-light text-primary-color-new"
+                  onClick={() => {
+                    setShowHistory(true);
+                    setTimeout(() => {
+                      if (typeof document !== "undefined") {
+                        document
+                          .getElementById("service-request-history")
+                          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }
+                    }, 0);
+                  }}
+                >
+                  View Service Request History
+                </Button>
+                <Button
+                  variant="outline"
+                  className="bg-light text-primary-color-new"
+                  onClick={handleClearDraft}
+                >
+                  Clear draft
+                </Button>
+              </>
+            )}
           </div>
         }
       />
 
-      <DashboardCard className="p-6 space-y-6">
-        {/* Service Selection */}
-        <div className="space-y-2">
-          <label className="text-sm font-semibold">
-            Service <span className="text-destructive">*</span>
-          </label>
-
-          <Dropdown
-            className="w-full"
-            fullWidth
-            searchable
-            searchPlaceholder="Search services..."
-            trigger={
-              <Button
-                variant="outline"
-                className="w-full h-11 px-4 justify-between border-gray-200 bg-gray-50/50 hover:bg-white hover:border-primary/40 focus:ring-2 focus:ring-primary/5 rounded-xl transition-all"
-              >
-                <div className="flex items-center gap-2">
-                  <span className={serviceCode ? "text-gray-900 font-semibold" : "text-gray-400 font-medium"}>
-                    {selectedMainLabel}
-                  </span>
-                </div>
-                <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${serviceCode ? "opacity-100" : "opacity-50"}`} />
-              </Button>
-            }
-            items={mainDropdownItems}
-          />
+      {showHistory ? (
+        <div id="service-request-history">
+          <DashboardCard className="p-6 space-y-6">
+            <div className="pt-2 animate-in fade-in slide-in-from-top-4 duration-500">
+              <ServiceRequestHistory
+                companyId={activeCompanyId}
+                refreshKey={historyRefreshKey}
+              />
+            </div>
+          </DashboardCard>
         </div>
-
-        {/* Custom Service Sub-Selection */}
-        {serviceCode === "CUSTOM" && (
-          <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+      ) : (
+        <DashboardCard className="p-6 space-y-6">
+          {/* Service Selection */}
+          <div className="space-y-2">
             <label className="text-sm font-semibold">
-              Custom Service Type <span className="text-destructive">*</span>
+              Service <span className="text-destructive">*</span>
             </label>
+
             <Dropdown
               className="w-full"
               fullWidth
               searchable
-              searchPlaceholder="Search custom services..."
+              searchPlaceholder="Search services..."
               trigger={
                 <Button
                   variant="outline"
                   className="w-full h-11 px-4 justify-between border-gray-200 bg-gray-50/50 hover:bg-white hover:border-primary/40 focus:ring-2 focus:ring-primary/5 rounded-xl transition-all"
                 >
                   <div className="flex items-center gap-2">
-                    <span className={customServiceId ? "text-gray-900 font-semibold" : "text-gray-400 font-medium"}>
-                      {selectedCustomLabel}
+                    <span className={serviceCode ? "text-gray-900 font-semibold" : "text-gray-400 font-medium"}>
+                      {selectedMainLabel}
                     </span>
                   </div>
-                  <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${customServiceId ? "opacity-100" : "opacity-50"}`} />
+                  <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${serviceCode ? "opacity-100" : "opacity-50"}`} />
                 </Button>
               }
-              items={customTemplates.map((t) => ({
-                id: t.customServiceCycleId,
-                label: t.customServiceCycle?.title || "Untitled Custom Service",
-                onClick: () => {
-                  setCustomServiceId(t.customServiceCycleId);
-                  setIsFormDirty(false);
-                },
-              }))}
+              items={mainDropdownItems}
             />
           </div>
-        )}
 
-
-        {/* Form area wrapped in logic */}
-        <div className="min-h-[400px]" id="service-request-history">
-          {(serviceCode && (serviceCode !== "CUSTOM" || customServiceId)) ? (
-            <div className="border-t pt-6 animate-in fade-in slide-in-from-top-4 duration-500">
-              <ServiceRequestForm
-                key={`${serviceCode}-${customServiceId}`}
-                service={serviceCode}
-                customServiceId={customServiceId || undefined}
-                companyId={activeCompanyId}
-                onDirtyChange={setIsFormDirty}
-                onSuccess={handleSuccess}
-                onDraftSave={handleDraftSave}
-                serviceLabel={serviceCode === "CUSTOM" ? selectedCustomLabel : selectedMainLabel}
+          {/* Custom Service Sub-Selection */}
+          {serviceCode === "CUSTOM" && (
+            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+              <label className="text-sm font-semibold">
+                Custom Service Type <span className="text-destructive">*</span>
+              </label>
+              <Dropdown
+                className="w-full"
+                fullWidth
+                searchable
+                searchPlaceholder="Search custom services..."
+                trigger={
+                  <Button
+                    variant="outline"
+                    className="w-full h-11 px-4 justify-between border-gray-200 bg-gray-50/50 hover:bg-white hover:border-primary/40 focus:ring-2 focus:ring-primary/5 rounded-xl transition-all"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={customServiceId ? "text-gray-900 font-semibold" : "text-gray-400 font-medium"}>
+                        {selectedCustomLabel}
+                      </span>
+                    </div>
+                    <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${customServiceId ? "opacity-100" : "opacity-50"}`} />
+                  </Button>
+                }
+                items={customTemplates.map((t) => ({
+                  id: t.customServiceCycleId,
+                  label: t.customServiceCycle?.title || "Untitled Custom Service",
+                  onClick: () => {
+                    setCustomServiceId(t.customServiceCycleId);
+                    setIsFormDirty(false);
+                  },
+                }))}
               />
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 border-t pt-10">
-              <div className="p-4 bg-primary/5 rounded-full text-primary/30">
-                <AlertCircle className="w-12 h-12" />
-              </div>
-              <div className="max-w-[300px]">
-                <h3 className="text-lg font-semibold text-gray-900">Get Started</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {serviceCode === "CUSTOM"
-                    ? "Please select a specific custom service type to see the form."
-                    : "Select a service from the dropdown above to view the request form and continue."}
-                </p>
-              </div>
-            </div>
           )}
-        </div>
-      </DashboardCard>
+
+
+          {/* Form area wrapped in logic */}
+          <div className="min-h-[400px]" id="service-request-form">
+            {(serviceCode && (serviceCode !== "CUSTOM" || customServiceId)) ? (
+              <div className="border-t pt-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                <ServiceRequestForm
+                  key={`${serviceCode}-${customServiceId}`}
+                  service={serviceCode}
+                  customServiceId={customServiceId || undefined}
+                  companyId={activeCompanyId}
+                  onDirtyChange={setIsFormDirty}
+                  onSuccess={handleSuccess}
+                  onDraftSave={handleDraftSave}
+                  serviceLabel={serviceCode === "CUSTOM" ? selectedCustomLabel : selectedMainLabel}
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 border-t pt-10">
+                <div className="p-4 bg-primary/5 rounded-full text-primary/30">
+                  <AlertCircle className="w-12 h-12" />
+                </div>
+                <div className="max-w-[300px]">
+                  <h3 className="text-lg font-semibold text-gray-900">Get Started</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {serviceCode === "CUSTOM"
+                      ? "Please select a specific custom service type to see the form."
+                      : "Select a service from the dropdown above to view the request form and continue."}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </DashboardCard>
+      )}
 
       {/* Confirmation Modal for unsaved changes */}
       <ConfirmationModal

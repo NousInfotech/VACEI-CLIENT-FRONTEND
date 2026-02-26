@@ -209,6 +209,7 @@ export default function ServicesHubPage() {
     const pendingCount = sidebarData.filter(s => ['ACTION_REQUIRED', 'OVERDUE', 'DUE_TODAY'].includes(s.worstCompliance)).length;
     const dueTodayCount = sidebarData.filter(s => s.worstCompliance === 'DUE_TODAY').length;
     const overdueCount = sidebarData.filter(s => s.worstCompliance === 'OVERDUE').length;
+    const dueSoonCount = sidebarData.filter(s => s.worstCompliance === 'DUE_SOON').length;
 
     return [
       {
@@ -223,6 +224,14 @@ export default function ServicesHubPage() {
         services: sidebarData.map(s => s.serviceName),
       },
       {
+        label: "Overdue",
+        value: overdueCount.toString(),
+        color: "text-red-600",
+        bg: "bg-red-100",
+        icon: AlertTriangle,
+        active: false,
+      },
+      {
         label: "Due Today",
         value: dueTodayCount.toString(),
         color: "text-orange-600",
@@ -231,11 +240,11 @@ export default function ServicesHubPage() {
         active: false,
       },
       {
-        label: "Overdue",
-        value: overdueCount.toString(),
-        color: "text-red-600",
-        bg: "bg-red-100",
-        icon: AlertTriangle,
+        label: "Due Soon",
+        value: dueSoonCount.toString(),
+        color: "text-amber-600",
+        bg: "bg-amber-100",
+        icon: Clock,
         active: false,
       },
     ];
@@ -270,8 +279,8 @@ export default function ServicesHubPage() {
         {stats.map((stat, i) => {
           const Icon = stat.icon;
 
-          // Filter to only show Active Services, Due Today, and Overdue
-          if (!["Active Services", "Due Today", "Overdue"].includes(stat.label)) {
+          // Filter to only show key summary cards
+          if (!["Active Services", "Due Today", "Due Soon", "Overdue"].includes(stat.label)) {
             return null;
           }
 

@@ -82,7 +82,7 @@ export const GroupInfoPane: React.FC<GroupInfoPaneProps> = ({
                   </div>
                   <div className="flex-1 flex flex-col border-b border-gray-50 transition-colors group-hover:border-transparent pb-0.5">
                     <span className="text-[15px] font-normal text-gray-900">{member.name}</span>
-                    <span className="text-[13px] text-gray-500">{member.role || 'Member'}</span>
+                    <span className="text-[13px] text-gray-500">{member.role}</span>
                   </div>
                 </div>
               ))}

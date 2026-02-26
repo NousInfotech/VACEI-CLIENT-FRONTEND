@@ -19,6 +19,8 @@ import { fetchUploadStatusSummary } from "@/api/documentApi";
 import { fetchTasks } from "@/api/taskService";
 import type { Task } from "@/interfaces";
 import { fetchPayrollData, transformPayrollSubmissionsToComplianceItems } from "@/lib/payrollComplianceIntegration";
+import { listComplianceCalendars, type ComplianceCalendarEntry } from "@/api/complianceCalendarService";
+import { isPast, isToday } from "date-fns";
 import { HugeiconsIcon } from '@hugeicons/react';
 import { AddressBookIcon, Alert02Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
@@ -98,6 +100,7 @@ export default function DashboardPage() {
   });
   const [activeFocus, setActiveFocus] = useState<any>(() => dashboardCache.activeFocus);
   const [upcomingDeadlines, setUpcomingDeadlines] = useState<any[]>(() => dashboardCache.upcomingDeadlines);
+  const [nextCalendarDeadline, setNextCalendarDeadline] = useState<ComplianceCalendarEntry | null>(null);
 
   const loadingCompanies = false; // Context handles loading implicitely or we can add it if needed
   const [stats, setStats] = useState<ProcessedDashboardStat[]>(() => dashboardCache.stats);
@@ -340,6 +343,46 @@ export default function DashboardPage() {
       }
     };
     loadDashboardSummary();
+  }, [authLoading, activeCompanyId]);
+
+  // Load next compliance deadline from Compliance Calendar for the active company
+  useEffect(() => {
+    if (authLoading || !activeCompanyId) return;
+
+    const loadComplianceCalendar = async () => {
+      try {
+        const entries = await listComplianceCalendars({ companyId: activeCompanyId });
+        if (!entries || entries.length === 0) {
+          setNextCalendarDeadline(null);
+          return;
+        }
+
+        const today = new Date();
+        const normalizedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+        const withValidDates = entries.filter(e => !!e.dueDate);
+
+        const overdueEntries = withValidDates.filter(e => {
+          const dl = new Date(e.dueDate);
+          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+          return dlDate.getTime() < normalizedToday.getTime();
+        }).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+        const upcomingEntries = withValidDates.filter(e => {
+          const dl = new Date(e.dueDate);
+          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+          return dlDate.getTime() >= normalizedToday.getTime();
+        }).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+        const nextEntry = overdueEntries[0] || upcomingEntries[0] || null;
+        setNextCalendarDeadline(nextEntry || null);
+      } catch (error) {
+        console.error("Failed to load compliance calendar for dashboard snapshot:", error);
+        setNextCalendarDeadline(null);
+      }
+    };
+
+    loadComplianceCalendar();
   }, [authLoading, activeCompanyId]);
 
   // Load financial summary data (separately)
@@ -815,12 +858,31 @@ export default function DashboardPage() {
                     <Kpi label="Due soon" value={complianceCounts.dueSoon} tone="warning" />
                   </Link>
                 </div>
-                {upcomingDeadlines.length > 0 ? (
+                {nextCalendarDeadline ? (
+                  <DashboardCard className="border border-info/30 bg-info/5 px-4 py-3">
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1">Next Deadline</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {nextCalendarDeadline.company?.name ? `${nextCalendarDeadline.company.name} – ` : ""}
+                      {nextCalendarDeadline.title}
+                      {nextCalendarDeadline.dueDate
+                        ? ` – ${new Date(nextCalendarDeadline.dueDate).toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'short',
+                          })}`
+                        : ''}
+                    </p>
+                  </DashboardCard>
+                ) : upcomingDeadlines.length > 0 ? (
                   <DashboardCard className="border border-info/30 bg-info/5 px-4 py-3">
                     <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1">Next Deadline</p>
                     <p className="text-sm font-bold text-gray-900">
                       {upcomingDeadlines[0].title}
-                      {upcomingDeadlines[0].deadline ? ` – ${new Date(upcomingDeadlines[0].deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}
+                      {upcomingDeadlines[0].deadline
+                        ? ` – ${new Date(upcomingDeadlines[0].deadline).toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'short',
+                          })}`
+                        : ''}
                     </p>
                   </DashboardCard>
                 ) : (
