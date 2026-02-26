@@ -34,31 +34,34 @@ export function OnboardingLayout({
 }: OnboardingLayoutProps) {
   const showBackButton = currentStep > 1 && onBack;
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-8">
-      <Card className={cn("w-full max-w-[840px] shadow-lg", className)}>
-        <CardContent className="p-8">
-          {/* Logo */}
-          <div className="mb-6">
-            <Image
-              src="/logo.svg"
-              alt="Logo"
-              width={120}
-              height={40}
-              className="object-contain"
-            />
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-40 py-8">
+      <Card className={cn("w-full shadow-lg h-[85vh] flex flex-col", className)}>
+        <CardContent className="p-8 flex flex-col h-full overflow-hidden">
+          {/* Header Section: Logo + Step Indicator (Stable) */}
+          <div className="shrink-0">
+            {/* Logo */}
+            <div className="mb-6">
+              <Image
+                src="/logo.svg"
+                alt="Logo"
+                width={120}
+                height={40}
+                className="object-contain"
+              />
+            </div>
+ 
+             {/* Step Indicator */}
+            <StepIndicator currentStep={currentStep} totalSteps={totalSteps} />
           </div>
-
-          {/* Step Indicator */}
-          <StepIndicator currentStep={currentStep} totalSteps={totalSteps} />
-
-          {/* Content */}
-          <div className="mb-8">
+ 
+           {/* Scrollable Content Section */}
+          <div className="flex-1 overflow-y-auto min-h-0 py-4 pr-2 custom-scrollbar">
             {children}
           </div>
-
-          {/* Actions */}
+ 
+           {/* Actions Section (Stable) */}
           {!hideActions && (
-            <div className="flex justify-between items-center pt-4 border-t gap-3">
+            <div className="flex justify-between items-center pt-6 border-t gap-3 shrink-0 mt-auto bg-white px-2">
               <div className="flex gap-2">
                 {showBackButton && (
                   <Button

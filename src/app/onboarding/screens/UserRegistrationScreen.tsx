@@ -141,7 +141,7 @@ export default function UserRegistrationScreen({ onComplete, onSaveExit, onBack 
   return (
     <OnboardingLayout
       currentStep={1}
-      totalSteps={7}
+      totalSteps={4}
       onContinue={handleContinue}
       onSaveExit={onSaveExit}
       onBack={onBack}

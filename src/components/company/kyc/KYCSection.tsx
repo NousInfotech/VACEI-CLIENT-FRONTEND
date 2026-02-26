@@ -5,11 +5,7 @@ import {
   Building2,
   User,
   MapPin,
-  FileText,
-  History,
-  AlertCircle,
   Globe,
-  Phone,
   Shield,
   ChevronDown,
   ChevronUp
@@ -34,8 +30,7 @@ const KYCSection = () => {
 
   const tabs = [
     { id: 'Company', label: 'COMPANY' },
-    { id: 'Shareholder', label: 'SHAREHOLDERS' },
-    { id: 'Representative', label: 'REPRESENTATIVES' },
+    { id: 'Involvements', label: 'INVOLVEMENTS' },
   ]
 
   const toggleExpand = (id: string) => {
@@ -121,30 +116,7 @@ const KYCSection = () => {
       )
     }
 
-    // Get all persons from company data based on workflow type
-    let allPersons: any[] = []
-    if (workflowType === 'Shareholder' && company?.shareHolders) {
-      allPersons = company.shareHolders.map((sh: any) => ({
-        _id: sh.personId?._id || sh._id,
-        name: sh.personId?.name || 'Unknown',
-        address: sh.personId?.address,
-        nationality: sh.personId?.nationality,
-        sharePercentage: sh.sharePercentage,
-        type: 'Shareholder'
-      }))
-    } else if (workflowType === 'Representative' && company?.representationalSchema) {
-      allPersons = company.representationalSchema.map((rep: any) => ({
-        _id: rep.personId?._id || rep._id,
-        name: rep.personId?.name || 'Unknown',
-        address: rep.personId?.address,
-        nationality: rep.personId?.nationality,
-        roles: rep.role || [],
-        type: 'Representative'
-      }))
-    }
-
     // Create a map of person IDs to their KYC workflow items
-    const kycMap = new Map<string, any>()
     const kycArray = Array.isArray(kyc) ? kyc : (kyc ? [kyc] : []);
     
     if (kycArray.length === 0) {
@@ -158,7 +130,9 @@ const KYCSection = () => {
     }
 
     if (workflowType === 'Company') {
-      const companyCycles = kycArray.filter((cycle: any) => !!cycle.documentRequest)
+      const companyCycles = kycArray.filter((cycle: any) =>
+        !!cycle.documentRequest && cycle.documentRequest.status !== 'DRAFT'
+      )
       if (companyCycles.length === 0) {
         return (
           <EmptyState
@@ -208,7 +182,7 @@ const KYCSection = () => {
                           <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
                             {uploadedDocsCount}/{totalDocs} DOCUMENTS
                           </Badge>
-                          {getStatusBadge(request.status)}
+                          {cycle.status && getStatusBadge(cycle.status)}
                         </div>
 
                         <div className="space-y-2">
@@ -264,54 +238,81 @@ const KYCSection = () => {
         </div>
       )
     }
+  }
 
+  // Involvements tab: merge shareholders + representatives deduped by personId
+  const renderInvolvements = () => {
+    if (loading) return <ListSkeleton count={3} />
+    if (error) return <EmptyState icon={Shield} title="Error Loading KYC" description={error} />
+
+    const kycArray = Array.isArray(kyc) ? kyc : (kyc ? [kyc] : []);
+    if (kycArray.length === 0) {
+      return <EmptyState icon={Shield} title="KYC Not Initiated" description="No KYC process has been initiated for involvements yet." />
+    }
+
+    // Build combined persons list from shareHolders + representationalSchema
+    const personMap = new Map<string, any>()
+
+    ;(company?.shareHolders || []).forEach((sh: any) => {
+      const pid = sh.personId?._id || sh.personId?.id || sh._id
+      if (!pid) return
+      const existing = personMap.get(pid) || {
+        _id: pid,
+        name: sh.personId?.name || 'Unknown',
+        address: sh.personId?.address,
+        nationality: sh.personId?.nationality,
+        roles: [],
+        sharePercentage: sh.sharePercentage,
+      }
+      if (!existing.roles.includes('SHAREHOLDER')) existing.roles.push('SHAREHOLDER')
+      personMap.set(pid, existing)
+    })
+
+    ;(company?.representationalSchema || []).forEach((rep: any) => {
+      const pid = rep.personId?._id || rep.personId?.id || rep._id
+      if (!pid) return
+      const existing = personMap.get(pid) || {
+        _id: pid,
+        name: rep.personId?.name || 'Unknown',
+        address: rep.personId?.address,
+        nationality: rep.personId?.nationality,
+        roles: [],
+      }
+      ;(rep.role || []).forEach((r: string) => {
+        if (!existing.roles.includes(r)) existing.roles.push(r)
+      })
+      if (!existing.roles.includes('REPRESENTATIVE')) existing.roles.push('REPRESENTATIVE')
+      personMap.set(pid, existing)
+    })
+
+    // Build KYC map from involvementKycs — exclude DRAFT document requests
+    const kycMap = new Map<string, any>()
     kycArray.forEach((cycle: any) => {
-      (cycle.involvementKycs || []).forEach((item: any) => {
-        // Handle all possible ways the backend might return the person ID
-        const personId = 
-          item.personId || 
-          item.person?.id || 
-          item.person?._id || 
-          item.involvement?.personId || 
-          item.involvement?.person?.id || 
-          item.involvement?.person?._id;
-          
-        if (personId) {
-          kycMap.set(personId, item)
-        }
+      ;(cycle.involvementKycs || []).forEach((item: any) => {
+        // Skip if document request is DRAFT
+        if (item.documentRequest?.status === 'DRAFT') return
+        const pid = item.personId || item.person?.id || item.person?._id ||
+          item.involvement?.personId || item.involvement?.person?.id || item.involvement?.person?._id
+        if (pid) kycMap.set(pid, item)
       })
     })
 
-    const peopleWithKyc = allPersons.filter(person => {
-      const personId = person._id || person.id
-      return kycMap.has(personId)
-    })
+    // Only show persons who have KYC initiated
+    const persons = Array.from(personMap.values()).filter(p => kycMap.has(p._id))
 
-    if (peopleWithKyc.length === 0) {
-      return (
-        <EmptyState
-          icon={Shield}
-          title="KYC Not Initiated"
-          description={`No KYC process has been initiated for ${workflowType.toLowerCase()}s by the platform admin yet.`}
-        />
-      )
+    if (persons.length === 0) {
+      return <EmptyState icon={Shield} title="No KYC Initiated" description="No KYC process has been initiated for any involvement by the platform admin yet." />
     }
 
     return (
       <div className="space-y-4">
-        {peopleWithKyc.map((person: any) => {
-          const personId = person._id || person.id
-          const kycItem = kycMap.get(personId)
-          const hasKycWorkflow = !!kycItem
+        {persons.map((person) => {
+          const kycItem = kycMap.get(person._id)
           const request = kycItem?.documentRequest
           const isExpanded = request ? expandedRequests.has(request.id) : false
 
-          // If there's a KYC workflow, get document counts
-          let totalDocs = 0
-          let uploadedDocsCount = 0
-          let singleDocs: any[] = []
-          let multipleGroups: any[] = []
-
+          let totalDocs = 0, uploadedDocsCount = 0
+          let singleDocs: any[] = [], multipleGroups: any[] = []
           if (request) {
             const docs = request.requestedDocuments || []
             singleDocs = docs.filter((d: any) => d.count === 'SINGLE')
@@ -321,10 +322,7 @@ const KYCSection = () => {
           }
 
           return (
-            <Card
-              key={person._id}
-              className="bg-white/80 border border-gray-300 rounded-xl shadow-sm hover:bg-white/70 transition-all mb-4 overflow-hidden"
-            >
+            <Card key={person._id} className="bg-white/80 border border-gray-300 rounded-xl shadow-sm hover:bg-white/70 transition-all mb-4 overflow-hidden">
               <CardContent className="p-0">
                 <div className="p-6">
                   <div className="flex items-start justify-between">
@@ -334,18 +332,20 @@ const KYCSection = () => {
                           {person.name.charAt(0)}
                         </div>
                         <div>
-                          <h4 className="text-lg font-semibold text-gray-900">
-                            {person.name}
-                          </h4>
+                          <h4 className="text-lg font-semibold text-gray-900">{person.name}</h4>
+                          <div className="flex gap-1 mt-1">
+                            {person.roles.map((role: string) => (
+                              <span key={role} className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                {role}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
 
                       <div className="mb-4 flex flex-wrap gap-2">
-                        {hasKycWorkflow ? (
+                        {request ? (
                           <>
-                            <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-100 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
-                              {request.category?.toUpperCase() || 'KYC'}
-                            </Badge>
                             <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
                               {uploadedDocsCount}/{totalDocs} DOCUMENTS
                             </Badge>
@@ -371,22 +371,16 @@ const KYCSection = () => {
                             <span className="text-xs">{person.nationality}</span>
                           </div>
                         )}
-                        {workflowType === 'Shareholder' && person.sharePercentage !== undefined && (
+                        {person.sharePercentage !== undefined && (
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <User className="h-4 w-4 text-gray-400 shrink-0" />
-                            <span className="text-xs">Share Percentage: {person.sharePercentage.toFixed(2)}%</span>
-                          </div>
-                        )}
-                        {workflowType === 'Representative' && person.roles && person.roles.length > 0 && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Shield className="h-4 w-4 text-gray-400 shrink-0" />
-                            <span className="text-xs">Roles: {person.roles.join(', ')}</span>
+                            <span className="text-xs">Share: {person.sharePercentage.toFixed(2)}%</span>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    {hasKycWorkflow && (
+                    {request && (
                       <div className="flex flex-col items-end gap-2">
                         <Button
                           variant="outline"
@@ -402,34 +396,14 @@ const KYCSection = () => {
                   </div>
                 </div>
 
-                {hasKycWorkflow && isExpanded && (
+                {request && isExpanded && (
                   <div className="bg-gray-50/50 border-t border-gray-100 p-6 animate-in slide-in-from-top-2 duration-300 space-y-4">
-                    <div className="mb-2 flex items-center justify-between">
-                      <h5 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Requested Documents</h5>
-                      <span className="text-[10px] text-gray-400 italic">Manage your compliance documents here</span>
-                    </div>
-
                     {singleDocs.length === 0 && multipleGroups.length === 0 ? (
-                      <div className="text-center py-4 text-gray-500 text-sm bg-white rounded-lg">
-                        No documents in this request yet
-                      </div>
+                      <div className="text-center py-4 text-gray-500 text-sm bg-white rounded-lg">No documents yet</div>
                     ) : (
                       <>
-                        <DocumentRequestSingle
-                          requestId={request.id}
-                          documents={singleDocs}
-                          onUpload={handleUpload}
-                          onClearDocument={handleClear}
-                        />
-
-                        <DocumentRequestDouble
-                          requestId={request.id}
-                          multipleDocuments={multipleGroups}
-                          onUploadMultiple={handleUploadMultiple}
-                          onClearMultipleItem={handleClearMultipleItem}
-                          onClearMultipleGroup={handleClearMultipleGroup}
-                          onDownloadMultipleGroup={handleDownloadMultipleGroup}
-                        />
+                        <DocumentRequestSingle requestId={request.id} documents={singleDocs} onUpload={handleUpload} onClearDocument={handleClear} />
+                        <DocumentRequestDouble requestId={request.id} multipleDocuments={multipleGroups} onUploadMultiple={handleUploadMultiple} onClearMultipleItem={handleClearMultipleItem} onClearMultipleGroup={handleClearMultipleGroup} onDownloadMultipleGroup={handleDownloadMultipleGroup} />
                       </>
                     )}
                   </div>
@@ -462,7 +436,7 @@ const KYCSection = () => {
       />
 
       <div className="space-y-6 outline-none">
-        {renderWorkflowList(activeTab)}
+        {activeTab === 'Company' ? renderWorkflowList('Company') : renderInvolvements()}
       </div>
     </div>
   )

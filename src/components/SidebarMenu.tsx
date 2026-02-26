@@ -50,7 +50,7 @@ export default function SidebarMenu({
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
   const { engagements } = useEngagements();
   const { activeCompanyId } = useActiveCompany();
-  const { sidebarData } = useGlobalDashboard();
+  const { sidebarData, companies: globalCompanies } = useGlobalDashboard();
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [documentRequestsMap, setDocumentRequestsMap] = useState<Record<string, DocumentRequest[]>>({});
   const [messagesTotal, setMessagesTotal] = useState<number | null>(null);
@@ -151,15 +151,29 @@ export default function SidebarMenu({
     };
     fetchData();
   }, [activeCompanyId, engagements]);
+
   const sections: { id: MenuSection; label: string }[] = useMemo(() => [
     { id: "primary", label: "Client portal" },
     { id: "operations", label: "Operations & tools" },
     { id: "settings", label: "Settings" },
   ], []);
 
+  // Logic: Filter menu items based on whether at least one company is fully active
+  const hasActiveCompany = globalCompanies.some(c => c.incorporationStatus === true && c.kycStatus === true);
+  const hiddenSlugs = ["compliance", "messages", "reseller-analytics", "global-library"];
+
   const dynamicMenu = useMemo(() => {
-    return menu.map((item) => {
-      let nextItem: MenuItem = item;
+    return menu
+      .filter(item => {
+        // If no active company, hide restricted items (only for global dashboard/portal view if applicable)
+        // Usually these slugs are in globalMenuData, but we apply to any menu passed
+        if (!hasActiveCompany && hiddenSlugs.includes(item.slug)) {
+          return false;
+        }
+        return true;
+      })
+      .map((item) => {
+        let nextItem: MenuItem = item;
 
       if (item.slug === "services-root") {
         const dynamicChildren = sidebarData.map((s) => {

@@ -2,11 +2,18 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react'
 
+interface Company {
+  id: string
+  name: string
+  incorporationStatus?: boolean
+  kycStatus?: boolean
+}
+
 interface ActiveCompanyContextType {
   activeCompanyId: string | null
   setActiveCompanyId: (companyId: string) => void
-  companies: { id: string; name: string }[]
-  setCompanies: (companies: { id: string; name: string }[]) => void
+  companies: Company[]
+  setCompanies: (companies: Company[]) => void
   loading: boolean
 }
 
@@ -18,7 +25,7 @@ interface ActiveCompanyProviderProps {
 
 export const ActiveCompanyProvider: React.FC<ActiveCompanyProviderProps> = ({ children }) => {
   const [activeCompanyId, setActiveCompanyIdState] = useState<string | null>(null)
-  const [companies, setCompanies] = useState<{ id: string; name: string }[]>([])
+  const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
   // Initialize from localStorage on mount

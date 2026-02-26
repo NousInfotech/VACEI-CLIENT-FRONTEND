@@ -92,8 +92,8 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
     
     return (
       <OnboardingLayout
-        currentStep={5}
-        totalSteps={7}
+        currentStep={4}
+        totalSteps={4}
         onContinue={() => {}}
         onSaveExit={onSaveExit}
         onBack={onBack}
@@ -115,8 +115,8 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
   if (!onboardingData) {
     return (
         <OnboardingLayout 
-          currentStep={5} 
-          totalSteps={7} 
+          currentStep={4} 
+          totalSteps={4} 
           onContinue={onBack} 
           onSaveExit={onSaveExit}
           onBack={onBack}
@@ -143,8 +143,8 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
 
   return (
     <OnboardingLayout
-      currentStep={5}
-      totalSteps={7}
+      currentStep={4}
+      totalSteps={4}
       onContinue={handleSubmit}
       onSaveExit={onSaveExit}
       onBack={onBack}

@@ -162,34 +162,38 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
         if (!existingDetails.directors.persons) {
           existingDetails.directors.persons = [];
         }
-        // Validate at least one director is required
+        // NOTE: Directors are now optional according to user request
+        /*
         if (existingDetails.directors.persons.length === 0) {
           setDirectorError('At least one director is required.');
           return;
         }
-        // Validate that all directors have required fields
-        const invalidDirectors = existingDetails.directors.persons.filter(
-          p => !p.fullName?.trim() || !p.address?.trim() || !p.nationality?.trim()
+        */
+        // Validate that provided directors have required fields
+        const invalidDirectors = (existingDetails.directors.persons || []).filter(
+          p => p.fullName?.trim() && (!p.address?.trim() || !p.nationality?.trim())
         );
         if (invalidDirectors.length > 0) {
-          setDirectorError('All directors must have full name, address, and nationality.');
+          setDirectorError('Provided directors must have full name, address, and nationality.');
           return;
         }
         setDirectorError('');
       }
       
-      // Validate at least one shareholder is required
+      // NOTE: Shareholders are now optional according to user request
+      /*
       if (!existingDetails.shareholders || existingDetails.shareholders.length === 0) {
         setShareholderError('At least one shareholder is required.');
         return;
       }
+      */
       
-      // Validate shareholders have required fields
-      const invalidShareholders = existingDetails.shareholders.filter(
-        p => !p.fullName?.trim() || !p.address?.trim() || !p.nationality?.trim()
+      // Validate provided shareholders have required fields
+      const invalidShareholders = (existingDetails.shareholders || []).filter(
+        p => p.fullName?.trim() && (!p.address?.trim() || !p.nationality?.trim())
       );
       if (invalidShareholders.length > 0) {
-        setShareholderError('All shareholders must have full name, address, and nationality.');
+        setShareholderError('Provided shareholders must have full name, address, and nationality.');
         return;
       }
       
@@ -219,34 +223,38 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
         if (!newDetails.directors.persons) {
           newDetails.directors.persons = [];
         }
-        // Validate at least one director is required
+        // NOTE: Directors are now optional according to user request
+        /*
         if (newDetails.directors.persons.length === 0) {
           setDirectorError('At least one director is required.');
           return;
         }
-        // Validate that all directors have required fields
-        const invalidDirectors = newDetails.directors.persons.filter(
-          p => !p.fullName?.trim() || !p.address?.trim() || !p.nationality?.trim()
+        */
+        // Validate that provided directors have required fields
+        const invalidDirectors = (newDetails.directors.persons || []).filter(
+          p => p.fullName?.trim() && (!p.address?.trim() || !p.nationality?.trim())
         );
         if (invalidDirectors.length > 0) {
-          setDirectorError('All directors must have full name, address, and nationality.');
+          setDirectorError('Provided directors must have full name, address, and nationality.');
           return;
         }
         setDirectorError('');
       }
       
-      // Validate at least one shareholder is required
+      // NOTE: Shareholders are now optional according to user request
+      /*
       if (!newDetails.shareholders || newDetails.shareholders.length === 0) {
         setShareholderError('At least one shareholder is required.');
         return;
       }
+      */
       
-      // Validate shareholders have required fields
-      const invalidShareholders = newDetails.shareholders.filter(
-        p => !p.fullName?.trim() || !p.address?.trim() || !p.nationality?.trim()
+      // Validate provided shareholders have required fields
+      const invalidShareholders = (newDetails.shareholders || []).filter(
+        p => p.fullName?.trim() && (!p.address?.trim() || !p.nationality?.trim())
       );
       if (invalidShareholders.length > 0) {
-        setShareholderError('All shareholders must have full name, address, and nationality.');
+        setShareholderError('Provided shareholders must have full name, address, and nationality.');
         return;
       }
       
@@ -792,7 +800,7 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
   return (
     <OnboardingLayout
       currentStep={3}
-      totalSteps={7}
+      totalSteps={4}
       onContinue={handleContinue}
       onSaveExit={onSaveExit}
       onBack={onBack}

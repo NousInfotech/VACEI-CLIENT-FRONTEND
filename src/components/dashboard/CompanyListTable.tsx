@@ -16,6 +16,7 @@ import {
     TableRow 
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { listServiceRequests } from "@/api/serviceRequestService";
 
 interface Company {
     id: string;
@@ -23,6 +24,9 @@ interface Company {
     registrationNumber?: string;
     overdueCount?: number;
     dueSoonCount?: number;
+    incorporationStatus?: boolean;
+    kycStatus?: boolean;
+    serviceRequestStatus?: string;
 }
 
 export default function CompanyListTable() {
@@ -43,16 +47,35 @@ export default function CompanyListTable() {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
+                let serviceRequests: any[] = [];
+                try {
+                    const srRes = await listServiceRequests({ service: 'INCORPORATION' });
+                    serviceRequests = srRes.data || srRes || [];
+                } catch (srError) {
+                    console.error("Failed to fetch service requests:", srError);
+                }
+
                 if (response.ok) {
                     const result = await response.json();
                     const data = result.data || result || [];
-                    setCompanies(data.map((c: any) => ({
-                        id: c.id,
-                        name: c.name,
-                        registrationNumber: c.registrationNumber,
-                        overdueCount: c.overdueComplianceCount || 0,
-                        dueSoonCount: c.dueSoonComplianceCount || 0
-                    })));
+                    
+                    setCompanies(data.map((c: any) => {
+                        // Find the latest service request for this company
+                        const sr = serviceRequests
+                            .filter((r: any) => (r.companyId?._id || r.companyId?.id || r.companyId) === c.id)
+                            .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+
+                        return {
+                            id: c.id,
+                            name: c.name,
+                            registrationNumber: c.registrationNumber,
+                            overdueCount: c.overdueComplianceCount || 0,
+                            dueSoonCount: c.dueSoonComplianceCount || 0,
+                            incorporationStatus: c.incorporationStatus ?? false,
+                            kycStatus: c.kycStatus ?? false,
+                            serviceRequestStatus: sr?.status || null
+                        };
+                    }));
                 }
             } catch (error) {
                 console.error("Failed to fetch companies:", error);
@@ -104,6 +127,8 @@ export default function CompanyListTable() {
                             <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100">S.No</TableHead>
                             <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100">Company Name</TableHead>
                             <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100">Registration No</TableHead>
+                            <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100 text-center">Incorporated</TableHead>
+                            <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100 text-center">KYC</TableHead>
                             <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100 text-center">Overdue</TableHead>
                             <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100 text-center">Due Soon</TableHead>
                             <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100 text-right">Actions</TableHead>
@@ -127,6 +152,32 @@ export default function CompanyListTable() {
                                     {company.registrationNumber || "N/A"}
                                 </TableCell>
                                 <TableCell className="text-center border border-gray-100">
+                                    <div className="flex justify-center">
+                                        {company.incorporationStatus ? (
+                                            <span className="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider border border-emerald-100">
+                                                Incorporated
+                                            </span>
+                                        ) : (
+                                            <span className="bg-gray-50 text-gray-400 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider border border-gray-100">
+                                                Unincorporated
+                                            </span>
+                                        )}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-center border border-gray-100">
+                                    <div className="flex justify-center">
+                                        {company.kycStatus ? (
+                                            <span className="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider border border-emerald-100">
+                                                Verified
+                                            </span>
+                                        ) : (
+                                            <span className="bg-gray-50 text-gray-400 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider border border-gray-100">
+                                                Unverified
+                                            </span>
+                                        )}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-center border border-gray-100">
                                     <span className={`text-sm font-bold ${company.overdueCount && company.overdueCount > 0 ? "text-destructive" : "text-gray-300"}`}>
                                         {company.overdueCount || 0}
                                     </span>
@@ -137,17 +188,60 @@ export default function CompanyListTable() {
                                     </span>
                                 </TableCell>
                                 <TableCell className="text-right border border-gray-100">
-                                    <Button
-                                        size="sm"
-                                        className="rounded-xl h-9"
-                                        onClick={() => {
-                                            setActiveCompanyId(company.id);
-                                            router.push(`/dashboard`);
-                                        }}
-                                    >
-                                        <Eye className="h-4 w-4 mr-2" />
-                                        Dashboard
-                                    </Button>
+                                    {company.incorporationStatus && company.kycStatus ? (
+                                        <Button
+                                            size="sm"
+                                            className="rounded-xl h-9"
+                                            onClick={() => {
+                                                setActiveCompanyId(company.id);
+                                                router.push(`/dashboard`);
+                                            }}
+                                        >
+                                            <Eye className="h-4 w-4 mr-2" />
+                                            Dashboard
+                                        </Button>
+                                    ) : company.serviceRequestStatus === 'APPROVED' ? (
+                                        <Button
+                                            size="sm"
+                                            className="rounded-xl h-9 bg-primary"
+                                            onClick={() => {
+                                                setActiveCompanyId(company.id);
+                                                // Smart highlight: incorporation not done → highlight incorporation tab
+                                                // incorporated but KYC pending → highlight kyc tab
+                                                // both done → no highlight
+                                                const highlight = !company.incorporationStatus
+                                                    ? 'incorporation'
+                                                    : !company.kycStatus
+                                                        ? 'kyc'
+                                                        : null;
+                                                const url = `/global-dashboard/companies/${company.id}${highlight ? `?highlight=${highlight}` : ''}`;
+                                                router.push(url);
+                                            }}
+                                        >
+                                            <Eye className="h-4 w-4 mr-2" />
+                                            View
+                                        </Button>
+                                    ) : company.serviceRequestStatus ? (
+                                        <div className="flex justify-end">
+                                            <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider border border-blue-100 flex items-center gap-1.5">
+                                                <div className="w-1 h-1 bg-blue-600 rounded-full animate-pulse" />
+                                                {company.serviceRequestStatus.replace(/_/g, ' ')}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="rounded-xl h-9 border-gray-200 hover:bg-gray-50"
+                                            onClick={() => {
+                                                setActiveCompanyId(company.id);
+                                                router.push(`/global-dashboard/companies/incorporation-request`);
+                                            }}
+                                        >
+                                            <Building2 className="h-4 w-4 mr-2" />
+                                            Service Request
+                                        </Button>
+                                    )}
                                 </TableCell>
                             </TableRow>
                         ))}

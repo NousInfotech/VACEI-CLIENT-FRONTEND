@@ -12,6 +12,7 @@ import { useCompany } from './hooks/useCompany'
 
 import PillTabs from '../shared/PillTabs'
 import { useTabQuery } from '@/hooks/useTabQuery'
+import { useSearchParams } from 'next/navigation'
 import BackButton from '../shared/BackButton'
 import EmptyState from '../shared/EmptyState'
 import { AlertCircle } from 'lucide-react'
@@ -22,6 +23,13 @@ import PageHeader from '../shared/PageHeader'
 const Company = () => {
   const [activeTab, setActiveTab] = useTabQuery('detail')
   const { company: data, loading, error } = useCompany()
+  const searchParams = useSearchParams()
+  const highlight = searchParams.get('highlight')
+  const highlightedTabId = highlight === 'incorporation'
+    ? 'incorporation'
+    : highlight === 'kyc'
+      ? 'kyc'
+      : undefined
 
   const tabs = [
     { id: 'detail', label: 'Company Detail', icon: LayoutGrid },
@@ -92,6 +100,7 @@ const Company = () => {
         tabs={tabs} 
         activeTab={activeTab} 
         onTabChange={setActiveTab} 
+        highlightedTabId={highlightedTabId}
       />
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">

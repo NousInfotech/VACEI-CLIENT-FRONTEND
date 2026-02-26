@@ -505,6 +505,28 @@ html {
       transform: scale(1);
     }
   }
+
+  @keyframes blink-animation {
+    0% { background-color: transparent; }
+    50% { background-color: rgba(59, 130, 246, 0.2); }
+    100% { background-color: transparent; }
+  }
+
+  @keyframes label-fade-out {
+    0%, 80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+  }
+
+  .blink-item {
+    animation: blink-animation 0.5s ease-in-out 8;
+    border: 2px solid #3b82f6 !important;
+    position: relative;
+  }
+
+  .blink-label {
+    animation: label-fade-out 4s ease forwards;
+    pointer-events: none;
+  }
 }
 
 @theme inline {

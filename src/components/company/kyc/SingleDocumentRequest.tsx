@@ -27,20 +27,17 @@ function SingleDocUploadCell({
   formatFileSize: (bytes: number) => string;
   accept: string;
 }) {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setSelectedFile(file);
+    // Reset input immediately so the same file can be selected again next time
     e.target.value = "";
-  };
-
-  const handleUploadClick = async () => {
-    if (!selectedFile) return;
+    if (!file) return;
     try {
-      await onUpload(requestId, documentId, selectedFile);
-      setSelectedFile(null);
+      await onUpload(requestId, documentId, file);
     } catch {
+      // error handled by parent
     }
   };
 
@@ -53,35 +50,10 @@ function SingleDocUploadCell({
     );
   }
 
-  if (selectedFile) {
-    return (
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs text-gray-600 max-w-[140px] truncate" title={selectedFile.name}>
-          {selectedFile.name} ({formatFileSize(selectedFile.size)})
-        </span>
-        <Button
-          size="sm"
-          variant="outline"
-          className="border-blue-300 hover:bg-blue-50 hover:text-blue-800 text-blue-700 h-8 px-3"
-          onClick={handleUploadClick}
-          disabled={isDisabled}
-        >
-          <Upload className="h-4 w-4 mr-1" />
-          Upload
-        </Button>
-        <label className="cursor-pointer">
-          <input type="file" className="hidden" accept={accept} onChange={handleFileSelect} disabled={isDisabled} />
-          <Button size="sm" variant="outline" className="h-8 px-2 text-xs" asChild disabled={isDisabled}>
-            <span>Change</span>
-          </Button>
-        </label>
-      </div>
-    );
-  }
-
   return (
     <label className={isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}>
       <input
+        ref={inputRef}
         type="file"
         className="hidden"
         accept={accept}
