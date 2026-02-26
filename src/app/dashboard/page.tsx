@@ -79,7 +79,7 @@ export default function DashboardPage() {
 
   // Lazy initialize state from cache to prevent loading flashes on back navigation
   const [loading, setLoading] = useState(() => {
-    return !(dashboardCache.statsLoaded && dashboardCache.activeCompanyId === activeCompanyId && (Date.now() - dashboardCache.timestamp < CACHE_TTL));
+    return !(dashboardCache.statsLoaded && (Date.now() - dashboardCache.timestamp < CACHE_TTL));
   });
   const [uploadLoading, setUploadLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(() => {
@@ -92,7 +92,7 @@ export default function DashboardPage() {
 
   const [complianceCounts, setComplianceCounts] = useState(() => dashboardCache.complianceCounts);
   const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(() => {
-    return (dashboardCache.activeCompanyId === activeCompanyId && (Date.now() - dashboardCache.timestamp < CACHE_TTL))
+    return (Date.now() - dashboardCache.timestamp < CACHE_TTL)
       ? dashboardCache.dashboardSummary
       : null;
   });

@@ -20,7 +20,10 @@ function membersToParticipants(members?: Array<Record<string, any>>): User[] {
     return members
         .filter((m) => m.userId !== currentUserId)
         .map((m) => {
-            const rawRole: UserRole = m.user?.role;
+            const rawRole =
+                m.role ||
+                m.organizationMember?.role ||
+                m.user?.organizationMember?.role;
             const roleStr = typeof rawRole === "string" ? rawRole : "";
             let normalizedRole = "Member";
             if (roleStr === "ORG_ADMIN" || roleStr === "PLATFORM_ADMIN" || roleStr === "ADMIN" || roleStr === "OWNER") {

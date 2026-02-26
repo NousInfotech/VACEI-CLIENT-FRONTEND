@@ -54,7 +54,6 @@ export default function ServiceRequestPage() {
   const searchParams = useSearchParams();
   const { activeCompanyId, companies } = useActiveCompany();
   const [serviceCode, setServiceCode] = useState<ServiceCode | "">("");
-  const [showHistory, setShowHistory] = useState(false);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
 
   // Handle auto-selection from query params
@@ -133,7 +132,6 @@ export default function ServiceRequestPage() {
   const activeCompanyName = companies.find(c => c.id === activeCompanyId)?.name;
 
   const handleServiceChange = (code: ServiceCode | "CUSTOM" | "") => {
-    setShowHistory(false);
     if (isFormDirty) {
       setPendingServiceCode(code as any);
       setShowConfirmModal(true);
@@ -157,7 +155,6 @@ export default function ServiceRequestPage() {
       setShowConfirmModal(true);
     } else {
       setServiceCode("");
-      setShowHistory(false);
     }
   };
 
@@ -169,11 +166,7 @@ export default function ServiceRequestPage() {
       buttonText: "View History",
       onAction: () => {
         setOnSuccessModal(false);
-        setShowHistory(true);
-        const el = document.getElementById("service-request-history");
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
+        window.open('/dashboard/services/request/history', '_blank');
       }
     });
     setOnSuccessModal(true);
@@ -201,11 +194,7 @@ export default function ServiceRequestPage() {
               variant="outline"
               className="bg-light text-primary-color-new"
               onClick={() => {
-                setShowHistory(true);
-                const el = document.getElementById("service-request-history");
-                if (el) {
-                  el.scrollIntoView({ behavior: "smooth", block: "start" });
-                }
+                window.open('/dashboard/services/request/history', '_blank');
               }}
             >
               View Service Request History
@@ -234,8 +223,8 @@ export default function ServiceRequestPage() {
             searchable
             searchPlaceholder="Search services..."
             trigger={
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="w-full h-11 px-4 justify-between border-gray-200 bg-gray-50/50 hover:bg-white hover:border-primary/40 focus:ring-2 focus:ring-primary/5 rounded-xl transition-all"
               >
                 <div className="flex items-center gap-2">
@@ -262,8 +251,8 @@ export default function ServiceRequestPage() {
               searchable
               searchPlaceholder="Search custom services..."
               trigger={
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full h-11 px-4 justify-between border-gray-200 bg-gray-50/50 hover:bg-white hover:border-primary/40 focus:ring-2 focus:ring-primary/5 rounded-xl transition-all"
                 >
                   <div className="flex items-center gap-2">
@@ -289,20 +278,10 @@ export default function ServiceRequestPage() {
 
         {/* Form area wrapped in logic */}
         <div className="min-h-[400px]" id="service-request-history">
-          {showHistory ? (
-            <div className="border-t pt-6 space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Service Request History
-              </h2>
-              <ServiceRequestHistory
-                companyId={activeCompanyId}
-                refreshKey={historyRefreshKey}
-              />
-            </div>
-          ) : (serviceCode && (serviceCode !== "CUSTOM" || customServiceId)) ? (
+          {(serviceCode && (serviceCode !== "CUSTOM" || customServiceId)) ? (
             <div className="border-t pt-6 animate-in fade-in slide-in-from-top-4 duration-500">
               <ServiceRequestForm
-                key={`${serviceCode}-${customServiceId}`} 
+                key={`${serviceCode}-${customServiceId}`}
                 service={serviceCode}
                 customServiceId={customServiceId || undefined}
                 companyId={activeCompanyId}
@@ -314,17 +293,17 @@ export default function ServiceRequestPage() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 border-t pt-10">
-               <div className="p-4 bg-primary/5 rounded-full text-primary/30">
-                 <AlertCircle className="w-12 h-12" />
-               </div>
-               <div className="max-w-[300px]">
-                 <h3 className="text-lg font-semibold text-gray-900">Get Started</h3>
-                 <p className="text-sm text-muted-foreground mt-1">
-                   {serviceCode === "CUSTOM" 
-                    ? "Please select a specific custom service type to see the form." 
+              <div className="p-4 bg-primary/5 rounded-full text-primary/30">
+                <AlertCircle className="w-12 h-12" />
+              </div>
+              <div className="max-w-[300px]">
+                <h3 className="text-lg font-semibold text-gray-900">Get Started</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {serviceCode === "CUSTOM"
+                    ? "Please select a specific custom service type to see the form."
                     : "Select a service from the dropdown above to view the request form and continue."}
-                 </p>
-               </div>
+                </p>
+              </div>
             </div>
           )}
         </div>

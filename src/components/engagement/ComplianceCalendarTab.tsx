@@ -26,6 +26,7 @@ interface ComplianceItem {
   description: string
   cta: string
   apiStatus: string
+  serviceCategory: string
   /** When false, "Mark as done" is hidden (e.g. from Compliance Calendar API which has no status update) */
   canMarkDone?: boolean
 }
@@ -58,31 +59,32 @@ function mapApiToComplianceItem(c: EngagementCompliance & { _fromComplianceCalen
     description: c.description || '',
     cta: c.cta || 'Mark as done',
     apiStatus: c.status,
+    serviceCategory: c.service || '',
     canMarkDone,
   }
 }
 
 const statusConfig: Record<ComplianceStatus, { label: string; color: string; icon: any; tone: "success" | "info" | "warning" | "danger" }> = {
-  filed: { 
-    label: 'Completed', 
+  filed: {
+    label: 'Completed',
     color: 'bg-emerald-50 text-emerald-600 border-emerald-100',
     icon: CheckCircle2,
     tone: 'success'
   },
-  upcoming: { 
-    label: 'Upcoming', 
+  upcoming: {
+    label: 'Upcoming',
     color: 'bg-blue-50 text-blue-600 border-blue-100',
     icon: Clock,
     tone: 'info'
   },
-  due_today: { 
-    label: 'Due Today', 
+  due_today: {
+    label: 'Due Today',
     color: 'bg-orange-50 text-orange-600 border-orange-100',
     icon: AlertCircle,
     tone: 'warning'
   },
-  overdue: { 
-    label: 'Overdue', 
+  overdue: {
+    label: 'Overdue',
     color: 'bg-red-50 text-red-600 border-red-100',
     icon: AlertCircle,
     tone: 'danger'
@@ -156,20 +158,46 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
     ((engagement as any)?._id as string | undefined) ||
     ((engagement as any)?.id as string | undefined) ||
     null
-  const companyId =
-    (engagement as any)?.companyId ??
-    (engagement as any)?.company?.id ??
-    null
+  const companyId = (engagement as any)?.companyId ?? (engagement as any)?.company?.id ?? null;
   const { compliances, loading, error, refetch } = useCompliances(engagementId, companyId)
   const [updatingId, setUpdatingId] = React.useState<string | null>(null)
 
-  const allItems: ComplianceItem[] = React.useMemo(
-    () => compliances.map(mapApiToComplianceItem),
-    [compliances]
-  )
-  
-  const filteredItems = activeFilter === 'all' 
-    ? allItems 
+  const SERVICE_CATEGORY_MAP: Record<string, string> = {
+    "Accounting & Bookkeeping": "ACCOUNTING",
+    "Accounting": "ACCOUNTING",
+    "Statutory Audit": "AUDITING",
+    "Audit": "AUDITING",
+    "VAT": "VAT",
+    "Tax": "TAX",
+    "Payroll": "PAYROLL",
+    "Corporate Services": "CSP",
+    "CFO Services": "CFO",
+    "MBR Filings": "MBR",
+    "MBR Filing": "MBR",
+    "Filings": "MBR",
+    "MBR": "MBR",
+    "Incorporation": "INCORPORATION",
+    "Business Plans": "CUSTOM",
+    "Liquidation": "CUSTOM",
+    "Legal": "LEGAL",
+    "Technology": "TECHNOLOGY"
+  };
+
+  const allItems: ComplianceItem[] = React.useMemo(() => {
+    let mapped = compliances.map(mapApiToComplianceItem)
+    const expectedCategory = SERVICE_CATEGORY_MAP[serviceName]
+    if (expectedCategory) {
+      mapped = mapped.filter((c: ComplianceItem) => {
+        if (expectedCategory === 'CUSTOM') return true;
+        const incomingService = String(c.serviceCategory || '').toUpperCase();
+        return incomingService === expectedCategory.toUpperCase();
+      })
+    }
+    return mapped
+  }, [compliances, serviceName])
+
+  const filteredItems = activeFilter === 'all'
+    ? allItems
     : allItems.filter((item: ComplianceItem) => item.status === activeFilter)
 
   const canMarkActionTaken = (item: ComplianceItem) =>
@@ -268,23 +296,23 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
               {viewMode === 'list' ? 'Compliance Deadlines' : 'Compliance Calendar'}
             </h3>
             <p className="text-sm text-gray-500">
-              {viewMode === 'list' 
-                ? 'Track and manage your statutory obligations.' 
+              {viewMode === 'list'
+                ? 'Track and manage your statutory obligations.'
                 : 'Interactive timeline of your filing deadlines.'}
             </p>
           </div>
           {/* View Toggle */}
-      <div className="w-fit">
-        <PillTabs
-          tabs={[
-            { id: 'list', label: 'List view', icon: List },
-            { id: 'month', label: 'Month view', icon: CalendarIcon }
-          ]}
-          activeTab={viewMode}
-          onTabChange={(id) => setViewMode(id as 'list' | 'month')}
-          className="bg-gray-50 border border-gray-100"
-        />
-      </div>
+          <div className="w-fit">
+            <PillTabs
+              tabs={[
+                { id: 'list', label: 'List view', icon: List },
+                { id: 'month', label: 'Month view', icon: CalendarIcon }
+              ]}
+              activeTab={viewMode}
+              onTabChange={(id) => setViewMode(id as 'list' | 'month')}
+              className="bg-gray-50 border border-gray-100"
+            />
+          </div>
         </div>
 
         {viewMode === 'list' ? (
@@ -301,7 +329,7 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
                 const StatusIcon = config.icon || Clock
 
                 return (
-                  <div 
+                  <div
                     key={item.id}
                     className="group bg-white border border-gray-100 p-6 flex flex-col md:flex-row md:items-center gap-6 relative overflow-hidden"
                   >
@@ -321,11 +349,11 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
                         </Badge>
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{item.type}</span>
                       </div>
-                      
+
                       <h4 className="text-lg font-bold text-gray-900 group-hover:text-primary transition-colors tracking-tight mb-1">
                         {item.title}
                       </h4>
-                      
+
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
                         <div className="flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-gray-400" />
