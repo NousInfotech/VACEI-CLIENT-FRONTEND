@@ -63,31 +63,55 @@ const dashboardCache = {
   statsLoaded: false,
   stats: [] as ProcessedDashboardStat[],
   netIncomeYTD: null as { amount: string; change: string } | null,
+  authVerified: false,
+  authTimestamp: 0,
+  companiesFetched: false,
 };
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const AUTH_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [uploadSummary, setUploadSummary] = useState<UploadStatusSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [uploadLoading, setUploadLoading] = useState(true);
-  const [authLoading, setAuthLoading] = useState(true); // Loading state for auth verification
-  const [revenueYTD, setRevenueYTD] = useState<{ amount: string; change: string } | null>(null);
-  const [netIncomeYTD, setNetIncomeYTD] = useState<{ amount: string; change: string } | null>(null);
-  const [username, setUsername] = useState<string>(''); // State for username to avoid hydration error
-  const [complianceCounts, setComplianceCounts] = useState({ overdue: 0, dueSoon: 0, waiting: 0, done: 0 });
-  const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
-  const [activeFocus, setActiveFocus] = useState<any>(null);
-  const [upcomingDeadlines, setUpcomingDeadlines] = useState<any[]>([]);
-  // Use context instead of local state
+  // Use context instead of local state first, since we read it for lazy init
   const { activeCompanyId, companies, setCompanies } = useActiveCompany();
+
+  const [uploadSummary, setUploadSummary] = useState<UploadStatusSummary | null>(null);
+
+  // Lazy initialize state from cache to prevent loading flashes on back navigation
+  const [loading, setLoading] = useState(() => {
+    return !(dashboardCache.statsLoaded && dashboardCache.activeCompanyId === activeCompanyId && (Date.now() - dashboardCache.timestamp < CACHE_TTL));
+  });
+  const [uploadLoading, setUploadLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(() => {
+    return !(dashboardCache.authVerified && (Date.now() - dashboardCache.authTimestamp < AUTH_CACHE_TTL));
+  }); // Loading state for auth verification
+
+  const [revenueYTD, setRevenueYTD] = useState<{ amount: string; change: string } | null>(null);
+  const [netIncomeYTD, setNetIncomeYTD] = useState<{ amount: string; change: string } | null>(() => dashboardCache.netIncomeYTD);
+  const [username, setUsername] = useState<string>(''); // State for username to avoid hydration error
+
+  const [complianceCounts, setComplianceCounts] = useState(() => dashboardCache.complianceCounts);
+  const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(() => {
+    return (dashboardCache.activeCompanyId === activeCompanyId && (Date.now() - dashboardCache.timestamp < CACHE_TTL))
+      ? dashboardCache.dashboardSummary
+      : null;
+  });
+  const [activeFocus, setActiveFocus] = useState<any>(() => dashboardCache.activeFocus);
+  const [upcomingDeadlines, setUpcomingDeadlines] = useState<any[]>(() => dashboardCache.upcomingDeadlines);
+
   const loadingCompanies = false; // Context handles loading implicitely or we can add it if needed
-  const [stats, setStats] = useState<ProcessedDashboardStat[]>([]);
+  const [stats, setStats] = useState<ProcessedDashboardStat[]>(() => dashboardCache.stats);
 
   // CRITICAL: Verify authentication on mount (before loading any data)
   // This prevents page flash by showing loading state while verifying
   useEffect(() => {
     const checkAuthentication = async () => {
+      // If we recently verified, skip the API call
+      if (dashboardCache.authVerified && (Date.now() - dashboardCache.authTimestamp < AUTH_CACHE_TTL)) {
+        setAuthLoading(false);
+        return;
+      }
+
       setAuthLoading(true);
       try {
         const isAuthenticated = await verifyAuthentication();
@@ -106,15 +130,19 @@ export default function DashboardPage() {
             document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=None; Secure';
           }
 
+          dashboardCache.authVerified = false;
           router.push('/login?message=' + encodeURIComponent('Session expired. Please login again.'));
           return; // Don't proceed with loading data
         }
 
         // Authentication verified - proceed with loading dashboard data
+        dashboardCache.authVerified = true;
+        dashboardCache.authTimestamp = Date.now();
         setAuthLoading(false);
       } catch (error) {
         console.error('Authentication check failed:', error);
         // On error, treat as unauthenticated
+        dashboardCache.authVerified = false;
         handleAuthError(error, router);
       }
     };
@@ -125,6 +153,7 @@ export default function DashboardPage() {
   // Fetch companies from backend
   useEffect(() => {
     if (authLoading) return; // Wait for auth verification
+    if (dashboardCache.companiesFetched && companies.length > 0) return; // Skip if already fetched with recent auth
 
     const fetchCompanies = async () => {
       try {
@@ -146,6 +175,7 @@ export default function DashboardPage() {
             registrationNumber: c.registrationNumber,
           }));
           setCompanies(mappedCompanies);
+          dashboardCache.companiesFetched = true;
         }
       } catch (error) {
         console.error("Failed to fetch companies:", error);
