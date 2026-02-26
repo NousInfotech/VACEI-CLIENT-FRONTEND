@@ -53,13 +53,20 @@ export default function EngagementChatTab() {
       const last = m.lastName ?? m.last_name ?? m.user?.lastName ?? m.user?.last_name ?? "";
       return [first, last].filter(Boolean).join(" ").trim() || "Unknown";
     };
-    const participants: User[] = members.map((m: any) => ({
-      id: m.userId,
-      name: memberName(m),
-      role: "CLIENT" as const,
-      isOnline: m.isOnline,
-      lastSeen: m.lastSeenAt ?? undefined,
-    }));
+    const participants: User[] = members.map((m: any) => {
+      const appRole =
+        (m as any).appRole ||
+        (m as any).user?.appRole ||
+        (m as any).role ||
+        "";
+      return {
+        id: m.userId,
+        name: memberName(m),
+        role: (appRole || "CLIENT") as any,
+        isOnline: m.isOnline,
+        lastSeen: m.lastSeenAt ?? undefined,
+      };
+    });
 
     const messages: Message[] = apiMessages.map((m) => {
       const fileUrl = m.fileUrl ?? undefined;

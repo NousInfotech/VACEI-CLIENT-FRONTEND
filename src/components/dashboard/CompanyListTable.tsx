@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useActiveCompany } from "@/context/ActiveCompanyContext";
 import DashboardCard from "@/components/DashboardCard";
+import { listComplianceCalendars } from "@/api/complianceCalendarService";
 import { Building2, Eye, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,14 +48,58 @@ export default function CompanyListTable() {
                 if (response.ok) {
                     const result = await response.json();
                     const data = result.data || result || [];
-                    setCompanies(data.map((c: any) => ({
+
+                    const baseCompanies = data.map((c: any) => ({
                         id: c.id,
                         name: c.name,
                         registrationNumber: c.registrationNumber,
-                        overdueCount: c.overdueComplianceCount || 0,
-                        dueTodayCount: c.dueTodayComplianceCount || 0,
-                        dueSoonCount: c.dueSoonComplianceCount || 0
-                    })));
+                        overdueCount: c.overdueComplianceCount ?? 0,
+                        dueTodayCount: c.dueTodayComplianceCount ?? 0,
+                        dueSoonCount: c.dueSoonComplianceCount ?? 0
+                    }));
+
+                    const today = new Date();
+                    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                    const oneWeekAhead = new Date(startOfToday.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+                    const enriched = await Promise.all(
+                        baseCompanies.map(async (company: { overdueCount: any; dueTodayCount: any; dueSoonCount: any; id: any; }) => {
+                            const hasBackendCounts =
+                                (company.overdueCount ?? 0) > 0 ||
+                                (company.dueTodayCount ?? 0) > 0 ||
+                                (company.dueSoonCount ?? 0) > 0;
+
+                            if (hasBackendCounts) return company;
+
+                            try {
+                                const entries = await listComplianceCalendars({ companyId: company.id });
+                                let overdue = 0;
+                                let dueToday = 0;
+                                let dueSoon = 0;
+
+                                entries.forEach((e) => {
+                                    if (!e.dueDate) return;
+                                    const dl = new Date(e.dueDate);
+                                    const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+                                    if (dlDate < startOfToday) overdue += 1;
+                                    else if (dlDate.getTime() === startOfToday.getTime()) dueToday += 1;
+                                    else if (dlDate > startOfToday && dlDate <= oneWeekAhead) dueSoon += 1;
+                                });
+
+                                return {
+                                    ...company,
+                                    overdueCount: overdue,
+                                    dueTodayCount: dueToday,
+                                    dueSoonCount: dueSoon,
+                                };
+                            } catch (err) {
+                                console.error("Failed to derive compliance counts for company", company.id, err);
+                                return company;
+                            }
+                        })
+                    );
+
+                    setCompanies(enriched);
                 }
             } catch (error) {
                 console.error("Failed to fetch companies:", error);
