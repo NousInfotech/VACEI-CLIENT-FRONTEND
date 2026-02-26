@@ -24,9 +24,10 @@ async function handleResponse<T>(res: Response): Promise<T> {
 
 export function getPortalRedirectUrl(url?: string): string {
   if (!url) return '';
-  if (url.startsWith('/dashboard')) return url;
-  if (url.startsWith('/')) return `/dashboard${url}`;
-  return url;
+  const cleaned = url.replace(/^\/(partner|platform|client)/, '');
+  if (cleaned.startsWith('/dashboard')) return cleaned;
+  if (cleaned.startsWith('/')) return `/dashboard${cleaned}`;
+  return cleaned;
 }
 
 export interface Notification {

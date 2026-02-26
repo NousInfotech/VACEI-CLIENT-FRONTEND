@@ -3,7 +3,7 @@
  */
 export function getDecodedUsername(): string | null {
   if (typeof window === 'undefined') return null;
-  
+
   try {
     const encoded = localStorage.getItem('username');
     if (!encoded) return null;
@@ -19,9 +19,9 @@ export function getDecodedUsername(): string | null {
  */
 export function getUserIdFromLocalStorage(): string | null {
   if (typeof window === 'undefined') return null;
-  
+
   try {
-    const userId = localStorage.getItem('user_id');
+    const userId = localStorage.getItem('user_id') || localStorage.getItem('userId');
     if (!userId) return null;
     return userId;
   } catch (error) {
@@ -55,7 +55,7 @@ export function getDecodedUserId(): string | null {
  */
 export function handleAuthError(error: any, router: any): void {
   // Check if error is a 401/403 authentication error
-  const isAuthError = 
+  const isAuthError =
     error?.message?.toLowerCase().includes('authentication') ||
     error?.message?.toLowerCase().includes('unauthorized') ||
     error?.message?.toLowerCase().includes('token expired') ||
@@ -69,12 +69,12 @@ export function handleAuthError(error: any, router: any): void {
       localStorage.removeItem('email');
       localStorage.removeItem('user_id');
       localStorage.removeItem('username');
-      
+
       // Clear cookie
       document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax';
       document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=None; Secure';
     }
-    
+
     // Redirect to login
     router.push('/login?message=' + encodeURIComponent('Session expired. Please login again.'));
   }

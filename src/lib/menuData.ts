@@ -161,7 +161,7 @@ export const SERVICE_METADATA: Record<string, { icon: any; label: string; href: 
     color: "indigo",
   },
   REGULATED_LICENSES: {
-    icon: DocumentValidationIcon, 
+    icon: DocumentValidationIcon,
     label: "Regulated Licenses",
     href: "/dashboard/services/regulated-licenses",
     category: "Workspaces",
@@ -267,8 +267,6 @@ export const menuData: MenuItem[] = [
     children: [],
     section: "primary",
     description: "Chat with your service team",
-    count: 8,
-    totalCount: 15,
   },
   {
     slug: "todo-list",
@@ -310,15 +308,15 @@ export const menuData: MenuItem[] = [
   //     ],
   //     section: "operations",
   // },
-  {
-    slug: "quickbooks-sync",
-    icon: FileSyncIcon,
-    label: "Quickbooks Sync",
-    href: "/dashboard/quickbooks-sync",
-    description: "Accounting software connection",
-    children: [],
-    section: "operations",
-  },
+  // {
+  //   slug: "quickbooks-sync",
+  //   icon: FileSyncIcon,
+  //   label: "Quickbooks Sync",
+  //   href: "/dashboard/quickbooks-sync",
+  //   description: "Accounting software connection",
+  //   children: [],
+  //   section: "operations",
+  // },
   // {
   //   slug: "support",
   //   icon: Message01Icon,

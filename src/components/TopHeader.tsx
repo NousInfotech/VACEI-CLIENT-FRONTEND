@@ -97,12 +97,12 @@ interface TopHeaderProps {
 export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false }: TopHeaderProps) {
     const [unreadCount, setUnreadCount] = useState(0);
     const [latestNotifications, setLatestNotifications] = useState<Notification[]>([]);
-    const [searchTerm, setSearchTerm] = useState(''); 
-    const [username, setUsername] = useState<string>('User'); 
+    const [searchTerm, setSearchTerm] = useState('');
+    const [username, setUsername] = useState<string>('User');
     const [role, setRole] = useState<string>('Client');
     const [showUploadDrawer, setShowUploadDrawer] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
-    
+
     // Use ActiveCompanyContext instead of local state
     const { activeCompanyId, setActiveCompanyId, companies, setCompanies } = useActiveCompany();
     const { companies: globalCompanies } = useGlobalDashboard();
@@ -317,7 +317,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
     ];
 
     return (
-        <header 
+        <header
             className="h-16 backdrop-blur-xl border flex items-center justify-between px-6 sticky top-0 z-40 rounded-[2rem] m-2 mb-0 mr-2 bg-background/80 shadow-lg"
             style={{
                 borderColor: `hsl(var(--border))`,
@@ -341,7 +341,15 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                 )}
 
                 <Button
-                    onClick={() => router.back()}
+                    onClick={() => {
+                        if (pathname === '/dashboard/services/request/history' || pathname === '/global-dashboard/services/request/history') {
+                            router.push('/dashboard/services/request');
+                        } else if (window.history.length > 2) {
+                            router.back();
+                        } else {
+                            router.push('/dashboard');
+                        }
+                    }}
                     variant="secondary"
                     size="sm"
                     className="px-4 bg-primary"
@@ -388,7 +396,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                                 <span className="hidden lg:inline uppercase">Global Dashboard</span>
                             </Button>
                         </Link>
-                        
+
                         <div className="h-4 w-px bg-border mx-1" />
 
                         <Dropdown
@@ -403,7 +411,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                                         <div className={cn(
                                             "w-1.5 h-1.5 rounded-full",
                                             globalCompanies.find(c => c.id === activeCompanyId)?.overdueCount ? "bg-destructive animate-pulse" :
-                                            globalCompanies.find(c => c.id === activeCompanyId)?.dueSoonCount ? "bg-amber-500" : "bg-success"
+                                                globalCompanies.find(c => c.id === activeCompanyId)?.dueSoonCount ? "bg-amber-500" : "bg-success"
                                         )} />
                                         {isMounted ? (activeCompanyName.length > 20 ? activeCompanyName.substring(0, 17) + "..." : activeCompanyName) : "Loading..."}
                                     </span>
@@ -511,7 +519,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                     <i className="fi fi-rr-settings text-gray-900"></i>
                 </Button>
 
-                <div 
+                <div
                     className="flex items-center gap-4 pl-4 border-l border-gray-200"
                 >
                     <div className="hidden sm:block text-right">
@@ -524,14 +532,14 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                     </div>
 
                     <div className="relative group cursor-pointer">
-                        <div 
+                        <div
                             className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-900 text-white shadow-lg group-hover:scale-105 transition-transform"
                         >
                             <span className="text-sm font-medium">
                                 {username.charAt(0).toUpperCase()}
                             </span>
                         </div>
-                        <div 
+                        <div
                             className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success rounded-full border-2 border-white shadow-sm"
                         ></div>
                     </div>

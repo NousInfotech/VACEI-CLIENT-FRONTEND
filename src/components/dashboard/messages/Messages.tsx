@@ -74,36 +74,61 @@ const Messages: React.FC = () => {
 
     const roomId = activeChatId;
 
-    // Load messages from API using the client-specific endpoint
+    // Load messages and room details from API
     setMessagesLoading(true);
-    chatService
-      .getClientRoomMessages(roomId, 50)
-      .then((res) => {
-        // API returns newest-first → reverse so oldest shows at top
-        const rawMsgs = (res.data ?? []).reverse();
-        const apiMsgs = rawMsgs.map(mapApiMessage).sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
-        // Merge participants: room members (from list) + message senders (for names)
-        const fromMessages = extractParticipants(res.data ?? []);
-        const room = rooms.find((r) => r.id === roomId);
-        const mergedParticipants = new Map<string, User>();
-        const mergeUser = (u: User) => {
-          const existing = mergedParticipants.get(u.id);
-          const incomingRole = u.role ?? 'PLATFORM_EMPLOYEE';
-          const finalRole =
-            existing?.role === 'PLATFORM_ADMIN' ? 'PLATFORM_ADMIN' : incomingRole;
-          mergedParticipants.set(u.id, {
-            ...(existing ?? u),
-            ...u,
-            role: finalRole,
-            isOnline: u.isOnline ?? existing?.isOnline ?? false,
-          });
-        };
 
-        (room?.participants ?? []).forEach(mergeUser);
-        fromMessages.forEach(mergeUser);
-        const participants = Array.from(mergedParticipants.values());
-        setRoomMessagesWithMerge(roomId, apiMsgs, participants);
+    Promise.all([
+      chatService.getClientRoomMessages(roomId, 50).catch(err => {
+        console.error("Failed to load generic messages:", err);
+        return { data: [] };
+      }),
+      chatService.getRoomById(roomId).catch(err => {
+        console.error("Failed to load deep room details:", err);
+        return { data: { members: [] } };
       })
+    ]).then(([resMsgs, resRoom]) => {
+      // API returns newest-first → reverse so oldest shows at top
+      const rawMsgs = (resMsgs.data ?? []).reverse();
+      const apiMsgs = rawMsgs.map(mapApiMessage).sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
+
+      const fromMessages = extractParticipants(resMsgs.data ?? []);
+      const room = rooms.find((r) => r.id === roomId);
+
+      const detailedMembers = (resRoom.data?.members ?? []).map((m: any) => {
+        const rawRole =
+          m?.appRole ||
+          m?.user?.appRole ||
+          "";
+        const roleStr = typeof rawRole === "string" ? rawRole : "";
+        const displayRole = roleStr.replace(/^ORG_/, "PARTNER_");
+
+        return {
+          id: m.userId || m.user?.id,
+          role: displayRole
+        };
+      });
+
+      const mergedParticipants = new Map<string, User>();
+      const mergeUser = (u: User) => {
+        const existing = mergedParticipants.get(u.id);
+        const detailed = detailedMembers.find((dm: any) => dm.id === u.id);
+
+        const incomingRole = detailed?.role || u.role || "";
+
+        const finalRole = existing?.role && existing.role !== '' ? existing.role : incomingRole;
+        mergedParticipants.set(u.id, {
+          ...(existing ?? u),
+          ...u,
+          role: finalRole,
+          isOnline: u.isOnline ?? existing?.isOnline ?? false,
+        });
+      };
+
+      (room?.participants ?? []).forEach(mergeUser);
+      fromMessages.forEach(mergeUser);
+      const participants = Array.from(mergedParticipants.values());
+      setRoomMessagesWithMerge(roomId, apiMsgs, participants);
+    })
       .catch(console.error)
       .finally(() => setMessagesLoading(false));
 
@@ -247,80 +272,80 @@ const Messages: React.FC = () => {
   };
 
   // ─── Send Message ─────────────────────────────────────────────────────────
-const handleSendMessage = async (content: {
-  text?: string;
-  gifUrl?: string;
-  fileUrl?: string;
-  fileName?: string;
-  fileSize?: string;
-  type: 'text' | 'gif' | 'image' | 'document';
-}) => {
-  if (!activeChatId) return;
+  const handleSendMessage = async (content: {
+    text?: string;
+    gifUrl?: string;
+    fileUrl?: string;
+    fileName?: string;
+    fileSize?: string;
+    type: 'text' | 'gif' | 'image' | 'document';
+  }) => {
+    if (!activeChatId) return;
 
-  // Handle edit
-  if (editingMessage) {
-    const text = content.text || '';
-    const activeRoom = rooms.find((r) => r.id === activeChatId);
-    if (activeRoom) {
-      const updatedMessages = activeRoom.messages.map((m) =>
-        m.id === editingMessage.id ? { ...m, text, isEdited: true } : m
+    // Handle edit
+    if (editingMessage) {
+      const text = content.text || '';
+      const activeRoom = rooms.find((r) => r.id === activeChatId);
+      if (activeRoom) {
+        const updatedMessages = activeRoom.messages.map((m) =>
+          m.id === editingMessage.id ? { ...m, text, isEdited: true } : m
+        );
+        setRoomMessages(activeChatId, updatedMessages);
+      }
+      chatService.editMessage(editingMessage.id, text).catch(console.error);
+      setEditingMessage(null);
+      return;
+    }
+
+    // ✅ CREATE UTC ISO TIME (same as backend)
+    const optimisticId = `optimistic-${Date.now()}`;
+    const createdAtISO = new Date().toISOString();
+    const createdAt = new Date(createdAtISO).getTime();
+
+    const optimistic: Message = {
+      id: optimisticId,
+      senderId: 'me',
+      type: content.type,
+      text: content.text,
+      fileUrl: content.fileUrl,
+      fileName: content.fileName,
+      fileSize: content.fileSize,
+      replyToId: replyToMessage?.id,
+      replyToMessageId: replyToMessage?.id ?? null,
+      replyToMessage: replyToMessage ?? null,
+      createdAt, // ✅ ONLY STORE THIS
+      status: 'sent',
+      timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    };
+
+    appendMessage(activeChatId, optimistic);
+
+    const replyToIdForSend =
+      replyToMessage?.id &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(replyToMessage.id)
+        ? replyToMessage.id
+        : undefined;
+
+    setReplyToMessage(null);
+
+    try {
+      let fileUrl: string | undefined;
+      if (content.type === 'image' || content.type === 'document') {
+        fileUrl = content.fileUrl;
+      }
+
+      await chatService.sendMessage(
+        activeChatId,
+        content.text || '',
+        fileUrl,
+        replyToIdForSend ? { replyToMessageId: replyToIdForSend } : undefined
       );
-      setRoomMessages(activeChatId, updatedMessages);
+
+      // Supabase realtime will replace optimistic message
+    } catch (err) {
+      console.error('Failed to send message:', err);
     }
-    chatService.editMessage(editingMessage.id, text).catch(console.error);
-    setEditingMessage(null);
-    return;
-  }
-
-  // ✅ CREATE UTC ISO TIME (same as backend)
-  const optimisticId = `optimistic-${Date.now()}`;
-  const createdAtISO = new Date().toISOString();
-  const createdAt = new Date(createdAtISO).getTime();
-
-  const optimistic: Message = {
-    id: optimisticId,
-    senderId: 'me',
-    type: content.type,
-    text: content.text,
-    fileUrl: content.fileUrl,
-    fileName: content.fileName,
-    fileSize: content.fileSize,
-    replyToId: replyToMessage?.id,
-    replyToMessageId: replyToMessage?.id ?? null,
-    replyToMessage: replyToMessage ?? null,
-    createdAt, // ✅ ONLY STORE THIS
-    status: 'sent',
-    timestamp: ''
   };
-
-  appendMessage(activeChatId, optimistic);
-
-  const replyToIdForSend =
-    replyToMessage?.id &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(replyToMessage.id)
-      ? replyToMessage.id
-      : undefined;
-
-  setReplyToMessage(null);
-
-  try {
-    let fileUrl: string | undefined;
-    if (content.type === 'image' || content.type === 'document') {
-      fileUrl = content.fileUrl;
-    }
-
-    await chatService.sendMessage(
-      activeChatId,
-      content.text || '',
-      fileUrl,
-      replyToIdForSend ? { replyToMessageId: replyToIdForSend } : undefined
-    );
-
-    // Supabase realtime will replace optimistic message
-  } catch (err) {
-    console.error('Failed to send message:', err);
-  }
-};
 
   // ─── Select mode helpers ──────────────────────────────────────────────────
   const handleToggleSelectMessage = (messageId: string) => {

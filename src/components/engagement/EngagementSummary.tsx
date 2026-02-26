@@ -154,7 +154,40 @@ const workflowStatusConfig: Record<
   },
 };
 
-export const ServiceTodoTable = ({ todos, loading }: { todos: TodoItem[], loading: boolean }) => {
+export const ServiceTodoTable = ({
+  todos,
+  loading,
+  onOpen,
+}: {
+  todos: TodoItem[];
+  loading: boolean;
+  onOpen?: (todo: TodoItem) => void;
+}) => {
+  const router = useRouter();
+
+  const handleOpen = (todo: TodoItem) => {
+    if (onOpen) {
+      onOpen(todo);
+      return;
+    }
+
+    if (todo.type === "CUSTOM") {
+      router.push(`/dashboard/todo-list/todo-list-view?taskId=${btoa(todo.id)}`);
+    } else if (
+      (todo.type === "DOCUMENT_REQUEST" || todo.type === "REQUESTED_DOCUMENT") &&
+      todo.engagementId
+    ) {
+      router.push(
+        `/dashboard/engagements/${todo.engagementId}?tab=requests${
+          todo.moduleId ? `&scrollTo=${todo.moduleId}` : ""
+        }`
+      );
+    } else if (todo.engagementId) {
+      router.push(`/dashboard/engagements/${todo.engagementId}`);
+    } else {
+      router.push(`/dashboard/todo-list/todo-list-view?taskId=${btoa(todo.id)}`);
+    }
+  };
   if (loading) return <Skeleton className="h-64 w-full" />;
   if (todos.length === 0) {
     return (
@@ -198,7 +231,12 @@ export const ServiceTodoTable = ({ todos, loading }: { todos: TodoItem[], loadin
                 {todo.deadline && todo.status?.toUpperCase() !== 'COMPLETED' && todo.status?.toUpperCase() !== 'ACTION_TAKEN' ? new Date(todo.deadline).toLocaleDateString('en-GB') : '—'}
               </td>
               <td className="py-4 px-4 text-right">
-                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800 text-[10px] font-bold uppercase tracking-widest p-0 h-auto">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-blue-600 hover:text-blue-800 text-[10px] font-bold uppercase tracking-widest p-0 h-auto"
+                  onClick={() => handleOpen(todo)}
+                >
                   Open
                 </Button>
               </td>
@@ -390,6 +428,52 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
   const vatActivePeriod = isVAT
     ? getActiveVATPeriod(vatPeriods, activeVatPeriodId)
     : undefined;
+
+  const currentStatusFromTodos = React.useMemo(() => {
+    if (allPendingItems.length === 0) {
+      return statusConfig.on_track;
+    }
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const sortedItems = [...allPendingItems].sort((a, b) => {
+      const dateA = a.deadline ? new Date(a.deadline) : new Date(8640000000000000);
+      const dateB = b.deadline ? new Date(b.deadline) : new Date(8640000000000000);
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    const top = sortedItems[0] as any;
+    const title = top.title || top.name || "Pending task";
+
+    if (top.deadline) {
+      const dl = new Date(top.deadline);
+      const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+      if (dlDate < today) {
+        return {
+          label: `Overdue – ${title}`,
+          color: statusConfig.overdue.color,
+        };
+      }
+      if (dlDate.getTime() === today.getTime()) {
+        return {
+          label: `Due today – ${title}`,
+          color: statusConfig.due_today.color,
+        };
+      }
+      if (dlDate > today) {
+        return {
+          label: `Due soon – ${title}`,
+          color: statusConfig.due_soon.color,
+        };
+      }
+    }
+
+    return {
+      label: `Action required – ${title}`,
+      color: statusConfig.action_required.color,
+    };
+  }, [allPendingItems]);
 
   const mbrStats = React.useMemo(() => {
     if (!isMBRFilings) return null;
@@ -630,7 +714,21 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           </div>
         </DashboardCard>
 
-        <PillTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+        <PillTabs
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={(tabId) => {
+            setActiveTab(tabId);
+            const params = new URLSearchParams(searchParams.toString());
+            if (tabId === "dashboard") {
+              params.delete("tab");
+            } else {
+              params.set("tab", tabId);
+            }
+            const qs = params.toString();
+            router.push(qs ? `?${qs}` : "?", { scroll: false });
+          }}
+        />
 
 
         {/* MBR Filings: Filings tab (table) */}
@@ -3083,10 +3181,10 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                           <Badge
                             className={cn(
                               "rounded-0 border px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit block",
-                              workflowInfo.color,
+                              currentStatusFromTodos.color,
                             )}
                           >
-                            {workflowInfo.label}
+                            {currentStatusFromTodos.label}
                           </Badge>
                         )}
                       </div>
@@ -4365,7 +4463,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                         Current Status
                       </h3>
                     </div>
-                    <p className="text-sm text-gray-600">{workflowInfo.label}</p>
+                    <p className="text-sm text-gray-600">{statusInfo.label}</p>
                   </div>
                 </DashboardCard>
 
@@ -4467,19 +4565,23 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           </div>
         )}
 
-        {activeTab === "library" && (
-          <LibraryExplorer
-            rootFolderId={engagementLibraryFolderId}
-          />
-        )}
+        <div className={cn(activeTab === "library" ? "" : "hidden")}>
+          <LibraryExplorer rootFolderId={engagementLibraryFolderId} />
+        </div>
 
-        {(activeTab === "document_requests" || activeTab === "requests") && <DocumentRequestsTab />}
+        <div className={cn(
+          activeTab === "document_requests" || activeTab === "requests" ? "" : "hidden"
+        )}>
+          <DocumentRequestsTab refreshKey={refreshTick} />
+        </div>
 
-        {activeTab === "milestones" && <MilestonesTab />}
+        <div className={cn(activeTab === "milestones" ? "" : "hidden")}>
+          <MilestonesTab refreshKey={refreshTick} />
+        </div>
 
-        {activeTab === "compliance_calendar" && (
-          <ComplianceCalendarTab serviceName={serviceName} />
-        )}
+        <div className={cn(activeTab === "compliance_calendar" ? "" : "hidden")}>
+          <ComplianceCalendarTab serviceName={serviceName} refreshKey={refreshTick} />
+        </div>
 
         {activeTab === "filings" && isMBRFilings && (
           <div className="space-y-6">
@@ -4634,14 +4736,52 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                 <div className="w-1 h-6 bg-gray-900 rounded-full" />
                 <h3 className="text-lg font-medium tracking-tight">Todos</h3>
               </div>
-              <ServiceTodoTable todos={engagementTodos} loading={todosLoading} />
+              <ServiceTodoTable
+                todos={engagementTodos}
+                loading={todosLoading}
+                onOpen={(todo) => {
+                  const type = (todo.type || "").toUpperCase();
+
+                  // Document requests → Document Requests tab
+                  if (
+                    (type === "DOCUMENT_REQUEST" || type === "REQUESTED_DOCUMENT") &&
+                    todo.engagementId
+                  ) {
+                    setActiveTab("document_requests");
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.set("tab", "document_requests");
+                    if (todo.moduleId) params.set("scrollTo", todo.moduleId);
+                    const qs = params.toString();
+                    router.push(qs ? `?${qs}` : "?", { scroll: false });
+                    return;
+                  }
+
+                  // Chat todos → Chat tab
+                  if (type === "CHAT") {
+                    setActiveTab("chat");
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.set("tab", "chat");
+                    if (todo.moduleId) params.set("messageId", todo.moduleId);
+                    const qs = params.toString();
+                    router.push(qs ? `?${qs}` : "?", { scroll: false });
+                    return;
+                  }
+
+                  // Fallback: open todo detail
+                  router.push(`/dashboard/todo-list/todo-list-view?taskId=${btoa(todo.id)}`);
+                }}
+              />
             </div>
           </DashboardCard>
         )}
 
-        {activeTab === "messages" && <UpdatesTab />}
+        <div className={cn(activeTab === "messages" ? "" : "hidden")}>
+          <UpdatesTab />
+        </div>
 
-        {activeTab === "chat" && <EngagementChatTab />}
+        <div className={cn(activeTab === "chat" ? "" : "hidden")}>
+          <EngagementChatTab />
+        </div>
       </div>
     </TooltipProvider>
   );

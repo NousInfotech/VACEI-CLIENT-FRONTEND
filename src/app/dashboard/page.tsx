@@ -19,6 +19,8 @@ import { fetchUploadStatusSummary } from "@/api/documentApi";
 import { fetchTasks } from "@/api/taskService";
 import type { Task } from "@/interfaces";
 import { fetchPayrollData, transformPayrollSubmissionsToComplianceItems } from "@/lib/payrollComplianceIntegration";
+import { listComplianceCalendars, type ComplianceCalendarEntry } from "@/api/complianceCalendarService";
+import { isPast, isToday } from "date-fns";
 import { HugeiconsIcon } from '@hugeicons/react';
 import { AddressBookIcon, Alert02Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
@@ -63,31 +65,56 @@ const dashboardCache = {
   statsLoaded: false,
   stats: [] as ProcessedDashboardStat[],
   netIncomeYTD: null as { amount: string; change: string } | null,
+  authVerified: false,
+  authTimestamp: 0,
+  companiesFetched: false,
 };
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const AUTH_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [uploadSummary, setUploadSummary] = useState<UploadStatusSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [uploadLoading, setUploadLoading] = useState(true);
-  const [authLoading, setAuthLoading] = useState(true); // Loading state for auth verification
-  const [revenueYTD, setRevenueYTD] = useState<{ amount: string; change: string } | null>(null);
-  const [netIncomeYTD, setNetIncomeYTD] = useState<{ amount: string; change: string } | null>(null);
-  const [username, setUsername] = useState<string>(''); // State for username to avoid hydration error
-  const [complianceCounts, setComplianceCounts] = useState({ overdue: 0, dueSoon: 0, waiting: 0, done: 0 });
-  const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
-  const [activeFocus, setActiveFocus] = useState<any>(null);
-  const [upcomingDeadlines, setUpcomingDeadlines] = useState<any[]>([]);
-  // Use context instead of local state
+  // Use context instead of local state first, since we read it for lazy init
   const { activeCompanyId, companies, setCompanies } = useActiveCompany();
+
+  const [uploadSummary, setUploadSummary] = useState<UploadStatusSummary | null>(null);
+
+  // Lazy initialize state from cache to prevent loading flashes on back navigation
+  const [loading, setLoading] = useState(() => {
+    return !(dashboardCache.statsLoaded && (Date.now() - dashboardCache.timestamp < CACHE_TTL));
+  });
+  const [uploadLoading, setUploadLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(() => {
+    return !(dashboardCache.authVerified && (Date.now() - dashboardCache.authTimestamp < AUTH_CACHE_TTL));
+  }); // Loading state for auth verification
+
+  const [revenueYTD, setRevenueYTD] = useState<{ amount: string; change: string } | null>(null);
+  const [netIncomeYTD, setNetIncomeYTD] = useState<{ amount: string; change: string } | null>(() => dashboardCache.netIncomeYTD);
+  const [username, setUsername] = useState<string>(''); // State for username to avoid hydration error
+
+  const [complianceCounts, setComplianceCounts] = useState(() => dashboardCache.complianceCounts);
+  const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(() => {
+    return (Date.now() - dashboardCache.timestamp < CACHE_TTL)
+      ? dashboardCache.dashboardSummary
+      : null;
+  });
+  const [activeFocus, setActiveFocus] = useState<any>(() => dashboardCache.activeFocus);
+  const [upcomingDeadlines, setUpcomingDeadlines] = useState<any[]>(() => dashboardCache.upcomingDeadlines);
+  const [nextCalendarDeadline, setNextCalendarDeadline] = useState<ComplianceCalendarEntry | null>(null);
+
   const loadingCompanies = false; // Context handles loading implicitely or we can add it if needed
-  const [stats, setStats] = useState<ProcessedDashboardStat[]>([]);
+  const [stats, setStats] = useState<ProcessedDashboardStat[]>(() => dashboardCache.stats);
 
   // CRITICAL: Verify authentication on mount (before loading any data)
   // This prevents page flash by showing loading state while verifying
   useEffect(() => {
     const checkAuthentication = async () => {
+      // If we recently verified, skip the API call
+      if (dashboardCache.authVerified && (Date.now() - dashboardCache.authTimestamp < AUTH_CACHE_TTL)) {
+        setAuthLoading(false);
+        return;
+      }
+
       setAuthLoading(true);
       try {
         const isAuthenticated = await verifyAuthentication();
@@ -106,15 +133,19 @@ export default function DashboardPage() {
             document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=None; Secure';
           }
 
+          dashboardCache.authVerified = false;
           router.push('/login?message=' + encodeURIComponent('Session expired. Please login again.'));
           return; // Don't proceed with loading data
         }
 
         // Authentication verified - proceed with loading dashboard data
+        dashboardCache.authVerified = true;
+        dashboardCache.authTimestamp = Date.now();
         setAuthLoading(false);
       } catch (error) {
         console.error('Authentication check failed:', error);
         // On error, treat as unauthenticated
+        dashboardCache.authVerified = false;
         handleAuthError(error, router);
       }
     };
@@ -125,6 +156,7 @@ export default function DashboardPage() {
   // Fetch companies from backend
   useEffect(() => {
     if (authLoading) return; // Wait for auth verification
+    if (dashboardCache.companiesFetched && companies.length > 0) return; // Skip if already fetched with recent auth
 
     const fetchCompanies = async () => {
       try {
@@ -146,6 +178,7 @@ export default function DashboardPage() {
             registrationNumber: c.registrationNumber,
           }));
           setCompanies(mappedCompanies);
+          dashboardCache.companiesFetched = true;
         }
       } catch (error) {
         console.error("Failed to fetch companies:", error);
@@ -310,6 +343,46 @@ export default function DashboardPage() {
       }
     };
     loadDashboardSummary();
+  }, [authLoading, activeCompanyId]);
+
+  // Load next compliance deadline from Compliance Calendar for the active company
+  useEffect(() => {
+    if (authLoading || !activeCompanyId) return;
+
+    const loadComplianceCalendar = async () => {
+      try {
+        const entries = await listComplianceCalendars({ companyId: activeCompanyId });
+        if (!entries || entries.length === 0) {
+          setNextCalendarDeadline(null);
+          return;
+        }
+
+        const today = new Date();
+        const normalizedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+        const withValidDates = entries.filter(e => !!e.dueDate);
+
+        const overdueEntries = withValidDates.filter(e => {
+          const dl = new Date(e.dueDate);
+          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+          return dlDate.getTime() < normalizedToday.getTime();
+        }).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+        const upcomingEntries = withValidDates.filter(e => {
+          const dl = new Date(e.dueDate);
+          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+          return dlDate.getTime() >= normalizedToday.getTime();
+        }).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+        const nextEntry = overdueEntries[0] || upcomingEntries[0] || null;
+        setNextCalendarDeadline(nextEntry || null);
+      } catch (error) {
+        console.error("Failed to load compliance calendar for dashboard snapshot:", error);
+        setNextCalendarDeadline(null);
+      }
+    };
+
+    loadComplianceCalendar();
   }, [authLoading, activeCompanyId]);
 
   // Load financial summary data (separately)
@@ -785,12 +858,31 @@ export default function DashboardPage() {
                     <Kpi label="Due soon" value={complianceCounts.dueSoon} tone="warning" />
                   </Link>
                 </div>
-                {upcomingDeadlines.length > 0 ? (
+                {nextCalendarDeadline ? (
+                  <DashboardCard className="border border-info/30 bg-info/5 px-4 py-3">
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1">Next Deadline</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {nextCalendarDeadline.company?.name ? `${nextCalendarDeadline.company.name} – ` : ""}
+                      {nextCalendarDeadline.title}
+                      {nextCalendarDeadline.dueDate
+                        ? ` – ${new Date(nextCalendarDeadline.dueDate).toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'short',
+                          })}`
+                        : ''}
+                    </p>
+                  </DashboardCard>
+                ) : upcomingDeadlines.length > 0 ? (
                   <DashboardCard className="border border-info/30 bg-info/5 px-4 py-3">
                     <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1">Next Deadline</p>
                     <p className="text-sm font-bold text-gray-900">
                       {upcomingDeadlines[0].title}
-                      {upcomingDeadlines[0].deadline ? ` – ${new Date(upcomingDeadlines[0].deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}
+                      {upcomingDeadlines[0].deadline
+                        ? ` – ${new Date(upcomingDeadlines[0].deadline).toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'short',
+                          })}`
+                        : ''}
                     </p>
                   </DashboardCard>
                 ) : (

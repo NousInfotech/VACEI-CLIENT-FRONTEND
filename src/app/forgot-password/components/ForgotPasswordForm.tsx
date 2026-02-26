@@ -1,29 +1,29 @@
 'use client';
 
 import Image from "next/image";
-import Link from "next/link"; // Import Link
-import { useState } from "react"; // useEffect and useRouter/useSearchParams are not needed for a simple forgot password form
+import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import AlertMessage from "../../../components/AlertMessage";
 import { Button } from "@/components/ui/button";
 
 export default function ForgotPasswordForm() {
+  const router = useRouter();
   const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
 
   const [email, setEmail] = useState("");
-  const [errors, setErrors] = useState<{ email?: string }>({}); // Only email error is needed
+  const [errors, setErrors] = useState<{ email?: string }>({}); 
   const [loading, setLoading] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const [messageVariant, setMessageVariant] = useState<"success" | "danger">("danger"); // To differentiate success/error alerts
+  const [messageVariant, setMessageVariant] = useState<"success" | "danger">("danger");
 
   const validate = () => {
     const newErrors: typeof errors = {};
-
     if (!email) {
       newErrors.email = "Email is required.";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       newErrors.email = "Enter a valid email.";
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -32,29 +32,25 @@ export default function ForgotPasswordForm() {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setAlertMessage(null); // Clear previous alerts
+    setAlertMessage(null);
 
     try {
       const response = await fetch(`${backendUrl}auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
-        credentials: "include",
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: "Failed to send password reset email." }));
-        throw new Error(errorData.message || errorData.error || `Failed to send password reset email: ${response.status}`);
+        const errorData = await response.json().catch(() => ({ message: "Failed to send OTP." }));
+        throw new Error(errorData.message || "Failed to send OTP.");
       }
 
-      const responseData = await response.json();
-      // Backend response structure: { data: { message: string }, message?: string }
-      const message = responseData.data?.message || responseData.message || "If an account with that email exists, an OTP has been sent to your inbox.";
-
-      setAlertMessage(message);
+      setAlertMessage("OTP sent successfully! Redirecting...");
       setMessageVariant("success");
-      setEmail(""); // Clear email field on success
-      setErrors({}); // Clear any errors
+      setTimeout(() => {
+        router.push(`/reset-password?email=${encodeURIComponent(email)}`);
+      }, 1500);
     } catch (err) {
       const errorMessage = (err as Error)?.message || "An unknown error occurred. Please try again.";
       setAlertMessage(errorMessage);

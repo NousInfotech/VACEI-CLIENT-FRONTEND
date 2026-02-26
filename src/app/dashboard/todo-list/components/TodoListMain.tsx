@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import TaskDetailModal from "./TaskDetailModal";
+import { SERVICE_METADATA } from "@/lib/menuData";
 
 
 
@@ -34,7 +35,10 @@ export default function TodoList() {
         try {
             const todoResponse = await getTodos();
             const filteredTodos = todoResponse.filter(t =>
-                t.type === 'DOCUMENT_REQUEST' || t.type === 'REQUESTED_DOCUMENT' || t.type === 'CUSTOM'
+                t.type === 'DOCUMENT_REQUEST' ||
+                t.type === 'REQUESTED_DOCUMENT' ||
+                t.type === 'CUSTOM' ||
+                t.type === 'CHAT'
             );
             setAllTasks(filteredTodos);
         } catch (err) {
@@ -94,12 +98,54 @@ export default function TodoList() {
         setPagination(prev => ({ ...prev, page: 1 }));
     };
 
+    const resolveServiceEngagementBase = (service?: string) => {
+        if (!service) return "";
+        const normalized = service.toUpperCase().replace(/[-\s&]/g, "_");
+        const metadataKey = (Object.keys(SERVICE_METADATA).find((k) =>
+            normalized === k || normalized.includes(k)
+        ) || "") as keyof typeof SERVICE_METADATA | "";
+        if (!metadataKey) return "";
+        return SERVICE_METADATA[metadataKey]?.href || "";
+    };
+
     const handleAction = (task: TodoItem) => {
-        if (task.type === 'CUSTOM') {
+        const type = (task.type || "").toUpperCase();
+        const serviceBase = resolveServiceEngagementBase(task.service);
+
+        if (type === 'CUSTOM') {
             setSelectedTask(task);
             setIsModalOpen(true);
-        } else if ((task.type === 'DOCUMENT_REQUEST' || task.type === 'REQUESTED_DOCUMENT') && task.engagementId) {
-            router.push(`/dashboard/engagements/${task.engagementId}?tab=requests&scrollTo=${task.moduleId}`);
+            return;
+        }
+
+        // Chat-related todos should open engagement chat tab, optionally scrolled to a specific message
+        if (type === 'CHAT' && task.engagementId) {
+            const messageQuery = task.moduleId ? `&messageId=${task.moduleId}` : "";
+            if (serviceBase) {
+                router.push(`${serviceBase}/engagements/${task.engagementId}?tab=chat${messageQuery}`);
+            } else {
+                router.push(`/dashboard/engagements/${task.engagementId}?tab=chat${messageQuery}`);
+            }
+            return;
+        }
+
+        // Requested documents should open engagement document request tab
+        if ((type === 'DOCUMENT_REQUEST' || type === 'REQUESTED_DOCUMENT') && task.engagementId) {
+            const scrollQuery = task.moduleId ? `&scrollTo=${task.moduleId}` : "";
+            if (serviceBase) {
+                router.push(`${serviceBase}/engagements/${task.engagementId}?tab=document_requests${scrollQuery}`);
+            } else {
+                router.push(`/dashboard/engagements/${task.engagementId}?tab=document_requests${scrollQuery}`);
+            }
+            return;
+        }
+
+        if (task.engagementId) {
+            if (serviceBase) {
+                router.push(`${serviceBase}/engagements/${task.engagementId}`);
+            } else {
+                router.push(`/dashboard/engagements/${task.engagementId}`);
+            }
         } else {
             router.push(`/dashboard/todo-list/todo-list-view?taskId=${btoa(task.id)}`);
         }
@@ -127,6 +173,7 @@ export default function TodoList() {
                         <option value="DOCUMENT_REQUEST">Document Request</option>
                         <option value="REQUESTED_DOCUMENT">Requested Document</option>
                         <option value="CUSTOM">Custom</option>
+                        <option value="CHAT">Chat</option>
                     </select>
 
                     {/* Service */}
@@ -200,6 +247,7 @@ export default function TodoList() {
                                             DOCUMENT_REQUEST: 'Doc Request',
                                             REQUESTED_DOCUMENT: 'Req. Doc',
                                             CUSTOM: 'Custom',
+                                            CHAT: 'Chat',
                                         };
                                         const st = (task.status || 'ACTION_REQUIRED').toUpperCase();
                                         const statusLabelMap: Record<string, string> = {

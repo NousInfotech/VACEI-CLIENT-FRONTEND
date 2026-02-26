@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { useEngagement } from "./hooks/useEngagement";
 import { useChat } from "@/hooks/useChat";
 import { ChatWindow } from "./chat/components/ChatWindow";
@@ -29,6 +30,8 @@ export default function EngagementChatTab() {
   const { engagement, serviceSlug } = useEngagement();
   const engagementId = (engagement as { _id?: string; id?: string })?._id ?? (engagement as { _id?: string; id?: string })?.id ?? null;
 
+  const searchParams = useSearchParams();
+
   const currentUserId = getUserIdFromLocalStorage();
   const orgTeam = (engagement as { orgTeam?: Array<{ userId: string }> })?.orgTeam;
   const partnerId = orgTeam?.find((m) => m.userId !== currentUserId)?.userId ?? null;
@@ -53,13 +56,20 @@ export default function EngagementChatTab() {
       const last = m.lastName ?? m.last_name ?? m.user?.lastName ?? m.user?.last_name ?? "";
       return [first, last].filter(Boolean).join(" ").trim() || "Unknown";
     };
-    const participants: User[] = members.map((m: any) => ({
-      id: m.userId,
-      name: memberName(m),
-      role: "CLIENT" as const,
-      isOnline: m.isOnline,
-      lastSeen: m.lastSeenAt ?? undefined,
-    }));
+    const participants: User[] = members.map((m: any) => {
+      const appRole =
+        (m as any).appRole ||
+        (m as any).user?.appRole ||
+        (m as any).role ||
+        "";
+      return {
+        id: m.userId,
+        name: memberName(m),
+        role: (appRole || "CLIENT") as any,
+        isOnline: m.isOnline,
+        lastSeen: m.lastSeenAt ?? undefined,
+      };
+    });
 
     const messages: Message[] = apiMessages.map((m) => {
       const fileUrl = m.fileUrl ?? undefined;
@@ -94,6 +104,18 @@ export default function EngagementChatTab() {
   const [previewMessage, setPreviewMessage] = React.useState<Message | null>(null);
   const [scrollToId, setScrollToId] = React.useState<string | undefined>();
   const [uploadProgress, setUploadProgress] = React.useState(0);
+  const [replyingTo, setReplyingTo] = React.useState<Message | null>(null);
+
+  // When opening from todo-list "Reply": scroll to message and open reply UI
+  useEffect(() => {
+    const messageId = searchParams.get("messageId");
+    if (!messageId) return;
+    setScrollToId(messageId);
+    const msg = chat.messages.find((m) => m.id === messageId);
+    if (msg) {
+      setReplyingTo(msg);
+    }
+  }, [searchParams, chat.messages]);
 
   useEffect(() => {
     if (roomId) markAsRead();
@@ -110,14 +132,24 @@ export default function EngagementChatTab() {
     if (!roomId) return;
 
     try {
+      const replyToIdForSend =
+        replyingTo?.id &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(replyingTo.id)
+          ? replyingTo.id
+          : undefined;
+
       if (content.type === "text" && content.text) {
-        await sendMessage(content.text);
+        await sendMessage(content.text, undefined, replyToIdForSend);
       } else if (content.type === "gif" && content.gifUrl) {
-        await sendMessage(`[GIF]`, content.gifUrl);
+        await sendMessage(`[GIF]`, content.gifUrl, replyToIdForSend);
       } else if ((content.type === "document" || content.type === "image") && content.fileUrl) {
-        await sendMessage(`📎 ${content.fileName ?? "attachment"}`, content.fileUrl);
+        await sendMessage(`📎 ${content.fileName ?? "attachment"}`, content.fileUrl, replyToIdForSend);
       } else if (content.fileUrl) {
-        await sendMessage(`📎 ${content.fileName ?? "attachment"}`, content.fileUrl);
+        await sendMessage(`📎 ${content.fileName ?? "attachment"}`, content.fileUrl, replyToIdForSend);
+      }
+
+      if (replyingTo) {
+        setReplyingTo(null);
       }
     } catch (err) {
       console.error("Send failed:", err);
@@ -187,7 +219,9 @@ export default function EngagementChatTab() {
           onMediaClick={(msg) => setPreviewMessage(msg)}
           scrollToMessageId={scrollToId}
           onScrollComplete={() => setScrollToId(undefined)}
-          onReplyMessage={(msg) => console.log('Reply to', msg)} // Will handle via ChatWindow state and MessageInput
+          onReplyMessage={setReplyingTo}
+          replyingTo={replyingTo}
+          onCancelReply={() => setReplyingTo(null)}
           onEditMessage={(msg) => console.log('Edit message', msg)} // Will handle via ChatWindow state and MessageInput
           onDeleteMessage={async (msgId) => {
             if (window.confirm("Are you sure you want to delete this message?")) {

@@ -33,7 +33,7 @@ type UploadingState = { requestId: string; documentId: string }
 
 type ClearAction = (reason: string) => Promise<void>
 
-const DocumentRequestsTab = () => {
+const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
   const [expandedRequests, setExpandedRequests] = useState<Set<string>>(new Set())
   const [uploadMode, setUploadMode] = useState<Record<string, 'single' | 'bulk'>>({})
   const [uploadingState, setUploadingState] = useState<UploadingState | null>(null)
@@ -47,6 +47,12 @@ const DocumentRequestsTab = () => {
   const searchParams = useSearchParams()
   const scrollToId = searchParams.get('scrollTo')
   const scrolledRef = useRef(false)
+
+  useEffect(() => {
+    if (refreshKey !== undefined) {
+      refetch();
+    }
+  }, [refreshKey, refetch]);
 
   useEffect(() => {
     if (scrollToId && documentRequests.length > 0 && !scrolledRef.current) {

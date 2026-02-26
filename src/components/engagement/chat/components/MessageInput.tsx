@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Send, Paperclip, Smile } from 'lucide-react';
+import { Send, Paperclip, Smile, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { Message } from '../types';
 
 import { AttachmentMenu } from './AttachmentMenu';
 import { EmojiPicker } from './EmojiPicker';
@@ -17,14 +18,31 @@ interface MessageInputProps {
   /** If provided, files are uploaded first and the returned URL is used. Otherwise blob URL is used (local only). */
   onFileUpload?: (file: File) => Promise<string>;
   isUploading?: boolean;
+  replyingTo?: Message | null;
+  onCancelReply?: () => void;
+  currentUserId?: string | null;
 }
 
-export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onFileUpload, isUploading = false }) => {
+export const MessageInput: React.FC<MessageInputProps> = ({
+  onSendMessage,
+  onFileUpload,
+  isUploading = false,
+  replyingTo = null,
+  onCancelReply,
+  currentUserId,
+}) => {
   const [message, setMessage] = useState('');
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const imageInputRef = React.useRef<HTMLInputElement>(null);
   const docInputRef = React.useRef<HTMLInputElement>(null);
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  React.useEffect(() => {
+    if (replyingTo && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [replyingTo]);
 
   const onSelectEmoji = (emoji: string) => {
     setMessage(prev => prev + emoji);
@@ -75,8 +93,33 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onFil
   };
 
   return (
-    <div className="p-2 bg-[#f0f2f5] flex items-center gap-2 shrink-0 relative">
-      <div className="flex items-center gap-1">
+    <div className="bg-[#f0f2f5] border-t border-gray-200">
+      {/* Reply preview banner */}
+      {replyingTo && onCancelReply && (
+        <div className="px-4 py-2 bg-white/50 backdrop-blur-sm border-b border-gray-200 flex items-center gap-3 animate-in slide-in-from-bottom-2 duration-200">
+          <div className="w-1 bg-primary rounded-full self-stretch" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] font-bold text-primary">
+                Replying to {currentUserId && replyingTo.senderId === currentUserId ? 'you' : 'Sender'}
+              </span>
+            </div>
+            <p className="text-[13px] text-gray-500 truncate italic">
+              {replyingTo.text || replyingTo.fileName || 'Media'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onCancelReply}
+            className="p-1 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            <X className="w-4 h-4 text-gray-400" />
+          </button>
+        </div>
+      )}
+
+      <div className="p-2 flex items-center gap-2 shrink-0 relative">
+        <div className="flex items-center gap-1">
         <input
           type="file"
           ref={imageInputRef}
@@ -144,6 +187,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onFil
 
       <div className="flex-1 relative group/input">
         <textarea
+          ref={textareaRef}
           rows={1}
           placeholder="Type a message"
           value={message}
@@ -165,6 +209,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onFil
       >
         <Send className="w-5 h-5 fill-current" />
       </button>
+      </div>
     </div>
   );
 };

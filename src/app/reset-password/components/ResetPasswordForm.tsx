@@ -15,32 +15,32 @@ export default function ResetPasswordForm() {
 
     const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
 
-    const [newPassword, setNewPassword] = useState("");
+    const [otpValue, setOtpValue] = useState(otp || "");
+    const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
-    const [errors, setErrors] = useState<{ newPassword?: string; confirmPassword?: string }>({});
+    const [errors, setErrors] = useState<{ otp?: string; password?: string; confirmPassword?: string }>({});
     const [loading, setLoading] = useState(false);
     const [alertMessage, setAlertMessage] = useState<string | null>(null);
     const [messageVariant, setMessageVariant] = useState<"success" | "danger">("danger");
 
-    useEffect(() => {
-        if (!otp || !emailFromUrl) {
-            setAlertMessage("Invalid or missing password reset link parameters. Please check your reset link.");
-            setMessageVariant("danger");
-        }
-    }, [otp, emailFromUrl]);
-
     const validate = () => {
         const newErrors: typeof errors = {};
 
-        if (!newPassword) {
-            newErrors.newPassword = "New password is required.";
-        } else if (newPassword.length < 6) {
-            newErrors.newPassword = "Password must be at least 6 characters long.";
+        if (!otpValue) {
+            newErrors.otp = "OTP is required.";
+        } else if (otpValue.length < 6) {
+            newErrors.otp = "Enter a valid 6-digit OTP.";
+        }
+
+        if (!password) {
+            newErrors.password = "New password is required.";
+        } else if (password.length < 6) {
+            newErrors.password = "Password must be at least 6 characters long.";
         }
 
         if (!confirmPassword) {
             newErrors.confirmPassword = "Confirm password is required.";
-        } else if (newPassword !== confirmPassword) {
+        } else if (password !== confirmPassword) {
             newErrors.confirmPassword = "Passwords do not match.";
         }
 
@@ -52,10 +52,10 @@ export default function ResetPasswordForm() {
         e.preventDefault();
         if (!validate()) return;
         setLoading(true);
-        setAlertMessage(null); // Clear previous alerts
+        setAlertMessage(null);
 
-        if (!otp || !emailFromUrl) {
-            setAlertMessage("Invalid password reset link. Please try again from the forgot password page.");
+        if (!emailFromUrl) {
+            setAlertMessage("Email is missing. Please try again from the forgot password page.");
             setMessageVariant("danger");
             setLoading(false);
             return;
@@ -67,10 +67,9 @@ export default function ResetPasswordForm() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     email: emailFromUrl,
-                    otp: otp,
-                    newPassword: newPassword,
+                    otp: otpValue,
+                    password: password,
                 }),
-                credentials: "include",
             });
 
             if (!response.ok) {
@@ -84,9 +83,10 @@ export default function ResetPasswordForm() {
 
             setAlertMessage(message);
             setMessageVariant("success");
-            setNewPassword(""); // Clear fields on success
+            setOtpValue("");
+            setPassword("");
             setConfirmPassword("");
-            setErrors({}); // Clear any errors
+            setErrors({});
 
         } catch (err) {
             const errorMessage = (err as Error)?.message || "An unknown error occurred. Please try again.";
@@ -123,19 +123,32 @@ export default function ResetPasswordForm() {
 
                         <div className="login_card_body text-center">
                             <h2 className="text-2xl font-bold mb-4 text-gray-800">Reset Your Password</h2>
-                            <p className="mb-6 text-muted-foreground">Enter your new password below.</p>
+                            <p className="mb-6 text-muted-foreground">Enter the OTP sent to your email and your new password.</p>
 
                             <form className="flex flex-col gap-4" onSubmit={handleResetPassword}>
                                 <div>
                                     <input
+                                        type="text"
+                                        placeholder="6-Digit OTP"
+                                        maxLength={6}
+                                        value={otpValue}
+                                        onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, ""))}
+                                        className="form-control w-full border p-2 rounded tracking-widest text-center font-bold"
+                                    />
+                                    {errors.otp && (
+                                        <p className="text-red-500 text-sm text-start pt-1">{errors.otp}</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <input
                                         type="password"
                                         placeholder="New Password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
                                         className="form-control w-full border p-2 rounded"
                                     />
-                                    {errors.newPassword && (
-                                        <p className="text-red-500 text-sm text-start pt-1">{errors.newPassword}</p>
+                                    {errors.password && (
+                                        <p className="text-red-500 text-sm text-start pt-1">{errors.password}</p>
                                     )}
                                 </div>
                                 <div>
