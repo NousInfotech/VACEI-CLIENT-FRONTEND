@@ -22,6 +22,7 @@ interface Company {
     name: string;
     registrationNumber?: string;
     overdueCount?: number;
+    dueTodayCount?: number;
     dueSoonCount?: number;
 }
 
@@ -51,6 +52,7 @@ export default function CompanyListTable() {
                         name: c.name,
                         registrationNumber: c.registrationNumber,
                         overdueCount: c.overdueComplianceCount || 0,
+                        dueTodayCount: c.dueTodayComplianceCount || 0,
                         dueSoonCount: c.dueSoonComplianceCount || 0
                     })));
                 }
@@ -105,6 +107,7 @@ export default function CompanyListTable() {
                             <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100">Company Name</TableHead>
                             <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100">Registration No</TableHead>
                             <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100 text-center">Overdue</TableHead>
+                            <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100 text-center">Due Today</TableHead>
                             <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100 text-center">Due Soon</TableHead>
                             <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100 text-right">Actions</TableHead>
                         </TableRow>
@@ -132,6 +135,11 @@ export default function CompanyListTable() {
                                     </span>
                                 </TableCell>
                                 <TableCell className="text-center border border-gray-100">
+                                    <span className={`text-sm font-bold ${company.dueTodayCount && company.dueTodayCount > 0 ? "text-warning" : "text-gray-300"}`}>
+                                        {company.dueTodayCount || 0}
+                                    </span>
+                                </TableCell>
+                                <TableCell className="text-center border border-gray-100">
                                     <span className={`text-sm font-bold ${company.dueSoonCount && company.dueSoonCount > 0 ? "text-warning" : "text-gray-300"}`}>
                                         {company.dueSoonCount || 0}
                                     </span>
@@ -153,7 +161,7 @@ export default function CompanyListTable() {
                         ))}
                         {filteredCompanies.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-32 text-center text-gray-300 italic font-medium border border-gray-100">
+                                <TableCell colSpan={7} className="h-32 text-center text-gray-300 italic font-medium border border-gray-100">
                                     No companies found.
                                 </TableCell>
                             </TableRow>

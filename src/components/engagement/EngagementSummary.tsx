@@ -155,6 +155,26 @@ const workflowStatusConfig: Record<
 };
 
 export const ServiceTodoTable = ({ todos, loading }: { todos: TodoItem[], loading: boolean }) => {
+  const router = useRouter();
+
+  const handleOpen = (todo: TodoItem) => {
+    if (todo.type === "CUSTOM") {
+      router.push(`/dashboard/todo-list/todo-list-view?taskId=${btoa(todo.id)}`);
+    } else if (
+      (todo.type === "DOCUMENT_REQUEST" || todo.type === "REQUESTED_DOCUMENT") &&
+      todo.engagementId
+    ) {
+      router.push(
+        `/dashboard/engagements/${todo.engagementId}?tab=requests${
+          todo.moduleId ? `&scrollTo=${todo.moduleId}` : ""
+        }`
+      );
+    } else if (todo.engagementId) {
+      router.push(`/dashboard/engagements/${todo.engagementId}`);
+    } else {
+      router.push(`/dashboard/todo-list/todo-list-view?taskId=${btoa(todo.id)}`);
+    }
+  };
   if (loading) return <Skeleton className="h-64 w-full" />;
   if (todos.length === 0) {
     return (
@@ -198,7 +218,12 @@ export const ServiceTodoTable = ({ todos, loading }: { todos: TodoItem[], loadin
                 {todo.deadline && todo.status?.toUpperCase() !== 'COMPLETED' && todo.status?.toUpperCase() !== 'ACTION_TAKEN' ? new Date(todo.deadline).toLocaleDateString('en-GB') : '—'}
               </td>
               <td className="py-4 px-4 text-right">
-                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800 text-[10px] font-bold uppercase tracking-widest p-0 h-auto">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-blue-600 hover:text-blue-800 text-[10px] font-bold uppercase tracking-widest p-0 h-auto"
+                  onClick={() => handleOpen(todo)}
+                >
                   Open
                 </Button>
               </td>
@@ -630,7 +655,21 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           </div>
         </DashboardCard>
 
-        <PillTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+        <PillTabs
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={(tabId) => {
+            setActiveTab(tabId);
+            const params = new URLSearchParams(searchParams.toString());
+            if (tabId === "dashboard") {
+              params.delete("tab");
+            } else {
+              params.set("tab", tabId);
+            }
+            const qs = params.toString();
+            router.push(qs ? `?${qs}` : "?", { scroll: false });
+          }}
+        />
 
 
         {/* MBR Filings: Filings tab (table) */}
@@ -3083,10 +3122,10 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                           <Badge
                             className={cn(
                               "rounded-0 border px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit block",
-                              workflowInfo.color,
+                              statusInfo.color,
                             )}
                           >
-                            {workflowInfo.label}
+                            {statusInfo.label}
                           </Badge>
                         )}
                       </div>
@@ -4365,7 +4404,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                         Current Status
                       </h3>
                     </div>
-                    <p className="text-sm text-gray-600">{workflowInfo.label}</p>
+                    <p className="text-sm text-gray-600">{statusInfo.label}</p>
                   </div>
                 </DashboardCard>
 
@@ -4473,12 +4512,14 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           />
         )}
 
-        {(activeTab === "document_requests" || activeTab === "requests") && <DocumentRequestsTab />}
+        {(activeTab === "document_requests" || activeTab === "requests") && (
+          <DocumentRequestsTab refreshKey={refreshTick} />
+        )}
 
-        {activeTab === "milestones" && <MilestonesTab />}
+        {activeTab === "milestones" && <MilestonesTab refreshKey={refreshTick} />}
 
         {activeTab === "compliance_calendar" && (
-          <ComplianceCalendarTab serviceName={serviceName} />
+          <ComplianceCalendarTab serviceName={serviceName} refreshKey={refreshTick} />
         )}
 
         {activeTab === "filings" && isMBRFilings && (

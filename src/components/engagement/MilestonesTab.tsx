@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { CheckCircle2, Circle, Clock, Calendar, Pencil, Trash2, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import DashboardCard from '../DashboardCard'
@@ -62,13 +62,19 @@ function formatMilestoneDate(m: any): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
 }
 
-export const MilestonesTab = () => {
+export const MilestonesTab = ({ refreshKey }: { refreshKey?: number }) => {
   const { engagement } = useEngagement()
   const engagementId =
     ((engagement as any)?._id as string | undefined) ||
     ((engagement as any)?.id as string | undefined) ||
     null
-  const { milestones: displayMilestones, loading, error, updateStatus, updateMilestone, deleteMilestone } = useMilestones(engagementId)
+  const { milestones: displayMilestones, loading, error, updateStatus, updateMilestone, deleteMilestone, reload } = useMilestones(engagementId)
+
+  useEffect(() => {
+    if (refreshKey !== undefined) {
+      reload();
+    }
+  }, [refreshKey, reload]);
 
   const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null)
   const [editTitle, setEditTitle] = useState("")

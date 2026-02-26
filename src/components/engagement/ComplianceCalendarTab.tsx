@@ -147,10 +147,11 @@ function SummaryCard({
 }
 
 interface ComplianceCalendarTabProps {
-  serviceName: string
+  serviceName: string;
+  refreshKey?: number;
 }
 
-const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceName }) => {
+const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceName, refreshKey }) => {
   const [viewMode, setViewMode] = React.useState<'list' | 'month'>('list')
   const [activeFilter, setActiveFilter] = React.useState<ComplianceStatus | 'all'>('all')
   const { engagement } = useEngagement()
@@ -161,6 +162,12 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
   const companyId = (engagement as any)?.companyId ?? (engagement as any)?.company?.id ?? null;
   const { compliances, loading, error, refetch } = useCompliances(engagementId, companyId)
   const [updatingId, setUpdatingId] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    if (refreshKey !== undefined) {
+      refetch();
+    }
+  }, [refreshKey, refetch]);
 
   const SERVICE_CATEGORY_MAP: Record<string, string> = {
     "Accounting & Bookkeeping": "ACCOUNTING",
