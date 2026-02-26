@@ -96,15 +96,15 @@ const Messages: React.FC = () => {
 
       const detailedMembers = (resRoom.data?.members ?? []).map((m: any) => {
         const rawRole =
-          m?.user?.role ||
-          m?.role ||
-          m?.user?.organizationMember?.role ||
-          m?.organizationMember?.role;
+          m?.appRole ||
+          m?.user?.appRole ||
+          "";
         const roleStr = typeof rawRole === "string" ? rawRole : "";
+        const displayRole = roleStr.replace(/^ORG_/, "PARTNER_");
 
         return {
           id: m.userId || m.user?.id,
-          role: roleStr
+          role: displayRole
         };
       });
 

@@ -21,17 +21,17 @@ function membersToParticipants(members?: Array<Record<string, any>>): User[] {
         .filter((m) => m.userId !== currentUserId)
         .map((m) => {
             const rawRole =
-                m.role ||
-                m.organizationMember?.role ||
-                m.user?.organizationMember?.role ||
-                m.user?.role;
+                m.appRole ||
+                m.user?.appRole ||
+                "";
             const roleStr = typeof rawRole === "string" ? rawRole : "";
+            const displayRole = roleStr.replace(/^ORG_/, "PARTNER_");
             return {
                 id: m.userId,
                 name: m.user
                     ? `${m.user.firstName ?? ""} ${m.user.lastName ?? ""}`.trim() || m.userId
                     : m.userId,
-                role: roleStr,
+                role: displayRole,
                 isOnline: false,
             };
         });
@@ -139,15 +139,15 @@ export function extractParticipants(messages: (ChatMessage & { sender_id?: strin
             ? `${(sender as any).firstName ?? (sender as any).first_name ?? ""} ${(sender as any).lastName ?? (sender as any).last_name ?? ""}`.trim()
             : senderId;
         const rawRole: unknown =
-            (sender as any)?.role ||
-            (sender as any)?.user?.role ||
-            (sender as any)?.organizationMember?.role ||
-            (sender as any)?.user?.organizationMember?.role;
+            (sender as any)?.appRole ||
+            (sender as any)?.user?.appRole ||
+            "";
         const roleStr = typeof rawRole === "string" ? rawRole : "";
+        const displayRole = roleStr.replace(/^ORG_/, "PARTNER_");
         seen.set(senderId, {
             id: senderId,
             name: name || senderId,
-            role: roleStr,
+            role: displayRole,
             isOnline: false,
         });
     });
