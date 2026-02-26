@@ -465,15 +465,33 @@ export const LibraryProvider: React.FC<{
     }
   }, [currentFolderId, useApi, folderPath, libraryData])
 
-  const handleView = useCallback((item: LibraryItem) => {
-    if (item.type !== "file") return
-    const url = (item as any).url
-    if (!url) {
-      console.error("No URL available for this file")
-      return
-    }
-    window.open(url, "_blank")
-  }, [])
+  const handleView = useCallback(
+    async (item: LibraryItem) => {
+      if (item.type !== "file") return
+      let url = (item as any).url as string | undefined
+      let fileName = ((item as any).file_name || (item as any).name || "file") as string
+
+      try {
+        if (!url && useApi) {
+          const res = await getFileDownloadUrl(item.id)
+          url = res.url
+          fileName = res.fileName || fileName
+        }
+      } catch (e) {
+        console.error("Failed to get file download URL", e)
+        return
+      }
+
+      if (!url) {
+        console.error("No URL available for this file")
+        return
+      }
+
+      // For view we just open the URL; browser handles file type
+      window.open(url, "_blank", "noopener,noreferrer")
+    },
+    [useApi]
+  )
 
   const handleDoubleClick = useCallback(
     (item: LibraryItem) => {
@@ -498,14 +516,28 @@ export const LibraryProvider: React.FC<{
       } else {
         files.push(...currentItems.filter((i) => i.type === "file"))
       }
+
       const fileItems = files.filter((i) => i.type === "file")
       for (const i of fileItems) {
-        const itemName = (i as any).file_name || (i as any).name
-        const itemUrl = (i as any).url
-        if (!itemUrl) continue
+        let fileName = (i as any).file_name || (i as any).name || "file"
+        let url = (i as any).url as string | undefined
+
+        try {
+          if (!url && useApi) {
+            const res = await getFileDownloadUrl(i.id)
+            url = res.url
+            fileName = res.fileName || fileName
+          }
+        } catch (e) {
+          console.error("Failed to get file download URL for download", e)
+          continue
+        }
+
+        if (!url) continue
+
         const link = document.createElement("a")
-        link.href = itemUrl
-        link.download = itemName || "file"
+        link.href = url
+        link.download = fileName || "file"
         link.target = "_blank"
         link.rel = "noopener noreferrer"
         document.body.appendChild(link)

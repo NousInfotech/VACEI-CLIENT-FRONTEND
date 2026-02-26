@@ -416,6 +416,52 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
     ? getActiveVATPeriod(vatPeriods, activeVatPeriodId)
     : undefined;
 
+  const currentStatusFromTodos = React.useMemo(() => {
+    if (allPendingItems.length === 0) {
+      return statusConfig.on_track;
+    }
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const sortedItems = [...allPendingItems].sort((a, b) => {
+      const dateA = a.deadline ? new Date(a.deadline) : new Date(8640000000000000);
+      const dateB = b.deadline ? new Date(b.deadline) : new Date(8640000000000000);
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    const top = sortedItems[0] as any;
+    const title = top.title || top.name || "Pending task";
+
+    if (top.deadline) {
+      const dl = new Date(top.deadline);
+      const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+      if (dlDate < today) {
+        return {
+          label: `Overdue – ${title}`,
+          color: statusConfig.overdue.color,
+        };
+      }
+      if (dlDate.getTime() === today.getTime()) {
+        return {
+          label: `Due today – ${title}`,
+          color: statusConfig.due_today.color,
+        };
+      }
+      if (dlDate > today) {
+        return {
+          label: `Due soon – ${title}`,
+          color: statusConfig.due_soon.color,
+        };
+      }
+    }
+
+    return {
+      label: `Action required – ${title}`,
+      color: statusConfig.action_required.color,
+    };
+  }, [allPendingItems]);
+
   const mbrStats = React.useMemo(() => {
     if (!isMBRFilings) return null;
     const now = new Date();
@@ -3122,10 +3168,10 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                           <Badge
                             className={cn(
                               "rounded-0 border px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit block",
-                              statusInfo.color,
+                              currentStatusFromTodos.color,
                             )}
                           >
-                            {statusInfo.label}
+                            {currentStatusFromTodos.label}
                           </Badge>
                         )}
                       </div>
