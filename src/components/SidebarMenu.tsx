@@ -62,24 +62,23 @@ export default function SidebarMenu({
 
     const loadMessageSummary = async () => {
       try {
-        const res = await chatService.getUnreadSummary();
+        const res = await chatService.getClientRooms();
         if (cancelled) return;
-        const data: any = res?.data ?? {};
+        const rooms = res.data ?? [];
 
-        let total: number | null = null;
-        if (typeof data.totalUnread === "number") {
-          total = data.totalUnread;
-        } else if (typeof data.total === "number") {
-          total = data.total;
-        } else if (Array.isArray((data as any).rooms)) {
-          total = (data as any).rooms.reduce(
-            (sum: number, r: any) => sum + (typeof r?.unreadCount === "number" ? r.unreadCount : 0),
-            0
-          );
-        }
+        let totalUnread = 0;
+        const unreadResults = await Promise.allSettled(
+          rooms.map(room => chatService.getUnreadCount(room.id))
+        );
 
-        if (total !== null) {
-          setMessagesTotal(total);
+        unreadResults.forEach(result => {
+          if (result.status === 'fulfilled') {
+            totalUnread += result.value.data?.unreadCount ?? 0;
+          }
+        });
+
+        if (!cancelled) {
+          setMessagesTotal(totalUnread);
         }
       } catch (e) {
         console.error("Failed to load messages summary", e);
@@ -166,17 +165,17 @@ export default function SidebarMenu({
           // Normalize service name to match SERVICE_METADATA keys
           // Replace all non-alphanumeric with _, collapse multiple _, trim _
           const normalized = s.serviceName.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-          
+
           // Try to find a matching metadata key by comparing normalized name with key or label
           const metadataKey = (Object.keys(SERVICE_METADATA).find(k => {
             const metadata = SERVICE_METADATA[k];
             const normalizedKey = k.replace(/[^A-Z0-9]+/g, "_");
             const normalizedLabel = metadata.label.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-            
-            return normalized === normalizedKey || normalized === normalizedLabel || 
-                   normalizedKey.includes(normalized) || normalizedLabel.includes(normalized);
+
+            return normalized === normalizedKey || normalized === normalizedLabel ||
+              normalizedKey.includes(normalized) || normalizedLabel.includes(normalized);
           }) || "CUSTOM") as keyof typeof SERVICE_METADATA;
-          
+
           const metadata = SERVICE_METADATA[metadataKey];
 
           // Check for single engagement to modify href
@@ -184,7 +183,7 @@ export default function SidebarMenu({
           const engagementId = hasSingleEngagement ? s.activeEngagements[0].id : undefined;
 
           const isCustom = metadataKey === "CUSTOM";
-          const serviceHref = isCustom && s.customServiceCycleId 
+          const serviceHref = isCustom && s.customServiceCycleId
             ? `${metadata.href}?customServiceId=${s.customServiceCycleId}`
             : metadata.href;
 
@@ -291,7 +290,7 @@ export default function SidebarMenu({
             currentStatusKey = pickWorst([currentStatusKey, childStatusKey].filter(Boolean) as string[]);
           }
         }
-        
+
         if (currentStatusKey) {
           const compliance = COMPLIANCE_MAP[currentStatusKey];
           itemStatus[item.slug] = {
@@ -315,7 +314,7 @@ export default function SidebarMenu({
           key => COMPLIANCE_MAP[key].label === itemStatus[item.slug]?.label
         ))
         .filter(Boolean) as string[];
-      
+
       const worst = pickWorst(statuses);
       if (worst) {
         sectionStatus[section.id] = COMPLIANCE_MAP[worst];
@@ -660,7 +659,7 @@ export default function SidebarMenu({
     const engagementId = itemConfig?.engagementId;
 
     const serviceHref = isServiceActive
-      ? engagementId 
+      ? engagementId
         ? `${item.href}/${engagementId}`
         : item.href || "#"
       : "/dashboard/services/request";

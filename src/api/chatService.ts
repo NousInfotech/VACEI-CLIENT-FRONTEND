@@ -336,7 +336,7 @@ class ChatService {
 
       if (error) throw error;
       const msg = data as ChatMessage;
-      this.notifyRoomMembers(roomId, content || "", msg?.id).catch(() => {});
+      this.notifyRoomMembers(roomId, content || "", msg?.id).catch(() => { });
       return msg;
     }
 
@@ -478,7 +478,10 @@ function normalizeRealtimePayload(raw: Record<string, unknown>): Record<string, 
     (r as any).inserted_at;
   let sentAt: string;
   if (typeof sentAtRaw === 'string') {
-    sentAt = sentAtRaw.includes('T') || sentAtRaw.endsWith('Z') ? sentAtRaw : `${String(sentAtRaw).replace(' ', 'T')}Z`;
+    sentAt = String(sentAtRaw).trim().replace(' ', 'T');
+    if (!sentAt.endsWith('Z') && !/[+-]\d{2}(:?\d{2})?$/.test(sentAt)) {
+      sentAt += 'Z';
+    }
   } else if (typeof sentAtRaw === 'number') {
     sentAt = sentAtRaw < 1e12 ? new Date(sentAtRaw * 1000).toISOString() : new Date(sentAtRaw).toISOString();
   } else {

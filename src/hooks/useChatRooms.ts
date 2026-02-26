@@ -7,7 +7,7 @@ import {
     type ChatMessage,
 } from "@/api/chatService";
 import { getDecodedUserId } from "@/utils/authUtils";
-import type { Chat, Message, User } from "@/components/dashboard/messages/types";
+import type { Chat, Message, User, UserRole } from "@/components/dashboard/messages/types";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -20,15 +20,14 @@ function membersToParticipants(members?: Array<Record<string, any>>): User[] {
     return members
         .filter((m) => m.userId !== currentUserId)
         .map((m) => {
-            const rawRole: unknown =
-                m.role ??
-                m.userRole ??
-                m.memberRole ??
-                m.user?.role ??
-                m.user?.userRole ??
-                m.user?.memberRole;
-            const roleStr = typeof rawRole === "string" ? rawRole.toUpperCase() : "";
-            const normalizedRole = roleStr.includes("ADMIN") ? "PLATFORM_ADMIN" : "PLATFORM_EMPLOYEE";
+            const rawRole: UserRole = m.user?.role;
+            const roleStr = typeof rawRole === "string" ? rawRole : "";
+            let normalizedRole = "Member";
+            if (roleStr === "ORG_ADMIN" || roleStr === "PLATFORM_ADMIN" || roleStr === "ADMIN" || roleStr === "OWNER") {
+                normalizedRole = "Platform Admin";
+            } else if (roleStr === "PLATFORM_EMPLOYEE" || roleStr === "ORG_EMPLOYEE" || roleStr === "EMPLOYEE") {
+                normalizedRole = "Platform Employee";
+            }
             return {
                 id: m.userId,
                 name: m.user
@@ -86,44 +85,44 @@ function mapClientRoomToChat(room: ClientChatRoom): Chat {
 /** Map a ChatMessage from the API → frontend Message shape */
 // Accept a flexible payload shape from both REST and realtime, where content may be null/undefined.
 export function mapApiMessage(
-  m: ChatMessage & Record<string, any>
+    m: ChatMessage & Record<string, any>
 ): Message {
 
-  const currentUserId = getDecodedUserId() ?? "";
-  const rawSenderId = m.senderId ?? m.sender_id;
-  const isMe = rawSenderId === currentUserId;
+    const currentUserId = getDecodedUserId() ?? "";
+    const rawSenderId = m.senderId ?? m.sender_id;
+    const isMe = rawSenderId === currentUserId;
 
-  const sender = m.sender ?? (m as any).sender;
-  const resolvedName = sender
-    ? `${sender.firstName ?? sender.first_name ?? ""} ${sender.lastName ?? sender.last_name ?? ""}`.trim()
-    : undefined;
+    const sender = m.sender ?? (m as any).sender;
+    const resolvedName = sender
+        ? `${sender.firstName ?? sender.first_name ?? ""} ${sender.lastName ?? sender.last_name ?? ""}`.trim()
+        : undefined;
 
-  const sentAt =
-    m.sentAt ??
-    m.sent_at ??
-    m.createdAt ??
-    m.created_at ??
-    new Date().toISOString();
+    const sentAt =
+        m.sentAt ??
+        m.sent_at ??
+        m.createdAt ??
+        m.created_at ??
+        new Date().toISOString();
 
-  const createdAtMs = new Date(sentAt).getTime();
+    const createdAtMs = new Date(sentAt).getTime();
 
-  return {
-    id: m.id,
-    senderId: isMe ? "me" : rawSenderId,
-    senderName: isMe ? undefined : resolvedName || undefined,
-    type: String(m.type ?? (m as any).type).toUpperCase() === "FILE" ? "document" : "text",
-    text: (m.content ?? (m as any).content ?? undefined) ?? undefined,
-    fileUrl: m.fileUrl ?? m.file_url ?? undefined,
-    createdAt: createdAtMs, // ✅ ONLY STORE UTC
-    timestamp: new Date(sentAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-    status: (m.participantStates?.every((s: any) => s.status === "READ")
-      ? "read"
-      : m.participantStates?.some((s: any) => s.status === "DELIVERED")
-        ? "delivered"
-        : "sent") as "sent" | "delivered" | "read",
-    replyToId: m.replyToMessageId ?? undefined,
-    replyToMessageId: m.replyToMessageId ?? undefined,
-};
+    return {
+        id: m.id,
+        senderId: isMe ? "me" : rawSenderId,
+        senderName: isMe ? undefined : resolvedName || undefined,
+        type: String(m.type ?? (m as any).type).toUpperCase() === "FILE" ? "document" : "text",
+        text: (m.content ?? (m as any).content ?? undefined) ?? undefined,
+        fileUrl: m.fileUrl ?? m.file_url ?? undefined,
+        createdAt: createdAtMs, // ✅ ONLY STORE UTC
+        timestamp: new Date(sentAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        status: (m.participantStates?.every((s: any) => s.status === "READ")
+            ? "read"
+            : m.participantStates?.some((s: any) => s.status === "DELIVERED")
+                ? "delivered"
+                : "sent") as "sent" | "delivered" | "read",
+        replyToId: m.replyToMessageId ?? undefined,
+        replyToMessageId: m.replyToMessageId ?? undefined,
+    };
 }
 
 /**
@@ -141,12 +140,18 @@ export function extractParticipants(messages: (ChatMessage & { sender_id?: strin
         const name = sender
             ? `${(sender as any).firstName ?? (sender as any).first_name ?? ""} ${(sender as any).lastName ?? (sender as any).last_name ?? ""}`.trim()
             : senderId;
-        const rawRole: unknown = (sender as any)?.role ?? (sender as any)?.userRole ?? (sender as any)?.memberRole;
-        const roleStr = typeof rawRole === "string" ? rawRole.toUpperCase() : "";
+        const rawRole: unknown = (sender as any)?.role || (sender as any)?.user?.role || (sender as any)?.organizationMember?.role || (sender as any)?.user?.organizationMember?.role;
+        const roleStr = typeof rawRole === "string" ? rawRole : "";
+        let normalizedRole = "Member";
+        if (roleStr === "ORG_ADMIN" || roleStr === "PLATFORM_ADMIN" || roleStr === "ADMIN" || roleStr === "OWNER") {
+            normalizedRole = "Platform Admin";
+        } else if (roleStr === "PLATFORM_EMPLOYEE" || roleStr === "ORG_EMPLOYEE" || roleStr === "EMPLOYEE") {
+            normalizedRole = "Platform Employee";
+        }
         seen.set(senderId, {
             id: senderId,
             name: name || senderId,
-            role: roleStr.includes("ADMIN") ? "PLATFORM_ADMIN" as const : "PLATFORM_EMPLOYEE" as const,
+            role: normalizedRole,
             isOnline: false,
         });
     });
