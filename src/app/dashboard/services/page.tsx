@@ -330,9 +330,9 @@ export default function ServicesHubPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-lg w-96 p-6 relative">
             <h2 className="text-xl font-bold mb-4">Active Services</h2>
-            <ul className="mb-4">
+            <ul className="mb-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
               {modalData.map((service, index) => (
-                <li key={index} className="border-b py-2">
+                <li key={index} className="border-b py-2 text-sm text-gray-700">
                   {service}
                 </li>
               ))}

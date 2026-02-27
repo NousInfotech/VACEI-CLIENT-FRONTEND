@@ -103,7 +103,7 @@ const Company = () => {
       />
 
       {/* Status Banners */}
-      <div className="flex flex-wrap gap-3">
+      {/* <div className="flex flex-wrap gap-3">
         {incorporationVerified ? (
           <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 rounded-xl">
             <CheckCircle2 className="h-4 w-4" />
@@ -115,7 +115,7 @@ const Company = () => {
             Incorporation Pending — Please complete the Incorporation KYC documents below
           </div>
         )}
-      </div>
+      </div> */}
       
       <PillTabs 
         tabs={tabs} 
