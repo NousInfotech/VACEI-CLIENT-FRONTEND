@@ -76,6 +76,7 @@ import {
 import { useEngagement } from "./hooks/useEngagement";
 import { Skeleton } from "@/components/ui/skeleton";
 import UpdatesTab from "./UpdatesTab";
+import FilingsTab from "./FilingsTab";
 
 export type EngagementStatus =
   | "on_track"
@@ -642,19 +643,19 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
             },
           ]
           : []),
-        ...(isPayroll ? [{ id: "payroll_filings", label: "Filings", icon: FileCheck }] : []),
-        ...(isCorporate ? [{ id: "corporate_filings", label: "Filings", icon: FileCheck }] : []),
-        ...(isCFO ? [{ id: "cfo_filings", label: "Filings", icon: FileCheck }] : []),
-        ...(isAccounting ? [{ id: "accounting_filings", label: "Filings", icon: FileCheck }] : []),
-        ...(isAudit ? [{ id: "audit_filings", label: "Filings", icon: FileCheck }] : []),
-        ...(isTax ? [{ id: "tax_filings", label: "Filings", icon: FileCheck }] : []),
-        ...(isIncorporation ? [{ id: "incorporation_filings", label: "Filings", icon: FileCheck }] : []),
-        ...(isBusinessPlans ? [{ id: "business_plans_filings", label: "Filings", icon: FileCheck }] : []),
-        ...(isLiquidation ? [{ id: "liquidation_filings", label: "Filings", icon: FileCheck }] : []),
-        ...(isBankingPayments ? [{ id: "banking_payments_filings", label: "Filings", icon: FileCheck }] : []),
-        ...(isInternationalStructuring ? [{ id: "international_filings", label: "Filings", icon: FileCheck }] : []),
-        ...(isCryptoAssets ? [{ id: "crypto_filings", label: "Filings", icon: FileCheck }] : []),
-        ...(isRegulatedLicenses ? [{ id: "regulated_licenses_filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isPayroll ? [{ id: "filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isCorporate ? [{ id: "filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isCFO ? [{ id: "filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isAccounting ? [{ id: "filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isAudit ? [{ id: "filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isTax ? [{ id: "filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isIncorporation ? [{ id: "filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isBusinessPlans ? [{ id: "filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isLiquidation ? [{ id: "filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isBankingPayments ? [{ id: "filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isInternationalStructuring ? [{ id: "filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isCryptoAssets ? [{ id: "filings", label: "Filings", icon: FileCheck }] : []),
+        ...(isRegulatedLicenses ? [{ id: "filings", label: "Filings", icon: FileCheck }] : []),
       ];
 
   return (
@@ -4781,6 +4782,10 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
 
         <div className={cn(activeTab === "chat" ? "" : "hidden")}>
           <EngagementChatTab />
+        </div>
+
+        <div className={cn(activeTab === "filings" ? "" : "hidden")}>
+          <FilingsTab />
         </div>
       </div>
     </TooltipProvider>
