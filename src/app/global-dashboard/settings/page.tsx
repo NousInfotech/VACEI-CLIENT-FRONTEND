@@ -515,6 +515,9 @@ function SettingsContent() {
 
                 {activeTab === "security" && (
                     <div className="space-y-6">
+                        {alert && activeTab === "security" && (
+                            <AlertMessage message={alert.message} variant={alert.variant} onClose={() => setAlert(null)} />
+                        )}
                         {/* MFA controls – same behavior as dashboard settings */}
                         <div className="space-y-3">
                             <h2 className="text-lg font-semibold text-brand-body">Security (MFA)</h2>
@@ -553,7 +556,7 @@ function SettingsContent() {
                                         type="radio"
                                         className="w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
                                         checked={mfaMethod === 'totp'}
-                                        onChange={() => setMfaMethod('totp')}
+                                        onChange={() => (totpConfigured ? updateMfaPreference('totp') : setMfaMethod('totp'))}
                                         disabled={mfaLoading}
                                     />
                                     <div className="flex flex-col">
@@ -568,7 +571,7 @@ function SettingsContent() {
                                         type="radio"
                                         className="w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
                                         checked={mfaMethod === 'webauthn'}
-                                        onChange={() => setMfaMethod('webauthn')}
+                                        onChange={() => updateMfaPreference('webauthn')}
                                         disabled={mfaLoading}
                                     />
                                     <div className="flex flex-col">
