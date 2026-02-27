@@ -179,7 +179,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         </div>
 
         {chat.messages.map((msg) => {
-          const isMe = currentUserId ? msg.senderId === currentUserId : msg.senderId === 'me';
+          const isMe = msg.senderId === currentUserId;
           const sender = chat.participants.find(p => p.id === msg.senderId) as any;
           const showSenderName = chat.type === 'GROUP' && !isMe;
 
