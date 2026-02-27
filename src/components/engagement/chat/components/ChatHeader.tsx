@@ -20,7 +20,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
     : (isOnline ? 'Online' : chat.participants[0]?.lastSeen || 'Offline');
 
   return (
-    <div className="h-16 flex items-center justify-between px-4 bg-[#f0f2f5] shrink-0 border-l border-gray-200 relative">
+    <div className="h-16 flex items-center justify-between px-4 bg-[#f0f2f5] shrink-0 border-l border-gray-200 relative z-20">
       <button 
         onClick={onInfoToggle}
         className="flex items-center gap-3 flex-1 text-left hover:opacity-80 transition-opacity min-w-0 h-full"
