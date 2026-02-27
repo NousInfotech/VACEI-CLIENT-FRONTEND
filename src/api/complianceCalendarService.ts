@@ -4,6 +4,8 @@
  * CLIENT: list (GLOBAL + own companies), get by id, create GLOBAL only, update/delete own entries.
  */
 
+import { dedupeInFlight } from "@/lib/inFlightDedupe";
+
 const backendUrl =
   process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
 
@@ -142,19 +144,22 @@ const basePath = "compliance-calendar";
 export async function listComplianceCalendars(
   params?: ListParams
 ): Promise<ComplianceCalendarEntry[]> {
-  const url = new URL(`${backendUrl}${basePath}`);
-  if (params?.type) url.searchParams.set("type", params.type);
-  if (params?.companyId) url.searchParams.set("companyId", params.companyId);
+  const key = `complianceCalendars:${params?.type ?? ""}:${params?.companyId ?? ""}`;
+  return dedupeInFlight(key, async () => {
+    const url = new URL(`${backendUrl}${basePath}`);
+    if (params?.type) url.searchParams.set("type", params.type);
+    if (params?.companyId) url.searchParams.set("companyId", params.companyId);
 
-  const res = await fetch(url.toString(), {
-    method: "GET",
-    headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
-    credentials: "include",
+    const res = await fetch(url.toString(), {
+      method: "GET",
+      headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+      credentials: "include",
+    });
+
+    const result = await handleResponse<ApiSuccess<ComplianceCalendarEntry[]>>(res);
+    if (!result.success || !Array.isArray(result.data)) return [];
+    return result.data;
   });
-
-  const result = await handleResponse<ApiSuccess<ComplianceCalendarEntry[]>>(res);
-  if (!result.success || !Array.isArray(result.data)) return [];
-  return result.data;
 }
 
 /**
