@@ -68,7 +68,7 @@ export default function ResetPasswordForm() {
                 body: JSON.stringify({
                     email: emailFromUrl,
                     otp: otpValue,
-                    password: password,
+                    newPassword: password,
                 }),
             });
 
