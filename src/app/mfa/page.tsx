@@ -233,7 +233,9 @@ function MfaForm() {
         ) : (
           <form onSubmit={handleCodeSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-brand-body">Security Code</label>
+              <label className="text-sm font-medium text-brand-body">
+                {method === 'email' ? 'Email security code' : 'Authenticator app code'}
+              </label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -241,7 +243,7 @@ function MfaForm() {
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ''))}
                 className="w-full h-12 rounded-lg border border-border bg-input px-4 tracking-[0.5em] text-center text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-ring"
-                placeholder="••••••"
+                placeholder="000000"
                 required
               />
               {error && <p className="text-sm text-red-500 mt-1">{error}</p>}

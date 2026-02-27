@@ -241,6 +241,7 @@ function SettingsContent() {
     const [totpOtpauthUrl, setTotpOtpauthUrl] = useState<string | null>(null);
     const [totpCode, setTotpCode] = useState('');
     const [totpVerifying, setTotpVerifying] = useState(false);
+    const [totpConfigured, setTotpConfigured] = useState(false);
     const [sessions, setSessions] = useState<{ id: string; device: string; location: string; lastSeen: string; }[]>(() => [
         { id: "local-1", device: "Chrome on Windows", location: "Unknown", lastSeen: "Just now" },
     ]);
@@ -273,12 +274,16 @@ function SettingsContent() {
                 const method = payload.mfaMethod as 'email' | 'totp' | 'webauthn' | null;
                 if (!enabled || !method) {
                     setMfaMethod('none');
+                    setTotpConfigured(false);
                 } else if (method === 'email') {
                     setMfaMethod('email');
+                    setTotpConfigured(false);
                 } else if (method === 'totp') {
                     setMfaMethod('totp');
+                    setTotpConfigured(true);
                 } else if (method === 'webauthn') {
                     setMfaMethod('webauthn');
+                    setTotpConfigured(false);
                 }
             } catch (err) {
                 console.error('Failed to load MFA preferences', err);
@@ -369,6 +374,8 @@ function SettingsContent() {
                 throw new Error(errData.message || 'Verification failed');
             }
             setTotpCode('');
+            setTotpOtpauthUrl(null);
+            setTotpConfigured(true);
             setAlert({ message: 'Authenticator app MFA enabled for your account.', variant: 'success' });
             setMfaMethod('totp');
         } catch (err: any) {
@@ -616,7 +623,26 @@ function SettingsContent() {
                             </div>
                             {mfaMethod === 'totp' && (
                                 <div className="mt-2 space-y-3 rounded-xl border border-dashed border-border bg-muted/40 p-4">
-                                    {!totpOtpauthUrl ? (
+                                    {totpConfigured && !totpOtpauthUrl ? (
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                            <div className="space-y-1 text-xs text-muted-foreground">
+                                                <p className="font-semibold text-brand-body">Authenticator app is enabled</p>
+                                                <p>
+                                                    Use your authenticator app when you log in. To move to a new device, you can
+                                                    reconfigure it – this will generate a new QR code and invalidate the old setup.
+                                                </p>
+                                            </div>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="text-[11px] font-semibold"
+                                                onClick={startTotpSetup}
+                                                disabled={mfaLoading}
+                                            >
+                                                {mfaLoading ? 'Preparing…' : 'Reconfigure app'}
+                                            </Button>
+                                        </div>
+                                    ) : !totpOtpauthUrl ? (
                                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                             <p className="text-[11px] text-muted-foreground">
                                                 Start authenticator-app setup to generate a QR code and secret for your device.
