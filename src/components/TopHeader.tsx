@@ -264,7 +264,8 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             setLatestNotifications(prev =>
                 prev.map(notif => (notif.id === id ? { ...notif, isRead: true } : notif))
             );
-            await getUnreadCount();
+            setUnreadCount(prev => Math.max(0, prev - 1));
+            // No need to re-fetch unread count as we just decremented it
         } catch (err: any) {
             console.error('Error marking as read from dropdown:', err);
         }
@@ -475,8 +476,8 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                                                     setLatestNotifications(prev =>
                                                         prev.map(notif => (notif.id === notification.id ? { ...notif, isRead: true } : notif))
                                                     );
+                                                    setUnreadCount(prev => Math.max(0, prev - 1));
                                                 }
-                                                await getUnreadCount();
                                             }}
                                         >
                                             <HeaderNotificationItem
