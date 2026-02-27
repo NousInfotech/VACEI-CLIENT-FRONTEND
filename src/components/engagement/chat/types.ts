@@ -20,6 +20,14 @@ export interface Message {
   fileSize?: string;
   timestamp: string;
   status: 'sent' | 'delivered' | 'read';
+  /** ID of the message being replied to (backend: replyToMessageId) */
+  replyToId?: string;
+  replyToMessageId?: string | null;
+  /** Resolved reply message for display (text, fileName, etc.) */
+  replyToMessage?: Message | null;
+  isEdited?: boolean;
+  reactions?: Record<string, string[]>;
+  createdAt?: number;
 }
 
 export type ChatType = 'INDIVIDUAL' | 'GROUP';

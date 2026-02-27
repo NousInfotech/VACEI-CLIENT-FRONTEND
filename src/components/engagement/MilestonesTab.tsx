@@ -188,7 +188,8 @@ export const MilestonesTab = ({ refreshKey }: { refreshKey?: number }) => {
                           )}
                         </div>
                         <div className="flex items-center gap-3">
-                          {/* Status Toggle Pill */}
+                          {/* Status Toggle Pill (WAIT / DONE / SKIP) temporarily disabled */}
+                          {/*
                           <div className={cn(
                             "flex items-center bg-gray-50/50 rounded-full border border-gray-100 p-0.5 shadow-inner transition-all duration-300",
                             loading ? "opacity-50 pointer-events-none" : "opacity-0 -translate-x-2 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:translate-x-0 focus-within:pointer-events-auto"
@@ -224,6 +225,7 @@ export const MilestonesTab = ({ refreshKey }: { refreshKey?: number }) => {
                               );
                             })}
                           </div>
+                          */}
 
                           {/* Date Pill */}
                           <div className="flex items-center gap-2 px-4 py-1.5 bg-white rounded-full border border-gray-100 shadow-sm text-xs font-bold text-slate-500">
@@ -231,7 +233,8 @@ export const MilestonesTab = ({ refreshKey }: { refreshKey?: number }) => {
                             <span>{formatMilestoneDate(milestone)}</span>
                           </div>
 
-                          {/* Actions */}
+                          {/* Actions (edit/delete) temporarily disabled */}
+                          {/*
                           <div className={cn(
                             "flex items-center gap-1 ml-1 transition-all duration-300",
                             loading ? "opacity-50 pointer-events-none" : "opacity-0 translate-x-2 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:translate-x-0 focus-within:pointer-events-auto"
@@ -257,6 +260,7 @@ export const MilestonesTab = ({ refreshKey }: { refreshKey?: number }) => {
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
+                          */}
                         </div>
                       </div>
                       <p className="text-gray-600 text-sm font-medium leading-relaxed">

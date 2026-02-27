@@ -64,6 +64,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const replyingTo = replyingToProp !== undefined ? replyingToProp : internalReplyingTo;
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const lastMessagesLength = useRef(chat.messages.length);
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedMessageIds, setSelectedMessageIds] = useState<string[]>([]);
 
   // Effect for search-triggered scroll
   useEffect(() => {
@@ -120,6 +122,24 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
   const handleCancelEdit = () => {
     setEditingMessage(null);
+  };
+
+  const toggleSelectMessage = (messageId: string) => {
+    setSelectedMessageIds(prev =>
+      prev.includes(messageId) ? prev.filter(id => id !== messageId) : [...prev, messageId]
+    );
+  };
+
+  const handleBulkCopy = () => {
+    if (!selectedMessageIds.length) return;
+    const selected = chat.messages.filter(m => selectedMessageIds.includes(m.id));
+    if (!selected.length) return;
+    const text = selected.map(m => m.text || '').join('\n');
+    if (text) {
+      navigator.clipboard.writeText(text);
+    }
+    setIsSelectMode(false);
+    setSelectedMessageIds([]);
   };
 
   return (
@@ -185,11 +205,49 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 onDelete={() => onDeleteMessage(msg.id)}
                 onReact={(emoji) => onReactToMessage(msg.id, emoji)}
                 onForward={() => onForwardMessage(msg)}
+                isSelectMode={isSelectMode}
+                isSelected={selectedMessageIds.includes(msg.id)}
+                onSelect={() => toggleSelectMessage(msg.id)}
+                onEnterSelectMode={() => {
+                  setIsSelectMode(true);
+                  setSelectedMessageIds(prev =>
+                    prev.length ? prev : [msg.id]
+                  );
+                }}
               />
             </div>
           );
         })}
       </div>
+
+      {isSelectMode && (
+        <div className="absolute bottom-0 left-0 right-0 bg-[#f0f2f5] border-t border-gray-200 z-50 flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                setIsSelectMode(false);
+                setSelectedMessageIds([]);
+              }}
+              className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+            >
+              <span className="text-xs text-gray-500">✕</span>
+            </button>
+            <span className="font-semibold text-gray-700 text-sm">
+              {selectedMessageIds.length} selected
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleBulkCopy}
+              className="p-2 hover:bg-gray-200 rounded-full transition-colors flex flex-col items-center gap-1 group"
+            >
+              <span className="text-sm text-gray-700 group-hover:text-primary font-medium">
+                Copy
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
 
       <MessageInput
         onSendMessage={onSendMessage}

@@ -495,23 +495,27 @@ const Messages: React.FC = () => {
             {isSelectMode && (
               <div className="absolute bottom-0 left-0 right-0 bg-[#f0f2f5] border-t border-gray-200 z-50 flex items-center justify-between px-6 py-4 animate-in slide-in-from-bottom duration-200">
                 <div className="flex items-center gap-3">
-                  <button onClick={() => { setIsSelectMode(false); setSelectedMessageIds([]); }} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                  <button
+                    onClick={() => {
+                      setIsSelectMode(false);
+                      setSelectedMessageIds([]);
+                    }}
+                    className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                  >
                     <X className="w-5 h-5 text-gray-500" />
                   </button>
-                  <span className="font-semibold text-gray-700">{selectedMessageIds.length} selected</span>
+                  <span className="font-semibold text-gray-700">
+                    {selectedMessageIds.length} selected
+                  </span>
                 </div>
                 <div className="flex items-center gap-6">
-                  <button onClick={handleBulkCopy} className="p-2 hover:bg-gray-200 rounded-full transition-colors flex flex-col items-center gap-1 group">
+                  {/* In select mode, only Copy is available */}
+                  <button
+                    onClick={handleBulkCopy}
+                    className="p-2 hover:bg-gray-200 rounded-full transition-colors flex flex-col items-center gap-1 group"
+                  >
                     <Copy className="w-5 h-5 text-gray-600 group-hover:text-primary" />
                     <span className="text-[10px] text-gray-500 font-medium">Copy</span>
-                  </button>
-                  <button onClick={handleBulkForward} className="p-2 hover:bg-gray-200 rounded-full transition-colors flex flex-col items-center gap-1 group">
-                    <Forward className="w-5 h-5 text-gray-600 group-hover:text-primary" />
-                    <span className="text-[10px] text-gray-500 font-medium">Share</span>
-                  </button>
-                  <button onClick={handleBulkDelete} className="p-2 hover:bg-gray-200 rounded-full transition-colors flex flex-col items-center gap-1 group">
-                    <Trash2 className="w-5 h-5 text-red-500" />
-                    <span className="text-[10px] text-red-500 font-medium">Delete</span>
                   </button>
                 </div>
               </div>

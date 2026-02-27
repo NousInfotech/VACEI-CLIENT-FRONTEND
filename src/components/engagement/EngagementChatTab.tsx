@@ -71,12 +71,18 @@ export default function EngagementChatTab() {
       };
     });
 
-    const messages: Message[] = apiMessages.map((m) => {
+    // First map raw API messages into our Message shape
+    const baseMessages: Message[] = apiMessages.map((m: any) => {
       const fileUrl = m.fileUrl ?? undefined;
-      const fileName = fileUrl ? fileUrl.split("/").pop() ?? fileUrl.split("?")[0]?.split("/").pop() ?? "File" : undefined;
+      const fileName =
+        fileUrl
+          ? fileUrl.split("/").pop() ?? fileUrl.split("?")[0]?.split("/").pop() ?? "File"
+          : undefined;
       const hasImageExt = (s: string) => /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$|\s)/i.test(s);
       const isImage = fileUrl && (hasImageExt(fileUrl) || hasImageExt(m.content || ""));
       const displayType = fileUrl ? (isImage ? "image" : "document") : "text";
+      const sentAt = m.sentAt || m.createdAt || m.created_at || new Date().toISOString();
+
       return {
         id: m.id,
         senderId: m.senderId,
@@ -84,9 +90,25 @@ export default function EngagementChatTab() {
         text: m.content ?? undefined,
         fileUrl,
         fileName,
-        timestamp: formatTime(m.sentAt),
+        timestamp: formatTime(sentAt),
         status: mapStatus(m.participantStates?.[0]?.status),
+        createdAt: new Date(sentAt).getTime(),
+        replyToId: m.replyToMessageId ?? undefined,
+        replyToMessageId: m.replyToMessageId ?? null,
+        // replyToMessage filled in second pass below
+        replyToMessage: null,
       };
+    });
+
+    // Second pass: resolve replyToMessage so the UI can show quoted preview like global chat
+    const byId = new Map<string, Message>();
+    baseMessages.forEach((msg) => {
+      byId.set(msg.id, msg);
+    });
+    baseMessages.forEach((msg) => {
+      if (msg.replyToMessageId) {
+        msg.replyToMessage = byId.get(msg.replyToMessageId) ?? null;
+      }
     });
 
     return {
@@ -94,7 +116,7 @@ export default function EngagementChatTab() {
       type: "GROUP" as const,
       name: "Engagement Chat",
       participants,
-      messages,
+      messages: baseMessages,
       unreadCount: 0,
     };
   }, [apiMessages, members, engagementId, roomId]);
@@ -136,7 +158,7 @@ export default function EngagementChatTab() {
         replyingTo?.id &&
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(replyingTo.id)
           ? replyingTo.id
-          : undefined;
+          : null;
 
       if (content.type === "text" && content.text) {
         await sendMessage(content.text, undefined, replyToIdForSend);

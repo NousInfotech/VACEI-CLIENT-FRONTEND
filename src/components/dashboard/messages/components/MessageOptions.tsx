@@ -1,11 +1,10 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { 
-  Reply, 
-  Forward, 
-  Trash2, 
-  Copy, 
-  CheckSquare, 
+import {
+  Reply,
+  Trash2,
+  Copy,
+  CheckSquare,
   Plus,
   ChevronLeft,
   Pencil
@@ -81,12 +80,14 @@ export const MessageOptions: React.FC<MessageOptionsProps> = ({
   const now = Date.now();
   const isEditable = isMe && !isDeleted && createdAt && (now - createdAt < 15 * 60 * 1000);
 
-  const mainOptions = isDeleted ? [] : [
-    { id: 'reply' as const, label: 'Reply', icon: Reply },
-    ...(isEditable ? [{ id: 'edit' as const, label: 'Edit', icon: Pencil }] : []),
-    { id: 'copy' as const, label: 'Copy', icon: Copy },
-    { id: 'forward' as const, label: 'Forward', icon: Forward },
-  ];
+  const mainOptions = isDeleted
+    ? []
+    : [
+        { id: 'reply' as const, label: 'Reply', icon: Reply },
+        ...(isEditable ? [{ id: 'edit' as const, label: 'Edit', icon: Pencil }] : []),
+        { id: 'copy' as const, label: 'Copy', icon: Copy },
+        // Forward disabled globally as per requirements
+      ];
 
   const footerOptions = [
     { id: 'select' as const, label: 'Select', icon: CheckSquare },
