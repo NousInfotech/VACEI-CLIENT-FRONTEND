@@ -21,6 +21,12 @@ interface PageHeaderProps {
   className?: string;
   variant?: "dark" | "light";
   animate?: boolean;
+  todoStats?: {
+    completed: number;
+    total: number;
+    healthStatus: 'Action Required' | 'Healthy';
+  };
+  todoStatsHref?: string;
 }
 
 export const PageHeader = ({
@@ -36,8 +42,10 @@ export const PageHeader = ({
   className,
   variant = "dark",
   animate = true,
+  todoStats,
+  todoStatsHref,
 }: PageHeaderProps) => {
-  const hasStatusBar = !!(activeCompany || badge || riskLevel);
+  const hasStatusBar = !!(activeCompany || badge || riskLevel || todoStats);
   const isLight = variant === "light";
 
   return (
@@ -117,6 +125,16 @@ export const PageHeader = ({
                   )}>{riskLevel.level}</span>
                 </Link>
               )}
+
+              {todoStats && (
+                todoStatsHref ? (
+                  <Link href={todoStatsHref} className="cursor-pointer hover:opacity-80 transition-opacity">
+                    <TodoStatsContent todoStats={todoStats} isLight={isLight} />
+                  </Link>
+                ) : (
+                  <TodoStatsContent todoStats={todoStats} isLight={isLight} />
+                )
+              )}
             </div>
           )}
         </div>
@@ -128,6 +146,27 @@ export const PageHeader = ({
         )}
       </div>
     </DashboardCard>
+  );
+};
+
+const TodoStatsContent = ({ todoStats, isLight }: { todoStats: NonNullable<PageHeaderProps["todoStats"]>, isLight: boolean }) => {
+  const isHealthy = todoStats.healthStatus === "Healthy";
+  
+  return (
+    <div className={cn(
+      "flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-sm transition-all",
+      isHealthy 
+        ? (isLight ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400")
+        : (isLight ? "bg-amber-50 border-amber-200 text-amber-700" : "bg-amber-500/10 border-amber-500/20 text-amber-400")
+    )}>
+      <div className={cn(
+        "h-2 w-2 rounded-full",
+        isHealthy ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
+      )} />
+      <span className="text-[11px] font-bold uppercase tracking-wider">
+        {todoStats.healthStatus}
+      </span>
+    </div>
   );
 };
 

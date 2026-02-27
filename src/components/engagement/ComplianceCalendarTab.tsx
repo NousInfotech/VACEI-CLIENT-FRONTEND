@@ -31,10 +31,11 @@ interface ComplianceItem {
   canMarkDone?: boolean
 }
 
-function mapApiToComplianceItem(c: EngagementCompliance & { _fromComplianceCalendar?: boolean }): ComplianceItem {
+function mapApiToComplianceItem(c: EngagementCompliance & { _fromComplianceCalendar?: boolean, deadline?: string }): ComplianceItem {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
-  const deadline = new Date(c.deadline)
+  const dueDateStr = c.deadline || (c as any).dueDate
+  const deadline = new Date(dueDateStr)
   deadline.setHours(0, 0, 0, 0)
   const isToday = today.getTime() === deadline.getTime()
   const isPast = deadline.getTime() < today.getTime()
@@ -45,21 +46,21 @@ function mapApiToComplianceItem(c: EngagementCompliance & { _fromComplianceCalen
   else if (isToday) status = 'due_today'
   else status = 'upcoming'
 
-  const authority = c.customServiceCycle?.title || c.service || 'Internal'
+  const authority = c.customServiceCycle?.title || c.service || (c as any).serviceCategory || 'Internal'
   const canMarkDone = c._fromComplianceCalendar === true ? false : true
   return {
     id: c.id,
     complianceId: c.id,
     engagementId: c.engagementId,
     title: c.title,
-    type: c.type || c.service,
-    dueDate: c.deadline,
+    type: c.type || c.service || (c as any).serviceCategory || 'Compliance',
+    dueDate: dueDateStr,
     status,
     authority,
     description: c.description || '',
     cta: c.cta || 'Mark as done',
     apiStatus: c.status,
-    serviceCategory: c.service || '',
+    serviceCategory: c.service || (c as any).serviceCategory || '',
     canMarkDone,
   }
 }
