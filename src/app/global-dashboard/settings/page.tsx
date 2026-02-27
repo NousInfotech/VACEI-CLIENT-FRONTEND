@@ -3,7 +3,8 @@
 import { Suspense, useState, useEffect, ChangeEvent, FocusEvent } from 'react';
 import * as Yup from 'yup';
 import { ValidationError } from 'yup';
-import { changePassword } from '@/api/authService';
+import { changePassword, updateProfile } from '@/api/authService';
+import { fetchPreferencesAPI, updatePreferencesAPI } from '@/api/notificationService';
 import AlertMessage, { AlertVariant } from '@/components/AlertMessage';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
@@ -13,13 +14,6 @@ import PillTabs from "@/components/shared/PillTabs";
 import { useTabQuery } from "@/hooks/useTabQuery";
 import { PageHeader } from "@/components/shared/PageHeader";
 
-// Simple textarea using Input styling
-const Textarea = (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
-    <textarea
-        {...props}
-        className={`block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-blue-500 focus:border-brand-primary sm:text-sm ${props.className || ""}`}
-    />
-);
 
 // Define the shape of your form data
 interface FormData {
@@ -122,25 +116,62 @@ function SettingsContent() {
         }
     };
 
-    const [profile, setProfile] = useState<{ companyName: string; regNumber: string; address: string; contact: string; }>(() => {
-        if (typeof window !== "undefined") {
-            const raw = localStorage.getItem("vacei-global-settings-profile");
-            if (raw) {
-                try { return JSON.parse(raw); } catch { /* ignore */ }
-            }
-        }
-        return { companyName: "", regNumber: "", address: "", contact: "" };
-    });
+    const [profile, setProfile] = useState<{ firstName: string; lastName: string; }>({ firstName: "", lastName: "" });
+    const [initialLoad, setInitialLoad] = useState(true);
     
-    const [notifications, setNotifications] = useState<{ emailEnabled: boolean; inAppEnabled: boolean; docRequests: boolean; tasks: boolean; deadlines: boolean; }>(() => {
+    useEffect(() => {
         if (typeof window !== "undefined") {
-            const raw = localStorage.getItem("vacei-global-settings-notifications");
-            if (raw) {
-                try { return JSON.parse(raw); } catch { /* ignore */ }
+            const tk = localStorage.getItem("token");
+            const uid = localStorage.getItem("user_id");
+            if (tk && uid) {
+                // Fetch actual user data
+                fetch(`${process.env.NEXT_PUBLIC_VACEI_BACKEND_URL || 'http://localhost:5000/api/v1/'}auth/me`, {
+                    headers: { 'Authorization': `Bearer ${tk}` }
+                }).then(r=>r.json()).then(data => {
+                    if (data?.data?.user) {
+                        setProfile({
+                            firstName: data.data.user.firstName || "",
+                            lastName: data.data.user.lastName || ""
+                        });
+                    }
+                }).catch(console.error);
+                
+                // Fetch notifications
+                fetchPreferencesAPI().then(prefs => {
+                    setNotifications(prev => ({ ...prev, ...prefs }));
+                }).catch(console.error);
             }
         }
-        return { emailEnabled: true, inAppEnabled: true, docRequests: true, tasks: true, deadlines: true };
-    });
+    }, []);
+    
+    const [notifications, setNotifications] = useState<{ emailEnabled: boolean; inAppEnabled: boolean; pushEnabled: boolean; soundEnabled: boolean; }>({ emailEnabled: true, inAppEnabled: true, pushEnabled: true, soundEnabled: true });
+    
+    const togglePreference = async (key: 'emailEnabled'|'inAppEnabled'|'pushEnabled'|'soundEnabled') => {
+        const newValue = !notifications[key];
+        setNotifications(prev => ({ ...prev, [key]: newValue }));
+        try {
+            await updatePreferencesAPI({ [key]: newValue });
+        } catch (err) {
+            setNotifications(prev => ({ ...prev, [key]: !newValue }));
+        }
+    };
+    
+    const handleProfileSubmit = async () => {
+        if (!profile.firstName || !profile.lastName) return;
+        try {
+            await updateProfile(profile);
+            setAlert({ message: 'Profile updated successfully!', variant: 'success' });
+            
+            // Also update local storage username
+            if (typeof window !== "undefined") {
+                localStorage.setItem("username", `${profile.firstName} ${profile.lastName}`);
+                // Refresh window so other components see updated name
+                window.dispatchEvent(new Event('storage'));
+            }
+        } catch (error: any) {
+            setAlert({ message: error.message || 'Failed to update profile.', variant: 'danger' });
+        }
+    };
     
     const [mfaEnabled, setMfaEnabled] = useState(false);
     const [sessions, setSessions] = useState<{ id: string; device: string; location: string; lastSeen: string; }[]>(() => [
@@ -150,13 +181,6 @@ function SettingsContent() {
         { id: "1", name: "You", email: "you@example.com", role: "Platform Admin" },
     ]);
     const [newUser, setNewUser] = useState<{ name: string; email: string; role: string; }>({ name: "", email: "", role: "Viewer" });
-
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            localStorage.setItem("vacei-global-settings-profile", JSON.stringify(profile));
-            localStorage.setItem("vacei-global-settings-notifications", JSON.stringify(notifications));
-        }
-    }, [profile, notifications]);
 
     const [activeTab, setActiveTab] = useTabQuery("general");
 
@@ -171,10 +195,8 @@ function SettingsContent() {
                 <PillTabs
                     tabs={[
                         { id: "general", label: "Profile", icon: SettingsIcon },
-                        { id: "users", label: "Global Users", icon: Users },
                         { id: "notifications", label: "Notifications", icon: Bell },
                         { id: "security", label: "Security & sessions", icon: Shield },
-                        { id: "billing", label: "Billing", icon: Wallet },
                         { id: "password", label: "Password", icon: Lock },
                     ]}
                     activeTab={activeTab}
@@ -182,70 +204,46 @@ function SettingsContent() {
                 />
 
                 {activeTab === "general" && (
-                    <div className="space-y-3">
-                        <h2 className="text-lg font-semibold text-brand-body">Global Profile (UI-only)</h2>
+                    <div className="space-y-4">
+                        <h2 className="text-lg font-semibold text-brand-body">My Profile</h2>
+                        {alert && activeTab === "general" && (
+                            <AlertMessage message={alert.message} variant={alert.variant} onClose={() => setAlert(null)} />
+                        )}
                         <div className="grid gap-3 md:grid-cols-2">
-                            <Input placeholder="Client name" value={profile.companyName} onChange={(e)=>setProfile(p=>({...p,companyName:e.target.value}))}/>
-                            <Input placeholder="Registration reference" value={profile.regNumber} onChange={(e)=>setProfile(p=>({...p,regNumber:e.target.value}))}/>
+                            <div>
+                                <label className="block text-sm font-medium text-brand-body mb-1">First Name</label>
+                                <Input placeholder="First Name" value={profile.firstName} onChange={(e)=>setProfile(p=>({...p,firstName:e.target.value}))}/>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-brand-body mb-1">Last Name</label>
+                                <Input placeholder="Last Name" value={profile.lastName} onChange={(e)=>setProfile(p=>({...p,lastName:e.target.value}))}/>
+                            </div>
                         </div>
-                        <Textarea rows={2} placeholder="Global Address" value={profile.address} onChange={(e)=>setProfile(p=>({...p,address:e.target.value}))}/>
-                        <Input placeholder="Primary contact" value={profile.contact} onChange={(e)=>setProfile(p=>({...p,contact:e.target.value}))}/>
+                        <Button onClick={handleProfileSubmit} variant="default" className="mt-2 text-primary-foreground font-normal">Save Changes</Button>
                     </div>
                 )}
 
-                {activeTab === "users" && (
-                    <div className="space-y-3">
-                        <h2 className="text-lg font-semibold text-brand-body">Global Users & roles (UI-only)</h2>
-                        <div className="flex flex-col gap-2 md:flex-row">
-                            <Input placeholder="Name" value={newUser.name} onChange={(e)=>setNewUser(u=>({...u,name:e.target.value}))}/>
-                            <Input placeholder="Email" value={newUser.email} onChange={(e)=>setNewUser(u=>({...u,email:e.target.value}))}/>
-                            <Dropdown
-                                trigger={
-                                    <Button variant="outline" className="w-full h-9 justify-between">
-                                        {newUser.role || "Select role"}
-                                        <ChevronDown className="h-4 w-4 opacity-50" />
-                                    </Button>
-                                }
-                                items={[
-                                    { id: "Admin", label: "Admin", onClick: () => setNewUser(u => ({ ...u, role: "Admin" })) },
-                                    { id: "Viewer", label: "Viewer", onClick: () => setNewUser(u => ({ ...u, role: "Viewer" })) }
-                                ]}
-                            />
-                            <Button className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow" onClick={()=>{ if(newUser.name && newUser.email){ setUsers(prev=>[...prev,{...newUser,id:Date.now().toString()}]); setNewUser({name:"",email:"",role:"Viewer"});} }}>Add</Button>
-                        </div>
-                        <div className="space-y-2">
-                            {users.map(u=>(
-                                <div key={u.id} className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-sm shadow-sm">
-                                    <div className="flex flex-col">
-                                        <span className="font-semibold text-brand-body">{u.name}</span>
-                                        <span className="text-muted-foreground text-xs mt-0.5">{u.email}</span>
-                                    </div>
-                                    <span className="text-xs rounded-lg bg-muted border border-border px-2.5 py-1 font-medium">{u.role}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                {/* Users tab removed */}
 
                 {activeTab === "notifications" && (
                     <div className="space-y-3">
-                        <h2 className="text-lg font-semibold text-brand-body">Global Notification preferences (UI-only)</h2>
-                        <div className="grid gap-2 md:grid-cols-2">
-                            <label className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={notifications.emailEnabled} onChange={()=>setNotifications(n=>({...n,emailEnabled:!n.emailEnabled}))}/>
-                                Email notifications
+                        <h2 className="text-lg font-semibold text-brand-body">Global Notification Preferences</h2>
+                        <div className="grid gap-4 md:grid-cols-2 mt-4">
+                            <label className="flex items-center justify-between p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                <span className="text-sm font-medium text-brand-body">Email notifications</span>
+                                <input type="checkbox" checked={Boolean(notifications.emailEnabled)} onChange={()=>togglePreference('emailEnabled')} className="w-4 h-4 text-primary rounded border-gray-300"/>
                             </label>
-                            <label className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={notifications.inAppEnabled} onChange={()=>setNotifications(n=>({...n,inAppEnabled:!n.inAppEnabled}))}/>
-                                In-app notifications
+                            <label className="flex items-center justify-between p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                <span className="text-sm font-medium text-brand-body">In-app notifications</span>
+                                <input type="checkbox" checked={Boolean(notifications.inAppEnabled)} onChange={()=>togglePreference('inAppEnabled')} className="w-4 h-4 text-primary rounded border-gray-300"/>
                             </label>
-                            <label className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={notifications.docRequests} onChange={()=>setNotifications(n=>({...n,docRequests:!n.docRequests}))}/>
-                                Document requests
+                            <label className="flex items-center justify-between p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                <span className="text-sm font-medium text-brand-body">Push Notifications</span>
+                                <input type="checkbox" checked={Boolean(notifications.pushEnabled)} onChange={()=>togglePreference('pushEnabled')} className="w-4 h-4 text-primary rounded border-gray-300"/>
                             </label>
-                            <label className="flex items-center gap-2 text-sm">
-                                <input type="checkbox" checked={notifications.tasks} onChange={()=>setNotifications(n=>({...n,tasks:!n.tasks}))}/>
-                                Task assignments
+                            <label className="flex items-center justify-between p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                <span className="text-sm font-medium text-brand-body">Sound Notifications</span>
+                                <input type="checkbox" checked={Boolean(notifications.soundEnabled)} onChange={()=>togglePreference('soundEnabled')} className="w-4 h-4 text-primary rounded border-gray-300"/>
                             </label>
                         </div>
                     </div>
@@ -280,14 +278,7 @@ function SettingsContent() {
                     </div>
                 )}
 
-                {activeTab === "billing" && (
-                    <div className="space-y-2">
-                        <h2 className="text-lg font-semibold text-brand-body">Billing</h2>
-                        <p className="text-sm text-muted-foreground">
-                            Manage your subscription and billing details here.
-                        </p>
-                    </div>
-                )}
+                {/* Billing tab removed */}
 
                 {activeTab === "password" && (
                 <div className="mt-1">

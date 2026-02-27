@@ -13,13 +13,13 @@ export interface SidebarServiceData {
   customServiceCycleId?: string | null;
   activeEngagements: { id: string; name: string | null }[];
   worstCompliance:
-    | "OVERDUE"
-    | "DUE_TODAY"
-    | "DUE_SOON"
-    | "ACTION_REQUIRED"
-    | "ACTION_TAKEN"
-    | "COMPLETED"
-    | "ON_TRACK";
+  | "OVERDUE"
+  | "DUE_TODAY"
+  | "DUE_SOON"
+  | "ACTION_REQUIRED"
+  | "ACTION_TAKEN"
+  | "COMPLETED"
+  | "ON_TRACK";
 }
 
 export const fetchSidebarData = async (
@@ -46,5 +46,42 @@ export const fetchSidebarData = async (
   // ✅ Log only sidebar data
   console.log("Sidebar Data:", result.data);
 
+  return result.data;
+};
+
+export const getCompanyProfile = async (companyId: string): Promise<any> => {
+  const response = await fetch(`${backendUrl}companies/${companyId}`, {
+    method: "GET",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to fetch company profile");
+  }
+
+  const result = await response.json();
+  return result.data;
+};
+
+export const updateCompanyProfile = async (companyId: string, payload: any): Promise<any> => {
+  const response = await fetch(`${backendUrl}companies/${companyId}`, {
+    method: "PUT",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to update company profile");
+  }
+
+  const result = await response.json();
   return result.data;
 };

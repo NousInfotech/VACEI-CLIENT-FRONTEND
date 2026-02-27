@@ -179,20 +179,47 @@ export default function CompanyListTable() {
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-right border border-gray-100">
-                                    {company.incorporationStatus || company.serviceRequestStatus === 'APPROVED' ? (
+                                    {/* Both verified → View Dashboard */}
+                                    {company.incorporationStatus && company.kycStatus ? (
+                                        <Button
+                                            size="sm"
+                                            className="rounded-xl h-9 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                            onClick={() => {
+                                                setActiveCompanyId(company.id);
+                                                router.push('/dashboard');
+                                            }}
+                                        >
+                                            <Eye className="h-4 w-4 mr-2" />
+                                            View Dashboard
+                                        </Button>
+                                    ) : company.incorporationStatus && !company.kycStatus ? (
+                                        /* Incorporated but KYC pending → View (KYC tab) */
                                         <Button
                                             size="sm"
                                             className="rounded-xl h-9"
                                             onClick={() => {
-                                                // Set active company and go to the main company dashboard (/dashboard)
                                                 setActiveCompanyId(company.id);
-                                                router.push("/dashboard");
+                                                router.push(`/global-dashboard/companies/${company.id}?tab=kyc&highlight=kyc`);
+                                            }}
+                                        >
+                                            <Eye className="h-4 w-4 mr-2" />
+                                            View
+                                        </Button>
+                                    ) : company.serviceRequestStatus === 'APPROVED' ? (
+                                        /* SR approved, incorporation cycle created → View (Incorporation tab) */
+                                        <Button
+                                            size="sm"
+                                            className="rounded-xl h-9"
+                                            onClick={() => {
+                                                setActiveCompanyId(company.id);
+                                                router.push(`/global-dashboard/companies/${company.id}?tab=incorporation&highlight=incorporation`);
                                             }}
                                         >
                                             <Eye className="h-4 w-4 mr-2" />
                                             View
                                         </Button>
                                     ) : company.serviceRequestStatus ? (
+                                        /* Any other SR status (PENDING, IN_REVIEW, REJECTED…) → status badge only */
                                         <div className="flex justify-end">
                                             <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider border border-blue-100 flex items-center gap-1.5">
                                                 <div className="w-1 h-1 bg-blue-600 rounded-full animate-pulse" />
@@ -200,6 +227,7 @@ export default function CompanyListTable() {
                                             </span>
                                         </div>
                                     ) : (
+                                        /* No request at all → one-time Service Request button */
                                         <Button
                                             size="sm"
                                             variant="outline"

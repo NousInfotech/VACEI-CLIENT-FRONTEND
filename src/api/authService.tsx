@@ -54,7 +54,7 @@ interface ChangePasswordResponse {
  */
 export async function changePassword(payload: ChangePasswordPayload): Promise<ChangePasswordResponse> {
   try {
-    const res = await fetch(`${backendUrl}auth/change-password`, {
+      const res = await fetch(`${backendUrl}auth/change-password`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -69,6 +69,35 @@ export async function changePassword(payload: ChangePasswordPayload): Promise<Ch
     };
   } catch (error) {
     console.error("Error changing password in service:", error);
+    throw error;
+  }
+}
+
+/**
+ * Payload for changing a user's profile.
+ */
+interface UpdateProfilePayload {
+  firstName?: string;
+  lastName?: string;
+}
+
+/**
+ * API call to change a user's profile.
+ */
+export async function updateProfile(payload: UpdateProfilePayload): Promise<any> {
+  try {
+    const res = await fetch(`${backendUrl}auth/me`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify(payload),
+    });
+
+    return await handleResponse(res);
+  } catch (error) {
+    console.error("Error updating profile in service:", error);
     throw error;
   }
 }

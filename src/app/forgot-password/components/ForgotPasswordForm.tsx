@@ -102,9 +102,9 @@ export default function ForgotPasswordForm() {
                 </div>
 
                 <Button
-                  variant={"outline"}
+                  variant="default"
                   type="submit"
-                  className="px-4 py-2 rounded-lg text-sm cursor-pointer bg-sidebar-background border-sky-800 hover:border-black hover:bg-black/85 hover:text-card-foreground text-card-foreground h-[40px] font-normal mt-2"
+                  className="w-full h-12 mt-2 rounded-lg font-semibold text-base bg-primary text-primary-foreground hover:opacity-90"
                   disabled={loading}
                 >
                   {loading ? "Sending..." : "Send Reset Link"}
