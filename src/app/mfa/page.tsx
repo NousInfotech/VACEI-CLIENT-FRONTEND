@@ -52,7 +52,9 @@ function MfaForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get('email') || '';
-  const method = (searchParams.get('method') as MfaMethod) || 'email';
+  const rawMethod = searchParams.get('method')?.toLowerCase();
+  const method: MfaMethod =
+    rawMethod === 'totp' || rawMethod === 'webauthn' ? rawMethod : 'email';
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -105,8 +107,8 @@ function MfaForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
-          otp: code,
-          method: method === 'totp' ? 'totp' : 'email',
+          otp: code.trim().replace(/\s/g, ''),
+          method,
         }),
       });
 

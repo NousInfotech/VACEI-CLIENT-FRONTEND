@@ -79,13 +79,13 @@ export default function LoginForm() {
             const responseData = await response.json();
             console.log('Login success response:', responseData);
             
-            // Backend response structure: { success: true, mfaRequired: true, mfaMethod } or { success: true, data: { user, token, client, mfaRequired, mfaMethod }, message: "..." }
+            // Backend response structure: { success, data: { user, mfaRequired, mfaMethod }, message }
             const loginData = responseData.data || responseData;
             const mfaRequired = responseData.mfaRequired ?? loginData.mfaRequired;
-            const mfaMethod = loginData.mfaMethod || 'email';
+            const mfaMethod = (loginData.mfaMethod ?? responseData.mfaMethod) || 'email';
             
             if (mfaRequired) {
-                router.push(`/mfa?email=${encodeURIComponent(email)}&method=${mfaMethod}`);
+                router.push(`/mfa?email=${encodeURIComponent(email)}&method=${encodeURIComponent(mfaMethod)}`);
                 return;
             }
 
