@@ -171,21 +171,7 @@ export function useChat(
     async (messageId: string) => {
       try {
         await chatService.deleteMessage(messageId);
-        // Soft-delete locally to match global chat UX
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === messageId
-              ? {
-                  ...m,
-                  content: null,
-                  fileUrl: null,
-                  type: "TEXT",
-                  isDeleted: true,
-                  reactions: {},
-                }
-              : m
-          )
-        );
+        setMessages((prev) => prev.filter((m) => m.id !== messageId));
       } catch (err) {
         console.error("Failed to delete message:", err);
         throw err;

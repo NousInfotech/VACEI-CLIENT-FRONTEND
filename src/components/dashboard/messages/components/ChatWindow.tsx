@@ -41,8 +41,6 @@ interface ChatWindowProps {
   hideMore?: boolean;
   hideSubtitle?: boolean;
   hideAvatar?: boolean;
-  /** Optional current user id; when provided we use it (and fall back to 'me') for alignment */
-  currentUserId?: string | null;
 }
 
 /** Format date label for the divider chip */
@@ -89,8 +87,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   hideSearch = false,
   hideMore = false,
   hideSubtitle = false,
-  hideAvatar = false,
-  currentUserId,
+  hideAvatar = false
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [highlightedId, setHighlightedId] = React.useState<string | null>(null);
@@ -167,9 +164,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           let lastDateStr = '';
 
           return chat.messages.map((msg) => {
-            const isMe = currentUserId
-              ? msg.senderId === currentUserId || msg.senderId === 'me'
-              : msg.senderId === 'me';
+            const isMe = msg.senderId === 'me';
             const sender = chat.participants.find(p => p.id === msg.senderId) ||
               (msg.senderName ? { id: msg.senderId, name: msg.senderName, role: 'PLATFORM_EMPLOYEE' as const, isOnline: false } : undefined);
             const showSenderName = !isMe; // Always show partner name for non-me messages

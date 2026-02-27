@@ -12,7 +12,6 @@ import { chatService } from '@/api/chatService';
 import type { Chat, Message, User } from './types';
 import { Inbox, X, Copy, Forward, Trash2, Check, Users, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getDecodedUserId } from '@/utils/authUtils';
 
 type RightPaneMode = 'search' | 'info' | null;
 type SidebarView = 'chats' | 'create-group';
@@ -489,7 +488,6 @@ const Messages: React.FC = () => {
                 selectedMessageIds={selectedMessageIds}
                 onSelectMessage={handleToggleSelectMessage}
                 onEnterSelectMode={() => setIsSelectMode(true)}
-                currentUserId={getDecodedUserId()}
               />
             </div>
 
@@ -507,7 +505,14 @@ const Messages: React.FC = () => {
                     <Copy className="w-5 h-5 text-gray-600 group-hover:text-primary" />
                     <span className="text-[10px] text-gray-500 font-medium">Copy</span>
                   </button>
-                  {/* Share and Delete removed from bulk toolbar as per requirement */}
+                  <button onClick={handleBulkForward} className="p-2 hover:bg-gray-200 rounded-full transition-colors flex flex-col items-center gap-1 group">
+                    <Forward className="w-5 h-5 text-gray-600 group-hover:text-primary" />
+                    <span className="text-[10px] text-gray-500 font-medium">Share</span>
+                  </button>
+                  <button onClick={handleBulkDelete} className="p-2 hover:bg-gray-200 rounded-full transition-colors flex flex-col items-center gap-1 group">
+                    <Trash2 className="w-5 h-5 text-red-500" />
+                    <span className="text-[10px] text-red-500 font-medium">Delete</span>
+                  </button>
                 </div>
               </div>
             )}

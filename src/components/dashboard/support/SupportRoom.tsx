@@ -97,7 +97,6 @@ const SupportRoom: React.FC = () => {
           hideAvatar={true} // Hide group icon
           hideSearch={false}
           hideMore={true}
-          currentUserId={undefined}
         />
       </div>
 

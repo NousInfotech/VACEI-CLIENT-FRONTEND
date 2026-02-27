@@ -4,14 +4,27 @@ import React, { useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useEngagement } from "./hooks/useEngagement";
 import { useChat } from "@/hooks/useChat";
-import { ChatWindow } from "@/components/dashboard/messages/components/ChatWindow";
-import { mapApiMessage } from "@/hooks/useChatRooms";
+import { ChatWindow } from "./chat/components/ChatWindow";
 import { MessageSearchPane } from "./chat/components/MessageSearchPane";
 import { GroupInfoPane } from "./chat/components/GroupInfoPane";
 import { MediaPreviewModal } from "./chat/components/MediaPreviewModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserIdFromLocalStorage, getDecodedUserId } from "@/utils/authUtils";
-import type { Chat, Message, User } from "@/components/dashboard/messages/types";
+import type { Chat, Message, User } from "./chat/types";
+
+function formatTime(dateStr: string): string {
+  return new Date(dateStr).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function mapStatus(status?: string): "sent" | "delivered" | "read" {
+  const s = (status ?? "").toUpperCase();
+  if (s === "READ") return "read";
+  if (s === "DELIVERED") return "delivered";
+  return "sent";
+}
 
 export default function EngagementChatTab() {
   const { engagement, serviceSlug } = useEngagement();
@@ -38,9 +51,6 @@ export default function EngagementChatTab() {
   } = useChat(engagementId, { partnerId });
 
   const chat: Chat = useMemo(() => {
-    const decodedUserId = getDecodedUserId() ?? null;
-    const effectiveCurrentUserId = decodedUserId || currentUserId || "";
-
     const memberName = (m: any) => {
       const first = m.firstName ?? m.first_name ?? m.user?.firstName ?? m.user?.first_name ?? "";
       const last = m.lastName ?? m.last_name ?? m.user?.lastName ?? m.user?.last_name ?? "";
@@ -61,9 +71,23 @@ export default function EngagementChatTab() {
       };
     });
 
-    const messages: Message[] = apiMessages.map((m) =>
-      mapApiMessage(m as any)
-    );
+    const messages: Message[] = apiMessages.map((m) => {
+      const fileUrl = m.fileUrl ?? undefined;
+      const fileName = fileUrl ? fileUrl.split("/").pop() ?? fileUrl.split("?")[0]?.split("/").pop() ?? "File" : undefined;
+      const hasImageExt = (s: string) => /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$|\s)/i.test(s);
+      const isImage = fileUrl && (hasImageExt(fileUrl) || hasImageExt(m.content || ""));
+      const displayType = fileUrl ? (isImage ? "image" : "document") : "text";
+      return {
+        id: m.id,
+        senderId: m.senderId,
+        type: displayType,
+        text: m.content ?? undefined,
+        fileUrl,
+        fileName,
+        timestamp: formatTime(m.sentAt),
+        status: mapStatus(m.participantStates?.[0]?.status),
+      };
+    });
 
     return {
       id: roomId ?? engagementId ?? "chat",
@@ -177,7 +201,13 @@ export default function EngagementChatTab() {
       <div className="flex-1 flex flex-col min-w-0 relative">
         <ChatWindow
           chat={chat}
+          currentUserId={getDecodedUserId() ?? currentUserId}
           onSendMessage={handleSendMessage}
+          onFileUpload={handleFileUpload}
+          isUploading={uploadProgress > 0}
+          hasMore={hasMore}
+          onLoadMore={loadMore}
+          isLoadingMore={isLoading}
           onSearchToggle={() => {
             setShowSearch(!showSearch);
             if (showInfo) setShowInfo(false);
@@ -186,14 +216,13 @@ export default function EngagementChatTab() {
             setShowInfo(!showInfo);
             if (showSearch) setShowSearch(false);
           }}
-          onMute={() => {}}
-          onClearChat={() => {}}
-          onSelectMessages={() => {}}
-          onMediaClick={(msg) => setPreviewMessage(msg as any)}
+          onMediaClick={(msg) => setPreviewMessage(msg)}
           scrollToMessageId={scrollToId}
           onScrollComplete={() => setScrollToId(undefined)}
           onReplyMessage={setReplyingTo}
-          onEditMessage={() => {}} // editing not yet enabled for engagement chat
+          replyingTo={replyingTo}
+          onCancelReply={() => setReplyingTo(null)}
+          onEditMessage={(msg) => console.log('Edit message', msg)} // Will handle via ChatWindow state and MessageInput
           onDeleteMessage={async (msgId) => {
             if (window.confirm("Are you sure you want to delete this message?")) {
               try {
@@ -211,18 +240,7 @@ export default function EngagementChatTab() {
               console.error("Failed to add reaction:", err);
             }
           }}
-          onForwardMessage={() => {}}
-          replyingTo={replyingTo}
-          editingMessage={null}
-          onCancelReply={() => setReplyingTo(null)}
-          onCancelEdit={() => {}}
-          isSelectMode={false}
-          selectedMessageIds={[]}
-          onSelectMessage={() => {}}
-          onEnterSelectMode={() => {}}
-          hideSearch={false}
-          hideMore={true}
-          currentUserId={getDecodedUserId() ?? null}
+          onForwardMessage={(msg) => console.log('Forward message', msg)}
         />
       </div>
 

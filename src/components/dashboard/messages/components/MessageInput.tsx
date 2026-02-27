@@ -93,12 +93,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    // Ensure Ctrl/Cmd + A always selects all text in the textarea
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
-      e.preventDefault();
-      textareaRef.current?.select();
-      return;
-    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -115,20 +109,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           <div className="w-1 bg-primary rounded-full self-stretch" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              {(() => {
-                const baseName =
-                  replyingTo && replyingTo.senderId === 'me'
-                    ? 'you'
-                    : replyingTo?.senderName || 'Sender';
-                const label = editingMessage
-                  ? 'Edit Message'
-                  : `Replying to ${baseName}`;
-                return (
               <span className="text-[12px] font-bold text-primary">
-                  {label}
+                {editingMessage ? 'Edit Message' : `Replying to ${replyingTo?.senderId === 'me' ? 'you' : 'Sender'}`}
               </span>
-                );
-              })()}
             </div>
             <p className="text-[13px] text-gray-500 truncate italic">
               {editingMessage?.text || replyingTo?.text || replyingTo?.fileName || 'Media'}

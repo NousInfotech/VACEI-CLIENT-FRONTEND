@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Users, Mail, Info } from 'lucide-react';
-import type { User } from '@/components/dashboard/messages/types';
+import type { User } from '../types';
 import { cn } from '@/lib/utils';
 
 interface GroupInfoPaneProps {

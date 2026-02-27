@@ -78,14 +78,14 @@ export const MessageOptions: React.FC<MessageOptionsProps> = ({
 
   if (!isOpen) return null;
 
-  // Allow editing of any own, non-deleted message (no time limit)
-  const isEditable = isMe && !isDeleted;
+  const now = Date.now();
+  const isEditable = isMe && !isDeleted && createdAt && (now - createdAt < 15 * 60 * 1000);
 
   const mainOptions = isDeleted ? [] : [
     { id: 'reply' as const, label: 'Reply', icon: Reply },
     ...(isEditable ? [{ id: 'edit' as const, label: 'Edit', icon: Pencil }] : []),
     { id: 'copy' as const, label: 'Copy', icon: Copy },
-    // Forward removed as per requirement
+    { id: 'forward' as const, label: 'Forward', icon: Forward },
   ];
 
   const footerOptions = [

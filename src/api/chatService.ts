@@ -46,9 +46,6 @@ export interface ChatMessage {
     status: "SENT" | "DELIVERED" | "READ";
     readAt: string | null;
   }>;
-  // Optional UI-only flags to align with global chat behaviour
-  isDeleted?: boolean;
-  reactions?: Record<string, string[]>;
 }
 
 export interface ChatMember {
@@ -234,11 +231,8 @@ class ChatService {
         throw error;
       }
 
-      // Supabase can return timestamp strings without timezone info.
-      // Normalize to ISO-with-zone so UI displays correct local time.
-      const normalized = (data || []).map((row: any) => normalizeRealtimePayload(row)) as any;
       return {
-        data: normalized as ChatMessage[],
+        data: (data || []) as ChatMessage[],
       };
     }
 
@@ -341,7 +335,7 @@ class ChatService {
         .single();
 
       if (error) throw error;
-      const msg = normalizeRealtimePayload(data as any) as unknown as ChatMessage;
+      const msg = data as ChatMessage;
       this.notifyRoomMembers(roomId, content || "", msg?.id).catch(() => { });
       return msg;
     }
