@@ -102,10 +102,14 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
           return;
         }
         if (data.existingCompanyDetails && data.companyType === 'existing') {
-          setExistingDetails(data.existingCompanyDetails);
+          setExistingDetails(prev => ({ ...prev, ...data.existingCompanyDetails }));
         }
         if (data.newCompanyDetails && data.companyType === 'new') {
-          setNewDetails(data.newCompanyDetails);
+          setNewDetails(prev => ({ 
+            ...prev, 
+            ...data.newCompanyDetails,
+            proposedNames: { ...prev.proposedNames, ...data.newCompanyDetails.proposedNames }
+          }));
         }
       } catch (error) {
         console.error('Failed to parse saved onboarding data:', error);
@@ -125,7 +129,7 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
       return;
     }
 
-    // Validate existing company required fields
+    // Validate common required fields
     if (companyType === 'existing') {
       if (!existingDetails.companyName.trim()) {
         alert('Company name is required.');
@@ -139,127 +143,21 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
         alert('Registered address is required.');
         return;
       }
-      if (!existingDetails.companyStartDate) {
-        alert('Company start date is required.');
-        return;
-      }
-      if (existingDetails.authorizedShares <= 0) {
-        alert('Authorized shares must be greater than 0.');
-        return;
-      }
-      if (existingDetails.issuedShares < 0) {
-        alert('Issued shares cannot be negative.');
-        return;
-      }
-      if (existingDetails.issuedShares > existingDetails.authorizedShares) {
-        alert('Issued shares cannot exceed authorized shares.');
-        return;
-      }
-      
-      // Validate directors if option is 'own'
-      if (existingDetails.directors.option === 'own') {
-        // Ensure persons array exists
-        if (!existingDetails.directors.persons) {
-          existingDetails.directors.persons = [];
-        }
-        // NOTE: Directors are now optional according to user request
-        /*
-        if (existingDetails.directors.persons.length === 0) {
-          setDirectorError('At least one director is required.');
-          return;
-        }
-        */
-        // Validate that provided directors have required fields
-        const invalidDirectors = (existingDetails.directors.persons || []).filter(
-          p => p.fullName?.trim() && (!p.address?.trim() || !p.nationality?.trim())
-        );
-        if (invalidDirectors.length > 0) {
-          setDirectorError('Provided directors must have full name, address, and nationality.');
-          return;
-        }
-        setDirectorError('');
-      }
-      
-      // NOTE: Shareholders are now optional according to user request
-      /*
-      if (!existingDetails.shareholders || existingDetails.shareholders.length === 0) {
-        setShareholderError('At least one shareholder is required.');
-        return;
-      }
-      */
-      
-      // Validate provided shareholders have required fields
-      const invalidShareholders = (existingDetails.shareholders || []).filter(
-        p => p.fullName?.trim() && (!p.address?.trim() || !p.nationality?.trim())
-      );
-      if (invalidShareholders.length > 0) {
-        setShareholderError('Provided shareholders must have full name, address, and nationality.');
-        return;
-      }
-      
-      // Clear shareholder error if validation passes
-      setShareholderError('');
     }
 
-    // Validate new company required fields
     if (companyType === 'new') {
-      if (!newDetails.proposedNames.name1.trim()) {
-        alert('At least one proposed company name is required.');
+      if (!(newDetails.proposedNames?.name1 || '').trim()) {
+        alert('Company name is required.');
         return;
       }
-      // Address is always required (even if service is needed, we need a temporary address)
+      if (!(newDetails.registrationNumber || '').trim()) {
+        alert('Registration number is required.');
+        return;
+      }
       if (!newDetails.registeredAddress.address?.trim()) {
-        alert('Address is required. If you need an address service, please provide a temporary address for now.');
+        alert('Registered address is required.');
         return;
       }
-      if (newDetails.authorizedShares <= 0) {
-        alert('Authorized shares must be greater than 0.');
-        return;
-      }
-      
-      // Validate directors if option is 'own'
-      if (newDetails.directors.option === 'own') {
-        // Ensure persons array exists
-        if (!newDetails.directors.persons) {
-          newDetails.directors.persons = [];
-        }
-        // NOTE: Directors are now optional according to user request
-        /*
-        if (newDetails.directors.persons.length === 0) {
-          setDirectorError('At least one director is required.');
-          return;
-        }
-        */
-        // Validate that provided directors have required fields
-        const invalidDirectors = (newDetails.directors.persons || []).filter(
-          p => p.fullName?.trim() && (!p.address?.trim() || !p.nationality?.trim())
-        );
-        if (invalidDirectors.length > 0) {
-          setDirectorError('Provided directors must have full name, address, and nationality.');
-          return;
-        }
-        setDirectorError('');
-      }
-      
-      // NOTE: Shareholders are now optional according to user request
-      /*
-      if (!newDetails.shareholders || newDetails.shareholders.length === 0) {
-        setShareholderError('At least one shareholder is required.');
-        return;
-      }
-      */
-      
-      // Validate provided shareholders have required fields
-      const invalidShareholders = (newDetails.shareholders || []).filter(
-        p => p.fullName?.trim() && (!p.address?.trim() || !p.nationality?.trim())
-      );
-      if (invalidShareholders.length > 0) {
-        setShareholderError('Provided shareholders must have full name, address, and nationality.');
-        return;
-      }
-      
-      // Clear shareholder error if validation passes
-      setShareholderError('');
     }
     
     // Clear any previous errors if validation passes
@@ -440,7 +338,7 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
           issuedShares: existingDetails.issuedShares || 0, // May start at 0 for incorporation service
           companyStartDate: startDate.toISOString(),
           clientId: clientId || undefined,
-          incorporationStatus: false, // PATH A: Needs incorporation service (intentional)
+          incorporationStatus: true, // PATH A: Already incorporated
           involvementDetails: involvementDetails.length > 0 ? involvementDetails : undefined,
         };
       } else {
@@ -611,26 +509,44 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
           issuedShares: 0, // For new companies, issued shares start at 0
           companyStartDate: startDate.toISOString(),
           clientId: clientId || undefined,
-          incorporationStatus: true, // PATH B: New Company Profile - already incorporated (intentional)
+          incorporationStatus: false, // PATH B: Needs incorporation service
           involvementDetails: involvementDetails.length > 0 ? involvementDetails : undefined,
         };
       }
 
       // Create Company record at backend (Step 3) - REQUIRED, don't proceed on error
       try {
-        const companyResult = await createCompany(companyPayload);
+        const existingOnboardingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
+        let companyId = existingOnboardingData.companyId;
+        let incorporationStatus = existingOnboardingData.incorporationStatus;
+        let kycStatus = existingOnboardingData.kycStatus;
+
+        // CRITICAL: Only create company if it doesn't already exist in localStorage
+        // This prevents creating duplicate companies when user clicks back and then continue again
+        if (!companyId) {
+          const companyResult = await createCompany(companyPayload);
+          companyId = companyResult.id;
+          incorporationStatus = companyResult.incorporationStatus;
+          kycStatus = companyResult.kycStatus;
+        } else {
+          console.log('Company already exists, skipping creation:', companyId);
+        }
         
         // Save company ID and incorporationStatus to localStorage
-        const existingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
         localStorage.setItem('onboarding-data', JSON.stringify({
-          ...existingData,
+          ...existingOnboardingData,
           companyType,
-          companyId: companyResult.id,
-          incorporationStatus: companyResult.incorporationStatus, // true if already incorporated, false if needs incorporation
-          kycStatus: companyResult.kycStatus, // false initially
+          companyId,
+          incorporationStatus, // true if already incorporated, false if needs incorporation
+          kycStatus, // false initially
           existingCompanyDetails: companyType === 'existing' ? existingDetails : undefined,
           newCompanyDetails: companyType === 'new' ? newDetails : undefined,
         }));
+
+        // IMPORTANT: Sync with Global Dashboard Context by setting active company
+        if (companyId) {
+          localStorage.setItem('vacei-active-company', companyId);
+        }
       } catch (error: any) {
         // CRITICAL: If backend creation fails, DO NOT allow continuation
         console.error('Failed to create company at backend:', error);
@@ -811,667 +727,96 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
         <div>Loading...</div>
       ) : (
       <div className="space-y-6">
-        {companyType === 'existing' ? (
-          <>
-            <div>
-              <h1 className="text-2xl font-semibold mb-2">Company details</h1>
-            </div>
+        <div>
+          <h1 className="text-2xl font-semibold mb-2">Company details</h1>
+          <p className="text-sm text-muted-foreground">Please provide the details for your company registration.</p>
+        </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Company name *</label>
-                <Input
-                  value={existingDetails.companyName}
-                  onChange={(e) => setExistingDetails(prev => ({ ...prev, companyName: e.target.value }))}
-                  placeholder="ACME LTD"
-                />
-              </div>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium mb-2 block">Company name *</label>
+            <Input
+              value={companyType === 'existing' ? existingDetails.companyName : (newDetails.proposedNames?.name1 || '')}
+              onChange={(e) => {
+                if (companyType === 'existing') {
+                  setExistingDetails(prev => ({ ...prev, companyName: e.target.value }));
+                } else {
+                  setNewDetails(prev => ({
+                    ...prev,
+                    proposedNames: { ...(prev.proposedNames || { name1: '', name2: '', name3: '' }), name1: e.target.value }
+                  }));
+                }
+              }}
+              placeholder="e.g., ACME LTD"
+            />
+          </div>
 
-              <div>
-                <label className="text-sm font-medium mb-2 block">Registration number *</label>
-                <Input
-                  value={existingDetails.registrationNumber}
-                  onChange={(e) => setExistingDetails(prev => ({ ...prev, registrationNumber: e.target.value }))}
-                  placeholder="C12345"
-                />
-              </div>
+          <div>
+            <label className="text-sm font-medium mb-2 block">Registration number *</label>
+            <Input
+              value={companyType === 'existing' ? existingDetails.registrationNumber : (newDetails.registrationNumber || '')}
+              onChange={(e) => {
+                if (companyType === 'existing') {
+                  setExistingDetails(prev => ({ ...prev, registrationNumber: e.target.value }));
+                } else {
+                  setNewDetails(prev => ({ ...prev, registrationNumber: e.target.value || '' }));
+                }
+              }}
+              placeholder="e.g., C12345"
+            />
+          </div>
 
-              <div>
-                <label className="text-sm font-medium mb-2 block">Country of incorporation *</label>
-                <Input
-                  value={existingDetails.countryOfIncorporation}
-                  onChange={(e) => setExistingDetails(prev => ({ ...prev, countryOfIncorporation: e.target.value }))}
-                  placeholder="Malta"
-                />
-              </div>
+          <div>
+            <label className="text-sm font-medium mb-2 block">Registered address *</label>
+            <Textarea
+              value={companyType === 'existing' ? existingDetails.registeredAddress : newDetails.registeredAddress.address}
+              onChange={(e) => {
+                if (companyType === 'existing') {
+                  setExistingDetails(prev => ({ ...prev, registeredAddress: e.target.value }));
+                } else {
+                  setNewDetails(prev => ({
+                    ...prev,
+                    registeredAddress: { ...prev.registeredAddress, address: e.target.value }
+                  }));
+                }
+              }}
+              placeholder="Enter full registered address"
+              rows={3}
+            />
+          </div>
 
-              <div>
-                <label className="text-sm font-medium mb-2 block">VAT number (optional)</label>
-                <Input
-                  value={existingDetails.vatNumber}
-                  onChange={(e) => setExistingDetails(prev => ({ ...prev, vatNumber: e.target.value }))}
-                  placeholder="MT12345678"
-                />
-              </div>
+          <div>
+            <label className="text-sm font-medium mb-2 block">Industry (optional)</label>
+            <Input
+              value={companyType === 'existing' ? (existingDetails.industry?.join(', ') || '') : (newDetails.industry?.join(', ') || '')}
+              onChange={(e) => {
+                const industries = e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                if (companyType === 'existing') {
+                  setExistingDetails(prev => ({ ...prev, industry: industries }));
+                } else {
+                  setNewDetails(prev => ({ ...prev, industry: industries }));
+                }
+              }}
+              placeholder="e.g., Technology, Finance (comma-separated)"
+            />
+          </div>
 
-              <div>
-                <label className="text-sm font-medium mb-2 block">Business activity</label>
-                <Textarea
-                  value={existingDetails.businessActivity}
-                  onChange={(e) => setExistingDetails(prev => ({ ...prev, businessActivity: e.target.value }))}
-                  placeholder="Briefly describe what the company does."
-                  rows={4}
-                />
-                <p className="text-xs text-muted-foreground mt-1">Briefly describe what the company does.</p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Registered address *</label>
-                <Textarea
-                  value={existingDetails.registeredAddress}
-                  onChange={(e) => setExistingDetails(prev => ({ ...prev, registeredAddress: e.target.value }))}
-                  placeholder="Enter registered address"
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Legal entity type *</label>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={existingDetails.legalType === 'LTD' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setExistingDetails(prev => ({ ...prev, legalType: 'LTD' }))}
-                  >
-                    LTD
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={existingDetails.legalType === 'PLC' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setExistingDetails(prev => ({ ...prev, legalType: 'PLC' }))}
-                  >
-                    PLC
-                  </Button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Authorized shares *</label>
-                  <Input
-                    type="number"
-                    value={existingDetails.authorizedShares}
-                    onChange={(e) => setExistingDetails(prev => ({ ...prev, authorizedShares: parseInt(e.target.value) || 0 }))}
-                    placeholder="1000"
-                    min="0"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Issued shares *</label>
-                  <Input
-                    type="number"
-                    value={existingDetails.issuedShares}
-                    onChange={(e) => setExistingDetails(prev => ({ ...prev, issuedShares: parseInt(e.target.value) || 0 }))}
-                    placeholder="1000"
-                    min="0"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Company start date (incorporation date) *</label>
-                <Input
-                  type="date"
-                  value={existingDetails.companyStartDate}
-                  onChange={(e) => setExistingDetails(prev => ({ ...prev, companyStartDate: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Industry / Business sectors (optional)</label>
-                <Input
-                  value={existingDetails.industry?.join(', ') || ''}
-                  onChange={(e) => {
-                    const industries = e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
-                    setExistingDetails(prev => ({ ...prev, industry: industries }));
-                  }}
-                  placeholder="e.g., Technology, Finance, Retail (comma-separated)"
-                />
-                <p className="text-xs text-muted-foreground mt-1">Enter industry categories separated by commas</p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Company summary (optional)</label>
-                <Textarea
-                  value={existingDetails.summary || ''}
-                  onChange={(e) => setExistingDetails(prev => ({ ...prev, summary: e.target.value }))}
-                  placeholder="Brief summary of the company"
-                  rows={3}
-                />
-              </div>
-
-              {/* Directors */}
-              <div>
-                <h2 className="text-lg font-medium mb-3">
-                  Directors <span className="text-red-500">*</span>
-                </h2>
-                <div className="flex gap-2 mb-3">
-                  <Button
-                    type="button"
-                    variant={existingDetails.directors.option === 'own' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setExistingDetails(prev => ({
-                      ...prev,
-                      directors: { option: 'own', persons: prev.directors.persons || [] }
-                    }))}
-                  >
-                    ⭕ I will appoint my own director(s)
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={existingDetails.directors.option === 'service' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setExistingDetails(prev => ({
-                      ...prev,
-                      directors: { option: 'service' }
-                    }))}
-                  >
-                    ⭕ Provide directorship service
-                  </Button>
-                </div>
-                {existingDetails.directors.option === 'own' ? (
-                  <div className="space-y-3">
-                    {existingDetails.directors.persons?.map((director, index) => (
-                      <PersonCard
-                        key={index}
-                        person={director}
-                        index={index}
-                        onChange={updateExistingDirector}
-                        onRemove={removeExistingDirector}
-                        canRemove={true}
-                      />
-                    ))}
-                    <div className="space-y-2">
-                      <Button type="button" variant="outline" size="sm" onClick={addExistingDirector}>
-                        {(!existingDetails.directors.persons || existingDetails.directors.persons.length === 0) 
-                          ? 'Add director' 
-                          : 'Add another director'}
-                      </Button>
-                      {directorError && (
-                        <p className="text-sm text-red-500">{directorError}</p>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <InfoBox>
-                    A director will be provided by us. No details required at this stage.
-                  </InfoBox>
-                )}
-              </div>
-
-              {/* Shareholders */}
-              <div>
-                <h2 className="text-lg font-medium mb-3">
-                  Shareholders <span className="text-red-500">*</span>
-                </h2>
-                <div className="space-y-3">
-                  {existingDetails.shareholders.map((shareholder, index) => (
-                    <PersonCard
-                      key={index}
-                      person={shareholder}
-                      index={index}
-                      showOwnership={true}
-                      onChange={updateExistingShareholder}
-                      onRemove={removeExistingShareholder}
-                      canRemove={true}
-                    />
-                  ))}
-                  <div className="space-y-2">
-                    <Button type="button" variant="outline" size="sm" onClick={addExistingShareholder}>
-                      {(!existingDetails.shareholders || existingDetails.shareholders.length === 0) 
-                        ? 'Add shareholder' 
-                        : 'Add another shareholder'}
-                    </Button>
-                    {shareholderError && (
-                      <p className="text-sm text-red-500">{shareholderError}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Company Secretary */}
-              <div>
-                <h2 className="text-lg font-medium mb-3">Company Secretary</h2>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={existingDetails.companySecretary.option === 'own' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setExistingDetails(prev => ({
-                      ...prev,
-                      companySecretary: { option: 'own' }
-                    }))}
-                  >
-                    ⭕ I will appoint my own
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={existingDetails.companySecretary.option === 'service' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setExistingDetails(prev => ({
-                      ...prev,
-                      companySecretary: { option: 'service' }
-                    }))}
-                  >
-                    ⭕ Provide secretarial service
-                  </Button>
-                </div>
-                {existingDetails.companySecretary.option === 'own' && (
-                  <div className="mt-3">
-                    <PersonCard
-                      person={existingDetails.companySecretary.person || { fullName: '', email: '', address: '', nationality: '' }}
-                      index={0}
-                      onChange={(index, field, value) => {
-                        setExistingDetails(prev => ({
-                          ...prev,
-                          companySecretary: {
-                            ...prev.companySecretary,
-                            person: { ...(prev.companySecretary.person || { fullName: '', email: '', address: '', nationality: '' }), [field]: value }
-                          }
-                        }));
-                      }}
-                      onRemove={() => {
-                        setExistingDetails(prev => ({
-                          ...prev,
-                          companySecretary: { ...prev.companySecretary, person: undefined }
-                        }));
-                      }}
-                      canRemove={false}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Judicial Representative */}
-              <div>
-                <h2 className="text-lg font-medium mb-3">Judicial Representative</h2>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={existingDetails.judicialRepresentative.option === 'own' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setExistingDetails(prev => ({
-                      ...prev,
-                      judicialRepresentative: { option: 'own' }
-                    }))}
-                  >
-                    ⭕ I will appoint my own
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={existingDetails.judicialRepresentative.option === 'service' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setExistingDetails(prev => ({
-                      ...prev,
-                      judicialRepresentative: { option: 'service' }
-                    }))}
-                  >
-                    ⭕ Provide service
-                  </Button>
-                </div>
-                {existingDetails.judicialRepresentative.option === 'own' && (
-                  <div className="mt-3">
-                    <PersonCard
-                      person={existingDetails.judicialRepresentative.person || { fullName: '', email: '', address: '', nationality: '' }}
-                      index={0}
-                      onChange={(index, field, value) => {
-                        setExistingDetails(prev => ({
-                          ...prev,
-                          judicialRepresentative: {
-                            ...prev.judicialRepresentative,
-                            person: { ...(prev.judicialRepresentative.person || { fullName: '', email: '', address: '', nationality: '' }), [field]: value }
-                          }
-                        }));
-                      }}
-                      onRemove={() => {
-                        setExistingDetails(prev => ({
-                          ...prev,
-                          judicialRepresentative: { ...prev.judicialRepresentative, person: undefined }
-                        }));
-                      }}
-                      canRemove={false}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div>
-              <h1 className="text-2xl font-semibold mb-2">New company incorporation</h1>
-            </div>
-
-            {/* Proposed Names */}
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-lg font-medium mb-3">Proposed names</h2>
-                <div className="space-y-3">
-                  <Input
-                    value={newDetails.proposedNames.name1}
-                    onChange={(e) => setNewDetails(prev => ({ 
-                      ...prev, 
-                      proposedNames: { ...prev.proposedNames, name1: e.target.value }
-                    }))}
-                    placeholder="Proposed name 1"
-                  />
-                  <Input
-                    value={newDetails.proposedNames.name2}
-                    onChange={(e) => setNewDetails(prev => ({ 
-                      ...prev, 
-                      proposedNames: { ...prev.proposedNames, name2: e.target.value }
-                    }))}
-                    placeholder="Proposed name 2"
-                  />
-                  <Input
-                    value={newDetails.proposedNames.name3}
-                    onChange={(e) => setNewDetails(prev => ({ 
-                      ...prev, 
-                      proposedNames: { ...prev.proposedNames, name3: e.target.value }
-                    }))}
-                    placeholder="Proposed name 3"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">We&apos;ll check availability in order.</p>
-              </div>
-
-
-              {/* Registered Address */}
-              <div>
-                <h2 className="text-lg font-medium mb-3">Registered address</h2>
-                <div className="flex gap-2 mb-3">
-                  <Button
-                    type="button"
-                    variant={newDetails.registeredAddress.option === 'have' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setNewDetails(prev => ({
-                      ...prev,
-                      registeredAddress: { option: 'have', address: prev.registeredAddress.address || '' }
-                    }))}
-                  >
-                    ⭕ I have an address
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={newDetails.registeredAddress.option === 'need_service' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setNewDetails(prev => ({
-                      ...prev,
-                      registeredAddress: { 
-                        option: 'need_service',
-                        address: prev.registeredAddress.address || '' // Preserve existing address or use empty string
-                      }
-                    }))}
-                  >
-                    ⭕ I need an address service
-                  </Button>
-                </div>
-                {newDetails.registeredAddress.option === 'have' ? (
-                  <Textarea
-                    value={newDetails.registeredAddress.address || ''}
-                    onChange={(e) => setNewDetails(prev => ({
-                      ...prev,
-                      registeredAddress: { ...prev.registeredAddress, address: e.target.value }
-                    }))}
-                    placeholder="Enter registered address"
-                    rows={3}
-                  />
-                ) : (
-                  <div className="space-y-2">
-                    <InfoBox>
-                      We will provide a registered address as part of the service. Please provide a temporary address for now (this will be updated after incorporation).
-                    </InfoBox>
-                    <Textarea
-                      value={newDetails.registeredAddress.address || ''}
-                      onChange={(e) => setNewDetails(prev => ({
-                        ...prev,
-                        registeredAddress: { ...prev.registeredAddress, address: e.target.value }
-                      }))}
-                      placeholder="Enter temporary address (will be updated after incorporation)"
-                      rows={3}
-                    />
-                    <p className="text-xs text-muted-foreground">A registered address will be provided as part of the service, but we need a temporary address for now.</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Legal Entity Type */}
-              <div>
-                <h2 className="text-lg font-medium mb-3">Legal entity type *</h2>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={newDetails.legalType === 'LTD' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setNewDetails(prev => ({ ...prev, legalType: 'LTD' }))}
-                  >
-                    LTD
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={newDetails.legalType === 'PLC' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setNewDetails(prev => ({ ...prev, legalType: 'PLC' }))}
-                  >
-                    PLC
-                  </Button>
-                </div>
-              </div>
-
-              {/* Share Capital */}
-              <div>
-                <h2 className="text-lg font-medium mb-3">Share capital</h2>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Authorized shares *</label>
-                  <Input
-                    type="number"
-                    value={newDetails.authorizedShares}
-                    onChange={(e) => setNewDetails(prev => ({ ...prev, authorizedShares: parseInt(e.target.value) || 0 }))}
-                    placeholder="1000"
-                    min="0"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">Total number of shares the company is authorized to issue</p>
-                </div>
-              </div>
-
-              {/* Industry */}
-              <div>
-                <h2 className="text-lg font-medium mb-3">Industry / Business sectors (optional)</h2>
-                <Input
-                  value={newDetails.industry?.join(', ') || ''}
-                  onChange={(e) => {
-                    const industries = e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
-                    setNewDetails(prev => ({ ...prev, industry: industries }));
-                  }}
-                  placeholder="e.g., Technology, Finance, Retail (comma-separated)"
-                />
-                <p className="text-xs text-muted-foreground mt-1">Enter industry categories separated by commas</p>
-              </div>
-
-              {/* Company Summary */}
-              <div>
-                <h2 className="text-lg font-medium mb-3">Company summary (optional)</h2>
-                <Textarea
-                  value={newDetails.summary || ''}
-                  onChange={(e) => setNewDetails(prev => ({ ...prev, summary: e.target.value }))}
-                  placeholder="Brief description of the planned business activities"
-                  rows={3}
-                />
-              </div>
-
-              {/* Expected Start Date */}
-              <div>
-                <h2 className="text-lg font-medium mb-3">Expected incorporation date (optional)</h2>
-                <Input
-                  type="date"
-                  value={newDetails.expectedStartDate || ''}
-                  onChange={(e) => setNewDetails(prev => ({ ...prev, expectedStartDate: e.target.value }))}
-                />
-                <p className="text-xs text-muted-foreground mt-1">When do you expect the company to be incorporated?</p>
-              </div>
-
-              {/* Directors */}
-              <div>
-                <h2 className="text-lg font-medium mb-3">
-                  Directors <span className="text-red-500">*</span>
-                </h2>
-                <div className="flex gap-2 mb-3">
-                  <Button
-                    type="button"
-                    variant={newDetails.directors.option === 'own' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setNewDetails(prev => ({
-                      ...prev,
-                      directors: { option: 'own', persons: prev.directors.persons || [] }
-                    }))}
-                  >
-                    ⭕ I will appoint my own director(s)
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={newDetails.directors.option === 'service' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setNewDetails(prev => ({
-                      ...prev,
-                      directors: { option: 'service' }
-                    }))}
-                  >
-                    ⭕ Provide directorship service
-                  </Button>
-                </div>
-                {newDetails.directors.option === 'own' ? (
-                  <div className="space-y-3">
-                    {newDetails.directors.persons?.map((director, index) => (
-                      <PersonCard
-                        key={index}
-                        person={director}
-                        index={index}
-                        onChange={updateDirector}
-                        onRemove={removeDirector}
-                        canRemove={true}
-                      />
-                    ))}
-                    <div className="space-y-2">
-                      <Button type="button" variant="outline" size="sm" onClick={addDirector}>
-                        {(!newDetails.directors.persons || newDetails.directors.persons.length === 0) 
-                          ? 'Add director' 
-                          : 'Add another director'}
-                      </Button>
-                      {directorError && (
-                        <p className="text-sm text-red-500">{directorError}</p>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <InfoBox>
-                    A director will be provided by us. No details required at this stage.
-                  </InfoBox>
-                )}
-              </div>
-
-              {/* Shareholders */}
-              <div>
-                <h2 className="text-lg font-medium mb-3">
-                  Shareholders <span className="text-red-500">*</span>
-                </h2>
-                <div className="space-y-3">
-                  {newDetails.shareholders.map((shareholder, index) => (
-                    <PersonCard
-                      key={index}
-                      person={shareholder}
-                      index={index}
-                      showOwnership={true}
-                      onChange={updateShareholder}
-                      onRemove={removeShareholder}
-                      canRemove={true}
-                    />
-                  ))}
-                  <div className="space-y-2">
-                  <Button type="button" variant="outline" size="sm" onClick={addShareholder}>
-                      {(!newDetails.shareholders || newDetails.shareholders.length === 0) 
-                        ? 'Add shareholder' 
-                        : 'Add another shareholder'}
-                  </Button>
-                    {shareholderError && (
-                      <p className="text-sm text-red-500">{shareholderError}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Company Secretary */}
-              <div>
-                <h2 className="text-lg font-medium mb-3">Company Secretary</h2>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={newDetails.companySecretary.option === 'own' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setNewDetails(prev => ({
-                      ...prev,
-                      companySecretary: { option: 'own' }
-                    }))}
-                  >
-                    ⭕ I will appoint my own
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={newDetails.companySecretary.option === 'service' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setNewDetails(prev => ({
-                      ...prev,
-                      companySecretary: { option: 'service' }
-                    }))}
-                  >
-                    ⭕ Provide secretarial service
-                  </Button>
-                </div>
-              </div>
-
-              {/* Judicial Representative */}
-              <div>
-                <h2 className="text-lg font-medium mb-3">Judicial Representative</h2>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={newDetails.judicialRepresentative.option === 'own' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setNewDetails(prev => ({
-                      ...prev,
-                      judicialRepresentative: { option: 'own' }
-                    }))}
-                  >
-                    ⭕ I will appoint my own
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={newDetails.judicialRepresentative.option === 'service' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setNewDetails(prev => ({
-                      ...prev,
-                      judicialRepresentative: { option: 'service' }
-                    }))}
-                  >
-                    ⭕ Provide service
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
+          <div>
+            <label className="text-sm font-medium mb-2 block">Description (optional)</label>
+            <Textarea
+              value={companyType === 'existing' ? (existingDetails.summary || '') : (newDetails.summary || '')}
+              onChange={(e) => {
+                if (companyType === 'existing') {
+                  setExistingDetails(prev => ({ ...prev, summary: e.target.value }));
+                } else {
+                  setNewDetails(prev => ({ ...prev, summary: e.target.value }));
+                }
+              }}
+              placeholder="Brief description of the company business"
+              rows={4}
+            />
+          </div>
+        </div>
       </div>
       )}
     </OnboardingLayout>

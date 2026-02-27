@@ -37,7 +37,7 @@ const Company = () => {
     { id: 'distribution', label: 'Distribution', icon: PieChart },
     { id: 'hierarchy', label: 'Company Hierarchy', icon: Network },
     { id: 'incorporation', label: 'Incorporation KYC', icon: ClipboardList },
-    { id: 'kyc', label: 'KYC', icon: ShieldCheck },
+    ...(data?.incorporationStatus ? [{ id: 'kyc', label: 'KYC', icon: ShieldCheck }] : []),
   ]
 
   const renderContent = () => {

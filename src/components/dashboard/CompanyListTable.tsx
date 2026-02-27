@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { listServiceRequests } from "@/api/serviceRequestService";
+import { cn } from "@/lib/utils";
 
 interface Company {
     id: string;
@@ -131,9 +132,6 @@ export default function CompanyListTable() {
                             <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100">Registration No</TableHead>
                             <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100 text-center">Incorporated</TableHead>
                             <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100 text-center">KYC</TableHead>
-                            <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100 text-center">Overdue</TableHead>
-                            <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100 text-center">Due Today</TableHead>
-                            <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100 text-center">Due Soon</TableHead>
                             <TableHead className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-100 text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -180,74 +178,39 @@ export default function CompanyListTable() {
                                         )}
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-center border border-gray-100">
-                                    <span className={`text-sm font-bold ${company.overdueCount && company.overdueCount > 0 ? "text-destructive" : "text-gray-300"}`}>
-                                        {company.overdueCount || 0}
-                                    </span>
-                                </TableCell>
-                                <TableCell className="text-center border border-gray-100">
-                                    <span className={`text-sm font-bold ${company.dueTodayCount && company.dueTodayCount > 0 ? "text-warning" : "text-gray-300"}`}>
-                                        {company.dueTodayCount || 0}
-                                    </span>
-                                </TableCell>
-                                <TableCell className="text-center border border-gray-100">
-                                    <span className={`text-sm font-bold ${company.dueSoonCount && company.dueSoonCount > 0 ? "text-warning" : "text-gray-300"}`}>
-                                        {company.dueSoonCount || 0}
-                                    </span>
-                                </TableCell>
                                 <TableCell className="text-right border border-gray-100">
-                                    {company.incorporationStatus && company.kycStatus ? (
+                                    {company.incorporationStatus ? (
                                         <Button
                                             size="sm"
                                             className="rounded-xl h-9"
                                             onClick={() => {
                                                 setActiveCompanyId(company.id);
-                                                router.push(`/dashboard`);
-                                            }}
-                                        >
-                                            <Eye className="h-4 w-4 mr-2" />
-                                            Dashboard
-                                        </Button>
-                                    ) : company.serviceRequestStatus === 'APPROVED' ? (
-                                        <Button
-                                            size="sm"
-                                            className="rounded-xl h-9 bg-primary"
-                                            onClick={() => {
-                                                setActiveCompanyId(company.id);
-                                                // Smart highlight: incorporation not done → highlight incorporation tab
-                                                // incorporated but KYC pending → highlight kyc tab
-                                                // both done → no highlight
-                                                const highlight = !company.incorporationStatus
-                                                    ? 'incorporation'
-                                                    : !company.kycStatus
-                                                        ? 'kyc'
-                                                        : null;
-                                                const url = `/global-dashboard/companies/${company.id}${highlight ? `?highlight=${highlight}` : ''}`;
-                                                router.push(url);
+                                                
+                                                if (!company.kycStatus) {
+                                                    // Rule: if incorporated but kyc pending -> go to kyc tab
+                                                    // alert("Please complete KYC verification to access full features.");
+                                                    router.push(`/global-dashboard/companies/${company.id}?tab=kyc&highlight=kyc`);
+                                                } else {
+                                                    // Both done -> normal View
+                                                    router.push(`/global-dashboard/companies/${company.id}`);
+                                                }
                                             }}
                                         >
                                             <Eye className="h-4 w-4 mr-2" />
                                             View
                                         </Button>
-                                    ) : company.serviceRequestStatus ? (
-                                        <div className="flex justify-end">
-                                            <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider border border-blue-100 flex items-center gap-1.5">
-                                                <div className="w-1 h-1 bg-blue-600 rounded-full animate-pulse" />
-                                                {company.serviceRequestStatus.replace(/_/g, ' ')}
-                                            </span>
-                                        </div>
                                     ) : (
                                         <Button
                                             size="sm"
-                                            variant="outline"
-                                            className="rounded-xl h-9 border-gray-200 hover:bg-gray-50"
+                                            className="rounded-xl h-9 bg-primary"
                                             onClick={() => {
                                                 setActiveCompanyId(company.id);
-                                                router.push(`/global-dashboard/companies/incorporation-request`);
+                                                // Rule: if incorporation pending -> go directly to incorporation tab
+                                                router.push(`/global-dashboard/companies/${company.id}?tab=incorporation&highlight=incorporation`);
                                             }}
                                         >
-                                            <Building2 className="h-4 w-4 mr-2" />
-                                            Service Request
+                                            <Eye className="h-4 w-4 mr-2" />
+                                            View
                                         </Button>
                                     )}
                                 </TableCell>
@@ -255,7 +218,7 @@ export default function CompanyListTable() {
                         ))}
                         {filteredCompanies.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={7} className="h-32 text-center text-gray-300 italic font-medium border border-gray-100">
+                                <TableCell colSpan={6} className="h-32 text-center text-gray-300 italic font-medium border border-gray-100">
                                     No companies found.
                                 </TableCell>
                             </TableRow>

@@ -100,6 +100,8 @@ export interface Company {
   id: string;
   /** Library root folder ID for this company (when set, company library shows only this folder). */
   folderId?: string | null;
+  incorporationStatus?: boolean;
+  kycStatus?: boolean;
 }
 
 

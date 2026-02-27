@@ -6,7 +6,6 @@ import { getOnboardingProgress, saveOnboardingStep } from '@/api/onboardingServi
 import UserRegistrationScreen from './screens/UserRegistrationScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
 import CompanyDetailsScreen from './screens/CompanyDetailsScreen';
-import ServicesSelectionScreen from './screens/ServicesSelectionScreen';
 import ReviewSubmitScreen from './screens/ReviewSubmitScreen';
 import KYCIntroductionScreen from './screens/KYCIntroductionScreen';
 import KYCDashboardScreen from './screens/KYCDashboardScreen';

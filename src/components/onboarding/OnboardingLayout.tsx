@@ -17,6 +17,7 @@ interface OnboardingLayoutProps {
   continueLabel?: string;
   hideActions?: boolean;
   disabled?: boolean; // Disable continue button
+  logoSrc?: string;
   className?: string;
 }
 
@@ -30,6 +31,7 @@ export function OnboardingLayout({
   continueLabel = 'Continue',
   hideActions = false,
   disabled = false,
+  logoSrc = '/logo.svg',
   className,
 }: OnboardingLayoutProps) {
   const showBackButton = currentStep > 1 && onBack;
@@ -42,7 +44,7 @@ export function OnboardingLayout({
             {/* Logo */}
             <div className="mb-6">
               <Image
-                src="/logo.svg"
+                src={logoSrc}
                 alt="Logo"
                 width={120}
                 height={40}

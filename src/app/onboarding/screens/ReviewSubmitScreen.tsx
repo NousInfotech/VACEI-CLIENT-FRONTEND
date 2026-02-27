@@ -30,24 +30,21 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
   const handleSubmit = async () => {
     if (!onboardingData) return;
 
-    // PATH B: New Company Profile - no service request needed, can proceed directly
+    // PATH B: New Company Profile (incorporationStatus: false) - no service request needed, can proceed directly
     const incorporationStatus = onboardingData.incorporationStatus;
-    if (incorporationStatus === true) {
+    if (incorporationStatus === false) {
       // PATH B: Skip service request submission, proceed directly
       setSubmitted(true);
       setTimeout(() => {
+        // Clear onboarding progress from localStorage on success
+        localStorage.removeItem('onboarding-progress');
+        localStorage.removeItem('onboarding-data');
         onComplete();
       }, 1000);
       return;
     }
 
-    // PATH A: Existing Company → Incorporation Service - validate services selected
-    const selectedServices = onboardingData.selectedServices || [];
-    if (selectedServices.length === 0) {
-      alert('Please select at least one service. Go back to Step 4 to select services.');
-      return;
-    }
-
+    // PATH A: Existing Company → Incorporation Service
     setIsSubmitting(true);
     try {
       const result = await submitOnboardingRequest(onboardingData);
@@ -60,6 +57,9 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
 
       // Auto-advance after a short delay
       setTimeout(() => {
+        // Clear onboarding progress from localStorage on success
+        localStorage.removeItem('onboarding-progress');
+        localStorage.removeItem('onboarding-data');
         onComplete();
       }, 2000);
     } catch (error: any) {
@@ -76,8 +76,8 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
   if (submitted) {
     // Check incorporation status from localStorage (created in Step 3)
     // NEW WORKFLOW:
-    // PATH A: Existing Company (incorporationStatus: false) → Service request submitted → Quotation will be sent
-    // PATH B: New Company Profile (incorporationStatus: true) → No service request → Proceed to KYC
+    // PATH A: Existing Company (incorporationStatus: true) → Service request submitted → Quotation will be sent
+    // PATH B: New Company Profile (incorporationStatus: false) → No service request → Proceed to KYC
     const savedData = localStorage.getItem('onboarding-data');
     let incorporationStatus: boolean | null = null;
     if (savedData) {
@@ -85,8 +85,8 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
         const parsed = JSON.parse(savedData);
         incorporationStatus = parsed.incorporationStatus;
       } catch (e) {
-        // Fallback: new companies have incorporationStatus: true
-        incorporationStatus = onboardingData?.companyType === 'new' ? true : false;
+        // Fallback: existing companies have incorporationStatus: true
+        incorporationStatus = onboardingData?.companyType === 'existing' ? true : false;
       }
     }
     
@@ -104,8 +104,8 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
           <h1 className="text-2xl font-semibold">Thank you</h1>
           <p className="text-muted-foreground">
             {incorporationStatus === true 
-              ? 'Your company profile has been created. You can proceed to KYC verification.'
-              : 'Your incorporation service request has been submitted. Your quotation will be sent within 24 hours.'}
+              ? 'Your company profile has been created. Your quotation will be sent within 24 hours.'
+              : 'Your incorporation service request has been submitted. You can proceed to KYC verification.'}
           </p>
         </div>
       </OnboardingLayout>
@@ -127,19 +127,8 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
     );
   }
 
-  const serviceNames: Record<string, string> = {
-    accounting: 'Accounting & Bookkeeping',
-    vat: 'VAT Returns',
-    audit: 'Audit',
-    payroll: 'Payroll',
-    directorship: 'Directorship service',
-    secretary: 'Company Secretary',
-    address: 'Registered Address',
-    tax: 'Tax Advisory',
-  };
-
-  // Check if PATH B (New Company Profile - no services)
-  const isPathB = onboardingData.incorporationStatus === true;
+  // Check if PATH A (Existing Company - incorporationStatus: true)
+  const isPathA = onboardingData.incorporationStatus === true;
 
   return (
     <OnboardingLayout
@@ -149,7 +138,7 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
       onSaveExit={onSaveExit}
       onBack={onBack}
       continueLabel={
-        isPathB 
+        !isPathA 
           ? 'Continue' 
           : (isSubmitting ? 'Submitting...' : 'Submit request')
       }
@@ -164,105 +153,39 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
         <Card>
           <CardContent className="p-4">
             <div className="flex justify-between items-start mb-3">
-              <h2 className="font-semibold">Company summary</h2>
+              <h2 className="font-semibold">Company overview</h2>
               <Button variant="link" size="sm" onClick={onBack} asChild>
                 <Link href="#edit">Edit</Link>
               </Button>
             </div>
             {onboardingData.companyType === 'existing' && onboardingData.existingCompanyDetails && (
               <div className="space-y-2 text-sm">
-                <p><span className="font-medium">Type:</span> Existing Company</p>
-                <p><span className="font-medium">Name:</span> {onboardingData.existingCompanyDetails.companyName}</p>
-                <p><span className="font-medium">Registration:</span> {onboardingData.existingCompanyDetails.registrationNumber}</p>
-                <p><span className="font-medium">Country:</span> {onboardingData.existingCompanyDetails.countryOfIncorporation}</p>
+                <p><span className="font-medium">Company Name:</span> {onboardingData.existingCompanyDetails.companyName}</p>
+                <p><span className="font-medium">Registration Number:</span> {onboardingData.existingCompanyDetails.registrationNumber}</p>
+                <p><span className="font-medium">Registered Address:</span> {onboardingData.existingCompanyDetails.registeredAddress}</p>
+                {onboardingData.existingCompanyDetails.industry && onboardingData.existingCompanyDetails.industry.length > 0 && (
+                  <p><span className="font-medium">Industry:</span> {onboardingData.existingCompanyDetails.industry.join(', ')}</p>
+                )}
+                {onboardingData.existingCompanyDetails.summary && (
+                  <p><span className="font-medium">Description:</span> {onboardingData.existingCompanyDetails.summary}</p>
+                )}
               </div>
             )}
             {onboardingData.companyType === 'new' && onboardingData.newCompanyDetails && (
               <div className="space-y-2 text-sm">
-                <p><span className="font-medium">Type:</span> New Incorporation</p>
-                <p><span className="font-medium">Proposed Names:</span></p>
-                <ul className="list-disc list-inside ml-2">
-                  {onboardingData.newCompanyDetails.proposedNames.name1 && (
-                    <li>{onboardingData.newCompanyDetails.proposedNames.name1}</li>
-                  )}
-                  {onboardingData.newCompanyDetails.proposedNames.name2 && (
-                    <li>{onboardingData.newCompanyDetails.proposedNames.name2}</li>
-                  )}
-                  {onboardingData.newCompanyDetails.proposedNames.name3 && (
-                    <li>{onboardingData.newCompanyDetails.proposedNames.name3}</li>
-                  )}
-                </ul>
+                <p><span className="font-medium">Company Name:</span> {onboardingData.newCompanyDetails.proposedNames.name1}</p>
+                <p><span className="font-medium">Registration Number:</span> {onboardingData.newCompanyDetails.registrationNumber}</p>
+                <p><span className="font-medium">Registered Address:</span> {onboardingData.newCompanyDetails.registeredAddress.address}</p>
+                {onboardingData.newCompanyDetails.industry && onboardingData.newCompanyDetails.industry.length > 0 && (
+                  <p><span className="font-medium">Industry:</span> {onboardingData.newCompanyDetails.industry.join(', ')}</p>
+                )}
+                {onboardingData.newCompanyDetails.summary && (
+                  <p><span className="font-medium">Description:</span> {onboardingData.newCompanyDetails.summary}</p>
+                )}
               </div>
             )}
           </CardContent>
         </Card>
-
-        {/* Selected Services */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex justify-between items-start mb-3">
-              <h2 className="font-semibold">Selected services</h2>
-              {onboardingData.incorporationStatus !== true && (
-              <Button variant="link" size="sm" onClick={onBack} asChild>
-                <Link href="#edit">Edit</Link>
-              </Button>
-              )}
-            </div>
-            {onboardingData.incorporationStatus === true ? (
-              // PATH B: New Company Profile - services not available
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">
-                  Services are not available for new company profiles. Your company is already incorporated and can proceed directly to KYC verification.
-                </p>
-              </div>
-            ) : onboardingData.selectedServices && onboardingData.selectedServices.length > 0 ? (
-              // PATH A: Existing Company → Incorporation Service - show selected services
-            <div className="space-y-1">
-              {onboardingData.selectedServices.map(serviceId => (
-                <p key={serviceId} className="text-sm">• {serviceNames[serviceId] || serviceId}</p>
-              ))}
-            </div>
-            ) : (
-              // PATH A: No services selected (should not happen, but handle gracefully)
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">
-                  No services selected. Please go back and select at least one service.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Roles & Services */}
-        {onboardingData.companyType === 'new' && onboardingData.newCompanyDetails && (
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex justify-between items-start mb-3">
-                <h2 className="font-semibold">Roles & service choices</h2>
-                <Button variant="link" size="sm" onClick={onBack} asChild>
-                  <Link href="#edit">Edit</Link>
-                </Button>
-              </div>
-              <div className="space-y-2 text-sm">
-                <p><span className="font-medium">Directors:</span> {
-                  onboardingData.newCompanyDetails.directors.option === 'own' 
-                    ? 'Own directors' 
-                    : 'Directorship service'
-                }</p>
-                <p><span className="font-medium">Company Secretary:</span> {
-                  onboardingData.newCompanyDetails.companySecretary.option === 'own'
-                    ? 'Own appointment'
-                    : 'Secretarial service'
-                }</p>
-                <p><span className="font-medium">Judicial Representative:</span> {
-                  onboardingData.newCompanyDetails.judicialRepresentative.option === 'own'
-                    ? 'Own appointment'
-                    : 'Service provided'
-                }</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </OnboardingLayout>
   );

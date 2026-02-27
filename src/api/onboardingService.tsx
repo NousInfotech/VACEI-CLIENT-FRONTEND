@@ -666,19 +666,14 @@ export async function submitOnboardingRequest(data: OnboardingData): Promise<{ s
     // PATH A: Build service request details
     // According to new workflow: ServiceRequests type = INCORPORATION (business services)
     // Services: Accounting & Bookkeeping, VAT Returns, Audit, Payroll, Tax Advisory, Directorship service, Company Secretary, Registered Address, etc.
-    const selectedServices = data.selectedServices || [];
     const generalDetails = [
       { 
         question: "Company Type", 
         answer: data.companyType,
-        // attachedFiles: [] // Optional - can add fileIds if files are uploaded
       },
       { 
-        question: "Selected Services", 
-        answer: selectedServices.length > 0 
-          ? selectedServices.join(", ") 
-          : "Incorporation Service (business services)",
-        // attachedFiles: [] // Optional
+        question: "Service Type", 
+        answer: "Incorporation Service",
       },
     ];
     
