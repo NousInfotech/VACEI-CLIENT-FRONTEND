@@ -23,17 +23,6 @@ export default function IncorporationRequestPage() {
 
     return (
         <section className="mx-auto w-full p-5 space-y-6">
-            <div className="flex items-center gap-4 mb-2">
-                <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="rounded-full h-8 w-8 p-0"
-                    onClick={() => router.back()}
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-sm font-medium text-muted-foreground uppercase tracking-widest">Back to Companies</span>
-            </div>
 
             <PageHeader 
                 title="Incorporation Request"
@@ -43,7 +32,7 @@ export default function IncorporationRequestPage() {
             />
 
             <DashboardCard className="p-8">
-                <div className="max-w-4xl mx-auto">
+                <div className="mx-auto">
                     <ServiceRequestForm 
                         service="INCORPORATION"
                         companyId={activeCompanyId}

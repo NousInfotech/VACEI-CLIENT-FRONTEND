@@ -7,7 +7,7 @@ import Distribution from './Distribution'
 import CompanyHierarchy from './CompanyHierarchy'
 import Kyc from './kyc/KYCSection'
 import IncorporationSection from './incorporation/IncorporationSection'
-import { LayoutGrid, Users, PieChart, Network, ShieldCheck, ClipboardList } from 'lucide-react'
+import { LayoutGrid, Users, PieChart, Network, ShieldCheck, ClipboardList, CheckCircle2, Clock } from 'lucide-react'
 import { useCompany } from './hooks/useCompany'
 
 import PillTabs from '../shared/PillTabs'
@@ -21,7 +21,7 @@ import { DetailsSkeleton } from '../shared/CommonSkeletons'
 import PageHeader from '../shared/PageHeader'
 
 const Company = () => {
-  const [activeTab, setActiveTab] = useTabQuery('detail')
+  const [activeTab, setActiveTab] = useTabQuery('incorporation')
   const { company: data, loading, error } = useCompany()
   const searchParams = useSearchParams()
   const highlight = searchParams.get('highlight')
@@ -31,13 +31,17 @@ const Company = () => {
       ? 'kyc'
       : undefined
 
+  const incorporationVerified = !!data?.incorporationStatus
+  const kycVerified = !!data?.kycStatus
+
   const tabs = [
     { id: 'detail', label: 'Company Detail', icon: LayoutGrid },
     { id: 'involvements', label: 'Involvements', icon: Users },
     { id: 'distribution', label: 'Distribution', icon: PieChart },
     { id: 'hierarchy', label: 'Company Hierarchy', icon: Network },
     { id: 'incorporation', label: 'Incorporation KYC', icon: ClipboardList },
-    ...(data?.incorporationStatus ? [{ id: 'kyc', label: 'KYC', icon: ShieldCheck }] : []),
+    // KYC tab only visible once incorporation is verified
+    ...(incorporationVerified ? [{ id: 'kyc', label: 'KYC', icon: ShieldCheck }] : []),
   ]
 
   const renderContent = () => {
@@ -47,8 +51,10 @@ const Company = () => {
       case 'distribution': return <Distribution data={data as CompanyType}/>
       case 'hierarchy': return <CompanyHierarchy />
       case 'incorporation': return <IncorporationSection />
-      case 'kyc': return <Kyc />
-      default: return <CompanyDetail />
+      case 'kyc':
+        // Guard: only render KYC section if incorporation is done
+        return incorporationVerified ? <Kyc /> : <IncorporationSection />
+      default: return <IncorporationSection />
     }
   }
 
@@ -95,6 +101,34 @@ const Company = () => {
         description="Detailed company profile, including distribution, hierarchy, and KYC status."
         className="mb-6"
       />
+
+      {/* Status Banners */}
+      <div className="flex flex-wrap gap-3">
+        {incorporationVerified ? (
+          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 rounded-xl">
+            <CheckCircle2 className="h-4 w-4" />
+            Incorporation KYC Verified
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold px-4 py-2 rounded-xl">
+            <Clock className="h-4 w-4" />
+            Incorporation Pending — Please complete the Incorporation KYC documents below
+          </div>
+        )}
+        {incorporationVerified && (
+          kycVerified ? (
+            <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 rounded-xl">
+              <CheckCircle2 className="h-4 w-4" />
+              KYC Verified
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-700 text-sm font-semibold px-4 py-2 rounded-xl">
+              <Clock className="h-4 w-4" />
+              KYC Pending — Please complete the KYC documents
+            </div>
+          )
+        )}
+      </div>
       
       <PillTabs 
         tabs={tabs} 
