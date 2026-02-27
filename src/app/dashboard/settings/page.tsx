@@ -13,6 +13,8 @@ import PillTabs from "@/components/shared/PillTabs";
 import { useTabQuery } from "@/hooks/useTabQuery";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { fetchPreferencesAPI, updatePreferencesAPI, NotificationPreference } from '@/api/notificationService';
+import { getCompanyProfile, updateCompanyProfile } from '@/api/companyService';
+import { useActiveCompany } from '@/context/ActiveCompanyContext';
 
 // Simple textarea using Input styling
 const Textarea = (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
@@ -141,16 +143,49 @@ function SettingsContent() {
         }
     };
 
-    // --- Local UI state for profile/settings (UI-only, stored locally) ---
-    const [profile, setProfile] = useState<{ companyName: string; regNumber: string; address: string; contact: string; }>(() => {
-        if (typeof window !== "undefined") {
-            const raw = localStorage.getItem("vacei-settings-profile");
-            if (raw) {
-                try { return JSON.parse(raw); } catch { /* ignore */ }
-            }
-        }
-        return { companyName: "", regNumber: "", address: "", contact: "" };
+    // --- Local UI state for profile/settings ---
+    const { activeCompanyId } = useActiveCompany();
+    const [profile, setProfile] = useState<{ name: string; registrationNumber: string; address: string; }>({
+        name: "",
+        registrationNumber: "",
+        address: ""
     });
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+    useEffect(() => {
+        const loadProfile = async () => {
+            if (!activeCompanyId) return;
+            try {
+                const data = await getCompanyProfile(activeCompanyId);
+                setProfile({
+                    name: data.name || "",
+                    registrationNumber: data.registrationNumber || "",
+                    address: data.address || ""
+                });
+            } catch (err) {
+                console.error("Failed to load company profile", err);
+            }
+        };
+        loadProfile();
+    }, [activeCompanyId]);
+
+    const handleSaveProfile = async () => {
+        if (!activeCompanyId) return;
+        setIsSavingProfile(true);
+        try {
+            await updateCompanyProfile(activeCompanyId, {
+                name: profile.name,
+                address: profile.address,
+                // registrationNumber typically shouldn't be updated but include if needed, backend ignores if not in schema or updates if allowed
+            });
+            setAlert({ message: 'Company profile updated successfully.', variant: 'success' });
+        } catch (err: any) {
+            setAlert({ message: err.message || 'Failed to update company profile.', variant: 'danger' });
+        } finally {
+            setIsSavingProfile(false);
+        }
+    };
+
     const [notifications, setNotifications] = useState<NotificationPreference>({
         emailEnabled: true,
         inAppEnabled: true,
@@ -161,16 +196,6 @@ function SettingsContent() {
     const [sessions, setSessions] = useState<{ id: string; device: string; location: string; lastSeen: string; }[]>(() => [
         { id: "local-1", device: "Chrome on Windows", location: "Unknown", lastSeen: "Just now" },
     ]);
-    const [users, setUsers] = useState<{ id: string; name: string; email: string; role: string; }[]>(() => [
-        { id: "1", name: "You", email: "you@example.com", role: "Owner" },
-    ]);
-    const [newUser, setNewUser] = useState<{ name: string; email: string; role: string; }>({ name: "", email: "", role: "Viewer" });
-
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            localStorage.setItem("vacei-settings-profile", JSON.stringify(profile));
-        }
-    }, [profile]);
 
     useEffect(() => {
         const loadPrefs = async () => {
@@ -211,10 +236,8 @@ function SettingsContent() {
                 <PillTabs
                     tabs={[
                         { id: "general", label: "Company profile", icon: SettingsIcon },
-                        { id: "users", label: "Users & roles", icon: Users },
                         { id: "notifications", label: "Notifications", icon: Bell },
                         { id: "security", label: "Security & sessions", icon: Shield },
-                        { id: "billing", label: "Billing", icon: Wallet },
                         { id: "password", label: "Password", icon: Lock },
                     ]}
                     activeTab={activeTab}
@@ -224,48 +247,26 @@ function SettingsContent() {
                 {/* Profile */}
                 {activeTab === "general" && (
                     <div className="space-y-3">
-                        <h2 className="text-lg font-semibold text-brand-body">Company profile (UI-only)</h2>
+                        <h2 className="text-lg font-semibold text-brand-body">Company profile</h2>
+                        {alert && activeTab === "general" && (
+                            <div className="mb-4">
+                                <AlertMessage message={alert.message} variant={alert.variant} onClose={() => setAlert(null)} duration={6000} />
+                            </div>
+                        )}
                         <div className="grid gap-3 md:grid-cols-2">
-                            <Input placeholder="Company name" value={profile.companyName} onChange={(e)=>setProfile(p=>({...p,companyName:e.target.value}))}/>
-                            <Input placeholder="Registration number" value={profile.regNumber} onChange={(e)=>setProfile(p=>({...p,regNumber:e.target.value}))}/>
+                            <Input placeholder="Company name" value={profile.name} onChange={(e)=>setProfile(p=>({...p,name:e.target.value}))}/>
+                            <Input placeholder="Registration number" disabled value={profile.registrationNumber} title="Registration numbers cannot be edited directly." className="bg-muted cursor-not-allowed text-muted-foreground" />
                         </div>
                         <Textarea rows={2} placeholder="Address" value={profile.address} onChange={(e)=>setProfile(p=>({...p,address:e.target.value}))}/>
-                        <Input placeholder="Contact details" value={profile.contact} onChange={(e)=>setProfile(p=>({...p,contact:e.target.value}))}/>
-                    </div>
-                )}
-
-                {/* Users & roles (UI only) */}
-                {activeTab === "users" && (
-                    <div className="space-y-3">
-                        <h2 className="text-lg font-semibold text-brand-body">Client users & roles (UI-only)</h2>
-                        <div className="flex flex-col gap-2 md:flex-row">
-                            <Input placeholder="Name" value={newUser.name} onChange={(e)=>setNewUser(u=>({...u,name:e.target.value}))}/>
-                            <Input placeholder="Email" value={newUser.email} onChange={(e)=>setNewUser(u=>({...u,email:e.target.value}))}/>
-                            <Dropdown
-                                trigger={
-                                    <Button variant="outline" className="w-full h-9 justify-between">
-                                        {newUser.role || "Select role"}
-                                        <ChevronDown className="h-4 w-4 opacity-50" />
-                                    </Button>
-                                }
-                                items={[
-                                    { id: "Owner", label: "Owner", onClick: () => setNewUser(u => ({ ...u, role: "Owner" })) },
-                                    { id: "Admin", label: "Admin", onClick: () => setNewUser(u => ({ ...u, role: "Admin" })) },
-                                    { id: "Viewer", label: "Viewer", onClick: () => setNewUser(u => ({ ...u, role: "Viewer" })) }
-                                ]}
-                            />
-                            <Button className="text-xs rounded-lg shadow-sm hover:shadow-md transition-shadow" onClick={()=>{ if(newUser.name && newUser.email){ setUsers(prev=>[...prev,{...newUser,id:Date.now().toString()}]); setNewUser({name:"",email:"",role:"Viewer"});} }}>Add</Button>
-                        </div>
-                        <div className="space-y-2">
-                            {users.map(u=>(
-                                <div key={u.id} className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-sm shadow-sm">
-                                    <div className="flex flex-col">
-                                        <span className="font-semibold text-brand-body">{u.name}</span>
-                                        <span className="text-muted-foreground text-xs mt-0.5">{u.email}</span>
-                                    </div>
-                                    <span className="text-xs rounded-lg bg-muted border border-border px-2.5 py-1 font-medium">{u.role}</span>
-                                </div>
-                            ))}
+                        
+                        <div className="pt-2">
+                            <Button 
+                                onClick={handleSaveProfile} 
+                                disabled={isSavingProfile || !activeCompanyId}
+                                className="px-4 py-2 font-normal"
+                            >
+                                {isSavingProfile ? 'Saving...' : 'Save Changes'}
+                            </Button>
                         </div>
                     </div>
                 )}
@@ -345,15 +346,7 @@ function SettingsContent() {
                     </div>
                 )}
 
-                {/* Billing (stub) */}
-                {activeTab === "billing" && (
-                    <div className="space-y-2">
-                        <h2 className="text-lg font-semibold text-brand-body">Billing (if enabled)</h2>
-                        <p className="text-sm text-muted-foreground">
-                            UI stub. Add plan selection & payment details once backend is ready.
-                        </p>
-                    </div>
-                )}
+                {/* Billing (stub) removed */}
 
                 {/* Change Password Section (kept functional) */}
                 {activeTab === "password" && (

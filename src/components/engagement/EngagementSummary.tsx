@@ -284,7 +284,11 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
   const isBusinessPlans = serviceName === "Business Plans";
   const isLiquidation = serviceName === "Liquidation";
   const isPayroll = serviceName === "Payroll";
-  const isCorporate = serviceName === "Corporate Services";
+  // Treat Legal service as a Corporate-style service so it also exposes the Filings tab
+  const isCorporate =
+    serviceName === "Corporate Services" ||
+    serviceSlug === "legal" ||
+    serviceName.toLowerCase().includes("legal");
   const isCFO = serviceName === "CFO Services";
   const isAccounting = serviceName === "Accounting & Bookkeeping";
   const isAudit = serviceName === "Statutory Audit";
