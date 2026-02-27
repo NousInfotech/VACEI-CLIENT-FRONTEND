@@ -65,8 +65,11 @@ export function useChat(
         );
         const data = (response.data ?? []).map(mapApiMessageToChatMessage);
 
+        // API returns newest first (descending). Reverse to sort ascending (oldest first).
+        data.reverse();
+
         if (cursor) {
-          setMessages((prev) => [...prev, ...data]);
+          setMessages((prev) => [...data, ...prev]);
         } else {
           setMessages(data);
         }

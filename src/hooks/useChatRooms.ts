@@ -104,6 +104,22 @@ export function mapApiMessage(
 
     const createdAtMs = new Date(sentAt).getTime();
 
+    const replyToMsgObj = m.replyToMessage ?? m.reply_to_message;
+    let mappedReply: Message | undefined = undefined;
+    if (replyToMsgObj) {
+        const replyUserId = replyToMsgObj.senderId ?? replyToMsgObj.sender_id;
+        mappedReply = {
+            id: replyToMsgObj.id,
+            senderId: replyUserId === currentUserId ? "me" : replyUserId,
+            text: replyToMsgObj.content ?? replyToMsgObj.text,
+            fileName: replyToMsgObj.fileName ?? replyToMsgObj.file_name,
+            timestamp: new Date(replyToMsgObj.sentAt ?? replyToMsgObj.sent_at ?? new Date()).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            createdAt: new Date(replyToMsgObj.sentAt ?? replyToMsgObj.sent_at ?? new Date()).getTime(),
+            type: "text", // fallback
+            status: "sent"
+        };
+    }
+
     return {
         id: m.id,
         senderId: isMe ? "me" : rawSenderId,
@@ -120,6 +136,7 @@ export function mapApiMessage(
                 : "sent") as "sent" | "delivered" | "read",
         replyToId: m.replyToMessageId ?? undefined,
         replyToMessageId: m.replyToMessageId ?? undefined,
+        replyToMessage: mappedReply,
     };
 }
 
@@ -288,6 +305,11 @@ export function useChatRooms(activeRoomId?: string): UseChatRoomsReturn {
                                             const safeCreatedAt = Math.max(maxExisting + 1, finalMsg.createdAt ?? Date.now());
                                             const msgForSort = { ...finalMsg, createdAt: safeCreatedAt };
 
+                                            if (msgForSort.replyToMessageId && !msgForSort.replyToMessage) {
+                                                const original = r.messages.find(m => m.id === msgForSort.replyToMessageId);
+                                                if (original) msgForSort.replyToMessage = original;
+                                            }
+
                                             const merged = [...r.messages];
                                             if (optimisticIndex !== -1) {
                                                 // Replace optimistic message with the canonical one
@@ -406,7 +428,18 @@ export function useChatRooms(activeRoomId?: string): UseChatRoomsReturn {
                     const merged = [...apiMessages, ...fromRealtime].sort(
                         (a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0)
                     );
-                    return { ...r, messages: merged, participants: participants ?? r.participants };
+
+                    const byId = new Map<string, Message>();
+                    merged.forEach(m => byId.set(m.id, m));
+                    const finalMerged = merged.map(m => {
+                        if (m.replyToMessageId && !m.replyToMessage) {
+                            const original = byId.get(m.replyToMessageId);
+                            if (original) return { ...m, replyToMessage: original };
+                        }
+                        return m;
+                    });
+
+                    return { ...r, messages: finalMerged, participants: participants ?? r.participants };
                 })
             );
         },
