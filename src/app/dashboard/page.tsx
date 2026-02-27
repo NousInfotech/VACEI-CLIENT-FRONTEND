@@ -61,6 +61,8 @@ const dashboardCache = {
   dashboardSummary: null as DashboardSummary | null,
   activeFocus: null as any,
   upcomingDeadlines: [] as any[],
+  calendarDeadlines: [] as ComplianceCalendarEntry[],
+  todoCounts: { overdue: 0, dueSoon: 0, waiting: 0, done: 0 },
   complianceCounts: { overdue: 0, dueSoon: 0, waiting: 0, done: 0 },
   statsLoaded: false,
   stats: [] as ProcessedDashboardStat[],
@@ -98,6 +100,7 @@ export default function DashboardPage() {
   const [netIncomeYTD, setNetIncomeYTD] = useState<{ amount: string; change: string } | null>(() => dashboardCache.netIncomeYTD);
   const [username, setUsername] = useState<string>(''); // State for username to avoid hydration error
 
+  const [todoCounts, setTodoCounts] = useState(() => dashboardCache.todoCounts);
   const [complianceCounts, setComplianceCounts] = useState(() => dashboardCache.complianceCounts);
   const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(() => {
     return (Date.now() - dashboardCache.timestamp < CACHE_TTL)
@@ -106,6 +109,7 @@ export default function DashboardPage() {
   });
   const [activeFocus, setActiveFocus] = useState<any>(() => dashboardCache.activeFocus);
   const [upcomingDeadlines, setUpcomingDeadlines] = useState<any[]>(() => dashboardCache.upcomingDeadlines);
+  const [calendarDeadlines, setCalendarDeadlines] = useState<ComplianceCalendarEntry[]>(() => dashboardCache.calendarDeadlines);
   const [nextCalendarDeadline, setNextCalendarDeadline] = useState<ComplianceCalendarEntry | null>(null);
 
   const loadingCompanies = false; // Context handles loading implicitely or we can add it if needed
@@ -228,6 +232,8 @@ export default function DashboardPage() {
       setDashboardSummary(dashboardCache.dashboardSummary);
       setActiveFocus(dashboardCache.activeFocus);
       setUpcomingDeadlines(dashboardCache.upcomingDeadlines);
+      setCalendarDeadlines(dashboardCache.calendarDeadlines);
+      setTodoCounts(dashboardCache.todoCounts);
       setComplianceCounts(dashboardCache.complianceCounts);
       return;
     }
@@ -322,45 +328,67 @@ export default function DashboardPage() {
         setDashboardSummary(summary);
         setActiveFocus(newFocus);
 
-        const overdueCount = allPendingItems.filter(t => {
+        // Calculate Todo counts for Analytics (Top section)
+        const todoOverdue = actionRequiredTodos.filter(t => {
           if (!t.deadline) return false;
           const dl = new Date(t.deadline);
           const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
           return dlDate.getTime() < today.getTime();
         }).length;
 
-        const dueTodayCount = allPendingItems.filter(t => {
+        const todoToday = actionRequiredTodos.filter(t => {
           if (!t.deadline) return false;
           const dl = new Date(t.deadline);
           const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
           return dlDate.getTime() === today.getTime();
         }).length;
 
-        const dueSoonCount = allPendingItems.filter(t => {
+        const todoSoon = actionRequiredTodos.filter(t => {
           if (!t.deadline) return false;
           const dl = new Date(t.deadline);
           const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
           return dlDate.getTime() > today.getTime() && dlDate.getTime() <= nextWeek.getTime();
         }).length;
 
-        setComplianceCounts({
-          overdue: overdueCount,
-          dueSoon: dueSoonCount,
-          waiting: dueTodayCount,
-          done: summary.counts.pending
+        // Calculate Compliance counts for Snapshot (Sidebar)
+        const complianceOverdue = actionRequiredTasks.filter(t => {
+          if (!t.deadline) return false;
+          const dl = new Date(t.deadline);
+          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+          return dlDate.getTime() < today.getTime();
+        }).length;
+
+        const complianceToday = actionRequiredTasks.filter(t => {
+          if (!t.deadline) return false;
+          const dl = new Date(t.deadline);
+          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+          return dlDate.getTime() === today.getTime();
+        }).length;
+
+        const complianceSoon = actionRequiredTasks.filter(t => {
+          if (!t.deadline) return false;
+          const dl = new Date(t.deadline);
+          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+          return dlDate.getTime() > today.getTime() && dlDate.getTime() <= nextWeek.getTime();
+        }).length;
+
+        setTodoCounts({
+          overdue: todoOverdue,
+          dueSoon: todoSoon,
+          waiting: todoToday,
+          done: actionRequiredTodos.length
         });
 
-        // Update cache
+        // Update cache (remaining fields handled by loadComplianceCalendar)
         dashboardCache.activeCompanyId = activeCompanyId;
         dashboardCache.timestamp = Date.now();
         dashboardCache.dashboardSummary = summary;
         dashboardCache.activeFocus = newFocus;
-        dashboardCache.upcomingDeadlines = futureDeadlines;
-        dashboardCache.complianceCounts = {
-          overdue: overdueCount,
-          dueSoon: dueSoonCount,
-          waiting: dueTodayCount,
-          done: summary.counts.pending
+        dashboardCache.todoCounts = {
+          overdue: todoOverdue,
+          dueSoon: todoSoon,
+          waiting: todoToday,
+          done: actionRequiredTodos.length
         };
       } catch (error) {
         console.error("Failed to fetch dashboard summary:", error);
@@ -407,6 +435,42 @@ export default function DashboardPage() {
 
         const nextEntry = overdueEntries[0] || upcomingEntries[0] || null;
         setNextCalendarDeadline(nextEntry || null);
+        
+        // Also set a list of upcoming calendar deadlines (top 3)
+        const topUpcoming = upcomingEntries.slice(0, 3);
+        setCalendarDeadlines(topUpcoming);
+        dashboardCache.calendarDeadlines = topUpcoming;
+
+        // Calculate sidebar counts based EXCLUSIVELY on calendar entries
+        const calToday = withValidDates.filter(e => {
+          const dl = new Date(e.dueDate);
+          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+          return dlDate.getTime() === normalizedToday.getTime();
+        }).length;
+
+        const calSoon = withValidDates.filter(e => {
+          const dl = new Date(e.dueDate);
+          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+          // Include Yesterday and items within the next 7 days in "Due Soon" per user request
+          const nextWeek = new Date(normalizedToday);
+          nextWeek.setDate(nextWeek.getDate() + 7);
+          
+          const isYesterdayOrPast = dlDate.getTime() < normalizedToday.getTime();
+          const isUpcomingSoon = dlDate.getTime() > normalizedToday.getTime() && dlDate.getTime() <= nextWeek.getTime();
+          
+          return isYesterdayOrPast || isUpcomingSoon;
+        }).length;
+
+        const newCounts = {
+          overdue: 0, // Not used in sidebar anymore
+          dueSoon: calSoon,
+          waiting: calToday,
+          done: entries.length
+        };
+
+        setComplianceCounts(newCounts);
+        dashboardCache.complianceCounts = newCounts;
+
       } catch (error) {
         console.error("Failed to load compliance calendar for dashboard snapshot:", error);
         setNextCalendarDeadline(null);
@@ -713,7 +777,7 @@ export default function DashboardPage() {
                 <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Due Today</span>
-                    <span className="text-3xl font-semibold text-info tabular-nums">{complianceCounts.waiting}</span>
+                    <span className="text-3xl font-semibold text-info tabular-nums">{todoCounts.waiting}</span>
                   </div>
                 </DashboardCard>
               </Link>
@@ -721,7 +785,7 @@ export default function DashboardPage() {
                 <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Due soon</span>
-                    <span className="text-3xl font-semibold text-warning tabular-nums">{complianceCounts.dueSoon}</span>
+                    <span className="text-3xl font-semibold text-warning tabular-nums">{todoCounts.dueSoon}</span>
                   </div>
                 </DashboardCard>
               </Link>
@@ -729,15 +793,15 @@ export default function DashboardPage() {
                 <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Overdue</span>
-                    <span className="text-3xl font-semibold text-destructive tabular-nums">{complianceCounts.overdue}</span>
+                    <span className="text-3xl font-semibold text-destructive tabular-nums">{todoCounts.overdue}</span>
                   </div>
                 </DashboardCard>
               </Link>
-              <Link href="/dashboard/services" className="h-[128px]">
+              <Link href="/dashboard/todo-list" className="h-[128px]">
                 <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Active Engagements</span>
-                    <span className="text-3xl font-semibold text-success tabular-nums">{dashboardSummary?.counts.activeServices || 0}</span>
+                    <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Pending</span>
+                    <span className="text-3xl font-semibold text-success tabular-nums">{todoCounts.done}</span>
                   </div>
                 </DashboardCard>
               </Link>
@@ -764,61 +828,74 @@ export default function DashboardPage() {
                 className="p-6"
               />
               <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                {activeServices.map((service, idx) => {
-                  const getIcon = (category: string) => {
-                    if (category === "Bookkeeping") return <FileText className="text-blue-600" size={24} />;
-                    if (category === "VAT") return <Briefcase className="text-amber-600" size={24} />;
-                    if (category === "Audit") return <Search className="text-rose-600" size={24} />;
-                    return <CheckCircle className="text-emerald-600" size={24} />;
-                  };
+                {activeServices.length > 0 ? (
+                  activeServices.map((service, idx) => {
+                    const getIcon = (category: string) => {
+                      if (category === "Bookkeeping") return <FileText className="text-blue-600" size={24} />;
+                      if (category === "VAT") return <Briefcase className="text-amber-600" size={24} />;
+                      if (category === "Audit") return <Search className="text-rose-600" size={24} />;
+                      return <CheckCircle className="text-emerald-600" size={24} />;
+                    };
 
-                  const getIconBg = (category: string) => {
-                    if (category === "Bookkeeping") return "bg-blue-50";
-                    if (category === "VAT") return "bg-amber-50";
-                    if (category === "Audit") return "bg-rose-50";
-                    return "bg-emerald-50";
-                  };
+                    const getIconBg = (category: string) => {
+                      if (category === "Bookkeeping") return "bg-blue-50";
+                      if (category === "VAT") return "bg-amber-50";
+                      if (category === "Audit") return "bg-rose-50";
+                      return "bg-emerald-50";
+                    };
 
-                  return (
-                    <div key={idx} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shrink-0", getIconBg(service.category))}>
-                          {getIcon(service.category)}
-                        </div>
-                        <div className="space-y-1">
-                          <h4 className="text-xl font-bold text-gray-900">{service.name}</h4>
-                          <div className="flex items-center gap-3">
-                            {service.category === "Bookkeeping" && (
-                              <span className="text-sm font-semibold text-gray-500">REG NO: REG#87777448</span>
-                            )}
-                            {service.nextDeadline && !['COMPLETED', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'ACTION_TAKEN', 'UPLOADED', 'PENDING_REVIEW', 'DONE'].includes(service.status.toUpperCase()) && (
-                              <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
-                                Due {new Date(service.nextDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                              </span>
-                            )}
-                            {service.category === "Audit" && service.status.toUpperCase().includes("WAITING") && !['COMPLETED', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'ACTION_TAKEN', 'UPLOADED', 'PENDING_REVIEW', 'DONE'].includes(service.status.toUpperCase()) && (
-                              <div className="flex items-center gap-1.5 text-rose-600 font-semibold text-sm">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
-                                <span>Waiting for your response</span>
-                              </div>
-                            )}
-                            <span className="text-sm text-gray-500">
-                              {service.nextStepDescription && !['COMPLETED', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'ACTION_TAKEN', 'UPLOADED', 'PENDING_REVIEW', 'DONE'].includes(service.status.toUpperCase())
-                                ? `Next step: ${service.nextStepDescription}`
-                                : service.next}
-                            </span>
+                    return (
+                      <div key={idx} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shrink-0", getIconBg(service.category))}>
+                            {getIcon(service.category)}
+                          </div>
+                          <div className="space-y-1">
+                            <h4 className="text-xl font-bold text-gray-900">{service.name}</h4>
+                            <div className="flex items-center gap-3">
+                              {service.category === "Bookkeeping" && (
+                                <span className="text-sm font-semibold text-gray-500">REG NO: REG#87777448</span>
+                              )}
+                              {service.nextDeadline && !['COMPLETED', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'ACTION_TAKEN', 'UPLOADED', 'PENDING_REVIEW', 'DONE'].includes(service.status.toUpperCase()) && (
+                                <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                                  Due {new Date(service.nextDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                                </span>
+                              )}
+                              {service.status.toUpperCase().includes("WAITING") && !['COMPLETED', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'ACTION_TAKEN', 'UPLOADED', 'PENDING_REVIEW', 'DONE'].includes(service.status.toUpperCase()) && (
+                                <div className="flex items-center gap-1.5 text-rose-600 font-semibold text-sm">
+                                  <AlertCircle size={14} />
+                                  Action Required
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
+                        <Link href={service.href}>
+                          <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-50">
+                            <ArrowRight size={20} className="text-gray-400" />
+                          </Button>
+                        </Link>
                       </div>
-                      <Link href={service.href}>
-                        <Button className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl px-5 py-2.5 h-auto flex items-center gap-2 group">
-                          View Details
-                          <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                        </Button>
-                      </Link>
+                    );
+                  })
+                ) : (
+                  <div className="bg-white rounded-3xl border border-dashed border-gray-200 p-12 flex flex-col items-center justify-center text-center space-y-4">
+                    <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center">
+                      <Briefcase className="text-gray-300" size={32} />
                     </div>
-                  );
-                })}
+                    <div className="space-y-1">
+                      <h4 className="text-lg font-semibold text-gray-900">No active engagements</h4>
+                      <p className="text-sm text-gray-500 max-w-[280px]">
+                        You don&apos;t have any ongoing services at the moment. Explore our service library to get started.
+                      </p>
+                    </div>
+                    <Link href="/dashboard/library">
+                      <Button variant="outline" className="rounded-xl px-6">
+                        Explore Services
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -896,39 +973,48 @@ export default function DashboardPage() {
                     <Kpi label="Due soon" value={complianceCounts.dueSoon} tone="warning" />
                   </Link>
                 </div>
-                {nextCalendarDeadline ? (
-                  <DashboardCard className="border border-info/30 bg-info/5 px-4 py-3">
-                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1">Next Deadline</p>
-                    <p className="text-sm font-bold text-gray-900">
-                      {nextCalendarDeadline.company?.name ? `${nextCalendarDeadline.company.name} – ` : ""}
-                      {nextCalendarDeadline.title}
-                      {nextCalendarDeadline.dueDate
-                        ? ` – ${new Date(nextCalendarDeadline.dueDate).toLocaleDateString('en-GB', {
-                            day: 'numeric',
-                            month: 'short',
-                          })}`
-                        : ''}
-                    </p>
-                  </DashboardCard>
-                ) : upcomingDeadlines.length > 0 ? (
-                  <DashboardCard className="border border-info/30 bg-info/5 px-4 py-3">
-                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1">Next Deadline</p>
-                    <p className="text-sm font-bold text-gray-900">
-                      {upcomingDeadlines[0].title}
-                      {upcomingDeadlines[0].deadline
-                        ? ` – ${new Date(upcomingDeadlines[0].deadline).toLocaleDateString('en-GB', {
-                            day: 'numeric',
-                            month: 'short',
-                          })}`
-                        : ''}
-                    </p>
-                  </DashboardCard>
-                ) : (
-                  <DashboardCard className="border border-gray-200 bg-gray-50 px-4 py-3">
-                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mb-1">Status</p>
-                    <p className="text-sm font-bold text-gray-900">No action-required deadlines</p>
-                  </DashboardCard>
-                )}
+                <div className="space-y-2">
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest px-1">Next Deadlines</p>
+                  {nextCalendarDeadline || calendarDeadlines.length > 0 ? (
+                    <div className="space-y-2">
+                      {nextCalendarDeadline && (
+                        <DashboardCard className="border border-info/30 bg-info/5 px-4 py-3">
+                          <p className="text-sm font-bold text-gray-900">
+                            {nextCalendarDeadline.company?.name ? `${nextCalendarDeadline.company.name} – ` : ""}
+                            {nextCalendarDeadline.title}
+                            {nextCalendarDeadline.dueDate
+                              ? ` – ${new Date(nextCalendarDeadline.dueDate).toLocaleDateString('en-GB', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                })}`
+                              : ''}
+                          </p>
+                          <span className="text-[10px] text-info font-bold uppercase mt-1 inline-block">Next Calendar Entry</span>
+                        </DashboardCard>
+                      )}
+                      {calendarDeadlines
+                        .filter(d => d.id !== nextCalendarDeadline?.id)
+                        .map((deadline, idx) => (
+                        <DashboardCard key={idx} className="border border-gray-100 bg-gray-50/50 px-4 py-3 hover:border-info/20 transition-colors">
+                          <p className="text-sm font-semibold text-gray-800">
+                            {deadline.title}
+                            {deadline.dueDate
+                              ? ` – ${new Date(deadline.dueDate).toLocaleDateString('en-GB', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                })}`
+                              : ''}
+                          </p>
+                          <p className="text-[10px] text-gray-500 font-medium uppercase mt-0.5">{deadline.type || 'Compliance'}</p>
+                        </DashboardCard>
+                      ))}
+                    </div>
+                  ) : (
+                    <DashboardCard className="border border-gray-200 bg-gray-50 px-4 py-6 text-center">
+                      <p className="text-sm font-bold text-gray-400 italic">No upcoming compliance deadlines</p>
+                    </DashboardCard>
+                  )}
+                </div>
               </div>
             </DashboardCard>
           </div>
