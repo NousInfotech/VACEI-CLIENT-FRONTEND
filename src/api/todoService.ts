@@ -2,6 +2,8 @@
  * Todo API Service
  */
 
+import { dedupeInFlight } from "@/lib/inFlightDedupe";
+
 const backendUrl =
   process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") ||
   "http://localhost:5000/api/v1/";
@@ -33,26 +35,29 @@ export interface TodoItem {
  * GET /todos
  */
 export async function getTodos(params: { id?: string } = {}): Promise<TodoItem[]> {
-  const url = new URL(`${backendUrl}todos`);
-  if (params.id) {
-    url.searchParams.append("id", params.id);
-  }
+  const id = params.id ?? "";
+  return dedupeInFlight(`todos:${id || "all"}`, async () => {
+    const url = new URL(`${backendUrl}todos`);
+    if (params.id) {
+      url.searchParams.append("id", params.id);
+    }
 
-  const response = await fetch(url.toString(), {
-    method: "GET",
-    headers: {
-      ...getAuthHeaders(),
-      "Content-Type": "application/json",
-    },
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || "Failed to fetch todos");
+    }
+
+    const result = await response.json();
+    return result.data ?? result;
   });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to fetch todos");
-  }
-
-  const result = await response.json();
-  return result.data ?? result;
 }
 
 /**

@@ -12,6 +12,7 @@ interface PageHeaderProps {
   icon?: React.ComponentType<{ className?: string }>;
   activeCompany?: string;
   badge?: React.ReactNode;
+  badgeHref?: string;
   riskLevel?: {
     level: string;
     color: string;
@@ -29,6 +30,7 @@ export const PageHeader = ({
   icon: Icon,
   activeCompany,
   badge,
+  badgeHref,
   riskLevel,
   actions,
   className,
@@ -85,9 +87,15 @@ export const PageHeader = ({
               )}
               
               {badge && (
-                <Link href="/dashboard/compliance" className="cursor-pointer hover:opacity-80 transition-opacity">
-                  {badge}
-                </Link>
+                badgeHref ? (
+                  <Link href={badgeHref} className="cursor-pointer hover:opacity-80 transition-opacity">
+                    {badge}
+                  </Link>
+                ) : (
+                  <div className="flex items-center">
+                    {badge}
+                  </div>
+                )
               )}
 
               {riskLevel && (

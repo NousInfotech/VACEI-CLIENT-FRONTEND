@@ -82,7 +82,54 @@ export default function OnboardingPage() {
 
   const loadProgress = async () => {
     try {
-      // Use localStorage only (no backend calls)
+      const token = localStorage.getItem('token');
+      
+      // If we have a token, they've already signed up (Step 1 complete)
+      // We should check if they already have a company
+      if (token) {
+        try {
+          const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
+          const response = await fetch(`${backendUrl}companies`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            const companies = result.data || result || [];
+            
+            if (companies.length > 0) {
+              const company = companies[0];
+              // If they have a company, Step 1-3 are essentially done or in progress
+              // Let's check if we should go directly to dashboard
+              if (company.incorporationStatus && company.kycStatus) {
+                setIsRedirecting(true);
+                router.replace('/global-dashboard');
+                return;
+              }
+              
+              // If they have a company but onboarding not marked complete, start at Step 4 (Review)
+              // This is a safe "resume" point for users who already have a company record
+              setCurrentStep(4);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to fetch companies for progress check:', e);
+        }
+        
+        // If authenticated but no company found, skip Step 1 (Signup) and go to Step 2 (Welcome)
+        const progress = await getOnboardingProgress();
+        if (progress.currentStep === 1) {
+           setCurrentStep(2);
+        } else {
+           setCurrentStep(progress.currentStep);
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Use localStorage fallback if not handled above
       const progress = await getOnboardingProgress();
       
       // Fix: If currentStep > 4 or all steps completed, mark as completed

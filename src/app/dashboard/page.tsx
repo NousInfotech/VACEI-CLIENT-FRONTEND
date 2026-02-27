@@ -68,6 +68,12 @@ const dashboardCache = {
   authVerified: false,
   authTimestamp: 0,
   companiesFetched: false,
+  // In-flight guards to prevent duplicate API calls (e.g. from React strict mode)
+  authInFlight: false,
+  companiesInFlight: false,
+  summaryInFlight: false,
+  complianceInFlight: false,
+  financialInFlight: false,
 };
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const AUTH_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -115,6 +121,13 @@ export default function DashboardPage() {
         return;
       }
 
+      // Avoid duplicate calls while an auth check is already running
+      if (dashboardCache.authInFlight) {
+        return;
+      }
+
+      dashboardCache.authInFlight = true;
+
       setAuthLoading(true);
       try {
         const isAuthenticated = await verifyAuthentication();
@@ -147,6 +160,8 @@ export default function DashboardPage() {
         // On error, treat as unauthenticated
         dashboardCache.authVerified = false;
         handleAuthError(error, router);
+      } finally {
+        dashboardCache.authInFlight = false;
       }
     };
 
@@ -157,8 +172,10 @@ export default function DashboardPage() {
   useEffect(() => {
     if (authLoading) return; // Wait for auth verification
     if (dashboardCache.companiesFetched && companies.length > 0) return; // Skip if already fetched with recent auth
+    if (dashboardCache.companiesInFlight) return; // Skip if a fetch is already running
 
     const fetchCompanies = async () => {
+      dashboardCache.companiesInFlight = true;
       try {
         const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
         const token = localStorage.getItem('token');
@@ -182,6 +199,8 @@ export default function DashboardPage() {
         }
       } catch (error) {
         console.error("Failed to fetch companies:", error);
+      } finally {
+        dashboardCache.companiesInFlight = false;
       }
     };
 
@@ -213,7 +232,12 @@ export default function DashboardPage() {
       return;
     }
 
+    if (dashboardCache.summaryInFlight) {
+      return;
+    }
+
     const loadDashboardSummary = async () => {
+      dashboardCache.summaryInFlight = true;
       try {
         const summary = await fetchDashboardSummary(activeCompanyId);
 
@@ -340,6 +364,8 @@ export default function DashboardPage() {
         };
       } catch (error) {
         console.error("Failed to fetch dashboard summary:", error);
+      } finally {
+        dashboardCache.summaryInFlight = false;
       }
     };
     loadDashboardSummary();
@@ -349,7 +375,12 @@ export default function DashboardPage() {
   useEffect(() => {
     if (authLoading || !activeCompanyId) return;
 
+    if (dashboardCache.complianceInFlight) {
+      return;
+    }
+
     const loadComplianceCalendar = async () => {
+      dashboardCache.complianceInFlight = true;
       try {
         const entries = await listComplianceCalendars({ companyId: activeCompanyId });
         if (!entries || entries.length === 0) {
@@ -379,6 +410,8 @@ export default function DashboardPage() {
       } catch (error) {
         console.error("Failed to load compliance calendar for dashboard snapshot:", error);
         setNextCalendarDeadline(null);
+      } finally {
+        dashboardCache.complianceInFlight = false;
       }
     };
 
@@ -399,8 +432,13 @@ export default function DashboardPage() {
       return;
     }
 
+    if (dashboardCache.financialInFlight) {
+      return;
+    }
+
     const loadFinancialData = async () => {
       setLoading(true);
+      dashboardCache.financialInFlight = true;
       try {
         const fetchedStats = await fetchFinancialSummary();
         console.log(fetchedStats);
@@ -457,6 +495,7 @@ export default function DashboardPage() {
         setNetIncomeYTD(null);
       } finally {
         setLoading(false);
+        dashboardCache.financialInFlight = false;
       }
     };
     loadFinancialData();
@@ -589,12 +628,10 @@ export default function DashboardPage() {
           activeCompany={companies.find(c => c.id === activeCompanyId)?.name || "ACME LTD"}
           badge={
             healthStatus === "Needs attention" ? (
-              <Link href="/dashboard/todo-list">
                 <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-700 font-bold text-xs uppercase tracking-widest shadow-sm text-white cursor-pointer hover:bg-white/5 transition-colors`}>
                   <span className={`w-2 h-2 rounded-full animate-pulse bg-warning`}></span>
                   {healthStatus}
                 </div>
-              </Link>
             ) : (
               <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-700 font-bold text-xs uppercase tracking-widest shadow-sm text-white`}>
                 <span className={`w-2 h-2 rounded-full animate-pulse bg-success`}></span>
@@ -602,6 +639,7 @@ export default function DashboardPage() {
               </div>
             )
           }
+          badgeHref={healthStatus === "Needs attention" ? "/dashboard/todo-list" : "/dashboard/compliance"}
           riskLevel={undefined}
         // actions={
         //   <DashboardActionButton 
