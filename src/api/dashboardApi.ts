@@ -1,3 +1,5 @@
+import { dedupeInFlight } from "@/lib/inFlightDedupe";
+
 const backendUrl =
   process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") ||
   "http://localhost:5000/api/v1/";
@@ -39,19 +41,21 @@ export interface DashboardSummary {
 }
 
 export const fetchDashboardSummary = async (companyId: string): Promise<DashboardSummary> => {
-  const response = await fetch(`${backendUrl}dashboard/summary?companyId=${companyId}`, {
-    method: "GET",
-    headers: {
-      ...getAuthHeaders(),
-      "Content-Type": "application/json",
-    },
+  return dedupeInFlight(`dashboardSummary:${companyId}`, async () => {
+    const response = await fetch(`${backendUrl}dashboard/summary?companyId=${companyId}`, {
+      method: "GET",
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || "Failed to fetch dashboard summary");
+    }
+
+    const result = await response.json();
+    return result.data;
   });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to fetch dashboard summary");
-  }
-
-  const result = await response.json();
-  return result.data;
 };

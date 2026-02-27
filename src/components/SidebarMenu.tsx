@@ -59,29 +59,38 @@ export default function SidebarMenu({
   // Load global badges for Messages & Alerts
   useEffect(() => {
     let cancelled = false;
+    let inFlight = false;
 
     const loadMessageSummary = async () => {
+      if (inFlight) return;
+      inFlight = true;
       try {
         const res = await chatService.getClientRooms();
         if (cancelled) return;
         const rooms = res.data ?? [];
 
-        let totalUnread = 0;
-        const unreadResults = await Promise.allSettled(
-          rooms.map(room => chatService.getUnreadCount(room.id))
-        );
+        // Prefer unreadCount directly from rooms payload (cheap: 1 API call).
+        // Fallback to per-room unread-count only if missing.
+        let totalUnread = rooms.reduce((sum, r: any) => sum + (Number(r?.unreadCount) || 0), 0);
 
-        unreadResults.forEach(result => {
-          if (result.status === 'fulfilled') {
-            totalUnread += result.value.data?.unreadCount ?? 0;
-          }
-        });
+        if (totalUnread === 0 && rooms.length > 0 && rooms.some((r: any) => r?.unreadCount === undefined)) {
+          const unreadResults = await Promise.allSettled(
+            rooms.map((room: any) => chatService.getUnreadCount(room.id))
+          );
+          unreadResults.forEach(result => {
+            if (result.status === 'fulfilled') {
+              totalUnread += result.value.data?.unreadCount ?? 0;
+            }
+          });
+        }
 
         if (!cancelled) {
           setMessagesTotal(totalUnread);
         }
       } catch (e) {
         console.error("Failed to load messages summary", e);
+      } finally {
+        inFlight = false;
       }
     };
 
@@ -124,20 +133,25 @@ export default function SidebarMenu({
       setDocumentRequestsMap({});
       return;
     }
+    let cancelled = false;
+    const controller = new AbortController();
+
     const fetchData = async () => {
       if (!activeCompanyId) return;
       try {
         // Fetch todos
         const todosData = await getTodos();
+        if (cancelled) return;
         setTodos(Array.isArray(todosData) ? todosData : []);
 
         // Fetch document requests if we have engagements
         if (engagements.length > 0) {
           const promises = engagements.map(eng => {
             const id = eng.id || eng._id;
-            return getDocumentRequests(id).then(data => ({ id, data }));
+            return getDocumentRequests(id, controller.signal).then(data => ({ id, data }));
           });
           const results = await Promise.all(promises);
+          if (cancelled) return;
           const map: Record<string, DocumentRequest[]> = {};
           results.forEach(res => {
             map[res.id] = res.data;
@@ -149,6 +163,10 @@ export default function SidebarMenu({
       }
     };
     fetchData();
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, [activeCompanyId, engagements]);
   const sections: { id: MenuSection; label: string }[] = useMemo(() => [
     { id: "primary", label: "Client portal" },

@@ -270,6 +270,7 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
                             selectedMessageIds={selectedMessageIds}
                             onSelectMessage={() => { }}
                             onEnterSelectMode={() => setIsSelectMode(true)}
+                            currentUserId={undefined}
                             hideSearch={true}
                             hideMore={true}
                         />

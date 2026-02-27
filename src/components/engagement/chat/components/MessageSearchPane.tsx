@@ -1,5 +1,5 @@
 import { X, Search } from 'lucide-react';
-import type { Message, User } from '../types';
+import type { Message, User } from '@/components/dashboard/messages/types';
 import React, { useState } from 'react';
 
 interface MessageSearchPaneProps {
