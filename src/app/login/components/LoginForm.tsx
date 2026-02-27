@@ -123,25 +123,49 @@ export default function LoginForm() {
                 document.cookie = `client-token=${encodeURIComponent(token)}; ${cookieOptions}`;
             }
 
-            // Check if onboarding is incomplete before redirecting
+            // Direct Redirection Logic: Bypass onboarding hop for fully registered users
             const onboardingProgress = localStorage.getItem('onboarding-progress');
+            const TOTAL_STEPS = 4;
+            
+            try {
+              // Quick check for existing companies to determine destination
+              const response = await fetch(`${backendUrl}companies`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              
+              if (response.ok) {
+                const result = await response.json();
+                const companies = result.data || result || [];
+                
+                // If they have a fully verified company, go straight to dashboard
+                const hasVerifiedCompany = companies.some((c: any) => c.incorporationStatus && c.kycStatus);
+                
+                if (hasVerifiedCompany) {
+                  router.push("/global-dashboard");
+                  return;
+                }
+              }
+            } catch (e) {
+              console.warn('Fast-path company check failed:', e);
+            }
+
+            // Fallback to onboarding progress check
             if (onboardingProgress) {
               try {
                 const progress = JSON.parse(onboardingProgress);
-                // If onboarding is not completed, redirect to onboarding page
+                // Redirect to onboarding only if setup is truly pending (Step 1-4)
                 if (progress.onboardingStatus !== 'completed' && 
-                    progress.currentStep <= 8 && 
-                    (!progress.completedSteps || progress.completedSteps.length < 8)) {
+                    progress.currentStep >= 1 && 
+                    progress.currentStep <= TOTAL_STEPS) {
                   router.push("/onboarding");
                   return;
                 }
               } catch (error) {
-                // If parsing fails, continue to dashboard
                 console.warn('Failed to parse onboarding progress:', error);
               }
             }
             
-            // Redirect to global dashboard after successful login (onboarding completed or no progress found)
+            // Default: Redirect to global dashboard
             router.push("/global-dashboard");
         } catch (err) {
             const errorMessage = (err as Error)?.message || "An unknown error occurred";

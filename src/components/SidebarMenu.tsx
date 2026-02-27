@@ -181,18 +181,15 @@ export default function SidebarMenu({
 
   const dynamicMenu = useMemo(() => {
     return menu
-      .filter(item => {
-        // If no active company, hide restricted items (only for global dashboard/portal view if applicable)
-        // Usually these slugs are in globalMenuData, but we apply to any menu passed
-        if (!hasActiveCompany && hiddenSlugs.includes(item.slug)) {
-          return false;
-        }
-        return true;
-      })
       .map((item) => {
-        let nextItem: MenuItem = item;
+        let nextItem: MenuItem = { ...item };
 
-      if (item.slug === "services-root") {
+        // Disable restricted items if no active company
+        if (!hasActiveCompany && hiddenSlugs.includes(item.slug)) {
+          nextItem.disabled = true;
+        }
+
+        if (item.slug === "services-root") {
         const dynamicChildren = sidebarData.map((s) => {
           // Normalize service name to match SERVICE_METADATA keys
           // Replace all non-alphanumeric with _, collapse multiple _, trim _

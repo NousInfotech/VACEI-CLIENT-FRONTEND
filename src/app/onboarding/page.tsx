@@ -262,7 +262,7 @@ export default function OnboardingPage() {
         <WelcomeScreen
           onComplete={() => handleStepComplete(2)}
           onSaveExit={handleSaveExit}
-          onBack={() => setCurrentStep(1)}
+          onBack={() => router.push('/login')}
         />
       )}
       {validStep === 3 && (
