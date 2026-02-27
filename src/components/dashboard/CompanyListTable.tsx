@@ -184,18 +184,9 @@ export default function CompanyListTable() {
                                             size="sm"
                                             className="rounded-xl h-9"
                                             onClick={() => {
+                                                // Set active company and go to the main company dashboard (/dashboard)
                                                 setActiveCompanyId(company.id);
-                                                
-                                                if (!company.incorporationStatus) {
-                                                    // Approved but not fully incorporated -> Incorporation KYC
-                                                    router.push(`/global-dashboard/companies/${company.id}?tab=incorporation&highlight=incorporation`);
-                                                } else if (!company.kycStatus) {
-                                                    // Incorporated but KYC pending -> KYC tab
-                                                    router.push(`/global-dashboard/companies/${company.id}?tab=kyc&highlight=kyc`);
-                                                } else {
-                                                    // Both done -> normal View
-                                                    router.push(`/global-dashboard/companies/${company.id}`);
-                                                }
+                                                router.push("/dashboard");
                                             }}
                                         >
                                             <Eye className="h-4 w-4 mr-2" />
