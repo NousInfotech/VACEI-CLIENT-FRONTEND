@@ -628,12 +628,10 @@ export default function DashboardPage() {
           activeCompany={companies.find(c => c.id === activeCompanyId)?.name || "ACME LTD"}
           badge={
             healthStatus === "Needs attention" ? (
-              <Link href="/dashboard/todo-list">
                 <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-700 font-bold text-xs uppercase tracking-widest shadow-sm text-white cursor-pointer hover:bg-white/5 transition-colors`}>
                   <span className={`w-2 h-2 rounded-full animate-pulse bg-warning`}></span>
                   {healthStatus}
                 </div>
-              </Link>
             ) : (
               <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-700 font-bold text-xs uppercase tracking-widest shadow-sm text-white`}>
                 <span className={`w-2 h-2 rounded-full animate-pulse bg-success`}></span>
@@ -641,6 +639,7 @@ export default function DashboardPage() {
               </div>
             )
           }
+          badgeHref={healthStatus === "Needs attention" ? "/dashboard/todo-list" : "/dashboard/compliance"}
           riskLevel={undefined}
         // actions={
         //   <DashboardActionButton 

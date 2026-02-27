@@ -314,6 +314,8 @@ export async function createCompany(companyData: {
 export async function getOnboardingProgress(): Promise<OnboardingProgress> {
   // Use localStorage only - no backend calls for now
   const saved = localStorage.getItem('onboarding-progress');
+  const token = localStorage.getItem('token');
+  
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
@@ -325,10 +327,11 @@ export async function getOnboardingProgress(): Promise<OnboardingProgress> {
   }
   
   // Return default progress if nothing is saved
+  // If authenticated, we must have passed Step 1
   return {
     onboardingStatus: 'in_progress',
-    currentStep: 1,
-    completedSteps: [],
+    currentStep: token ? 2 : 1,
+    completedSteps: token ? [1] : [],
   };
 }
 
