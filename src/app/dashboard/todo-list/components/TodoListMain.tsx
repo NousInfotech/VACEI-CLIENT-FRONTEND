@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { getTodos, TodoItem } from "@/api/todoService";
 import AlertMessage, { AlertVariant } from "@/components/AlertMessage";
@@ -151,11 +151,41 @@ export default function TodoList() {
         }
     };
 
+    const todoStats = useMemo(() => {
+        if (!allTasks.length) return undefined;
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const sevenDaysFromNow = new Date();
+        sevenDaysFromNow.setDate(today.getDate() + 7);
+        sevenDaysFromNow.setHours(23, 59, 59, 999);
+
+        const incompleteTasks = allTasks.filter(t => {
+            const st = (t.status || '').toUpperCase();
+            return st !== 'COMPLETED' && st !== 'ACTION_TAKEN';
+        });
+
+        const hasUrgentTasks = incompleteTasks.some(t => {
+            if (!t.deadline) return false;
+            const deadline = new Date(t.deadline);
+            return deadline <= sevenDaysFromNow;
+        });
+
+        return {
+            total: allTasks.length,
+            completed: allTasks.length - incompleteTasks.length,
+            healthStatus: (hasUrgentTasks ? 'Action Required' : 'Healthy') as 'Action Required' | 'Healthy'
+        };
+    }, [allTasks]);
+
     return (
         <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-4">
             <PageHeader
                 title="To-Do List"
                 subtitle="Manage your tasks, track progress, and collaborate with your team."
+                todoStats={todoStats}
+                todoStatsHref="/dashboard/todo-list"
             />
 
             <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">

@@ -14,6 +14,7 @@ export async function fetchTasks(params: FetchTasksParams = {}) {
   const mockTasks: any[] = [
     {
       id: 1,
+      companyId: "c1",
       title: "Review Q4 Financial Statements",
       description: "Complete review of Q4 financial statements and prepare summary report",
       statusId: 1,
@@ -25,11 +26,12 @@ export async function fetchTasks(params: FetchTasksParams = {}) {
       category: "Financial Review",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       priority: "High",
     },
     {
       id: 2,
+      companyId: "c1",
       title: "Tax Filing Preparation",
       description: "Prepare all necessary documents for annual tax filing",
       statusId: 2,
@@ -41,11 +43,12 @@ export async function fetchTasks(params: FetchTasksParams = {}) {
       category: "Tax",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days from now
+      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
       priority: "Medium",
     },
     {
       id: 3,
+      companyId: "c2",
       title: "Audit Documentation",
       description: "Compile and organize all audit-related documentation",
       statusId: 3,
@@ -57,23 +60,27 @@ export async function fetchTasks(params: FetchTasksParams = {}) {
       category: "Audit",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      dueDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+      dueDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
       priority: "Low",
     },
   ];
+
+  const filteredTasks = params.companyId 
+    ? mockTasks.filter(t => t.companyId === params.companyId)
+    : mockTasks;
 
   const page = params.page || 1;
   const limit = params.limit || 10;
   const startIndex = (page - 1) * limit;
   const endIndex = startIndex + limit;
-  const paginatedData = mockTasks.slice(startIndex, endIndex);
+  const paginatedData = filteredTasks.slice(startIndex, endIndex);
 
   return {
     data: paginatedData,
     pagination: {
-      total: mockTasks.length,
+      total: filteredTasks.length,
       page: page,
-      totalPages: Math.ceil(mockTasks.length / limit),
+      totalPages: Math.ceil(filteredTasks.length / limit),
       limit: limit,
     },
   };
@@ -483,6 +490,7 @@ export interface FetchTasksParams {
   categoryId?: number | null;
   statusId?: number | null;
   assignedToId?: number | null; // This is for filtering by a single assigned user
+  companyId?: string | null;
 }
 
 export interface Assignment {

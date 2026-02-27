@@ -141,10 +141,19 @@ function LegacyComplianceCalendarPage() {
 
   // Load compliance items
   const loadComplianceItems = useCallback(async () => {
+    if (!activeCompanyId) {
+      setComplianceItems([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       // Fetch tasks and transform to compliance items
-      const taskResponse = await fetchTasks({ page: 1, limit: 100 });
+      const taskResponse = await fetchTasks({ 
+        page: 1, 
+        limit: 100,
+        companyId: activeCompanyId 
+      });
       const tasks = taskResponse.data || [];
       
       // Transform tasks to compliance items
@@ -216,7 +225,7 @@ function LegacyComplianceCalendarPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeCompanyId]);
 
   useEffect(() => {
     loadComplianceItems();
@@ -233,7 +242,6 @@ function LegacyComplianceCalendarPage() {
       try {
         const data = await listComplianceCalendars({
           companyId: activeCompanyId,
-          type: "COMPANY",
         } as any);
         setCalendarEntries(Array.isArray(data) ? data : []);
       } catch (error) {
@@ -254,7 +262,6 @@ function LegacyComplianceCalendarPage() {
     let upcoming = 0;
 
     calendarEntries.forEach((entry) => {
-      if (entry.type !== "COMPANY") return;
       const due = new Date(entry.dueDate);
       if (Number.isNaN(due.getTime())) return;
       const normalized = new Date(due.getFullYear(), due.getMonth(), due.getDate());
@@ -268,8 +275,15 @@ function LegacyComplianceCalendarPage() {
       dueToday,
       upcoming,
       completed: 0,
+      hasTasks: overdue > 0 || dueToday > 0 
     };
   }, [calendarEntries]);
+
+  const todoStats = useMemo(() => ({
+    healthStatus: statusCounts.hasTasks ? "Action Required" as const : "Healthy" as const,
+    total: statusCounts.overdue + statusCounts.dueToday,
+    completed: statusCounts.completed
+  }), [statusCounts]);
 
   // Apply filters
   const filteredItems = complianceItems.filter((item) => {
@@ -386,6 +400,7 @@ function LegacyComplianceCalendarPage() {
       <PageHeader
         title="Compliance Calendar"
         subtitle="All statutory deadlines and obligations — automatically tracked"
+        todoStats={todoStats}
         actions={
           <div className="flex items-center gap-3">
             <Button
@@ -405,16 +420,6 @@ function LegacyComplianceCalendarPage() {
               <Download className="w-4 h-4 mr-2" />
               Download (.ics)
             </Button>
-
-            <Link href="/dashboard/compliance/setup">
-              <Button
-                variant="outline"
-                className="bg-light text-primary-color-new"
-              >
-                <ArrowRight className="w-4 h-4 mr-2" />
-                Setup
-              </Button>
-            </Link>
           </div>
         }
       />

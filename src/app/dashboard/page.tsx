@@ -63,7 +63,7 @@ const dashboardCache = {
   upcomingDeadlines: [] as any[],
   calendarDeadlines: [] as ComplianceCalendarEntry[],
   todoCounts: { overdue: 0, dueSoon: 0, waiting: 0, done: 0 },
-  complianceCounts: { overdue: 0, dueSoon: 0, waiting: 0, done: 0 },
+  complianceCounts: { overdue: 0, dueSoon: 0, waiting: 0, upcoming: 0, done: 0 },
   statsLoaded: false,
   stats: [] as ProcessedDashboardStat[],
   netIncomeYTD: null as { amount: string; change: string } | null,
@@ -101,7 +101,7 @@ export default function DashboardPage() {
   const [username, setUsername] = useState<string>(''); // State for username to avoid hydration error
 
   const [todoCounts, setTodoCounts] = useState(() => dashboardCache.todoCounts);
-  const [complianceCounts, setComplianceCounts] = useState(() => dashboardCache.complianceCounts);
+  const [complianceCounts, setComplianceCounts] = useState<{ overdue: number; dueSoon: number; waiting: number; upcoming?: number; done: number }>(() => dashboardCache.complianceCounts);
   const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(() => {
     return (Date.now() - dashboardCache.timestamp < CACHE_TTL)
       ? dashboardCache.dashboardSummary
@@ -461,10 +461,17 @@ export default function DashboardPage() {
           return isYesterdayOrPast || isUpcomingSoon;
         }).length;
 
+        const calUpcoming = withValidDates.filter(e => {
+          const dl = new Date(e.dueDate);
+          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+          return dlDate.getTime() >= normalizedToday.getTime();
+        }).length;
+
         const newCounts = {
           overdue: 0, // Not used in sidebar anymore
           dueSoon: calSoon,
           waiting: calToday,
+          upcoming: calUpcoming,
           done: entries.length
         };
 
@@ -641,7 +648,7 @@ export default function DashboardPage() {
     { text: "Need 1 more invoice", sender: "John (Accountant)", time: "1 hour ago" },
     { text: "Audit query sent", sender: "System", time: "3 hours ago" },
   ];
-  const healthStatus = complianceCounts.overdue > 0 ? "Needs attention" : complianceCounts.dueSoon > 0 ? "Needs attention" : "Healthy";
+  const healthStatus = (todoCounts.overdue > 0 || todoCounts.waiting > 0 || todoCounts.dueSoon > 0) ? "Action Required" : "Healthy";
 
   // Calculate Risk Level
   const getRiskLevel = () => {
@@ -690,30 +697,12 @@ export default function DashboardPage() {
           title={getGreeting()}
           subtitle={username ? "Here's your compliance status and what's happening with your business today." : "Welcome back! Here's what's happening with your business today."}
           activeCompany={companies.find(c => c.id === activeCompanyId)?.name || "ACME LTD"}
-          badge={
-            healthStatus === "Needs attention" ? (
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-700 font-bold text-xs uppercase tracking-widest shadow-sm text-white cursor-pointer hover:bg-white/5 transition-colors`}>
-                  <span className={`w-2 h-2 rounded-full animate-pulse bg-warning`}></span>
-                  {healthStatus}
-                </div>
-            ) : (
-              <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-700 font-bold text-xs uppercase tracking-widest shadow-sm text-white`}>
-                <span className={`w-2 h-2 rounded-full animate-pulse bg-success`}></span>
-                {healthStatus}
-              </div>
-            )
-          }
-          badgeHref={healthStatus === "Needs attention" ? "/dashboard/todo-list" : "/dashboard/compliance"}
-          riskLevel={undefined}
-        // actions={
-        //   <DashboardActionButton 
-        //     Icon={User}
-        //     title="Contact Accountant"
-        //     subtitle="Get expert assistance"
-        //     onClick={handleContactAccountantClick}
-        //     className="bg-white/5 border border-white/10 hover:bg-white/10 text-white"
-        //   />
-        // }
+          todoStats={{
+            total: todoCounts.done, // total items considered
+            completed: todoCounts.done - (todoCounts.overdue + todoCounts.waiting + todoCounts.dueSoon),
+            healthStatus: healthStatus as 'Action Required' | 'Healthy'
+          }}
+          todoStatsHref={healthStatus === "Action Required" ? "/dashboard/todo-list" : "/dashboard/compliance"}
         />
 
         {/* 🔴 Priority Actions (Only if needed) */}
@@ -970,7 +959,7 @@ export default function DashboardPage() {
                     <Kpi label="Due Today" value={complianceCounts.waiting} tone="info" />
                   </Link>
                   <Link href="/dashboard/compliance">
-                    <Kpi label="Due soon" value={complianceCounts.dueSoon} tone="warning" />
+                    <Kpi label="Upcoming" value={complianceCounts.upcoming || 0} tone="warning" />
                   </Link>
                 </div>
                 <div className="space-y-2">
@@ -992,22 +981,7 @@ export default function DashboardPage() {
                           <span className="text-[10px] text-info font-bold uppercase mt-1 inline-block">Next Calendar Entry</span>
                         </DashboardCard>
                       )}
-                      {calendarDeadlines
-                        .filter(d => d.id !== nextCalendarDeadline?.id)
-                        .map((deadline, idx) => (
-                        <DashboardCard key={idx} className="border border-gray-100 bg-gray-50/50 px-4 py-3 hover:border-info/20 transition-colors">
-                          <p className="text-sm font-semibold text-gray-800">
-                            {deadline.title}
-                            {deadline.dueDate
-                              ? ` – ${new Date(deadline.dueDate).toLocaleDateString('en-GB', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                })}`
-                              : ''}
-                          </p>
-                          <p className="text-[10px] text-gray-500 font-medium uppercase mt-0.5">{deadline.type || 'Compliance'}</p>
-                        </DashboardCard>
-                      ))}
+                      {/* Removed secondary deadlines to only show the single next deadline as per user request */}
                     </div>
                   ) : (
                     <DashboardCard className="border border-gray-200 bg-gray-50 px-4 py-6 text-center">

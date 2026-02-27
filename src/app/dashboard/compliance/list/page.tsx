@@ -7,9 +7,11 @@ import Dropdown from "@/components/Dropdown";
 import { ChevronDown } from "lucide-react";
 import { fetchTasks, fetchTaskCategories, fetchTaskStatuses } from "@/api/taskService";
 import type { Category, Status, Task, Pagination } from "@/interfaces";
+import { useActiveCompany } from "@/context/ActiveCompanyContext";
 
 export default function ComplianceListPage() {
   const router = useRouter();
+  const { activeCompanyId } = useActiveCompany();
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -28,6 +30,11 @@ export default function ComplianceListPage() {
 
   const loadData = useCallback(
     async (page: number = 1) => {
+      if (!activeCompanyId) {
+        setTasks([]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
         const [taskResponse, cats, stats] = await Promise.all([
@@ -36,6 +43,7 @@ export default function ComplianceListPage() {
             search,
             categoryId: serviceFilter === "all" ? undefined : serviceFilter,
             statusId: statusFilter === "all" ? undefined : statusFilter,
+            companyId: activeCompanyId,
           }),
           fetchTaskCategories(),
           fetchTaskStatuses(),
@@ -48,7 +56,7 @@ export default function ComplianceListPage() {
         setLoading(false);
       }
     },
-    [search, serviceFilter, statusFilter]
+    [search, serviceFilter, statusFilter, activeCompanyId]
   );
 
   useEffect(() => {

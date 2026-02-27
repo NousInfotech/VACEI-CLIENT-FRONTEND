@@ -30,6 +30,26 @@ interface ComplianceItem {
   description: string;
 }
 
+const SERVICE_NAME_MAPPING: Record<string, string> = {
+  "ACCOUNTING": "Accounting",
+  "AUDITING": "Audit",
+  "VAT": "VAT",
+  "TAX": "Tax",
+  "PAYROLL": "Payroll",
+  "CSP": "Corporate Services",
+  "MBR": "MBR Filing",
+  "CFO": "CFO Services",
+  "LEGAL": "Legal",
+  "TECHNOLOGY": "Technology",
+  "INCORPORATION": "Incorporation",
+  "PROJECTS_TRANSACTIONS": "Projects & Transactions",
+  "GRANTS_AND_INCENTIVES": "Grants & Incentives"
+};
+
+const getFriendlyServiceName = (category: string) => {
+  return SERVICE_NAME_MAPPING[category.toUpperCase()] || category;
+};
+
 function mapApiToComplianceItem(c: ComplianceCalendarEntry): ComplianceItem {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -43,6 +63,8 @@ function mapApiToComplianceItem(c: ComplianceCalendarEntry): ComplianceItem {
   if (isPastDate) status = "overdue";
   else if (isTodayDate) status = "due_today";
 
+  const authority = c.customServiceCycle?.title || getFriendlyServiceName(c.serviceCategory || '');
+
   return {
     id: c.id,
     complianceId: c.id,
@@ -50,7 +72,7 @@ function mapApiToComplianceItem(c: ComplianceCalendarEntry): ComplianceItem {
     title: c.title,
     dueDate: c.dueDate,
     status,
-    authority: c.customServiceCycle?.title || c.serviceCategory,
+    authority,
     description: c.description || "",
   };
 }
