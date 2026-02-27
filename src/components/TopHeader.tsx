@@ -139,16 +139,18 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
         }
     }, []);
 
+    const hasActiveCompany = globalCompanies.length > 0 && globalCompanies.some(c => c.incorporationStatus === true && c.kycStatus === true);
+
     // SSE Hook
-    const { notifications: sseNotifications, unreadCount: sseUnreadCount } = useSSE();
+    const { notifications: sseNotifications, unreadCount: sseUnreadCount } = useSSE(hasActiveCompany);
 
     // Re-fetch when SSE notification arrives
     useEffect(() => {
-        if (sseNotifications.length > 0) {
+        if (hasActiveCompany && sseNotifications.length > 0) {
             getUnreadCount();
             getLatestNotifications();
         }
-    }, [sseNotifications, getUnreadCount, getLatestNotifications]);
+    }, [sseNotifications, getUnreadCount, getLatestNotifications, hasActiveCompany]);
 
     // Fetch companies from backend API
     const fetchCompaniesFromAPI = useCallback(async () => {
@@ -195,9 +197,11 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
     }, [fetchCompaniesFromAPI]);
 
     useEffect(() => {
-        getUnreadCount();
-        getLatestNotifications();
-    }, [pathname, getUnreadCount, getLatestNotifications]);
+        if (hasActiveCompany) {
+            getUnreadCount();
+            getLatestNotifications();
+        }
+    }, [pathname, getUnreadCount, getLatestNotifications, hasActiveCompany]);
 
     // Refresh companies when navigating to dashboard (after login or signup)
     useEffect(() => {

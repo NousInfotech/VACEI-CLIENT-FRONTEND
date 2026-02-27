@@ -3,12 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useSearchParams } from 'next/navigation'; // For accessing URL query parameters
+import { useRouter, useSearchParams } from 'next/navigation'; // For accessing URL query parameters
 import AlertMessage from "@/components/AlertMessage"; // This is the correct import
 
 
 
 export default function ResetPasswordForm() {
+    const router = useRouter();
     const searchParams = useSearchParams();
     const otp = searchParams.get('otp') || searchParams.get('token'); // Support both 'otp' and 'token' for backward compatibility
     const emailFromUrl = searchParams.get('email');
@@ -83,6 +84,9 @@ export default function ResetPasswordForm() {
 
             setAlertMessage(message);
             setMessageVariant("success");
+            setTimeout(() => {
+                router.push("/login");
+            }, 2000);
             setOtpValue("");
             setPassword("");
             setConfirmPassword("");
@@ -166,7 +170,7 @@ export default function ResetPasswordForm() {
 
                                 <button
                                     type="submit"
-                                    className="bg-primary text-card-foreground py-3 rounded"
+                                    className="w-full h-12 mt-2 rounded-lg font-semibold text-base bg-primary text-primary-foreground hover:opacity-90"
                                     disabled={loading}
                                 >
                                     {loading ? "Resetting..." : "Reset Password"}

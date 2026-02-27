@@ -95,6 +95,7 @@ export default function SidebarMenu({
     };
 
     const loadNotificationSummary = async () => {
+      if (!globalCompanies.some(c => c.incorporationStatus && c.kycStatus)) return;
       try {
         const res = await fetchUnreadCountAPI();
         if (cancelled) return;
@@ -125,7 +126,7 @@ export default function SidebarMenu({
         document.removeEventListener("visibilitychange", handleVisibility);
       }
     };
-  }, []);
+  }, [globalCompanies]);
 
   useEffect(() => {
     if (!activeCompanyId) {
