@@ -6,63 +6,12 @@ import { getOnboardingProgress, saveOnboardingStep } from '@/api/onboardingServi
 import UserRegistrationScreen from './screens/UserRegistrationScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
 import CompanyDetailsScreen from './screens/CompanyDetailsScreen';
-import ServicesSelectionScreen from './screens/ServicesSelectionScreen';
 import ReviewSubmitScreen from './screens/ReviewSubmitScreen';
 import KYCIntroductionScreen from './screens/KYCIntroductionScreen';
 import KYCDashboardScreen from './screens/KYCDashboardScreen';
 import { OnboardingProgress } from '@/interfaces';
 
-const TOTAL_STEPS = 7;
-
-// Helper function to check if it's PATH B (New Company Profile)
-function isNewCompanyProfile(): boolean {
-  if (typeof window === 'undefined') return false;
-  try {
-    const saved = localStorage.getItem('onboarding-data');
-    if (saved) {
-      const data = JSON.parse(saved);
-      return data.incorporationStatus === true;
-    }
-  } catch {
-    // Fallback: check companyType
-    try {
-      const saved = localStorage.getItem('onboarding-data');
-      if (saved) {
-        const data = JSON.parse(saved);
-        return data.companyType === 'new' && data.incorporationStatus !== false;
-      }
-    } catch {
-      return false;
-    }
-  }
-  return false;
-}
-
-// Helper function to get the next step, skipping Step 4 for PATH B
-function getNextStep(currentStep: number): number {
-  const isPathB = isNewCompanyProfile();
-  
-  if (isPathB) {
-    // PATH B: Skip Step 4 (Services)
-    if (currentStep === 3) return 5; // Step 3 → Step 5 (skip 4)
-  }
-  
-  // Normal flow or PATH A
-  return currentStep + 1;
-}
-
-// Helper function to get the previous step, skipping Step 4 for PATH B
-function getPreviousStep(currentStep: number): number {
-  const isPathB = isNewCompanyProfile();
-  
-  if (isPathB) {
-    // PATH B: Skip Step 4 (Services)
-    if (currentStep === 5) return 3; // Step 5 → Step 3 (skip 4)
-  }
-  
-  // Normal flow or PATH A
-  return currentStep - 1;
-}
+const TOTAL_STEPS = 4;
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -93,25 +42,24 @@ export default function OnboardingPage() {
       if (saved) {
         try {
           const localProgress = JSON.parse(saved);
-          // Check if completed OR if all steps are done (currentStep > 7 or completedSteps.length >= 7)
+          // Check if completed OR if all steps are done (currentStep > 4)
           if (localProgress.onboardingStatus === 'completed' || 
-              localProgress.currentStep > 7 || 
-              (localProgress.completedSteps && localProgress.completedSteps.length >= 7)) {
+              localProgress.currentStep > TOTAL_STEPS) {
             // Fix: Mark as completed if not already marked
             if (localProgress.onboardingStatus !== 'completed') {
               const completedProgress: OnboardingProgress = {
                 onboardingStatus: 'completed',
-                currentStep: 7,
-                completedSteps: [1, 2, 3, 4, 5, 6, 7],
+                currentStep: TOTAL_STEPS,
+                completedSteps: [1, 2, 3, 4],
               };
               localStorage.setItem('onboarding-progress', JSON.stringify(completedProgress));
             }
             setIsRedirecting(true);
-            router.replace('/dashboard');
+            router.replace('/global-dashboard');
             // Fallback: force redirect if router doesn't work
             setTimeout(() => {
               if (typeof window !== 'undefined' && window.location.pathname === '/onboarding') {
-                window.location.href = '/dashboard';
+                window.location.href = '/global-dashboard';
               }
             }, 200);
             return true; // Indicates we should stop here
@@ -132,36 +80,25 @@ export default function OnboardingPage() {
     loadProgress();
   }, [router]);
 
-  // PATH B: Redirect if user is on Step 4 (should be skipped)
-  // This must be called unconditionally (before any early returns)
-  useEffect(() => {
-    if (!loading) {
-      const isPathB = isNewCompanyProfile();
-      if (isPathB && currentStep === 4) {
-        setCurrentStep(5); // Step 4 → Step 5 (skip 4)
-      }
-    }
-  }, [loading, currentStep]);
-
   const loadProgress = async () => {
     try {
       // Use localStorage only (no backend calls)
       const progress = await getOnboardingProgress();
       
-      // Fix: If currentStep > 7 or all steps completed, mark as completed
-      if (progress.currentStep > 7 || progress.completedSteps.length >= 7) {
+      // Fix: If currentStep > 4 or all steps completed, mark as completed
+      if (progress.currentStep > TOTAL_STEPS || progress.completedSteps.length >= TOTAL_STEPS) {
         const completedProgress: OnboardingProgress = {
           onboardingStatus: 'completed',
-          currentStep: 7,
-          completedSteps: [1, 2, 3, 4, 5, 6, 7],
+          currentStep: TOTAL_STEPS,
+          completedSteps: [1, 2, 3, 4],
         };
         localStorage.setItem('onboarding-progress', JSON.stringify(completedProgress));
         setOnboardingProgress(completedProgress);
         setIsRedirecting(true);
-        router.replace('/dashboard');
+        router.replace('/global-dashboard');
         setTimeout(() => {
           if (typeof window !== 'undefined' && window.location.pathname === '/onboarding') {
-            window.location.href = '/dashboard';
+            window.location.href = '/global-dashboard';
           }
         }, 200);
         setLoading(false);
@@ -173,21 +110,21 @@ export default function OnboardingPage() {
       // If onboarding is completed, redirect to dashboard
       if (progress.onboardingStatus === 'completed') {
         setIsRedirecting(true);
-        router.replace('/dashboard');
+        router.replace('/global-dashboard');
         // Fallback: force redirect if router doesn't work
         setTimeout(() => {
           if (typeof window !== 'undefined' && window.location.pathname === '/onboarding') {
-            window.location.href = '/dashboard';
+            window.location.href = '/global-dashboard';
           }
         }, 200);
         setLoading(false);
         return;
       }
       
-      // Resume from last incomplete step (ensure it's valid: 1-7)
-      if (progress.currentStep && progress.currentStep > 1 && progress.currentStep <= 7) {
+      // Resume from last incomplete step (ensure it's valid: 1-4)
+      if (progress.currentStep && progress.currentStep >= 1 && progress.currentStep <= TOTAL_STEPS) {
         setCurrentStep(progress.currentStep);
-      } else if (progress.currentStep > 7) {
+      } else if (progress.currentStep > TOTAL_STEPS) {
         // Invalid step number, start from step 1
         setCurrentStep(1);
       }
@@ -202,17 +139,22 @@ export default function OnboardingPage() {
 
   const handleStepComplete = (step: number) => {
     if (step < TOTAL_STEPS) {
-      const nextStep = getNextStep(step);
-      setCurrentStep(nextStep);
+      setCurrentStep(step + 1);
     } else {
       // Onboarding complete
-      router.push('/dashboard');
+      const completedProgress: OnboardingProgress = {
+        onboardingStatus: 'completed',
+        currentStep: TOTAL_STEPS,
+        completedSteps: [1, 2, 3, 4],
+      };
+      localStorage.setItem('onboarding-progress', JSON.stringify(completedProgress));
+      router.push('/global-dashboard');
     }
   };
 
   // Check if all steps are completed (even if status says in_progress)
-  const isAllStepsCompleted = (onboardingProgress?.completedSteps?.length ?? 0) >= 7 || 
-                               (onboardingProgress?.currentStep ?? 0) > 7;
+  const isAllStepsCompleted = (onboardingProgress?.completedSteps?.length ?? 0) >= TOTAL_STEPS || 
+                               (onboardingProgress?.currentStep ?? 0) > TOTAL_STEPS;
 
   // Show redirecting screen if completed or redirecting
   if (isRedirecting || 
@@ -222,16 +164,16 @@ export default function OnboardingPage() {
         if (isAllStepsCompleted && onboardingProgress?.onboardingStatus !== 'completed') {
           const completedProgress: OnboardingProgress = {
             onboardingStatus: 'completed',
-            currentStep: 7,
-            completedSteps: [1, 2, 3, 4, 5, 6, 7],
+            currentStep: TOTAL_STEPS,
+            completedSteps: [1, 2, 3, 4],
           };
       localStorage.setItem('onboarding-progress', JSON.stringify(completedProgress));
       if (!isRedirecting) {
         setIsRedirecting(true);
-        router.replace('/dashboard');
+        router.replace('/global-dashboard');
         setTimeout(() => {
           if (typeof window !== 'undefined' && window.location.pathname === '/onboarding') {
-            window.location.href = '/dashboard';
+            window.location.href = '/global-dashboard';
           }
         }, 200);
       }
@@ -258,9 +200,8 @@ export default function OnboardingPage() {
     );
   }
 
-  // Ensure currentStep is valid (1-7)
-  const validStep = currentStep >= 1 && currentStep <= 7 ? currentStep : 1;
-  const isPathB = isNewCompanyProfile();
+  // Ensure currentStep is valid (1-4)
+  const validStep = currentStep >= 1 && currentStep <= TOTAL_STEPS ? currentStep : 1;
 
   return (
     <>
@@ -284,35 +225,11 @@ export default function OnboardingPage() {
           onBack={() => setCurrentStep(2)}
         />
       )}
-      {/* Step 4 (Services) - Only show for PATH A (Existing Company) */}
-      {validStep === 4 && !isPathB && (
-        <ServicesSelectionScreen
+      {validStep === 4 && (
+        <ReviewSubmitScreen
           onComplete={() => handleStepComplete(4)}
           onSaveExit={handleSaveExit}
           onBack={() => setCurrentStep(3)}
-        />
-      )}
-      {validStep === 5 && (
-        <ReviewSubmitScreen
-          onComplete={() => handleStepComplete(5)}
-          onSaveExit={handleSaveExit}
-          onBack={() => setCurrentStep(getPreviousStep(5))}
-        />
-      )}
-      {/* Step 6 (KYC Introduction) - Previously Step 7 */}
-      {validStep === 6 && (
-        <KYCIntroductionScreen
-          onComplete={() => handleStepComplete(6)}
-          onSaveExit={handleSaveExit}
-          onBack={() => setCurrentStep(getPreviousStep(6))}
-        />
-      )}
-      {/* Step 7 (KYC Dashboard) - Previously Step 8 */}
-      {validStep === 7 && (
-        <KYCDashboardScreen
-          onComplete={() => handleStepComplete(7)}
-          onSaveExit={handleSaveExit}
-          onBack={() => setCurrentStep(6)}
         />
       )}
     </>

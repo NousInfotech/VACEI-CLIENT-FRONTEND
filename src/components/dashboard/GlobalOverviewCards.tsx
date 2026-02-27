@@ -255,6 +255,31 @@ export default function GlobalOverviewCards() {
   const analytics = getResellerAnalyticsContent();
   const support = getSupportContent();
 
+  // Logic: Show all cards only if at least one company has both incorporationStatus and kycStatus as true
+  const hasActiveCompany = companies.some(c => c.incorporationStatus === true && c.kycStatus === true);
+
+  if (!hasActiveCompany) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <CardWrapper 
+          title="My Companies" 
+          bgImage="/global-dashboard/companies.png"
+          button={companiesData.button}
+        >
+          {companiesData.content}
+        </CardWrapper>
+
+        <CardWrapper 
+          title="Support" 
+          bgImage="/global-dashboard/supports.png"
+          button={support.button}
+        >
+          {support.content}
+        </CardWrapper>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <CardWrapper 

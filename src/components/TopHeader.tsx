@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { GlobalUploadDrawer } from "@/components/GlobalUploadDrawer";
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Notification01Icon, Upload04Icon, Video01Icon } from '@hugeicons/core-free-icons';
-import { PanelLeft, PanelLeftClose, ChevronDown, LayoutGrid, ArrowLeft } from 'lucide-react';
+import { PanelLeft, PanelLeftClose, ChevronDown, LayoutGrid, ArrowLeft, ChevronLeft } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import Dropdown from "./Dropdown";
 
@@ -352,11 +352,11 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                     }}
                     variant="secondary"
                     size="sm"
-                    className="rounded-full px-4 bg-[#0B1525] text-white hover:bg-[#0B1525]/90 border border-white/10"
+                    className="px-4 bg-primary"
                     aria-label="Go Back"
                     title="Go Back"
                 >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    <ChevronLeft className="h-4 w-4 mr-2" />
                     Back
                 </Button>
 

@@ -141,12 +141,13 @@ export default function UserRegistrationScreen({ onComplete, onSaveExit, onBack 
   return (
     <OnboardingLayout
       currentStep={1}
-      totalSteps={7}
+      totalSteps={4}
       onContinue={handleContinue}
       onSaveExit={onSaveExit}
       onBack={onBack}
       continueLabel={loading ? 'Creating account...' : 'Continue'}
       disabled={loading}
+      logoSrc="/logo/Logo.webp"
     >
       <div className="space-y-6">
         <div>

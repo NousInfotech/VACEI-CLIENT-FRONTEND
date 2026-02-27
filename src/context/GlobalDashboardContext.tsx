@@ -9,6 +9,8 @@ interface Company {
   name: string;
   overdueCount: number;
   dueSoonCount: number;
+  incorporationStatus?: boolean;
+  kycStatus?: boolean;
 }
 
 interface GlobalDashboardContextType {
@@ -53,7 +55,9 @@ export function GlobalDashboardProvider({ children }: { children: React.ReactNod
           id: c.id,
           name: c.name,
           overdueCount: c.overdueComplianceCount || 0,
-          dueSoonCount: c.dueSoonComplianceCount || 0
+          dueSoonCount: c.dueSoonComplianceCount || 0,
+          incorporationStatus: c.incorporationStatus ?? false,
+          kycStatus: c.kycStatus ?? false
         }));
         setCompanies(mappedCompanies);
 

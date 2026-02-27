@@ -143,7 +143,9 @@ const IncorporationSection = () => {
     )
   }
 
-  const documentRequests = incorporation.documentRequests || [];
+  const documentRequests = (incorporation.documentRequests || []).filter(
+    (req: any) => req.status !== 'DRAFT'
+  );
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
@@ -159,6 +161,32 @@ const IncorporationSection = () => {
           <ClipboardList size={32} />
         </div>
       </div>
+
+      {/* Progress bar */}
+      {documentRequests.length > 0 && (() => {
+        const allDocs = documentRequests.flatMap((r: any) => r.requestedDocuments || []);
+        const totalDocs = allDocs.length;
+        const uploadedDocs = allDocs.filter((d: any) => d.status === 'UPLOADED' || d.status === 'ACCEPTED').length;
+        const percent = totalDocs > 0 ? Math.round((uploadedDocs / totalDocs) * 100) : 0;
+        return (
+          <div className="bg-white/60 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md px-6 py-4 space-y-2">
+            <div className="flex items-center justify-between text-sm font-semibold">
+              <span className="text-gray-700 flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-indigo-500" />
+                Document Upload Progress
+              </span>
+              <span className="text-indigo-600">{uploadedDocs} / {totalDocs} uploaded</span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+              <div
+                className="h-2.5 rounded-full bg-green-500 transition-all duration-700"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+            <p className="text-[11px] text-gray-400 font-medium text-right">{percent}% complete</p>
+          </div>
+        );
+      })()}
 
       <div className="space-y-4">
           {documentRequests.length === 0 ? (

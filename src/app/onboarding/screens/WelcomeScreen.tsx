@@ -50,7 +50,7 @@ export default function WelcomeScreen({ onComplete, onSaveExit, onBack }: Welcom
   return (
     <OnboardingLayout
       currentStep={2}
-      totalSteps={7}
+      totalSteps={4}
       onContinue={handleContinue}
       onSaveExit={onSaveExit}
       onBack={onBack}
@@ -78,7 +78,7 @@ export default function WelcomeScreen({ onComplete, onSaveExit, onBack }: Welcom
                 <Building2 className="h-6 w-6 text-primary" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-2">Existing Company — Incorporation Service</h3>
+                <h3 className="font-semibold text-lg mb-2">Create a company profile that exists ( i have a company )</h3>
                 <p className="text-sm text-muted-foreground mb-4">
                   You have an existing company and need incorporation services (Accounting, VAT, Audit, Payroll, Tax Advisory, etc.).
                 </p>
@@ -108,7 +108,7 @@ export default function WelcomeScreen({ onComplete, onSaveExit, onBack }: Welcom
                 <FileText className="h-6 w-6 text-primary" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-2">New Company Profile</h3>
+                <h3 className="font-semibold text-lg mb-2">Create a company profile that don&apos;t exist ( i don&apos;t have company )</h3>
                 <p className="text-sm text-muted-foreground mb-4">
                   Create a new company profile. Your company is already incorporated. Services are not available for this path.
                 </p>
