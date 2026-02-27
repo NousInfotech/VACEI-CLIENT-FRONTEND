@@ -134,8 +134,17 @@ export default function FilingsTab() {
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="h-9 w-9 rounded-0 hover:bg-white hover:text-primary border border-transparent hover:border-slate-200 shadow-none"
-                              onClick={() => window.open(filing.file?.url, '_blank')}
+                              className="h-9 w-9 rounded-0 hover:bg-primary/10 hover:text-primary transition-all duration-200 border border-transparent hover:border-primary/20 shadow-none text-slate-400 font-bold"
+                              onClick={() => {
+                                if (filing.file?.url) {
+                                  const link = document.createElement('a');
+                                  link.href = filing.file.url;
+                                  link.download = filing.file.file_name || filing.name;
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                }
+                              }}
                             >
                               <Download size={16} />
                             </Button>
@@ -152,8 +161,12 @@ export default function FilingsTab() {
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="h-9 w-9 rounded-0 hover:bg-white hover:text-primary border border-transparent hover:border-slate-200 shadow-none"
-                              onClick={() => window.open(filing.file?.url, '_blank')}
+                              className="h-9 w-9 rounded-0 hover:bg-primary/10 hover:text-primary transition-all duration-200 border border-transparent hover:border-primary/20 shadow-none text-slate-400 font-bold"
+                              onClick={() => {
+                                if (filing.file?.url) {
+                                  window.open(filing.file.url, '_blank');
+                                }
+                              }}
                             >
                               <ExternalLink size={16} />
                             </Button>
