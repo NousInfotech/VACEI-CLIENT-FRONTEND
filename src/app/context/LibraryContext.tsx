@@ -531,12 +531,15 @@ export const LibraryProvider: React.FC<{
         for (const folder of folders) {
           try {
             const folderName = (folder as any).folder_name || (folder as any).name || "folder"
-            const fileList = await collectFilesInFolder(folder.id, "")
+            const { files: fileList, emptyFolders: emptyFolderPaths } = await collectFilesInFolder(folder.id, "")
             const zip = new JSZip()
             for (const { fileId, fileName, zipPath } of fileList) {
               const res = await getFileDownloadUrl(fileId)
               const blob = await fetch(res.url).then((r) => r.blob())
               zip.file(zipPath, blob)
+            }
+            for (const zipPath of emptyFolderPaths) {
+              zip.file(`${zipPath}/.keep`, new Blob([]))
             }
             const content = await zip.generateAsync({ type: "blob" })
             const link = document.createElement("a")
@@ -568,14 +571,29 @@ export const LibraryProvider: React.FC<{
 
         if (!url) continue
 
-        const link = document.createElement("a")
-        link.href = url
-        link.download = fileName || "file"
-        link.target = "_blank"
-        link.rel = "noopener noreferrer"
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+        // Fetch as blob and trigger download so the file downloads instead of opening in browser
+        try {
+          const resp = await fetch(url, { credentials: "omit" })
+          if (!resp.ok) throw new Error("Download failed")
+          const blob = await resp.blob()
+          const blobUrl = URL.createObjectURL(blob)
+          const link = document.createElement("a")
+          link.href = blobUrl
+          link.download = fileName || "file"
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          URL.revokeObjectURL(blobUrl)
+        } catch (e) {
+          console.error("Failed to download file", e)
+          const link = document.createElement("a")
+          link.href = url
+          link.download = fileName || "file"
+          link.target = "_blank"
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+        }
       }
     },
     [useApi, selectedItems, currentItems]
