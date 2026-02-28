@@ -31,7 +31,7 @@ export function OnboardingLayout({
   continueLabel = 'Continue',
   hideActions = false,
   disabled = false,
-  logoSrc = '/logo.svg',
+  logoSrc = '/logo/Logo.webp',
   className,
 }: OnboardingLayoutProps) {
   const showBackButton = currentStep > 1 && onBack;

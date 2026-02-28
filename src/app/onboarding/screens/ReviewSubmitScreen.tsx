@@ -5,7 +5,7 @@ import { OnboardingLayout } from '@/components/onboarding/OnboardingLayout';
 import { Card, CardContent } from '@/components/ui/card2';
 import { Button } from '@/components/ui/button';
 import { OnboardingData } from '@/interfaces';
-import { submitOnboardingRequest } from '@/api/onboardingService';
+import { submitOnboardingRequest, getOnboardingDataFromDB } from '@/api/onboardingService';
 import Link from 'next/link';
 
 interface ReviewSubmitScreenProps {
@@ -20,11 +20,33 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    // Load saved data
-    const saved = localStorage.getItem('onboarding-data');
-    if (saved) {
-      setOnboardingData(JSON.parse(saved));
-    }
+    const loadData = async () => {
+      // 1. Load from localStorage
+      const saved = localStorage.getItem('onboarding-data');
+      let data: any = null;
+      if (saved) {
+        try {
+          data = JSON.parse(saved);
+        } catch (e) {
+          console.warn('Failed to parse localStorage onboarding-data');
+        }
+      }
+
+      // 2. Load from DB if authenticated
+      const token = localStorage.getItem('token');
+      if (token) {
+        const dbOnboarding = await getOnboardingDataFromDB();
+        if (dbOnboarding?.data) {
+          data = { ...data, ...dbOnboarding.data };
+        }
+      }
+
+      if (data) {
+        setOnboardingData(data);
+      }
+    };
+
+    loadData();
   }, []);
 
   const handleSubmit = async () => {
@@ -76,8 +98,8 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
   if (submitted) {
     // Check incorporation status from localStorage (created in Step 3)
     // NEW WORKFLOW:
-    // PATH A: Existing Company (incorporationStatus: true) → Service request submitted → Quotation will be sent
-    // PATH B: New Company Profile (incorporationStatus: false) → No service request → Proceed to KYC
+    // PATH A: Existing Company (incorporationStatus: true) → Already incorporated → Proceed to KYC
+    // PATH B: New Company (incorporationStatus: false) → Needs incorporation → Service request submitted
     const savedData = localStorage.getItem('onboarding-data');
     let incorporationStatus: boolean | null = null;
     if (savedData) {
@@ -104,8 +126,8 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
           <h1 className="text-2xl font-semibold">Thank you</h1>
           <p className="text-muted-foreground">
             {incorporationStatus === true 
-              ? 'Your company profile has been created. Your quotation will be sent within 24 hours.'
-              : 'Your incorporation service request has been submitted. You can proceed to KYC verification.'}
+              ? 'Your company profile has been created. You can proceed to KYC verification.'
+              : 'Your quotation will be sent within 24 hours.'}
           </p>
         </div>
       </OnboardingLayout>

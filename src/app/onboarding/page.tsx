@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getOnboardingProgress, saveOnboardingStep } from '@/api/onboardingService';
+import { getOnboardingProgress, saveOnboardingStep, saveOnboardingDataToDB } from '@/api/onboardingService';
 import UserRegistrationScreen from './screens/UserRegistrationScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
 import CompanyDetailsScreen from './screens/CompanyDetailsScreen';
@@ -24,201 +24,68 @@ function OnboardingPageContent() {
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged out (no token) - if so, clear stale onboarding data for fresh signup
     const token = localStorage.getItem('token');
+    
+    // If no token, we are at the signup phase (Step 1)
     if (!token) {
-      // User is not logged in - clear any stale onboarding data to allow fresh signup
-      localStorage.removeItem('onboarding-progress');
-      localStorage.removeItem('onboarding-data');
-      localStorage.removeItem('service-request-id');
-      localStorage.removeItem('quotation-id');
-      localStorage.removeItem('incorporation-cycle-id');
-      // Start fresh onboarding
       setCurrentStep(1);
       setLoading(false);
       return;
     }
 
-    // Immediate check on mount - if completed, redirect right away
-    const checkAndRedirect = () => {
-      const saved = localStorage.getItem('onboarding-progress');
-      if (saved) {
-        try {
-          const localProgress = JSON.parse(saved);
-          // Check if completed OR if all steps are done (currentStep > 4)
-          if (localProgress.onboardingStatus === 'completed' || 
-              localProgress.currentStep > TOTAL_STEPS) {
-            // Fix: Mark as completed if not already marked
-            if (localProgress.onboardingStatus !== 'completed') {
-              const completedProgress: OnboardingProgress = {
-                onboardingStatus: 'completed',
-                currentStep: TOTAL_STEPS,
-                completedSteps: [1, 2, 3, 4],
-              };
-              localStorage.setItem('onboarding-progress', JSON.stringify(completedProgress));
-            }
-            setIsRedirecting(true);
-            router.replace('/global-dashboard');
-            // Fallback: force redirect if router doesn't work
-            setTimeout(() => {
-              if (typeof window !== 'undefined' && window.location.pathname === '/onboarding') {
-                window.location.href = '/global-dashboard';
-              }
-            }, 200);
-            return true; // Indicates we should stop here
-          }
-        } catch {
-          // Invalid data, continue
-        }
-      }
-      return false;
-    };
+    // If we have a token, we should check progress
+    loadProgress(token);
+  }, []);
 
-    // Check immediately
-    if (checkAndRedirect()) {
-      return; // Don't load progress if redirecting
-    }
-
-    // Load progress for non-completed onboarding
-    loadProgress();
-  }, [router]);
-
-  const loadProgress = async () => {
+  const loadProgress = async (token: string) => {
     try {
-      const token = localStorage.getItem('token');
-      
-      // If we have a token but NOT the 'continue' flag, treat as a fresh signup
-      if (token && !isContinue) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('onboarding-progress');
-        localStorage.removeItem('onboarding-data');
-        localStorage.removeItem('service-request-id');
-        localStorage.removeItem('quotation-id');
-        localStorage.removeItem('incorporation-cycle-id');
-        localStorage.removeItem('vacei-active-company');
-        localStorage.removeItem('vacei-companies');
-        // Clear cookie as well
-        if (typeof document !== 'undefined') {
-          document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-        }
-        setCurrentStep(1);
-        setLoading(false);
-        return;
-      }
+      setLoading(true);
 
-      // If we have a token and ARE continuing, handle progress
-      if (token && isContinue) {
-        try {
-          const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
-          const response = await fetch(`${backendUrl}companies`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          
-          if (response.ok) {
-            const result = await response.json();
-            const companies = result.data || result || [];
-            
-            if (companies.length > 0) {
-              const company = companies[0];
-              if (company.incorporationStatus && company.kycStatus) {
-                setIsRedirecting(true);
-                router.replace('/global-dashboard');
-                return;
-              }
-              
-              setCurrentStep(4);
-              setLoading(false);
-              return;
-            }
-          }
-        } catch (e) {
-          console.warn('Failed to fetch companies for progress check:', e);
-        }
-        
-        const progress = await getOnboardingProgress();
-        
-        // Ensure clientId is in onboarding-data for Step 3 (Company Creation)
-        const encodedClientId = localStorage.getItem('client_id');
-        if (encodedClientId) {
-          try {
-            const clientId = atob(encodedClientId);
-            const existingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
-            if (!existingData.clientId) {
-              localStorage.setItem('onboarding-data', JSON.stringify({
-                ...existingData,
-                clientId: clientId
-              }));
-            }
-          } catch (e) {
-            console.warn('Failed to decode client_id or update onboarding-data:', e);
-          }
-        }
-
-        if (progress.currentStep === 1) {
-           setCurrentStep(2);
-        } else {
-           setCurrentStep(progress.currentStep);
-        }
-        setLoading(false);
-        return;
-      }
-
-      // Use localStorage fallback if not handled above
+      // 1. Fetch backend progress (Client Preferences)
       const progress = await getOnboardingProgress();
       
-      // Fix: If currentStep > 4 or all steps completed, mark as completed
-      if (progress.currentStep > TOTAL_STEPS || progress.completedSteps.length >= TOTAL_STEPS) {
-        const completedProgress: OnboardingProgress = {
-          onboardingStatus: 'completed',
-          currentStep: TOTAL_STEPS,
-          completedSteps: [1, 2, 3, 4],
-        };
-        localStorage.setItem('onboarding-progress', JSON.stringify(completedProgress));
-        setOnboardingProgress(completedProgress);
+      // 2. Fetch companies to check "fully registered" status
+      const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
+      const response = await fetch(`${backendUrl}companies`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        const companies = result.data || result || [];
+        
+        if (companies.length > 0) {
+          const company = companies[0];
+          // Fully registered = Company exists AND (Incorporation complete AND KYC complete)
+          // Note: If they just finished Step 4, they might still be in "onboarding" technically 
+          // but we should send them to dashboard if the statuses are right.
+          if (company.incorporationStatus && company.kycStatus) {
+            setIsRedirecting(true);
+            router.replace('/global-dashboard');
+            return;
+          }
+        }
+      }
+
+      // 3. Handle step navigation based on progress
+      if (progress.onboardingStatus === 'completed' || progress.currentStep > TOTAL_STEPS) {
         setIsRedirecting(true);
         router.replace('/global-dashboard');
-        setTimeout(() => {
-          if (typeof window !== 'undefined' && window.location.pathname === '/onboarding') {
-            window.location.href = '/global-dashboard';
-          }
-        }, 200);
-        setLoading(false);
         return;
       }
-      
-      setOnboardingProgress(progress);
-      
-      // If onboarding is completed, redirect to dashboard
-      if (progress.onboardingStatus === 'completed') {
-        setIsRedirecting(true);
-        router.replace('/global-dashboard');
-        // Fallback: force redirect if router doesn't work
-        setTimeout(() => {
-          if (typeof window !== 'undefined' && window.location.pathname === '/onboarding') {
-            window.location.href = '/global-dashboard';
-          }
-        }, 200);
-        setLoading(false);
-        return;
-      }
-      
-      // Resume from last incomplete step (ensure it's valid: 1-4)
-      if (progress.currentStep && progress.currentStep >= 1 && progress.currentStep <= TOTAL_STEPS) {
-        setCurrentStep(progress.currentStep);
-      } else if (progress.currentStep > TOTAL_STEPS) {
-        // Invalid step number, start from step 1
-        setCurrentStep(1);
-      }
+
+      // Resume from last incomplete step
+      setCurrentStep(progress.currentStep || 2);
     } catch (error) {
       console.error('Failed to load onboarding progress:', error);
-      // On error, start from step 1
-      setCurrentStep(1);
+      // Fallback to minimal sensible step if authenticated
+      setCurrentStep(2);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStepComplete = (step: number) => {
+  const handleStepComplete = async (step: number) => {
     if (step < TOTAL_STEPS) {
       // Ensure 'continue' param is added when moving past step 1
       if (step === 1) {
@@ -226,12 +93,24 @@ function OnboardingPageContent() {
       }
       setCurrentStep(step + 1);
     } else {
-      // Onboarding complete
+      // Onboarding complete - mark in DB
       const completedProgress: OnboardingProgress = {
         onboardingStatus: 'completed',
         currentStep: TOTAL_STEPS,
         completedSteps: [1, 2, 3, 4],
       };
+      
+      const token = localStorage.getItem('token');
+      if (token) {
+        await saveOnboardingStep(TOTAL_STEPS, {});
+        // Also explicitly mark as completed
+        const existingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
+        await saveOnboardingDataToDB({
+          progress: completedProgress,
+          data: existingData
+        });
+      }
+      
       localStorage.setItem('onboarding-progress', JSON.stringify(completedProgress));
       router.push('/global-dashboard');
     }
@@ -326,22 +205,25 @@ function OnboardingPageContent() {
       const currentProgress: OnboardingProgress = {
         onboardingStatus: 'in_progress',
         currentStep: currentStep,
-        completedSteps: onboardingProgress?.completedSteps || [],
+        completedSteps: Array.from({ length: currentStep - 1 }, (_, i) => i + 1),
       };
+      
       localStorage.setItem('onboarding-progress', JSON.stringify(currentProgress));
       
-      // Also save step progress to backend if possible
-      try {
-        await saveOnboardingStep(currentStep, {});
-      } catch (error) {
-        // If backend save fails, localStorage is already saved, so continue
-        console.warn('Backend save failed on exit, using localStorage:', error);
+      // Also save step progress to backend if possible - use saveOnboardingDataToDB to avoid auto-advancing
+      const token = localStorage.getItem('token');
+      if (token) {
+        const existingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
+        await saveOnboardingDataToDB({
+          progress: currentProgress,
+          data: existingData
+        });
       }
     } catch (error) {
       console.error('Failed to save progress on exit:', error);
     } finally {
       // Redirect to login
-    router.push('/login');
+      router.push('/login');
     }
   }
 }
