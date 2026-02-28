@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
  
-import { RefreshCw, Eye, Download, FileEdit, FileUp, Upload, FileIcon } from "lucide-react";
+import { RefreshCw, Eye, Download, FileEdit, FileUp, Upload, FileIcon, Info } from "lucide-react";
 import { RequestedDocument } from "./types";
 
 interface UploadingDocumentState {
@@ -174,9 +174,12 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
                   )}
                 </div>
                 {docStatus === 'REJECTED' && doc.rejectionReason && (
-                    <div className="mt-2 text-xs bg-rose-50 text-rose-700 p-2 rounded-lg border border-rose-100 flex items-start gap-2">
-                        <span className="font-bold">Reason:</span>
-                        <span>{doc.rejectionReason}</span>
+                    <div className="text-[10px] bg-rose-50 text-rose-700 p-2 rounded-lg border border-rose-100 flex items-start gap-2 mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <Info className="w-3 h-3 mt-0.5 shrink-0" />
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold uppercase tracking-wider text-[9px] opacity-70">Reason for rejection</span>
+                            <span className="leading-relaxed">{doc.rejectionReason}</span>
+                        </div>
                     </div>
                 )}
               </div>

@@ -47,6 +47,7 @@ export interface DocumentItem {
   file?: DocumentFile | null;
   templateFile?: DocumentFile | null;
   children?: DocumentItem[];
+  rejectionReason?: string;
   createdAt?: string;
 }
 

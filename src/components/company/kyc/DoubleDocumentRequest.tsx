@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
  
-import { Eye, Download, FileEdit, FileUp, Upload, RefreshCw, Eraser, File as FileIcon } from "lucide-react";
+import { Eye, Download, FileEdit, FileUp, Upload, RefreshCw, Eraser, File as FileIcon, CheckCircle, Clock, AlertCircle, Trash2, Info } from "lucide-react";
 import { RequestedDocument } from "./types";
 
 interface UploadingMultipleState {
@@ -290,9 +290,12 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                         </div>
                       </div>
                       {itemStatus === 'REJECTED' && item.rejectionReason && (
-                        <div className="text-[10px] bg-rose-50 text-rose-700 p-2 rounded-lg border border-rose-100 flex items-start gap-2">
-                           <span className="font-bold shrink-0">Reason:</span>
-                           <span>{item.rejectionReason}</span>
+                        <div className="text-[10px] bg-rose-50 text-rose-700 p-2 rounded-lg border border-rose-100 flex items-start gap-2 mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                           <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                           <div className="flex flex-col gap-0.5">
+                              <span className="font-bold uppercase tracking-wider text-[9px] opacity-70">Reason for rejection</span>
+                              <span className="leading-relaxed">{item.rejectionReason}</span>
+                           </div>
                         </div>
                       )}
                     </div>

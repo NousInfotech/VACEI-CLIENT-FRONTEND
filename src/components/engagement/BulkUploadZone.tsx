@@ -82,12 +82,20 @@ const BulkUploadZone: React.FC<BulkUploadZoneProps> = ({
           <h5 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Requested Documents:</h5>
         </div>
         <div className="divide-y divide-gray-50 max-h-64 overflow-y-auto">
-          {documents.filter(doc => !(doc.url || doc.file?.url || doc.fileId)).length === 0 && (
+          {documents.filter(doc => {
+            const isUploaded = (doc.url || doc.file?.url || doc.fileId);
+            const isRejected = (doc.status?.toUpperCase() === 'REJECTED');
+            return !isUploaded || isRejected;
+          }).length === 0 && (
             <div className="p-10 text-center bg-white/50">
               <p className="text-gray-400 text-xs italic">All requested documents have been uploaded.</p>
             </div>
           )}
-          {documents.filter(doc => !(doc.url || doc.file?.url || doc.fileId)).map((doc, index) => {
+          {documents.filter(doc => {
+            const isUploaded = (doc.url || doc.file?.url || doc.fileId);
+            const isRejected = (doc.status?.toUpperCase() === 'REJECTED');
+            return !isUploaded || isRejected;
+          }).map((doc, index) => {
             const docId = doc.id ?? doc._id
             const template = doc.templateFile || doc.templateFileId
             
@@ -101,6 +109,12 @@ const BulkUploadZone: React.FC<BulkUploadZoneProps> = ({
                   <p className="text-sm font-semibold text-gray-800 truncate">
                     {doc.documentName || doc.name || doc.label || 'Untitled'}
                   </p>
+                  {(doc.status?.toUpperCase() === 'REJECTED' && doc.rejectionReason) && (
+                    <div className="flex items-start gap-1.5 mt-1 text-[10px] text-rose-600 bg-rose-50/50 p-1.5 rounded-lg border border-rose-100/50">
+                      <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" />
+                      <span className="leading-tight">Reason: {doc.rejectionReason}</span>
+                    </div>
+                  )}
                 </div>
 
                 {template && (
