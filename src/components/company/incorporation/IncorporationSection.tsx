@@ -21,9 +21,11 @@ import DocumentRequestSingle from '../kyc/SingleDocumentRequest'
 import DocumentRequestDouble from '../kyc/DoubleDocumentRequest'
 import EmptyState from '../../shared/EmptyState'
 import { clearRequestedDocument, uploadRequestedDocument } from '@/api/auditService'
+import BulkUploadZone from '../../engagement/BulkUploadZone'
 
 const IncorporationSection = () => {
   const [expandedRequests, setExpandedRequests] = useState<Set<string>>(new Set())
+  const [uploadMode, setUploadMode] = useState<Record<string, 'single' | 'bulk'>>({})
   const { company } = useCompany()
   const { incorporation, refetch, loading, error } = useIncorporation(company?._id || company?.id || null)
 
@@ -258,6 +260,19 @@ const IncorporationSection = () => {
                               {isExpanded ? <ChevronUp size={16} className="mr-2" /> : <ChevronDown size={16} className="mr-2" />}
                               {isExpanded ? 'Hide Documents' : 'View Documents'}
                             </Button>
+                            {isExpanded && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setUploadMode(prev => ({
+                                  ...prev,
+                                  [request.id]: prev[request.id] === 'bulk' ? 'single' : 'bulk'
+                                }))}
+                                className="text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-primary/5"
+                              >
+                                Switch to {uploadMode[request.id] === 'bulk' ? 'Single' : 'Bulk'} Upload
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -270,21 +285,62 @@ const IncorporationSection = () => {
                             </div>
                           ) : (
                             <>
-                              <DocumentRequestSingle
-                                requestId={request.id}
-                                documents={singleDocs}
-                                onUpload={handleUpload}
-                                onClearDocument={handleClear}
-                              />
+                               {uploadMode[request.id] === 'bulk' ? (
+                                <BulkUploadZone
+                                  requestId={request.id}
+                                  onSuccess={async () => {
+                                    await refetch();
+                                  }}
+                                  onClear={handleClear}
+                                  documents={docs}
+                                />
+                              ) : (
+                                <>
+                                  {request.unassignedFiles && request.unassignedFiles.length > 0 && (
+                                    <div className="mb-6 bg-white/60 p-4 rounded-xl border border-indigo-100 shadow-xs">
+                                      <div className="flex items-center justify-between mb-3 pb-2 border-b border-indigo-50">
+                                        <h5 className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest flex items-center gap-1.5">
+                                          <FileText size={12} />
+                                          Unassigned Bulk Uploads ({request.unassignedFiles.length})
+                                        </h5>
+                                      </div>
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {request.unassignedFiles.map((file: any) => (
+                                          <div key={file.id} className="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-100 group hover:border-indigo-200 transition-colors">
+                                            <div className="w-8 h-8 bg-indigo-50 rounded flex items-center justify-center text-indigo-500 shrink-0">
+                                              <FileText size={14} />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                              <p className="text-[11px] font-bold text-gray-900 truncate" title={file.file_name}>
+                                                {file.file_name}
+                                              </p>
+                                              <p className="text-[9px] text-gray-400 font-medium">
+                                                {file.createdAt ? new Date(file.createdAt).toLocaleDateString() : 'N/A'}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
 
-                              <DocumentRequestDouble
-                                requestId={request.id}
-                                multipleDocuments={multipleGroups}
-                                onUploadMultiple={handleUploadMultiple}
-                                onClearMultipleItem={handleClearMultipleItem}
-                                onClearMultipleGroup={handleClearMultipleGroup}
-                                onDownloadMultipleGroup={handleDownloadMultipleGroup}
-                              />
+                                  <DocumentRequestSingle
+                                    requestId={request.id}
+                                    documents={singleDocs}
+                                    onUpload={handleUpload}
+                                    onClearDocument={handleClear}
+                                  />
+
+                                  <DocumentRequestDouble
+                                    requestId={request.id}
+                                    multipleDocuments={multipleGroups}
+                                    onUploadMultiple={handleUploadMultiple}
+                                    onClearMultipleItem={handleClearMultipleItem}
+                                    onClearMultipleGroup={handleClearMultipleGroup}
+                                    onDownloadMultipleGroup={handleDownloadMultipleGroup}
+                                  />
+                                </>
+                              )}
                             </>
                           )}
                         </div>
