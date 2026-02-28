@@ -88,7 +88,9 @@ export async function fetchUnreadCountAPI(): Promise<FetchUnreadCountResponse> {
   const res = await fetch(`${backendUrl}notifications/unread-count`, {
     headers: getAuthHeaders(),
   });
-  return handleResponse<FetchUnreadCountResponse>(res);
+  const raw = await handleResponse<{ count?: number; data?: { count?: number } }>(res);
+  const count = typeof raw?.count === 'number' ? raw.count : (raw?.data?.count ?? 0);
+  return { count };
 }
 
 export async function markNotificationAsReadAPI(notificationId: string): Promise<void> {

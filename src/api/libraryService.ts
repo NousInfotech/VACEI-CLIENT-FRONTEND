@@ -163,32 +163,48 @@ export async function getFileDownloadUrl(
   };
 }
 
+/** Entry for a file in the zip (with path). */
+export interface ZipFileEntry {
+  fileId: string;
+  fileName: string;
+  zipPath: string;
+}
+/** Entry for an empty folder (path only, no files). */
+export interface ZipEmptyFolderEntry {
+  zipPath: string;
+}
+
 /**
- * Recursively collect all files in a folder (flattened with path prefix for zip).
- * Returns [{ fileId, fileName, zipPath }].
+ * Recursively collect all files in a folder and empty folder paths (for ZIP).
+ * Returns { files: [{ fileId, fileName, zipPath }], emptyFolders: [zipPath] } so that
+ * empty subfolders still appear in the ZIP like a desktop folder structure.
  */
 export async function collectFilesInFolder(
   folderId: string,
   pathPrefix: string,
   signal?: AbortSignal
-): Promise<{ fileId: string; fileName: string; zipPath: string }[]> {
+): Promise<{ files: ZipFileEntry[]; emptyFolders: string[] }> {
   const content = await getFolderContent(folderId, undefined, signal);
-  const parentId = content.folder?.id ?? content.folder?.folder_id ?? folderId;
   const files = content.files ?? [];
   const folders = content.folders ?? content.childFolders ?? [];
-  const out: { fileId: string; fileName: string; zipPath: string }[] = [];
+  const fileEntries: ZipFileEntry[] = [];
+  const emptyFolders: string[] = [];
 
   for (const f of files) {
     const id = f.id ?? f.file_id ?? "";
     const name = f.filename ?? f.file_name ?? "file";
-    out.push({ fileId: id, fileName: name, zipPath: `${pathPrefix}${pathPrefix ? "/" : ""}${name}` });
+    fileEntries.push({ fileId: id, fileName: name, zipPath: `${pathPrefix}${pathPrefix ? "/" : ""}${name}` });
   }
   for (const fd of folders) {
     const id = fd.id ?? fd.folder_id ?? "";
     const name = fd.name ?? fd.folder_name ?? "folder";
     const subPrefix = `${pathPrefix}${pathPrefix ? "/" : ""}${name}`;
-    const subFiles = await collectFilesInFolder(id, subPrefix, signal);
-    out.push(...subFiles);
+    const sub = await collectFilesInFolder(id, subPrefix, signal);
+    fileEntries.push(...sub.files);
+    if (sub.files.length === 0 && sub.emptyFolders.length === 0) {
+      emptyFolders.push(subPrefix);
+    }
+    emptyFolders.push(...sub.emptyFolders);
   }
-  return out;
+  return { files: fileEntries, emptyFolders };
 }

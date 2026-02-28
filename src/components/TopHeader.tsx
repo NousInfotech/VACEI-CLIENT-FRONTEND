@@ -17,6 +17,7 @@ import {
     fetchNotificationsAPI,
     fetchUnreadCountAPI,
     markNotificationAsReadAPI,
+    markAllNotificationsAsReadAPI,
 } from '@/api/notificationService';
 import { getCompanies } from '@/api/auditService';
 import { useActiveCompany } from '@/context/ActiveCompanyContext';
@@ -203,6 +204,21 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
         }
     }, [pathname, getUnreadCount, getLatestNotifications, hasActiveCompany]);
 
+    // When user returns to tab or navigates back, update badge number only
+    useEffect(() => {
+        if (!hasActiveCompany) return;
+        const onFocus = () => getUnreadCount();
+        const onVisibility = () => {
+            if (document.visibilityState === 'visible') getUnreadCount();
+        };
+        window.addEventListener('focus', onFocus);
+        document.addEventListener('visibilitychange', onVisibility);
+        return () => {
+            window.removeEventListener('focus', onFocus);
+            document.removeEventListener('visibilitychange', onVisibility);
+        };
+    }, [hasActiveCompany, getUnreadCount]);
+
     // Refresh companies when navigating to dashboard (after login or signup)
     useEffect(() => {
         if (pathname?.startsWith('/dashboard')) {
@@ -269,9 +285,20 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                 prev.map(notif => (notif.id === id ? { ...notif, isRead: true } : notif))
             );
             setUnreadCount(prev => Math.max(0, prev - 1));
-            // No need to re-fetch unread count as we just decremented it
+            await getLatestNotifications();
         } catch (err: any) {
             console.error('Error marking as read from dropdown:', err);
+        }
+    };
+
+    const handleMarkAllAsReadFromDropdown = async () => {
+        try {
+            await markAllNotificationsAsReadAPI();
+            setUnreadCount(0);
+            setLatestNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })));
+            await getLatestNotifications();
+        } catch (err: any) {
+            console.error('Error marking all as read from dropdown:', err);
         }
     };
 
@@ -465,10 +492,16 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                     <div className="flex flex-col max-h-[480px]">
                         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest">Latest Notifications</h3>
-                            {unreadCount > 0 && (
-                                <span className="text-[10px] font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded-full uppercase tracking-widest">
-                                    {unreadCount} New
-                                </span>
+                            {unreadCount > 0 ? (
+                                <button
+                                    type="button"
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleMarkAllAsReadFromDropdown(); }}
+                                    className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest"
+                                >
+                                    Mark all as read
+                                </button>
+                            ) : (
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">All read</span>
                             )}
                         </div>
                         <div className="p-3 overflow-y-auto">
