@@ -232,8 +232,8 @@ export default function SidebarMenu({
         nextItem = { ...nextItem, count: messagesTotal };
       }
 
-      if (nextItem.slug === "notifications" && notificationsUnread !== null) {
-        nextItem = { ...nextItem, count: notificationsUnread };
+      if (nextItem.slug === "notifications") {
+        nextItem = { ...nextItem, count: undefined };
       }
 
       return nextItem;
