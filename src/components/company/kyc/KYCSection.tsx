@@ -21,10 +21,12 @@ import DocumentRequestDouble from './DoubleDocumentRequest'
 import PillTabs from '../../shared/PillTabs'
 import EmptyState from '../../shared/EmptyState'
 import { clearRequestedDocument, uploadRequestedDocument } from '@/api/auditService'
+import BulkUploadZone from '../../engagement/BulkUploadZone'
 
 const KYCSection = () => {
   const [activeTab, setActiveTab] = useState('Company')
   const [expandedRequests, setExpandedRequests] = useState<Set<string>>(new Set())
+  const [uploadMode, setUploadMode] = useState<Record<string, 'single' | 'bulk'>>({})
   const { company } = useCompany()
   const { kyc, refetch, loading, error } = useKyc(company?._id || company?.id || null)
 
@@ -84,6 +86,10 @@ const KYCSection = () => {
 
   const handleDownloadMultipleGroup = (requestId: string, multipleId: string, groupName: string, items: any[]) => {
     console.log(`Downloading all items for group ${groupName} in request ${requestId}`)
+  }
+
+  const handleBulkUploadSuccess = async () => {
+    await refetch()
   }
 
   const getStatusBadge = (status: string) => {
@@ -203,6 +209,19 @@ const KYCSection = () => {
                           {isExpanded ? <ChevronUp size={16} className="mr-2" /> : <ChevronDown size={16} className="mr-2" />}
                           {isExpanded ? 'Hide Documents' : 'View Documents'}
                         </Button>
+                        {isExpanded && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setUploadMode(prev => ({
+                              ...prev,
+                              [request.id]: prev[request.id] === 'bulk' ? 'single' : 'bulk'
+                            }))}
+                            className="text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-primary/5"
+                          >
+                            Switch to {uploadMode[request.id] === 'bulk' ? 'Single' : 'Bulk'} Upload
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -214,21 +233,32 @@ const KYCSection = () => {
                         <span className="text-[10px] text-gray-400 italic">Core identification and incorporation documents</span>
                       </div>
 
-                      <DocumentRequestSingle
-                        requestId={request.id}
-                        documents={singleDocs}
-                        onUpload={handleUpload}
-                        onClearDocument={handleClear}
-                      />
+                      {uploadMode[request.id] === 'bulk' ? (
+                        <BulkUploadZone 
+                          requestId={request.id}
+                          onSuccess={handleBulkUploadSuccess}
+                          onClear={handleClear}
+                          documents={docs}
+                        />
+                      ) : (
+                        <>
+                          <DocumentRequestSingle
+                            requestId={request.id}
+                            documents={singleDocs}
+                            onUpload={handleUpload}
+                            onClearDocument={handleClear}
+                          />
 
-                      <DocumentRequestDouble
-                        requestId={request.id}
-                        multipleDocuments={multipleGroups}
-                        onUploadMultiple={handleUploadMultiple}
-                        onClearMultipleItem={handleClearMultipleItem}
-                        onClearMultipleGroup={handleClearMultipleGroup}
-                        onDownloadMultipleGroup={handleDownloadMultipleGroup}
-                      />
+                          <DocumentRequestDouble
+                            requestId={request.id}
+                            multipleDocuments={multipleGroups}
+                            onUploadMultiple={handleUploadMultiple}
+                            onClearMultipleItem={handleClearMultipleItem}
+                            onClearMultipleGroup={handleClearMultipleGroup}
+                            onDownloadMultipleGroup={handleDownloadMultipleGroup}
+                          />
+                        </>
+                      )}
                     </div>
                   )}
                 </CardContent>
@@ -391,6 +421,19 @@ const KYCSection = () => {
                           {isExpanded ? <ChevronUp size={16} className="mr-2" /> : <ChevronDown size={16} className="mr-2" />}
                           {isExpanded ? 'Hide Documents' : 'View Documents'}
                         </Button>
+                        {isExpanded && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setUploadMode(prev => ({
+                              ...prev,
+                              [request.id]: prev[request.id] === 'bulk' ? 'single' : 'bulk'
+                            }))}
+                            className="text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-primary/5"
+                          >
+                            Switch to {uploadMode[request.id] === 'bulk' ? 'Single' : 'Bulk'} Upload
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -400,6 +443,13 @@ const KYCSection = () => {
                   <div className="bg-gray-50/50 border-t border-gray-100 p-6 animate-in slide-in-from-top-2 duration-300 space-y-4">
                     {singleDocs.length === 0 && multipleGroups.length === 0 ? (
                       <div className="text-center py-4 text-gray-500 text-sm bg-white rounded-lg">No documents yet</div>
+                    ) : uploadMode[request.id] === 'bulk' ? (
+                      <BulkUploadZone 
+                        requestId={request.id}
+                        onSuccess={handleBulkUploadSuccess}
+                        onClear={handleClear}
+                        documents={request.requestedDocuments || []}
+                      />
                     ) : (
                       <>
                         <DocumentRequestSingle requestId={request.id} documents={singleDocs} onUpload={handleUpload} onClearDocument={handleClear} />
