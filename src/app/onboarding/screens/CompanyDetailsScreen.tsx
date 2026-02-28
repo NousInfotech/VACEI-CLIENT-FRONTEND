@@ -161,10 +161,6 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
         alert('Company name is required.');
         return;
       }
-      if (!(newDetails.registrationNumber || '').trim()) {
-        alert('Registration number is required.');
-        return;
-      }
       if (!newDetails.registeredAddress.address?.trim()) {
         alert('Registered address is required.');
         return;
@@ -782,20 +778,18 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
             />
           </div>
 
+          {companyType === 'existing' && (
           <div>
             <label className="text-sm font-medium mb-2 block">Registration number *</label>
             <Input
-              value={companyType === 'existing' ? existingDetails.registrationNumber : (newDetails.registrationNumber || '')}
+              value={existingDetails.registrationNumber}
               onChange={(e) => {
-                if (companyType === 'existing') {
-                  setExistingDetails(prev => ({ ...prev, registrationNumber: e.target.value }));
-                } else {
-                  setNewDetails(prev => ({ ...prev, registrationNumber: e.target.value || '' }));
-                }
+                setExistingDetails(prev => ({ ...prev, registrationNumber: e.target.value }));
               }}
               placeholder="e.g., C12345"
             />
           </div>
+          )}
 
           <div>
             <label className="text-sm font-medium mb-2 block">Registered address *</label>
