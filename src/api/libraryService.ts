@@ -162,3 +162,33 @@ export async function getFileDownloadUrl(
     fileName: data.fileName ?? data.file_name ?? "file",
   };
 }
+
+/**
+ * Recursively collect all files in a folder (flattened with path prefix for zip).
+ * Returns [{ fileId, fileName, zipPath }].
+ */
+export async function collectFilesInFolder(
+  folderId: string,
+  pathPrefix: string,
+  signal?: AbortSignal
+): Promise<{ fileId: string; fileName: string; zipPath: string }[]> {
+  const content = await getFolderContent(folderId, undefined, signal);
+  const parentId = content.folder?.id ?? content.folder?.folder_id ?? folderId;
+  const files = content.files ?? [];
+  const folders = content.folders ?? content.childFolders ?? [];
+  const out: { fileId: string; fileName: string; zipPath: string }[] = [];
+
+  for (const f of files) {
+    const id = f.id ?? f.file_id ?? "";
+    const name = f.filename ?? f.file_name ?? "file";
+    out.push({ fileId: id, fileName: name, zipPath: `${pathPrefix}${pathPrefix ? "/" : ""}${name}` });
+  }
+  for (const fd of folders) {
+    const id = fd.id ?? fd.folder_id ?? "";
+    const name = fd.name ?? fd.folder_name ?? "folder";
+    const subPrefix = `${pathPrefix}${pathPrefix ? "/" : ""}${name}`;
+    const subFiles = await collectFilesInFolder(id, subPrefix, signal);
+    out.push(...subFiles);
+  }
+  return out;
+}

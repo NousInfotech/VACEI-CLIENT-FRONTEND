@@ -18,13 +18,13 @@ export const ContextMenu: React.FC = () => {
       style={{ left: contextMenu.x, top: contextMenu.y }}
       onClick={(e) => e.stopPropagation()}
     >
-      {item.type === 'file' && (
+      {(item.type === 'file' || item.type === 'folder') && (
         <button 
           className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-primary transition-colors text-left"
           onClick={() => { handleDownload(item); closeContextMenu(); }}
         >
           <Download className="w-4 h-4" />
-          Download
+          {item.type === 'folder' ? 'Download as ZIP' : 'Download'}
         </button>
       )}
       {item.type === 'file' && (

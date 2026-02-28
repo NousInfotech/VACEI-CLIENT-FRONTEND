@@ -18,10 +18,12 @@ import {
   getRootFolders,
   getFolderContent,
   getFileDownloadUrl,
+  collectFilesInFolder,
   type LibraryFolderView,
   type LibraryFileItem,
   type LibraryRootType,
 } from "@/api/libraryService"
+import JSZip from "jszip"
 import { getCompanyById } from "@/api/auditService"
 
 type ViewMode = "list" | "grid"
@@ -507,14 +509,45 @@ export const LibraryProvider: React.FC<{
 
   const handleDownload = useCallback(
     async (item?: LibraryItem) => {
+      const folders: LibraryItem[] = []
       const files: LibraryItem[] = []
       if (item) {
-        if (item.type === "folder" && useApi) return
-        files.push(item)
+        if (item.type === "folder") {
+          folders.push(item)
+        } else {
+          files.push(item)
+        }
       } else if (selectedItems.length > 0) {
-        files.push(...currentItems.filter((i) => selectedItems.includes(i.id)))
+        const selected = currentItems.filter((i) => selectedItems.includes(i.id))
+        selected.forEach((i) => (i.type === "folder" ? folders.push(i) : files.push(i)))
       } else {
-        files.push(...currentItems.filter((i) => i.type === "file"))
+        currentItems.forEach((i) => {
+          if (i.type === "folder") folders.push(i)
+          else if (i.type === "file") files.push(i)
+        })
+      }
+
+      if (folders.length > 0 && useApi) {
+        for (const folder of folders) {
+          try {
+            const folderName = (folder as any).folder_name || (folder as any).name || "folder"
+            const fileList = await collectFilesInFolder(folder.id, "")
+            const zip = new JSZip()
+            for (const { fileId, fileName, zipPath } of fileList) {
+              const res = await getFileDownloadUrl(fileId)
+              const blob = await fetch(res.url).then((r) => r.blob())
+              zip.file(zipPath, blob)
+            }
+            const content = await zip.generateAsync({ type: "blob" })
+            const link = document.createElement("a")
+            link.href = URL.createObjectURL(content)
+            link.download = `${folderName}.zip`
+            link.click()
+            URL.revokeObjectURL(link.href)
+          } catch (e) {
+            console.error("Failed to download folder as zip", e)
+          }
+        }
       }
 
       const fileItems = files.filter((i) => i.type === "file")
