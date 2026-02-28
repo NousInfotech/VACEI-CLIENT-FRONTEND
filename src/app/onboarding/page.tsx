@@ -10,10 +10,11 @@ import ReviewSubmitScreen from './screens/ReviewSubmitScreen';
 import KYCIntroductionScreen from './screens/KYCIntroductionScreen';
 import KYCDashboardScreen from './screens/KYCDashboardScreen';
 import { OnboardingProgress } from '@/interfaces';
+import { Suspense } from 'react';
 
 const TOTAL_STEPS = 4;
 
-export default function OnboardingPage() {
+function OnboardingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isContinue = searchParams.get('continue') === 'true';
@@ -343,5 +344,20 @@ export default function OnboardingPage() {
     router.push('/login');
     }
   }
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading onboarding...</p>
+        </div>
+      </div>
+    }>
+      <OnboardingPageContent />
+    </Suspense>
+  );
 }
 
