@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
  
 import { RefreshCw, Eye, Download, FileEdit, FileUp, Upload, FileIcon, Info } from "lucide-react";
+import { downloadFile } from "@/utils/downloadUtils";
 import { RequestedDocument } from "./types";
 
 interface UploadingDocumentState {
@@ -221,22 +222,7 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={async () => {
-                      try {
-                        const response = await fetch(docUrl!);
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const link = document.createElement("a");
-                        link.href = url;
-                        link.download = doc.file?.file_name || doc.documentName;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        window.URL.revokeObjectURL(url);
-                      } catch (error) {
-                        console.error("Download error:", error);
-                      }
-                    }}
+                    onClick={() => downloadFile(docUrl!, doc.file?.file_name || doc.documentName)}
                     className="border-green-300 hover:bg-green-50 hover:text-green-800 text-green-700 h-8 w-8 p-0"
                     title="Download Document"
                     disabled={isDisabled}
