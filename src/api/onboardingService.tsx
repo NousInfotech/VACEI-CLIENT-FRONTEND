@@ -309,25 +309,164 @@ export async function createCompany(companyData: {
   }
 }
 
+// Update Company (Step 3 revision)
+export async function updateCompany(companyId: string, companyData: {
+  name: string;
+  registrationNumber: string;
+  address: string;
+  companyType: 'PRIMARY' | 'NON_PRIMARY';
+  legalType: 'LTD' | 'PLC';
+  summary?: string;
+  industry?: string[];
+  authorizedShares: number;
+  issuedShares: number;
+  companyStartDate: string; // ISO datetime string
+  clientId?: string;
+  incorporationStatus: boolean; // true if already incorporated, false if needs incorporation service
+  shareDetails?: Array<{
+    class: 'A' | 'B' | 'C' | 'ORDINARY';
+    issued: number;
+  }>;
+  involvementDetails?: Array<{
+    personName: string;
+    personAddress: string;
+    personNationality: string;
+    role: Array<'DIRECTOR' | 'LEGAL_REPRESENTATIVE' | 'JUDICIAL_REPRESENTATIVE' | 'SHAREHOLDER' | 'SECRETARY'>; // Array of roles as per API spec
+    classA?: number;
+    classB?: number;
+    classC?: number;
+    ordinary?: number;
+  }>;
+}): Promise<{
+  id: string;
+  name: string;
+  registrationNumber: string;
+  incorporationStatus: boolean;
+  kycStatus: boolean;
+}> {
+  try {
+    const token = localStorage.getItem("token");
+    const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
+    const response = await fetch(`${backendUrl}companies/${companyId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(companyData),
+    });
+
+    if (!response.ok) {
+      let errorMessage = "Failed to update company";
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || `Server error: ${response.status}`;
+      } catch {
+        errorMessage = `Server error: ${response.status} ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    const company = result.data || result;
+
+    return {
+      id: company.id,
+      name: company.name,
+      registrationNumber: company.registrationNumber,
+      incorporationStatus: company.incorporationStatus ?? false,
+      kycStatus: company.kycStatus ?? false,
+    };
+  } catch (error: any) {
+    if (error.message === "BACKEND_NOT_AVAILABLE" || error.message.includes("BACKEND_NOT_AVAILABLE")) {
+      throw new Error("Backend is not available. Please try again later.");
+    }
+    throw error;
+  }
+}
+
+
+/**
+ * Get onboarding data from database (stored in client preferences)
+ */
+export async function getOnboardingDataFromDB(): Promise<any | null> {
+  try {
+    const encodedClientId = localStorage.getItem('client_id');
+    if (!encodedClientId) return null;
+    
+    const clientId = atob(encodedClientId);
+    const response = await request("GET", `clients/${clientId}`);
+    
+    if (response?.data?.preferences?.onboarding) {
+      return response.data.preferences.onboarding;
+    }
+    return response?.preferences?.onboarding || null;
+  } catch (error) {
+    console.warn('Failed to fetch onboarding data from DB:', error);
+    return null;
+  }
+}
+
+/**
+ * Save onboarding data to database (stored in client preferences)
+ */
+export async function saveOnboardingDataToDB(data: any): Promise<void> {
+  try {
+    const encodedClientId = localStorage.getItem('client_id');
+    if (!encodedClientId) return;
+    
+    const clientId = atob(encodedClientId);
+    
+    // First get existing preferences to avoid overwriting other settings
+    const currentClient = await request("GET", `clients/${clientId}`);
+    const currentPreferences = (currentClient?.data?.preferences || currentClient?.preferences || {});
+    
+    const updatedPreferences = {
+      ...currentPreferences,
+      onboarding: {
+        ...(currentPreferences.onboarding || {}),
+        ...data
+      }
+    };
+    
+    await request("PUT", `clients/${clientId}`, {
+      body: { preferences: updatedPreferences }
+    });
+  } catch (error) {
+    console.error('Failed to save onboarding data to DB:', error);
+  }
+}
+
 // Get onboarding progress
-// NOTE: Currently using localStorage only (no backend DB yet)
 export async function getOnboardingProgress(): Promise<OnboardingProgress> {
-  // Use localStorage only - no backend calls for now
-  const saved = localStorage.getItem('onboarding-progress');
   const token = localStorage.getItem('token');
+  
+  // Try to get from DB if authenticated
+  if (token) {
+    const dbData = await getOnboardingDataFromDB();
+    if (dbData?.progress) {
+      // Sync DB progress to localStorage for fallback
+      localStorage.setItem('onboarding-progress', JSON.stringify(dbData.progress));
+      if (dbData.data) {
+        localStorage.setItem('onboarding-data', JSON.stringify(dbData.data));
+      }
+      return dbData.progress;
+    }
+  }
+
+  // Fallback to localStorage
+  const saved = localStorage.getItem('onboarding-progress');
   
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
       return parsed;
     } catch (parseError) {
-      // Invalid saved data, return default
       console.warn('Invalid onboarding progress data in localStorage:', parseError);
     }
   }
   
   // Return default progress if nothing is saved
-  // If authenticated, we must have passed Step 1
   return {
     onboardingStatus: 'in_progress',
     currentStep: token ? 2 : 1,
@@ -336,22 +475,32 @@ export async function getOnboardingProgress(): Promise<OnboardingProgress> {
 }
 
 // Save onboarding step data
-// NOTE: Only saves to localStorage - backend endpoints for onboarding steps don't exist
 export async function saveOnboardingStep(step: number, data: any): Promise<void> {
-      // Update progress in localStorage
-      const currentProgress: OnboardingProgress = {
-        onboardingStatus: 'in_progress',
-        currentStep: step + 1,
-        completedSteps: Array.from({ length: step }, (_, i) => i + 1),
-      };
-      localStorage.setItem('onboarding-progress', JSON.stringify(currentProgress));
-      
-      // Save step data to localStorage
-      const existingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
-      localStorage.setItem('onboarding-data', JSON.stringify({
-        ...existingData,
-        ...data,
-      }));
+  // Update progress
+  const currentProgress: OnboardingProgress = {
+    onboardingStatus: 'in_progress',
+    currentStep: step + 1,
+    completedSteps: Array.from({ length: step }, (_, i) => i + 1),
+  };
+  
+  // Save to localStorage (fallback)
+  localStorage.setItem('onboarding-progress', JSON.stringify(currentProgress));
+  
+  const existingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
+  const updatedData = {
+    ...existingData,
+    ...data,
+  };
+  localStorage.setItem('onboarding-data', JSON.stringify(updatedData));
+  
+  // Sync to database if token is present
+  const token = localStorage.getItem('token');
+  if (token) {
+    await saveOnboardingDataToDB({
+      progress: currentProgress,
+      data: updatedData
+    });
+  }
 }
 
 // Complete sign-up with onboarding data
@@ -632,22 +781,22 @@ export async function submitOnboardingRequest(data: OnboardingData): Promise<{ s
     }
 
     // NEW WORKFLOW:
-    // PATH A: Existing Company (incorporationStatus: false) → Needs incorporation service → Create service request
-    // PATH B: New Company Profile (incorporationStatus: true) → Already incorporated → Skip service request, proceed to KYC
+    // PATH A: Existing Company (incorporationStatus: true) → Already incorporated → Skip service request, proceed to KYC
+    // PATH B: New Company Profile (incorporationStatus: false) → Needs incorporation service → Create service request
     if (incorporationStatus === true) {
-      // PATH B: New Company Profile - already incorporated
+      // PATH A: Existing Company Profile - already incorporated
       // Cannot send incorporation service requests
       // Proceed directly to KYC phase
-      console.log('PATH B: New Company Profile - already incorporated. Skipping service request creation.');
+      console.log('PATH A: Existing Company Profile - already incorporated. Skipping service request creation.');
       return {
         success: true,
-        // No serviceRequestId for new company profiles
+        // No serviceRequestId for existing companies that are already incorporated
       };
     }
 
-    // PATH A: Existing Company → Came for Incorporation Service
+    // PATH B: New Company → Came for Incorporation Service
     // Step 1: Create service request draft for INCORPORATION service
-    // According to new workflow: ServiceRequests type = INCORPORATION (business services)
+    // According to new workflow: ServiceRequests type = INCORPORATION
     // According to backend docs: POST /api/v1/service-requests with { companyId, service: "INCORPORATION" }
     const draftResponse = await request("POST", "service-requests", { 
       body: { 

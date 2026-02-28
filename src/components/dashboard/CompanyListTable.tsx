@@ -108,7 +108,7 @@ export default function CompanyListTable() {
 
     return (
         <DashboardCard className="overflow-hidden bg-white border-gray-200 shadow-sm">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between gap-4">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between gap-4 ">
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input 
@@ -123,7 +123,7 @@ export default function CompanyListTable() {
                 </p>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto p-5">
                 <Table className="border-collapse border border-gray-100">
                     <TableHeader className="bg-gray-50/50">
                         <TableRow className="hover:bg-transparent border-gray-100">

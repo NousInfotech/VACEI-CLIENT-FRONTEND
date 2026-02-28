@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useMemo } from 'react';
+import React, { useMemo, Suspense } from 'react';
 import ETBTable from './ETBTable';
 import AdjustmentsTab from './AdjustmentsTab';
 import { TableProperties, FileStack, Calculator, BarChart3, PieChart, Scale, FolderOpen, Building2, Receipt, Share2 } from 'lucide-react';
@@ -81,7 +81,7 @@ const Engagement = () => {
       case 'income_statement': return extractedData ? <IncomeStatement data={extractedData} /> : null;
       case 'balance_sheet': return extractedData ? <BalanceSheet data={extractedData} /> : null;
       case 'classification': return extractedData ? <Classification data={extractedData} /> : null;
-      case 'requests': return <DocumentRequestsTab />;
+      case 'requests': return <Suspense fallback={<div className="p-8 text-center text-gray-500 font-medium">Loading document requests...</div>}><DocumentRequestsTab /></Suspense>;
       case 'mbr': return <MBRTab />;
       case 'tax': return <TaxTab />;
       case 'library': return <LibrarySharedFolderTab />;

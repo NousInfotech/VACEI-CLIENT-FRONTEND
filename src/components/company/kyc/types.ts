@@ -15,6 +15,7 @@ export interface RequestedDocument {
   count: 'SINGLE' | 'MULTIPLE';
   isMandatory: boolean;
   status: 'PENDING' | 'UPLOADED' | 'ACCEPTED' | 'REJECTED';
+  rejectionReason?: string;
   createdAt: string;
   fileId?: string | null;
   templateFileId?: string | null;

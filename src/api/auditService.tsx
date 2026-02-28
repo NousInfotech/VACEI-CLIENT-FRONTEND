@@ -149,6 +149,7 @@ export interface Engagement {
   trialBalanceDoc?: any;
   /** Partner/org team members - used for direct chat when engagement room access is denied */
   orgTeam?: Array<{ userId: string;[k: string]: unknown }>;
+  rejectionReason?: string;
   createdAt?: string;
   updatedAt?: string;
 
@@ -226,6 +227,7 @@ export interface RequestedDocument {
   templateFileId?: string | null;
   file?: FileResponse | null;
   templateFile?: FileResponse | null;
+  rejectionReason?: string;
   children?: RequestedDocument[];
 }
 

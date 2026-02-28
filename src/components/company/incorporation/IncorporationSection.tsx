@@ -28,14 +28,26 @@ const IncorporationSection = () => {
   const { incorporation, refetch, loading, error } = useIncorporation(company?._id || company?.id || null)
 
   const toggleExpand = (id: string) => {
-    const newSet = new Set(expandedRequests)
-    if (newSet.has(id)) {
-      newSet.delete(id)
-    } else {
-      newSet.add(id)
-    }
-    setExpandedRequests(newSet)
+    setExpandedRequests(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(id)) {
+        newSet.delete(id)
+      } else {
+        newSet.add(id)
+      }
+      return newSet
+    })
   }
+
+  // Initialize expandedRequests with all IDs when data is loaded
+  React.useEffect(() => {
+    if (incorporation?.documentRequests) {
+      const allIds = incorporation.documentRequests
+        .filter((req: any) => req.status !== 'DRAFT')
+        .map((req: any) => req.id);
+      setExpandedRequests(new Set(allIds));
+    }
+  }, [incorporation?.documentRequests]);
 
   // API handlers
   const handleUpload = async (requestId: string, requestedDocumentId: string, file: File) => {
@@ -197,7 +209,7 @@ const IncorporationSection = () => {
             />
           ) : (
              documentRequests.map((request: any) => {
-                const isExpanded = expandedRequests.has(request.id) || true; // Default expanded for visibility
+                const isExpanded = expandedRequests.has(request.id);
                 
                 const docs = request.requestedDocuments || []
                 const singleDocs = docs.filter((d: any) => d.count === 'SINGLE')
@@ -208,10 +220,10 @@ const IncorporationSection = () => {
                 return (
                   <Card
                     key={request.id}
-                    className="bg-white/80 border border-gray-300 rounded-xl shadow-sm hover:bg-white/70 transition-all mb-4 overflow-hidden"
+                    className="bg-white/80 border border-gray-300 rounded-xl shadow-sm hover:bg-white/70 transition-all overflow-hidden"
                   >
                     <CardContent className="p-0">
-                      <div className="p-6">
+                      <div className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-3">
@@ -251,7 +263,7 @@ const IncorporationSection = () => {
                       </div>
 
                       {isExpanded && (
-                        <div className="bg-gray-50/50 border-t border-gray-100 p-6 animate-in slide-in-from-top-2 duration-300 space-y-4">
+                        <div className="bg-gray-50/50 border-t border-gray-100 animate-in slide-in-from-top-2 duration-300 p-4">
                           {singleDocs.length === 0 && multipleGroups.length === 0 ? (
                             <div className="text-center py-4 text-gray-500 text-sm bg-white rounded-lg">
                               No documents in this request yet

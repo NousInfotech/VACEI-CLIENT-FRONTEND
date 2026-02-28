@@ -345,25 +345,27 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                     </button>
                 )}
 
-                <Button
-                    onClick={() => {
-                        if (pathname === '/dashboard/services/request/history' || pathname === '/global-dashboard/services/request/history') {
-                            router.push('/dashboard/services/request');
-                        } else if (window.history.length > 2) {
-                            router.back();
-                        } else {
-                            router.push('/dashboard');
-                        }
-                    }}
-                    variant="secondary"
-                    size="sm"
-                    className="px-4 bg-primary"
-                    aria-label="Go Back"
-                    title="Go Back"
-                >
-                    <ChevronLeft className="h-4 w-4 mr-2" />
-                    Back
-                </Button>
+                {pathname !== '/dashboard' && pathname !== '/global-dashboard' && (
+                    <Button
+                        onClick={() => {
+                            if (pathname === '/dashboard/services/request/history' || pathname === '/global-dashboard/services/request/history') {
+                                router.push('/dashboard/services/request');
+                            } else if (window.history.length > 2) {
+                                router.back();
+                            } else {
+                                router.push('/dashboard');
+                            }
+                        }}
+                        variant="secondary"
+                        size="sm"
+                        className="px-4 bg-primary"
+                        aria-label="Go Back"
+                        title="Go Back"
+                    >
+                        <ChevronLeft className="h-4 w-4 mr-2" />
+                        Back
+                    </Button>
+                )}
 
                 {/* <div className="flex items-center gap-2 max-w-[350px] flex-1">
                         <div className="relative flex items-center w-full">

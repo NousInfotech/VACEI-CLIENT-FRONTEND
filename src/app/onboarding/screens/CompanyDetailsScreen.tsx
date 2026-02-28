@@ -15,7 +15,7 @@ import {
   AddressOption,
   ServiceToggleOption
 } from '@/interfaces';
-import { saveOnboardingStep, createCompany } from '@/api/onboardingService';
+import { saveOnboardingStep, createCompany, getOnboardingDataFromDB, updateCompany } from '@/api/onboardingService';
 
 interface CompanyDetailsScreenProps {
   onComplete: () => void;
@@ -89,17 +89,30 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
   });
 
   useEffect(() => {
-    // Load saved data if available
-    const saved = localStorage.getItem('onboarding-data');
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
+    const loadInitialData = async () => {
+      // 1. Try to load from localStorage first (for immediate responsiveness)
+      const saved = localStorage.getItem('onboarding-data');
+      let data: any = null;
+      if (saved) {
+        try {
+          data = JSON.parse(saved);
+        } catch (e) {
+          console.warn('Failed to parse localStorage onboarding-data');
+        }
+      }
+
+      // 2. Try to load from DB if authenticated (will overwrite localStorage if newer/available)
+      const token = localStorage.getItem('token');
+      if (token) {
+        const dbOnboarding = await getOnboardingDataFromDB();
+        if (dbOnboarding?.data) {
+          data = { ...data, ...dbOnboarding.data };
+        }
+      }
+
+      if (data) {
         if (data.companyType) {
           setCompanyType(data.companyType);
-        } else {
-          // If no company type is saved, redirect to step 1
-          onBack();
-          return;
         }
         if (data.existingCompanyDetails && data.companyType === 'existing') {
           setExistingDetails(prev => ({ ...prev, ...data.existingCompanyDetails }));
@@ -111,16 +124,14 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
             proposedNames: { ...prev.proposedNames, ...data.newCompanyDetails.proposedNames }
           }));
         }
-      } catch (error) {
-        console.error('Failed to parse saved onboarding data:', error);
-        // On error, redirect to step 1
-        onBack();
+      } else {
+        // If still no data and not loading anything else, maybe we should go back
+        console.warn('No onboarding data found in localStorage or DB');
       }
-    } else {
-      // No saved data, redirect to step 1
-      onBack();
-    }
-  }, [onBack]);
+    };
+
+    loadInitialData();
+  }, []);
 
   const handleContinue = async () => {
     // Validate companyType is set
@@ -150,10 +161,6 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
         alert('Company name is required.');
         return;
       }
-      if (!(newDetails.registrationNumber || '').trim()) {
-        alert('Registration number is required.');
-        return;
-      }
       if (!newDetails.registeredAddress.address?.trim()) {
         alert('Registered address is required.');
         return;
@@ -166,9 +173,21 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
 
     setLoading(true);
     try {
-      // Get clientId from localStorage (created in Step 1)
+      // Get clientId from localStorage (created in Step 1 or stored after Login)
       const onboardingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
-      const clientId = onboardingData.clientId;
+      let clientId = onboardingData.clientId;
+      
+      // Fallback: If not found in onboardingData, try to get from client_id directly
+      if (!clientId) {
+        const encodedClientId = localStorage.getItem('client_id');
+        if (encodedClientId) {
+          try {
+            clientId = atob(encodedClientId);
+          } catch (e) {
+            console.warn('Failed to decode client_id:', e);
+          }
+        }
+      }
 
       // Prepare company data for backend
       let companyPayload: any = {};
@@ -514,7 +533,7 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
         };
       }
 
-      // Create Company record at backend (Step 3) - REQUIRED, don't proceed on error
+      // Create or Update Company record at backend (Step 3) - REQUIRED, don't proceed on error
       try {
         const existingOnboardingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
         let companyId = existingOnboardingData.companyId;
@@ -529,7 +548,15 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
           incorporationStatus = companyResult.incorporationStatus;
           kycStatus = companyResult.kycStatus;
         } else {
-          console.log('Company already exists, skipping creation:', companyId);
+          console.log('Company already exists, updating:', companyId);
+          // If the legalType property is present but invalid, it will cause 500
+          // Let's strip undefined properties to be safe
+          const safePayload = Object.fromEntries(
+            Object.entries(companyPayload).filter(([_, v]) => v !== undefined)
+          ) as any;
+          const companyResult = await updateCompany(companyId, safePayload);
+          incorporationStatus = companyResult.incorporationStatus;
+          kycStatus = companyResult.kycStatus;
         }
         
         // Save company ID and incorporationStatus to localStorage
@@ -751,20 +778,18 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
             />
           </div>
 
+          {companyType === 'existing' && (
           <div>
             <label className="text-sm font-medium mb-2 block">Registration number *</label>
             <Input
-              value={companyType === 'existing' ? existingDetails.registrationNumber : (newDetails.registrationNumber || '')}
+              value={existingDetails.registrationNumber}
               onChange={(e) => {
-                if (companyType === 'existing') {
-                  setExistingDetails(prev => ({ ...prev, registrationNumber: e.target.value }));
-                } else {
-                  setNewDetails(prev => ({ ...prev, registrationNumber: e.target.value || '' }));
-                }
+                setExistingDetails(prev => ({ ...prev, registrationNumber: e.target.value }));
               }}
               placeholder="e.g., C12345"
             />
           </div>
+          )}
 
           <div>
             <label className="text-sm font-medium mb-2 block">Registered address *</label>

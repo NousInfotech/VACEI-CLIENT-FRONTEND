@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
  
-import { RefreshCw, Eye, Download, FileEdit, FileUp, Upload, FileIcon } from "lucide-react";
+import { RefreshCw, Eye, Download, FileEdit, FileUp, Upload, FileIcon, Info } from "lucide-react";
 import { RequestedDocument } from "./types";
 
 interface UploadingDocumentState {
@@ -15,6 +15,7 @@ function SingleDocUploadCell({
   documentId,
   isUploading,
   isDisabled,
+  isRejected,
   onUpload,
   formatFileSize,
   accept,
@@ -23,6 +24,7 @@ function SingleDocUploadCell({
   documentId: string;
   isUploading: boolean;
   isDisabled: boolean;
+  isRejected?: boolean;
   onUpload: (requestId: string, documentId: string, file: File) => void | Promise<void>;
   formatFileSize: (bytes: number) => string;
   accept: string;
@@ -63,14 +65,14 @@ function SingleDocUploadCell({
       <Button
         size="sm"
         variant="outline"
-        className="border-blue-300 hover:bg-blue-50 hover:text-blue-800 text-blue-700"
-        title="Choose file to upload"
+        className="border-blue-300 hover:bg-blue-50 hover:text-blue-800 text-blue-700 font-bold"
+        title={isRejected ? "Choose file to reupload" : "Choose file to upload"}
         disabled={isDisabled}
         asChild
       >
         <span>
           <Upload className="h-4 w-4 mr-1" />
-          Choose File
+          {isRejected ? "Reupload" : "Choose File"}
         </span>
       </Button>
     </label>
@@ -157,7 +159,7 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
                   >
                     {doc.type.toLowerCase()}
                   </Badge>
-                  <Badge variant="outline" className="text-gray-600 border-gray-300">
+                  <Badge variant="outline" className={docStatus === 'REJECTED' ? "text-rose-600 border-rose-300 bg-rose-50" : "text-gray-600 border-gray-300"}>
                     {doc.status}
                   </Badge>
                   {docUrl && doc.createdAt && (
@@ -171,21 +173,32 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
                     </span>
                   )}
                 </div>
+                {docStatus === 'REJECTED' && doc.rejectionReason && (
+                    <div className="text-[10px] bg-rose-50 text-rose-700 p-2 rounded-lg border border-rose-100 flex items-start gap-2 mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <Info className="w-3 h-3 mt-0.5 shrink-0" />
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold uppercase tracking-wider text-[9px] opacity-70">Reason for rejection</span>
+                            <span className="leading-relaxed">{doc.rejectionReason}</span>
+                        </div>
+                    </div>
+                )}
               </div>
             </div>
 
             <div className="flex items-center gap-1">
-              {!docUrl ? (
+              {(!docUrl || docStatus === 'REJECTED') && (
                 <SingleDocUploadCell
                   requestId={requestId}
                   documentId={doc.id}
                   isUploading={isUploading}
                   isDisabled={isDisabled || !canUpload}
+                  isRejected={docStatus === 'REJECTED'}
                   onUpload={onUpload}
                   formatFileSize={formatFileSize}
                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
                 />
-              ) : (
+              )}
+              {docUrl && (
                 <>
                   <span className="text-xs text-gray-600 mr-1 truncate max-w-[120px]" title={doc.file?.file_name ?? "File"}>
                     {doc.file?.file_name ?? "File"}

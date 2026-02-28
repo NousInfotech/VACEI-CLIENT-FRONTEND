@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -4574,11 +4574,11 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           <LibraryExplorer rootFolderId={engagementLibraryFolderId} />
         </div>
 
-        <div className={cn(
-          activeTab === "document_requests" || activeTab === "requests" ? "" : "hidden"
-        )}>
-          <DocumentRequestsTab refreshKey={refreshTick} />
-        </div>
+        {activeTab === "document_requests" && (
+          <Suspense fallback={<div className="p-8 text-center text-gray-500 font-medium">Loading document requests...</div>}>
+            <DocumentRequestsTab refreshKey={refreshTick} />
+          </Suspense>
+        )}
 
         <div className={cn(activeTab === "milestones" ? "" : "hidden")}>
           <MilestonesTab refreshKey={refreshTick} />

@@ -78,20 +78,11 @@ export default function WelcomeScreen({ onComplete, onSaveExit, onBack }: Welcom
                 <Building2 className="h-6 w-6 text-primary" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-2">Create a company profile that exists ( i have a company )</h3>
+                <h3 className="font-semibold text-lg mb-2">I already have an Incorporated company</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  You have an existing company and need incorporation services (Accounting, VAT, Audit, Payroll, Tax Advisory, etc.).
+                  Your company is already incorporated and legally exists.<br />
+                  Create a company profile to access services such as Accounting, VAT, Audit, Payroll, Tax Advisory, Compliance, and Corporate Support.
                 </p>
-                <Button
-                  variant={selectedType === 'existing' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedType('existing');
-                  }}
-                >
-                  Select
-                </Button>
               </div>
             </div>
           </Card>
@@ -108,20 +99,11 @@ export default function WelcomeScreen({ onComplete, onSaveExit, onBack }: Welcom
                 <FileText className="h-6 w-6 text-primary" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-2">Create a company profile that don&apos;t exist ( i don&apos;t have company )</h3>
+                <h3 className="font-semibold text-lg mb-2">I want to Incorporate a new company</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Create a new company profile. Your company is already incorporated. Services are not available for this path.
+                  Your company does not exist yet and you want to proceed with company incorporation.<br />
+                  Create a company profile to begin the incorporation and company formation process.
                 </p>
-                <Button
-                  variant={selectedType === 'new' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedType('new');
-                  }}
-                >
-                  Select
-                </Button>
               </div>
             </div>
           </Card>
