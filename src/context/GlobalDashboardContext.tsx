@@ -86,8 +86,17 @@ export function GlobalDashboardProvider({ children }: { children: React.ReactNod
     try {
       const data = await fetchSidebarData(activeCompanyId);
       setSidebarData(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to fetch sidebar data:", error);
+      setSidebarData([]);
+      
+      // If company not found, it might be stale.
+      if (error.message?.includes("not found") || error.status === 404) {
+        console.warn("Active company not found, clearing stale ID");
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('vacei-active-company');
+        }
+      }
     }
   }, [activeCompanyId]);
 

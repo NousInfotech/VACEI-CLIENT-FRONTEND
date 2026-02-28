@@ -166,9 +166,21 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
 
     setLoading(true);
     try {
-      // Get clientId from localStorage (created in Step 1)
+      // Get clientId from localStorage (created in Step 1 or stored after Login)
       const onboardingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
-      const clientId = onboardingData.clientId;
+      let clientId = onboardingData.clientId;
+      
+      // Fallback: If not found in onboardingData, try to get from client_id directly
+      if (!clientId) {
+        const encodedClientId = localStorage.getItem('client_id');
+        if (encodedClientId) {
+          try {
+            clientId = atob(encodedClientId);
+          } catch (e) {
+            console.warn('Failed to decode client_id:', e);
+          }
+        }
+      }
 
       // Prepare company data for backend
       let companyPayload: any = {};

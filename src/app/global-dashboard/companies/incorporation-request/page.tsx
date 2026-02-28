@@ -1,24 +1,24 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useActiveCompany } from "@/context/ActiveCompanyContext";
 import PageHeader from "@/components/shared/PageHeader";
 import DashboardCard from "@/components/DashboardCard";
 import ServiceRequestForm from "@/components/services/ServiceRequestForm";
-import { SuccessModal } from "@/components/ui/SuccessModal";
-import { Building2, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { Building2 } from "lucide-react";
 
 export default function IncorporationRequestPage() {
     const router = useRouter();
     const { activeCompanyId, companies } = useActiveCompany();
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const activeCompanyName = companies.find(c => c.id === activeCompanyId)?.name;
 
     const handleSuccess = () => {
-        setShowSuccessModal(true);
+        toast.success("Created");
+        setTimeout(() => {
+            router.push('/global-dashboard/companies');
+        }, 1500);
     };
 
     return (
@@ -41,15 +41,6 @@ export default function IncorporationRequestPage() {
                     />
                 </div>
             </DashboardCard>
-
-            <SuccessModal 
-                isOpen={showSuccessModal}
-                onClose={() => setShowSuccessModal(false)}
-                title="Request Submitted!"
-                message="Your incorporation request has been submitted successfully. Our team will review it and get back to you shortly."
-                buttonText="View Companies"
-                onAction={() => router.push('/global-dashboard/companies')}
-            />
         </section>
     );
 }

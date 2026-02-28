@@ -106,6 +106,10 @@ export default function LoginForm() {
                 localStorage.setItem("role", btoa(user.role.toLowerCase()));
             }
             
+            // Clear any stale active company data from previous users
+            localStorage.removeItem("vacei-active-company");
+            localStorage.removeItem("vacei-companies");
+            
             // Store client specific IDs for library and other features
             if (loginData.client?.id) {
                 localStorage.setItem("client_id", btoa(loginData.client.id));
@@ -159,7 +163,7 @@ export default function LoginForm() {
                 if (progress.onboardingStatus !== 'completed' && 
                     progress.currentStep >= 1 && 
                     progress.currentStep <= TOTAL_STEPS) {
-                  router.push("/onboarding");
+                  router.push("/onboarding?continue=true");
                   return;
                 }
               } catch (error) {
@@ -440,7 +444,18 @@ export default function LoginForm() {
                                     variant="outline"
                                     size="lg"
                                     className="w-full h-12 rounded-lg font-semibold text-base"
-                                    onClick={() => router.push("/onboarding")}
+                                    onClick={() => {
+                                        // Clear any stale auth/onboarding data to ensure fresh signup
+                                        localStorage.removeItem('token');
+                                        localStorage.removeItem('onboarding-progress');
+                                        localStorage.removeItem('onboarding-data');
+                                        localStorage.removeItem('service-request-id');
+                                        localStorage.removeItem('quotation-id');
+                                        localStorage.removeItem('incorporation-cycle-id');
+                                        localStorage.removeItem('vacei-active-company');
+                                        localStorage.removeItem('vacei-companies');
+                                        router.push("/onboarding");
+                                    }}
                                 >
                                     <span className="flex items-center justify-center">
                                         <i className="fi fi-rr-user-add mr-2 h-5 w-5"></i>

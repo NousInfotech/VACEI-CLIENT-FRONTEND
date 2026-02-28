@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getOnboardingProgress, saveOnboardingStep } from '@/api/onboardingService';
 import UserRegistrationScreen from './screens/UserRegistrationScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
@@ -15,6 +15,8 @@ const TOTAL_STEPS = 4;
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isContinue = searchParams.get('continue') === 'true';
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [onboardingProgress, setOnboardingProgress] = useState<OnboardingProgress | null>(null);
@@ -84,9 +86,27 @@ export default function OnboardingPage() {
     try {
       const token = localStorage.getItem('token');
       
-      // If we have a token, they've already signed up (Step 1 complete)
-      // We should check if they already have a company
-      if (token) {
+      // If we have a token but NOT the 'continue' flag, treat as a fresh signup
+      if (token && !isContinue) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('onboarding-progress');
+        localStorage.removeItem('onboarding-data');
+        localStorage.removeItem('service-request-id');
+        localStorage.removeItem('quotation-id');
+        localStorage.removeItem('incorporation-cycle-id');
+        localStorage.removeItem('vacei-active-company');
+        localStorage.removeItem('vacei-companies');
+        // Clear cookie as well
+        if (typeof document !== 'undefined') {
+          document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        }
+        setCurrentStep(1);
+        setLoading(false);
+        return;
+      }
+
+      // If we have a token and ARE continuing, handle progress
+      if (token && isContinue) {
         try {
           const backendUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
           const response = await fetch(`${backendUrl}companies`, {
@@ -99,16 +119,12 @@ export default function OnboardingPage() {
             
             if (companies.length > 0) {
               const company = companies[0];
-              // If they have a company, Step 1-3 are essentially done or in progress
-              // Let's check if we should go directly to dashboard
               if (company.incorporationStatus && company.kycStatus) {
                 setIsRedirecting(true);
                 router.replace('/global-dashboard');
                 return;
               }
               
-              // If they have a company but onboarding not marked complete, start at Step 4 (Review)
-              // This is a safe "resume" point for users who already have a company record
               setCurrentStep(4);
               setLoading(false);
               return;
@@ -118,8 +134,25 @@ export default function OnboardingPage() {
           console.warn('Failed to fetch companies for progress check:', e);
         }
         
-        // If authenticated but no company found, skip Step 1 (Signup) and go to Step 2 (Welcome)
         const progress = await getOnboardingProgress();
+        
+        // Ensure clientId is in onboarding-data for Step 3 (Company Creation)
+        const encodedClientId = localStorage.getItem('client_id');
+        if (encodedClientId) {
+          try {
+            const clientId = atob(encodedClientId);
+            const existingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
+            if (!existingData.clientId) {
+              localStorage.setItem('onboarding-data', JSON.stringify({
+                ...existingData,
+                clientId: clientId
+              }));
+            }
+          } catch (e) {
+            console.warn('Failed to decode client_id or update onboarding-data:', e);
+          }
+        }
+
         if (progress.currentStep === 1) {
            setCurrentStep(2);
         } else {
@@ -186,6 +219,10 @@ export default function OnboardingPage() {
 
   const handleStepComplete = (step: number) => {
     if (step < TOTAL_STEPS) {
+      // Ensure 'continue' param is added when moving past step 1
+      if (step === 1) {
+        router.push('/onboarding?continue=true');
+      }
       setCurrentStep(step + 1);
     } else {
       // Onboarding complete

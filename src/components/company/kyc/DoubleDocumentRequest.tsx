@@ -63,8 +63,9 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
   }
 
   const renderItemStatus = (item: RequestedDocument) => {
+    const isRejected = (item.status ?? "").toUpperCase() === "REJECTED";
     return (
-      <Badge variant="outline" className="text-gray-600 border-gray-300">
+      <Badge variant="outline" className={isRejected ? "text-rose-600 border-rose-300 bg-rose-50" : "text-gray-600 border-gray-300"}>
         {item.status}
       </Badge>
     );
@@ -98,11 +99,9 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                       {group.type.toLowerCase()}
                     </Badge>
                   </div>
-                  {/* (group as any).instruction logic if needed */}
                 </div>
               </div>
               
-              {/* Group-level action buttons */}
               <div className="flex items-center gap-1 shrink-0">
                 {group.type === "TEMPLATE" && group.templateFile?.url && (
                    <Button
@@ -142,158 +141,163 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
               </div>
             </div>
           
-
-            {/* Individual items */}
             {group.children && group.children.length > 0 && (
               <div className="space-y-2 pt-2 border-t border-gray-100">
-                {group.children.map((item, index) => {
+                {group.children.map((item) => {
                   const itemUrl = item.file?.url;
                   const templateUrl = item.templateFile?.url;
                   const isItemUploading = uploadingState?.documentId === item.id;
+                  const itemStatus = (item.status ?? "").toUpperCase();
 
                   return (
-                  <div
-                    key={item.id}
-                    id={item.id}
-                    className="flex items-center justify-between gap-3 border border-gray-400 p-3 rounded-md transition-all duration-500"
-                  >
-                    <div className="flex-1">
-                      <p className="text-md">
-                        {item.documentName}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
-                        {renderItemStatus(item)}
-                        {itemUrl && item.createdAt && (
-                          <span className="text-xs text-gray-500">
-                            Uploaded: {(() => {
-                              const date = new Date(item.createdAt);
-                              return isNaN(date.getTime())
-                                ? "N/A"
-                                : format(date, "MMM dd, yyyy HH:mm");
-                            })()}
-                          </span>
-                        )}
+                    <div
+                      key={item.id}
+                      id={item.id}
+                      className="flex flex-col gap-2 border border-gray-100 p-3 rounded-md transition-all duration-500"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">
+                            {item.documentName}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                            {renderItemStatus(item)}
+                            {itemUrl && item.createdAt && (
+                              <span className="text-xs text-gray-500">
+                                Uploaded: {(() => {
+                                  const date = new Date(item.createdAt);
+                                  return isNaN(date.getTime())
+                                    ? "N/A"
+                                    : format(date, "MMM dd, yyyy HH:mm");
+                                })()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          {(!itemUrl || itemStatus === 'REJECTED') && (
+                            <label className={`cursor-pointer ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
+                              <input
+                                type="file"
+                                className="hidden"
+                                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const dataTransfer = new DataTransfer();
+                                    dataTransfer.items.add(file);
+                                    onUploadMultiple(requestId, item.id, dataTransfer.files);
+                                  }
+                                  e.target.value = "";
+                                }}
+                                disabled={isItemUploading || isDisabled}
+                              />
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-blue-300 hover:bg-blue-50 hover:text-blue-800 text-blue-700 h-8 px-3 font-bold"
+                                title={itemStatus === 'REJECTED' ? "Choose file to reupload" : "Upload Document"}
+                                disabled={isItemUploading || isDisabled}
+                                asChild
+                              >
+                                <span>
+                                  {isItemUploading ? (
+                                    <RefreshCw className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <Upload className="h-4 w-4 mr-1" />
+                                      {itemStatus === 'REJECTED' ? "Reupload" : "Upload"}
+                                    </>
+                                  )}
+                                </span>
+                              </Button>
+                            </label>
+                          )}
+
+                          {itemUrl && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => window.open(itemUrl!, "_blank")}
+                                className="border-blue-300 hover:bg-blue-50 hover:text-blue-800 text-blue-700 h-8 w-8 p-0"
+                                title="View Document"
+                                disabled={isDisabled}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={async () => {
+                                  try {
+                                    const response = await fetch(itemUrl!);
+                                    const blob = await response.blob();
+                                    const url = window.URL.createObjectURL(blob);
+                                    const link = document.createElement("a");
+                                    link.href = url;
+                                    link.download = item.file?.file_name || item.documentName;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    window.URL.revokeObjectURL(url);
+                                  } catch (error) {
+                                    console.error("Download error:", error);
+                                  }
+                                }}
+                                className="border-green-300 hover:bg-green-50 hover:text-green-800 text-green-700 h-8 w-8 p-0"
+                                title="Download Uploaded Document"
+                                disabled={isDisabled}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+
+                          {onClearMultipleItem && itemUrl && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => onClearMultipleItem(requestId, item.id)}
+                              className="border-yellow-300 hover:bg-yellow-50 hover:text-yellow-800 text-yellow-700 h-8 px-2 text-xs"
+                              title="Clear Uploaded File"
+                              disabled={isDisabled}
+                            >
+                              Clear
+                            </Button>
+                          )}
+                           
+                          {templateUrl && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-amber-300 hover:bg-amber-50 hover:text-amber-700 text-amber-700"
+                              title="Download Template"
+                              disabled={isDisabled}
+                              asChild
+                            >
+                              <a
+                                href={templateUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`inline-flex items-center gap-1 text-sm ${isDisabled ? 'pointer-events-none opacity-50' : ''}`}
+                              >
+                                <FileIcon className="h-4 w-4"/>
+                              </a>
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      {/* Single file upload input */}
-                      {!itemUrl && (
-                        <label className={`cursor-pointer ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
-                          <input
-                            type="file"
-                            className="hidden"
-                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const dataTransfer = new DataTransfer();
-                                dataTransfer.items.add(file);
-                                onUploadMultiple(requestId, item.id, dataTransfer.files);
-                              }
-                              e.target.value = "";
-                            }}
-                            disabled={isItemUploading || isDisabled}
-                          />
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-blue-300 hover:bg-blue-50 hover:text-blue-800 text-blue-700 h-8 px-3"
-                            title="Upload Document"
-                            disabled={isItemUploading || isDisabled}
-                            asChild
-                          >
-                            <span>
-                              {isItemUploading ? (
-                                <RefreshCw className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <>
-                                  <Upload className="h-4 w-4 mr-1" />
-                                  Upload
-                                </>
-                              )}
-                            </span>
-                          </Button>
-                        </label>
-                      )}
-
-                      {/* Uploaded file actions */}
-                      {itemUrl && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => window.open(itemUrl!, "_blank")}
-                            className="border-blue-300 hover:bg-blue-50 hover:text-blue-800 text-blue-700 h-8 w-8 p-0"
-                            title="View Document"
-                            disabled={isDisabled}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={async () => {
-                              try {
-                                const response = await fetch(itemUrl!);
-                                const blob = await response.blob();
-                                const url = window.URL.createObjectURL(blob);
-                                const link = document.createElement("a");
-                                link.href = url;
-                                link.download = item.file?.file_name || item.documentName;
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                                window.URL.revokeObjectURL(url);
-                              } catch (error) {
-                                console.error("Download error:", error);
-                              }
-                            }}
-                            className="border-green-300 hover:bg-green-50 hover:text-green-800 text-green-700 h-8 w-8 p-0"
-                            title="Download Uploaded Document"
-                            disabled={isDisabled}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-
-                      {/* Clear (reset) only the uploaded file */}
-                      {onClearMultipleItem && itemUrl && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onClearMultipleItem(requestId, item.id)}
-                          className="border-yellow-300 hover:bg-yellow-50 hover:text-yellow-800 text-yellow-700 h-8 px-2 text-xs"
-                          title="Clear Uploaded File"
-                          disabled={isDisabled}
-                        >
-                          Clear
-                        </Button>
-                      )}
-                       
-                       {templateUrl && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-amber-300 hover:bg-amber-50 hover:text-amber-700 text-amber-700"
-                          title="Download Template"
-                          disabled={isDisabled}
-                          asChild
-                        >
-                          <a
-                            href={templateUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`inline-flex items-center gap-1 text-sm ${isDisabled ? 'pointer-events-none opacity-50' : ''}`}
-                          >
-                            <FileIcon className="h-4 w-4"/>
-                          </a>
-                        </Button>
+                      {itemStatus === 'REJECTED' && item.rejectionReason && (
+                        <div className="text-[10px] bg-rose-50 text-rose-700 p-2 rounded-lg border border-rose-100 flex items-start gap-2">
+                           <span className="font-bold shrink-0">Reason:</span>
+                           <span>{item.rejectionReason}</span>
+                        </div>
                       )}
                     </div>
-                  </div>
-                );})}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -304,5 +308,3 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
 };
 
 export default DocumentRequestDouble;
-
- 
