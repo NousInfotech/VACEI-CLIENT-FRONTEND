@@ -425,14 +425,14 @@ function LegacyComplianceCalendarPage() {
       />
 
       {/* Summary Strip – analytics for Overdue, Due soon, Upcoming */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <SummaryCard
+      <div className="grid grid-cols-2 gap-4">
+        {/* <SummaryCard
           label="Overdue"
           value={statusCounts.overdue}
           tone="danger"
           onClick={() => {}}
           isActive={false}
-        />
+        /> */}
         {/* Waiting on you analytics hidden in client portal */}
         {/* <SummaryCard
           label="Waiting on you"
@@ -455,13 +455,13 @@ function LegacyComplianceCalendarPage() {
           onClick={() => {}}
           isActive={false}
         />
-        <SummaryCard
+        {/* <SummaryCard
           label="Completed"
           value={statusCounts.completed}
           tone="info"
           onClick={() => {}}
           isActive={false}
-        />
+        /> */}
       </div>
 
       {/* Payroll Service Card (disabled) */}

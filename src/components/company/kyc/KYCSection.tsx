@@ -468,25 +468,41 @@ const KYCSection = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
-      <div className="flex items-center justify-between bg-white/40 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md">
-        <div>
-          <h2 className="text-3xl font-semibold">KYC Workflow Details</h2>
-          <p className="text-sm text-gray-500 mt-1 font-medium">Manage document requests and workflow status</p>
-        </div>
-        <div className="p-4 bg-linear-to-br from-blue-500 to-indigo-600 rounded-2xl text-white shadow-lg shadow-blue-200">
-          <Shield size={32} />
-        </div>
-      </div>
+      {!company?.kycStatus && (
+        <>
+          <div className="flex items-center justify-between bg-white/40 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md">
+            <div>
+              <h2 className="text-3xl font-semibold">KYC Workflow Details</h2>
+              <p className="text-sm text-gray-500 mt-1 font-medium">Manage document requests and workflow status</p>
+            </div>
+            <div className="p-4 bg-linear-to-br from-blue-500 to-indigo-600 rounded-2xl text-white shadow-lg shadow-blue-200">
+              <Shield size={32} />
+            </div>
+          </div>
 
-      <PillTabs
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        className="mb-8"
-      />
+          <PillTabs
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            className="mb-8"
+          />
+        </>
+      )}
 
       <div className="space-y-6 outline-none">
-        {activeTab === 'Company' ? renderWorkflowList('Company') : renderInvolvements()}
+        {company?.kycStatus ? (
+          <Card className="bg-white/60 border-emerald-100 shadow-sm backdrop-blur-md p-12 text-center flex flex-col items-center justify-center animate-in zoom-in-95 duration-500">
+            <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 mb-6 drop-shadow-sm">
+              <Shield size={48} />
+            </div>
+            <h3 className="text-3xl font-bold text-gray-900 mb-3 tracking-tight">KYC Verified</h3>
+            <p className="text-gray-500 max-w-sm mx-auto font-medium">
+              The KYC verification process for your company and all key involvements has been successfully completed.
+            </p>
+          </Card>
+        ) : (
+          activeTab === 'Company' ? renderWorkflowList('Company') : renderInvolvements()
+        )}
       </div>
     </div>
   )
