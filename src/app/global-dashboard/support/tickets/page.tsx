@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { HelpCircle, ArrowLeft, Loader2, MessageSquare } from "lucide-react";
+import { HelpCircle, ArrowLeft, Loader2, MessageSquare, ListChecks } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import DashboardCard from "@/components/DashboardCard";
 import { Button } from "@/components/ui/button";
-import { getSupportRequests, type SupportRequestItem } from "@/api/supportService";
+import { getSupportRequests, getTickets, type SupportRequestItem, type TicketItem } from "@/api/supportService";
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
@@ -22,7 +22,9 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function SupportTicketsPage() {
   const [requests, setRequests] = useState<SupportRequestItem[]>([]);
+  const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ticketsLoading, setTicketsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState({ total: 0, totalPages: 1, limit: 10 });
@@ -38,6 +40,14 @@ export default function SupportTicketsPage() {
       .catch((err) => setError(err?.message ?? "Failed to load requests"))
       .finally(() => setLoading(false));
   }, [page]);
+
+  useEffect(() => {
+    setTicketsLoading(true);
+    getTickets({ limit: 50 })
+      .then((res) => setTickets(res.data))
+      .catch(() => setTickets([]))
+      .finally(() => setTicketsLoading(false));
+  }, []);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -125,6 +135,51 @@ export default function SupportTicketsPage() {
                 </div>
               )}
             </>
+          )}
+        </DashboardCard>
+
+        <DashboardCard className="p-6 border-none shadow-sm bg-white">
+          <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+            <ListChecks className="w-4 h-4" />
+            My tickets (view updates)
+          </h3>
+          {ticketsLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+            </div>
+          ) : tickets.length === 0 ? (
+            <p className="text-slate-500 py-4">No tickets yet. When a support request is accepted, a ticket will appear here.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="pb-3 text-xs font-bold uppercase tracking-widest text-slate-400">Subject</th>
+                    <th className="pb-3 text-xs font-bold uppercase tracking-widest text-slate-400">Status</th>
+                    <th className="pb-3 text-xs font-bold uppercase tracking-widest text-slate-400">Created</th>
+                    <th className="pb-3 text-xs font-bold uppercase tracking-widest text-slate-400 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tickets.map((t) => (
+                    <tr key={t.id} className="border-b border-slate-100 hover:bg-slate-50/50">
+                      <td className="py-4 font-medium text-slate-900">{t.supportRequest?.subject ?? "—"}</td>
+                      <td className="py-4">
+                        <StatusBadge status={t.status} />
+                      </td>
+                      <td className="py-4 text-sm text-slate-500">{new Date(t.createdAt).toLocaleDateString()}</td>
+                      <td className="py-4 text-right">
+                        <Link href={`/global-dashboard/support/tickets/${t.id}`}>
+                          <Button variant="outline" size="sm" className="border-slate-200 text-slate-700">
+                            View updates
+                          </Button>
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </DashboardCard>
       </div>

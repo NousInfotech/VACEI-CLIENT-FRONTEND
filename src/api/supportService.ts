@@ -26,6 +26,14 @@ export interface SupportRequestItem {
   tickets?: { id: string; status: string; category: string }[];
 }
 
+export interface TicketUpdateItem {
+  id: string;
+  title: string | null;
+  description: string | null;
+  createdAt: string;
+  createdBy?: { id: string; firstName: string; lastName: string };
+}
+
 export interface TicketItem {
   id: string;
   supportRequestId: string | null;
@@ -35,6 +43,7 @@ export interface TicketItem {
   createdAt: string;
   updatedAt: string;
   supportRequest?: { id: string; subject: string; status: string } | null;
+  updates?: TicketUpdateItem[];
 }
 
 export async function createSupportRequest(
@@ -93,6 +102,44 @@ export async function getSupportRequests(params?: {
     data: result.data ?? [],
     meta: result.meta ?? { total: 0, page: 1, limit: 10, totalPages: 0 },
   };
+}
+
+export async function getTicketById(ticketId: string): Promise<TicketItem> {
+  const response = await fetch(`${supportBase}/tickets/${ticketId}`, {
+    method: "GET",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to fetch ticket");
+  }
+  const result = await response.json();
+  return result.data;
+}
+
+export async function createTicketUpdate(
+  ticketId: string,
+  payload: { title?: string; description?: string }
+): Promise<TicketUpdateItem> {
+  const response = await fetch(`${supportBase}/tickets/${ticketId}/updates`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || "Failed to add update");
+  }
+  const result = await response.json();
+  return result.data;
 }
 
 export async function getSupportRequestById(id: string): Promise<SupportRequestItem> {
