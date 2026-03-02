@@ -173,6 +173,7 @@ function OnboardingPageContent() {
         <UserRegistrationScreen
           onComplete={() => handleStepComplete(1)}
           onSaveExit={handleSaveExit}
+          onBack={() => router.push('/login')}
         />
       )}
       {validStep === 2 && (

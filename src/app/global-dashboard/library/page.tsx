@@ -6,14 +6,15 @@ import { LibraryExplorer } from "@/components/library/LibraryExplorer";
 
 export default function GlobalLibraryPage() {
     return (
-        <div className="space-y-8">
-            <PageHeader 
-                title="Global Library"
-                subtitle="Centralized document storage for all your business entities."
-                icon={Library}
-            />
+        <div className="flex flex-col h-[calc(100vh-100px)] -m-4 lg:-m-6 overflow-hidden">
+            <div className="p-4 lg:p-6 pb-2">
+                <PageHeader 
+                    title="Global Library"
+                    icon={Library}
+                />
+            </div>
 
-            <div className="bg-white rounded-2xl overflow-hidden border border-white/10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex-1 mx-5 rounded-2xl min-h-0 bg-white border-t border-gray-200">
                 <LibraryExplorer useApi={true} />
             </div>
         </div>

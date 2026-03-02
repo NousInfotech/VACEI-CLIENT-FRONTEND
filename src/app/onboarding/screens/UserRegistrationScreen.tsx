@@ -30,6 +30,14 @@ export default function UserRegistrationScreen({ onComplete, onSaveExit, onBack 
     phone?: string;
   }>({});
 
+  const isFormFullyFilled = !!(
+    email.trim() &&
+    password.trim() &&
+    confirmPassword.trim() &&
+    firstName.trim() &&
+    lastName.trim()
+  );
+
   // Removed auto-fill from localStorage - fields should start empty
   // Users can still save their progress, but fields won't auto-populate on page load
 
@@ -143,7 +151,7 @@ export default function UserRegistrationScreen({ onComplete, onSaveExit, onBack 
       currentStep={1}
       totalSteps={4}
       onContinue={handleContinue}
-      onSaveExit={onSaveExit}
+      onSaveExit={isFormFullyFilled ? onSaveExit : undefined}
       onBack={onBack}
       continueLabel={loading ? 'Creating account...' : 'Continue'}
       disabled={loading}

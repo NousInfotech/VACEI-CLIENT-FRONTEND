@@ -1,16 +1,17 @@
-"use client";
-
-import React, { useState } from "react";
+"use client"
+import React, { useState, useRef } from "react";
 import { 
     HelpCircle, 
     Send, 
     CheckCircle2, 
     LifeBuoy, 
     MessageSquare, 
-    ShieldAlert, 
     Clock, 
-    Flag,
-    AlertCircle
+    ChevronDown,
+    Upload,
+    X,
+    ImageIcon,
+    FileText
 } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import DashboardCard from "@/components/DashboardCard";
@@ -20,43 +21,66 @@ import { Button } from "@/components/ui/button";
 import Dropdown, { DropdownItem } from "@/components/Dropdown";
 import { cn } from "@/lib/utils";
 
-const CATEGORIES = [
-    { id: "incorporation", label: "Incorporation Support", icon: <Flag className="w-4 h-4" /> },
-    { id: "kyc", label: "KYC & Verification", icon: <ShieldAlert className="w-4 h-4" /> },
-    { id: "billing", label: "Billing & Invoices", icon: <MessageSquare className="w-4 h-4" /> },
-    { id: "technical", label: "Technical Issue", icon: <AlertCircle className="w-4 h-4" /> },
-    { id: "other", label: "General Inquiry", icon: <HelpCircle className="w-4 h-4" /> },
-];
-
-const PRIORITIES = [
-    { id: "low", label: "Low", color: "bg-blue-500" },
-    { id: "medium", label: "Medium", color: "bg-amber-500" },
-    { id: "high", label: "High", color: "bg-orange-500" },
-    { id: "urgent", label: "Urgent", color: "bg-red-500" },
+const SERVICES_SUBJECTS = [
+    { id: "bookkeeping", label: "Bookkeeping" },
+    { id: "vat", label: "VAT" },
+    { id: "tax", label: "Tax" },
+    { id: "incorporation", label: "Incorporation" },
+    { id: "audit", label: "Audit" },
+    { id: "payroll", label: "Payroll" },
+    { id: "banking-payments", label: "Banking & Payments" },
+    { id: "business-plans", label: "Business Plans" },
+    { id: "cfo", label: "CFO Services" },
+    { id: "csp-mbr", label: "CSP / MBR" },
+    { id: "liquidation", label: "Liquidation" },
+    { id: "regulated-licenses", label: "Regulated Licenses" },
+    { id: "international-structuring", label: "International Structuring" },
+    { id: "crypto-digital-assets", label: "Crypto & Digital Assets" },
+    { id: "other", label: "Other" },
 ];
 
 export default function GlobalSupportPage() {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({
-        category: "incorporation",
-        priority: "medium",
         subject: "",
-        message: ""
+        customSubject: "",
+        brief: ""
     });
+    const [attachments, setAttachments] = useState<File[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            const newFiles = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
+            setAttachments(prev => [...prev, ...newFiles]);
+        }
+    };
+
+    const removeAttachment = (index: number) => {
+        setAttachments(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const onDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        if (e.dataTransfer.files) {
+            const newFiles = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+            setAttachments(prev => [...prev, ...newFiles]);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
         // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1200));
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
-        console.log("Support Ticket Submitted:", {
-            ...formData,
-            submittedAt: new Date().toISOString(),
-            userId: localStorage.getItem("user_id"),
-            companyId: localStorage.getItem("vacei-active-company")
+        console.log("Support Request Submitted:", {
+            subject: formData.subject === "other" ? formData.customSubject : formData.subject,
+            brief: formData.brief,
+            attachments: attachments.map(f => f.name),
+            submittedAt: new Date().toISOString()
         });
 
         setIsLoading(false);
@@ -66,11 +90,11 @@ export default function GlobalSupportPage() {
     const handleReset = () => {
         setIsSubmitted(false);
         setFormData({
-            category: "incorporation",
-            priority: "medium",
             subject: "",
-            message: ""
+            customSubject: "",
+            brief: ""
         });
+        setAttachments([]);
     };
 
     if (isSubmitted) {
@@ -89,10 +113,10 @@ export default function GlobalSupportPage() {
                                 <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                             </div>
                         </div>
-                        <h2 className="text-3xl font-bold text-slate-900 mb-2">Message Sent!</h2>
+                        <h2 className="text-3xl font-bold text-slate-900 mb-2">Request Sent!</h2>
                         <p className="text-slate-500 font-medium mb-8 leading-relaxed">
-                            Your support ticket has been created successfully. <br />
-                            Our team will get back to you shortly via the message center.
+                            Your support request has been received. <br />
+                            Our team will review the details and get back to you shortly.
                         </p>
                         <Button 
                             variant="default" 
@@ -126,7 +150,7 @@ export default function GlobalSupportPage() {
                             <h3 className="font-bold text-lg">Direct Assistance</h3>
                         </div>
                         <p className="text-slate-400 text-sm leading-relaxed mb-6">
-                            Need help with your incorporation or documents? Our dedicated support team is available Mon-Fri, 9am - 6pm.
+                            Need help with your services or documents? Our dedicated support team is available Mon-Fri, 9am - 6pm.
                         </p>
                         <div className="space-y-4">
                             <div className="flex items-center gap-3 text-sm font-medium">
@@ -139,119 +163,130 @@ export default function GlobalSupportPage() {
                             </div>
                         </div>
                     </DashboardCard>
-
-                    <div className="p-6 rounded-3xl border border-slate-200 bg-white/50 backdrop-blur-sm">
-                        <h4 className="font-bold text-slate-900 mb-3">Frequently Asked</h4>
-                        <ul className="space-y-3">
-                            {['How to upload KYC?', 'Timeline for Incorporation', 'Billing intervals'].map((q, i) => (
-                                <li key={i} className="text-sm text-slate-500 flex items-center gap-2 group cursor-pointer hover:text-slate-900 transition-colors">
-                                    <HelpCircle className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    {q}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
                 </div>
 
                 {/* Form Column */}
                 <div className="lg:col-span-2">
                     <DashboardCard className="p-8 border-none shadow-sm bg-white overflow-visible">
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Category */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-slate-400 px-1">
-                                        Support Category
-                                    </label>
-                                    <Dropdown
-                                        className="w-full"
-                                        label={CATEGORIES.find(c => c.id === formData.category)?.label || "Select Category"}
-                                        trigger={
-                                            <button 
-                                                type="button"
-                                                className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center justify-between hover:border-slate-300 transition-all font-medium text-slate-700"
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    {CATEGORIES.find(c => c.id === formData.category)?.icon}
-                                                    <span>{CATEGORIES.find(c => c.id === formData.category)?.label}</span>
-                                                </div>
-                                                <ChevronDown className="w-4 h-4 opacity-50" />
-                                            </button>
-                                        }
-                                        items={CATEGORIES.map(c => ({
-                                            id: c.id,
-                                            label: c.label,
-                                            icon: c.icon,
-                                            onClick: () => setFormData(prev => ({ ...prev, category: c.id }))
-                                        }))}
-                                        fullWidth
-                                    />
-                                </div>
-
-                                {/* Priority */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-slate-400 px-1">
-                                        Priority Level
-                                    </label>
-                                    <Dropdown
-                                        className="w-full"
-                                        label={PRIORITIES.find(p => p.id === formData.priority)?.label || "Select Priority"}
-                                        trigger={
-                                            <button 
-                                                type="button"
-                                                className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center justify-between hover:border-slate-300 transition-all font-medium text-slate-700"
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <div className={cn("w-2 h-2 rounded-full", PRIORITIES.find(p => p.id === formData.priority)?.color)} />
-                                                    <span>{PRIORITIES.find(p => p.id === formData.priority)?.label}</span>
-                                                </div>
-                                                <ChevronDown className="w-4 h-4 opacity-50" />
-                                            </button>
-                                        }
-                                        items={PRIORITIES.map(p => ({
-                                            id: p.id,
-                                            label: p.label,
-                                            icon: <div className={cn("w-2 h-2 rounded-full", p.color)} />,
-                                            onClick: () => setFormData(prev => ({ ...prev, priority: p.id }))
-                                        }))}
-                                        fullWidth
-                                    />
-                                </div>
-                            </div>
-
                             {/* Subject */}
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                                 <label className="text-xs font-bold uppercase tracking-widest text-slate-400 px-1">
                                     Subject
                                 </label>
-                                <Input 
-                                    className="h-12 px-4 rounded-xl bg-slate-50/50 border-slate-200 focus:ring-slate-900/5 focus:border-slate-300" 
-                                    placeholder="Enter a brief summary of your issue"
-                                    required
-                                    value={formData.subject}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                                <Dropdown
+                                    className="w-full"
+                                    label={SERVICES_SUBJECTS.find(s => s.id === formData.subject)?.label || "Select Subject"}
+                                    trigger={
+                                        <button 
+                                            type="button"
+                                            className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center justify-between hover:border-slate-300 transition-all font-medium text-slate-700"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span>{SERVICES_SUBJECTS.find(s => s.id === formData.subject)?.label || "Select Subject"}</span>
+                                            </div>
+                                            <ChevronDown className="w-4 h-4 opacity-50" />
+                                        </button>
+                                    }
+                                    items={SERVICES_SUBJECTS.map(s => ({
+                                        id: s.id,
+                                        label: s.label,
+                                        onClick: () => setFormData(prev => ({ ...prev, subject: s.id }))
+                                    }))}
+                                    fullWidth
                                 />
+                                {formData.subject === "other" && (
+                                    <Input 
+                                        className="h-12 px-4 rounded-xl bg-slate-50/50 border-slate-200 focus:ring-slate-900/5 focus:border-slate-300 animate-in slide-in-from-top-2" 
+                                        placeholder="Please specify the subject"
+                                        required
+                                        value={formData.customSubject}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, customSubject: e.target.value }))}
+                                    />
+                                )}
                             </div>
 
-                            {/* Message */}
+                            {/* Brief */}
                             <div className="space-y-2">
                                 <label className="text-xs font-bold uppercase tracking-widest text-slate-400 px-1">
-                                    Message Details
+                                    Brief Details
                                 </label>
                                 <Textarea 
                                     className="min-h-[160px] p-4 rounded-xl bg-slate-50/50 border-slate-200 focus:ring-slate-900/5 focus:border-slate-300 transition-all"
                                     placeholder="Please describe your request in detail..."
                                     required
-                                    value={formData.message}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+                                    value={formData.brief}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, brief: e.target.value }))}
                                 />
+                            </div>
+
+                            {/* Attachments */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase tracking-widest text-slate-400 px-1">
+                                    Attachments (Images Only)
+                                </label>
+                                <div 
+                                    onDragOver={(e) => e.preventDefault()}
+                                    onDrop={onDrop}
+                                    className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center bg-slate-50/30 hover:bg-slate-50/80 hover:border-slate-300 transition-all cursor-pointer"
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    <input 
+                                        type="file" 
+                                        ref={fileInputRef} 
+                                        onChange={handleFileChange} 
+                                        className="hidden" 
+                                        multiple 
+                                        accept="image/*"
+                                    />
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="p-3 bg-white rounded-xl shadow-sm">
+                                            <Upload className="w-6 h-6 text-slate-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-slate-700">Click to upload or drag and drop</p>
+                                            <p className="text-xs text-slate-400 mt-1">PNG, JPG or GIF up to 10MB each</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {attachments.length > 0 && (
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 animate-in fade-in slide-in-from-top-2">
+                                        {attachments.map((file, index) => (
+                                            <div key={index} className="relative group rounded-xl overflow-hidden border border-slate-200 aspect-square bg-white">
+                                                <img 
+                                                    src={URL.createObjectURL(file)} 
+                                                    alt={`Attachment ${index}`}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <button 
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            removeAttachment(index);
+                                                        }}
+                                                        className="p-2 bg-white rounded-full text-slate-900 hover:bg-red-500 hover:text-white transition-all shadow-lg"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                                <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/60 backdrop-blur-sm">
+                                                    <p className="text-[10px] text-white truncate font-medium">
+                                                        {file.name}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="pt-2">
                                 <Button 
                                     type="submit" 
-                                    disabled={isLoading}
-                                    className="w-full md:w-auto px-10 h-14 rounded-2xl bg-slate-900 hover:bg-black text-white font-bold flex items-center justify-center gap-2 shadow-xl shadow-slate-200 hover:shadow-slate-300 transition-all active:scale-[0.98]"
+                                    disabled={isLoading || !formData.subject || (formData.subject === 'other' && !formData.customSubject)}
+                                    className="w-full md:w-auto px-10 h-14 rounded-2xl bg-slate-900 hover:bg-black text-white font-bold flex items-center justify-center gap-2 shadow-xl shadow-slate-200 hover:shadow-slate-300 transition-all active:scale-[0.98] disabled:opacity-50 disabled:scale-100"
                                 >
                                     {isLoading ? (
                                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -268,24 +303,5 @@ export default function GlobalSupportPage() {
                 </div>
             </div>
         </div>
-    );
-}
-
-function ChevronDown(props: any) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="m6 9 6 6 6-6" />
-        </svg>
     );
 }

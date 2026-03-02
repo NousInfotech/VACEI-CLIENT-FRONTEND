@@ -253,13 +253,13 @@ export default function GlobalCompliancePage() {
             <div className="space-y-8">
                 {/* Summary Cards Strip */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <SummaryCard
+                    {/* <SummaryCard
                         label="Overdue"
                         value={counts.overdue}
                         tone="danger"
                         onClick={() => setActiveFilter(activeFilter === 'overdue' ? 'all' : 'overdue')}
                         isActive={activeFilter === 'overdue'}
-                    />
+                    /> */}
                     <SummaryCard
                         label="Due Today"
                         value={counts.due_today}
@@ -274,13 +274,13 @@ export default function GlobalCompliancePage() {
                         onClick={() => setActiveFilter(activeFilter === 'upcoming' ? 'all' : 'upcoming')}
                         isActive={activeFilter === 'upcoming'}
                     />
-                    <SummaryCard
+                    {/* <SummaryCard
                         label="Completed"
                         value={counts.filed}
                         tone="success"
                         onClick={() => setActiveFilter(activeFilter === 'filed' ? 'all' : 'filed')}
                         isActive={activeFilter === 'filed'}
-                    />
+                    /> */}
                 </div>
 
                 <div className="space-y-6">

@@ -40,7 +40,12 @@ export default function TodoList() {
                 t.type === 'CUSTOM' ||
                 t.type === 'CHAT'
             );
-            setAllTasks(filteredTodos);
+            const sortedTodos = filteredTodos.sort((a, b) => {
+                const dateA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+                const dateB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+                return dateA - dateB;
+            });
+            setAllTasks(sortedTodos);
         } catch (err) {
             console.error("Failed to load data:", err);
             setMessage("Failed to load data.");
