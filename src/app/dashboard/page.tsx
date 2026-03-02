@@ -30,6 +30,7 @@ import { getOnboardingProgress } from "@/api/onboardingService";
 import CurrentFocus, { FocusItem } from "@/components/dashboard/CurrentFocus";
 import NextComplianceDeadline from "@/components/dashboard/NextComplianceDeadline";
 import { DashboardSkeleton } from "@/components/shared/CommonSkeletons";
+import { SERVICE_METADATA } from "@/lib/menuData";
 
 // Company interface
 interface Company {
@@ -79,6 +80,26 @@ const dashboardCache = {
 };
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const AUTH_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+const resolveServiceEngagementBase = (service?: string) => {
+  if (!service) return "";
+  const normalized = service.toUpperCase().replace(/[-\s&]/g, "_");
+  const metadataKey = (Object.keys(SERVICE_METADATA).find((k) =>
+    normalized === k || normalized.includes(k)
+  ) || "") as keyof typeof SERVICE_METADATA | "";
+  if (!metadataKey) return "";
+  return SERVICE_METADATA[metadataKey]?.href || "";
+};
+
+const formatServiceName = (service?: string) => {
+  if (!service) return "Action Required";
+  const normalized = service.toUpperCase().replace(/[-\s&]/g, "_");
+  const metadataKey = (Object.keys(SERVICE_METADATA).find((k) =>
+    normalized === k || normalized.includes(k)
+  ) || "") as keyof typeof SERVICE_METADATA | "";
+  if (!metadataKey) return service;
+  return SERVICE_METADATA[metadataKey]?.label || service;
+};
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -314,7 +335,8 @@ export default function DashboardPage() {
               else if (dl.toDateString() !== now.toDateString() && dl > now && dl <= nextWeek) derivedStatus = 'due_soon';
             }
             newFocus = {
-              serviceName: nextItem.service || nextItem.type || 'Action Required',
+              serviceName: formatServiceName(nextItem.service),
+              service: nextItem.service,
               taskDescription: nextItem.title,
               status: derivedStatus,
               primaryActionLabel: nextItem.cta || (nextItem.category ? 'View Task' : 'Take Action'),
@@ -322,6 +344,26 @@ export default function DashboardPage() {
             };
           } else {
             newFocus = null;
+          }
+        }
+
+        if (newFocus) {
+          if (newFocus.id && !newFocus.todoId) {
+            newFocus.todoId = newFocus.id;
+          }
+
+          if (newFocus.todoId) {
+            const fullTodo = allPendingItems.find(t => String(t.id) === String(newFocus!.todoId));
+            if (fullTodo) {
+              newFocus = {
+                ...newFocus,
+                type: fullTodo.type,
+                moduleId: fullTodo.moduleId,
+                engagementId: fullTodo.engagementId,
+                service: fullTodo.service,
+                serviceName: formatServiceName(fullTodo.service)
+              };
+            }
           }
         }
 
@@ -743,8 +785,32 @@ export default function DashboardPage() {
             return (activeFocus.status as any) || 'waiting_on_you';
           })(),
           primaryActionType: 'view',
-          primaryActionLink: `/dashboard/todo-list?id=${activeFocus.todoId}`,
-          primaryActionLabel: activeFocus.primaryActionLabel
+          primaryActionLink: (() => {
+            if (!activeFocus) return '';
+            const type = (activeFocus.type || '').toUpperCase();
+            const engagementId = activeFocus.engagementId;
+            const moduleId = activeFocus.moduleId;
+            const serviceBase = resolveServiceEngagementBase(activeFocus.service);
+
+            if ((type === 'DOCUMENT_REQUEST' || type === 'REQUESTED_DOCUMENT') && engagementId) {
+              const base = serviceBase || `/dashboard/engagements/${engagementId}`;
+              const scrollQuery = moduleId ? `&scrollTo=${moduleId}` : "";
+              if (serviceBase) {
+                return `${serviceBase}/engagements/${engagementId}?tab=document_requests${scrollQuery}`;
+              }
+              return `${base}?tab=document_requests${scrollQuery}`;
+            }
+            if (type === 'CHAT' && engagementId) {
+              const base = serviceBase || `/dashboard/engagements/${engagementId}`;
+              const messageQuery = moduleId ? `&messageId=${moduleId}` : "";
+              if (serviceBase) {
+                return `${serviceBase}/engagements/${engagementId}?tab=chat${messageQuery}`;
+              }
+              return `${base}?tab=chat${messageQuery}`;
+            }
+            return `/dashboard/todo-list?id=${activeFocus.todoId}`;
+          })(),
+          primaryActionLabel: activeFocus.primaryActionLabel || 'Take Action'
         } : null} />
 
         {/* Notice Board and Stats Row */}

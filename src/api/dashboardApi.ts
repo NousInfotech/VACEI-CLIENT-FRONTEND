@@ -15,6 +15,11 @@ export interface DashboardSummary {
     status: string;
     primaryActionLabel: string;
     todoId: string;
+    id?: string;
+    type?: string;
+    moduleId?: string;
+    engagementId?: string;
+    service?: string;
   } | null;
   counts: {
     overdue: number;

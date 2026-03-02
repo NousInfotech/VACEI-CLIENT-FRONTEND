@@ -170,6 +170,7 @@ export const LibraryProvider: React.FC<{
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [stableSidebarFolders, setStableSidebarFolders] = useState<LibraryItem[]>([])
 
   // API mode state
   const [apiRootFolders, setApiRootFolders] = useState<LibraryItem[]>([])
@@ -416,11 +417,24 @@ export const LibraryProvider: React.FC<{
       .map((folder) => ({ ...folder, name: (folder as any).folder_name || "" }))
   }, [useApi, apiRootFolders, libraryData])
 
-  /** Sidebar: at root shows root folders; inside a folder shows its child subfolders */
+  useEffect(() => {
+    const folders = rawCurrentItems.filter((i) => i.type === "folder")
+    // Capture folders at root (length 0) or first level (length 1)
+    if (folders.length > 0 && breadcrumbs.length <= 1) {
+      setStableSidebarFolders(
+        folders.map((f) => ({
+          ...f,
+          name: (f as any).folder_name || (f as any).name || "Folder",
+        }))
+      )
+    }
+  }, [rawCurrentItems, breadcrumbs.length])
+
+  /** Sidebar: show persistent "parent steps" if captured, otherwise fallback to rootFolders */
   const sidebarFolders = useMemo(() => {
-    const items = rawCurrentItems.filter((i) => i.type === "folder")
-    return items.map((f) => ({ ...f, name: (f as any).folder_name || (f as any).name || "Folder" }))
-  }, [rawCurrentItems])
+    if (stableSidebarFolders.length > 0) return stableSidebarFolders
+    return rootFolders
+  }, [stableSidebarFolders, rootFolders])
 
   const handleFolderClick = useCallback(
     (id: string | null, opts?: { fromBreadcrumb?: boolean; name?: string }) => {
@@ -431,18 +445,27 @@ export const LibraryProvider: React.FC<{
         setFolderPath([])
         return
       }
-      if (opts?.fromBreadcrumb && folderPath.length > 0) {
-        const idx = folderPath.findIndex((p) => p.id === id)
-        if (idx >= 0) {
-          setFolderPath(folderPath.slice(0, idx + 1))
-          setCurrentFolderId(id)
-          return
-        }
-      }
       if (useApi) {
         setCurrentFolderId(id)
-        const name = opts?.name ?? currentItems.find((i) => i.id === id)?.name ?? rootFolders.find((r) => r.id === id)?.name ?? "Folder"
-        setFolderPath((prev) => [...prev, { id, name }])
+        setFolderPath((prev) => {
+          // If the clicked folder is a root folder, reset the path
+          const isRoot = rootFolders.some((rf) => rf.id === id)
+          if (isRoot) {
+            const name = opts?.name ?? rootFolders.find((rf) => rf.id === id)?.name ?? "Folder"
+            return [{ id, name }]
+          }
+
+          const idx = prev.findIndex((p) => p.id === id)
+          if (idx >= 0) {
+            return prev.slice(0, idx + 1)
+          }
+          const name =
+            opts?.name ??
+            currentItems.find((i) => i.id === id)?.name ??
+            rootFolders.find((r) => r.id === id)?.name ??
+            "Folder"
+          return [...prev, { id, name }]
+        })
       } else {
         setCurrentFolderId(id)
       }

@@ -284,7 +284,7 @@ export interface KycCycle {
  * Get companies by client ID (from middleware)
  * @returns Promise<Company[]>
  */
-export async function getCompanies(): Promise<Pick<Company, "_id" | "name" | "registrationNumber">[]> {
+export async function getCompanies(): Promise<Pick<Company, "_id" | "name" | "registrationNumber" | "incorporationStatus" | "kycStatus">[]> {
   try {
     const response = await fetch(`${backendUrl}companies`, {
       method: "GET",
@@ -318,6 +318,8 @@ export async function getCompanies(): Promise<Pick<Company, "_id" | "name" | "re
       id: company.id || company._id,
       name: company.name,
       registrationNumber: company.registrationNumber,
+      incorporationStatus: company.incorporationStatus,
+      kycStatus: company.kycStatus,
     }));
   } catch (error) {
     console.error('Error fetching companies:', error);
