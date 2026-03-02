@@ -111,6 +111,9 @@ export default function EngagementChatTab() {
       }
     });
 
+    // Ensure messages are always ordered strictly by time (oldest → newest)
+    baseMessages.sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
+
     return {
       id: roomId ?? engagementId ?? "chat",
       type: "GROUP" as const,
