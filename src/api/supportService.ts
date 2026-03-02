@@ -17,7 +17,7 @@ export interface SupportRequestItem {
   organizationId: string | null;
   subject: string;
   description: string | null;
-  status: "PENDING" | "ACCEPTED";
+  status: "PENDING" | "ACCEPTED" | "REJECTED";
   createdAt: string;
   updatedAt: string;
   user?: { id: string; firstName: string; lastName: string; email: string | null };

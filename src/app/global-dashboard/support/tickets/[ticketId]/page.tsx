@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { HelpCircle, ArrowLeft, Loader2, MessageSquare, Send } from "lucide-react";
+import { HelpCircle, ArrowLeft, Loader2, MessageSquare } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import DashboardCard from "@/components/DashboardCard";
 import { Button } from "@/components/ui/button";
-import { getTicketById, createTicketUpdate, type TicketItem, type TicketUpdateItem } from "@/api/supportService";
+import { getTicketById, type TicketItem, type TicketUpdateItem } from "@/api/supportService";
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
@@ -30,10 +30,6 @@ export default function TicketDetailPage() {
   const [ticket, setTicket] = useState<TicketItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ticketId) {
@@ -48,27 +44,6 @@ export default function TicketDetailPage() {
       .catch((err) => setError(err?.message ?? "Failed to load ticket"))
       .finally(() => setLoading(false));
   }, [ticketId]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!ticketId || !description.trim()) return;
-    setSubmitting(true);
-    setSubmitError(null);
-    try {
-      await createTicketUpdate(ticketId, {
-        title: title.trim() || undefined,
-        description: description.trim(),
-      });
-      setTitle("");
-      setDescription("");
-      const updated = await getTicketById(ticketId);
-      setTicket(updated);
-    } catch (err: any) {
-      setSubmitError(err?.message ?? "Failed to add update");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   if (!ticketId) {
     return (
@@ -107,6 +82,9 @@ export default function TicketDetailPage() {
   }
 
   const updates: TicketUpdateItem[] = ticket.updates ?? [];
+  const backHref = ticket.supportRequestId
+    ? `/global-dashboard/support/tickets/request/${ticket.supportRequestId}`
+    : "/global-dashboard/support/tickets";
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -117,10 +95,10 @@ export default function TicketDetailPage() {
       />
 
       <div className="flex flex-col gap-4">
-        <Link href="/global-dashboard/support/tickets">
+        <Link href={backHref}>
           <Button variant="outline" className="border-slate-200 text-slate-700">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to My Requests
+            Back to request
           </Button>
         </Link>
 
@@ -141,9 +119,9 @@ export default function TicketDetailPage() {
             Updates
           </h3>
           {updates.length === 0 ? (
-            <p className="text-slate-500 py-4">No updates yet. Add one below.</p>
+            <p className="text-slate-500 py-4">No updates yet.</p>
           ) : (
-            <ul className="space-y-4 mb-6">
+            <ul className="space-y-4">
               {updates.map((u) => (
                 <li key={u.id} className="border-l-2 border-slate-900/20 pl-4 py-2">
                   <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
@@ -158,39 +136,6 @@ export default function TicketDetailPage() {
               ))}
             </ul>
           )}
-
-          <form onSubmit={handleSubmit} className="space-y-4 pt-4 border-t border-slate-100">
-            <h3 className="text-sm font-bold text-slate-700">Add update</h3>
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Title (optional)</label>
-              <input
-                type="text"
-                className="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300"
-                placeholder="Brief title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Message</label>
-              <textarea
-                className="w-full border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300 min-h-[100px]"
-                placeholder="Your message..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-              />
-            </div>
-            {submitError && <p className="text-sm text-red-600">{submitError}</p>}
-            <Button
-              type="submit"
-              className="bg-slate-900 hover:bg-black text-white"
-              disabled={submitting || !description.trim()}
-            >
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
-              Add update
-            </Button>
-          </form>
         </DashboardCard>
       </div>
     </div>

@@ -175,6 +175,14 @@ export default function GlobalSupportPage() {
                 title="Support"
                 subtitle="Get assistance and help from our team."
                 icon={HelpCircle}
+                actions={
+                    <Link href="/global-dashboard/support/tickets">
+                        <Button variant="outline" className="border-slate-200 text-slate-700">
+                            <ListChecks className="w-4 h-4 mr-2" />
+                            View my requests
+                        </Button>
+                    </Link>
+                }
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
