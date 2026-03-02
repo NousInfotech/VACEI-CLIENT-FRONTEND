@@ -4,21 +4,21 @@ import React, { useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useEngagement } from "./hooks/useEngagement";
 import { useChat } from "@/hooks/useChat";
-import { ChatWindow } from "./chat/components/ChatWindow";
-import { MessageSearchPane } from "./chat/components/MessageSearchPane";
-import { GroupInfoPane } from "./chat/components/GroupInfoPane";
-import { MediaPreviewModal } from "./chat/components/MediaPreviewModal";
+import { ChatWindow } from "@/components/dashboard/messages/components/ChatWindow";
+import { MessageSearchPane } from "@/components/dashboard/messages/components/MessageSearchPane";
+import { GroupInfoPane } from "@/components/dashboard/messages/components/GroupInfoPane";
+import { MediaPreviewModal } from "@/components/dashboard/messages/components/MediaPreviewModal";
+import { mapApiMessage } from "@/hooks/useChatRooms";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserIdFromLocalStorage, getDecodedUserId } from "@/utils/authUtils";
 import type { Chat, Message, User } from "./chat/types";
+import { chatService } from "@/api/chatService";
+import { cn } from "@/lib/utils";
 
-function formatTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
+/** 
+ * No longer need local formatTime as mapApiMessage handles it.
+ * Keeping mapStatus for sendMessage fallback if needed, though useChat handles most.
+ */
 function mapStatus(status?: string): "sent" | "delivered" | "read" {
   const s = (status ?? "").toUpperCase();
   if (s === "READ") return "read";
@@ -71,33 +71,18 @@ export default function EngagementChatTab() {
       };
     });
 
-    // First map raw API messages into our Message shape
-    const baseMessages: Message[] = apiMessages.map((m: any) => {
-      const fileUrl = m.fileUrl ?? undefined;
-      const fileName =
-        fileUrl
-          ? fileUrl.split("/").pop() ?? fileUrl.split("?")[0]?.split("/").pop() ?? "File"
-          : undefined;
-      const hasImageExt = (s: string) => /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$|\s)/i.test(s);
-      const isImage = fileUrl && (hasImageExt(fileUrl) || hasImageExt(m.content || ""));
-      const displayType = fileUrl ? (isImage ? "image" : "document") : "text";
-      const sentAt = m.sentAt || m.createdAt || m.created_at || new Date().toISOString();
+    // Use the central mapApiMessage for consistent formatting (timestamps, types, etc)
+    const baseMessages: Message[] = apiMessages.map((msg: any) => {
+      const mapped = mapApiMessage(msg);
+      
+      // Realtime/API payloads might not have resolved senderName. 
+      // Resolve it from our participants list for display consistency.
+      if (mapped.senderId !== 'me' && !mapped.senderName) {
+        const p = participants.find(p => p.id === mapped.senderId);
+        if (p) mapped.senderName = p.name;
+      }
 
-      return {
-        id: m.id,
-        senderId: m.senderId,
-        type: displayType,
-        text: m.content ?? undefined,
-        fileUrl,
-        fileName,
-        timestamp: formatTime(sentAt),
-        status: mapStatus(m.participantStates?.[0]?.status),
-        createdAt: new Date(sentAt).getTime(),
-        replyToId: m.replyToMessageId ?? undefined,
-        replyToMessageId: m.replyToMessageId ?? null,
-        // replyToMessage filled in second pass below
-        replyToMessage: null,
-      };
+      return mapped as Message;
     });
 
     // Second pass: resolve replyToMessage so the UI can show quoted preview like global chat
@@ -117,19 +102,21 @@ export default function EngagementChatTab() {
     return {
       id: roomId ?? engagementId ?? "chat",
       type: "GROUP" as const,
-      name: "Engagement Chat",
+      name: engagement?.title || "Engagement Chat",
       participants,
       messages: baseMessages,
       unreadCount: 0,
     };
   }, [apiMessages, members, engagementId, roomId]);
 
-  const [showSearch, setShowSearch] = React.useState(false);
-  const [showInfo, setShowInfo] = React.useState(false);
+  const [rightPaneMode, setRightPaneMode] = React.useState<'search' | 'info' | null>(null);
   const [previewMessage, setPreviewMessage] = React.useState<Message | null>(null);
   const [scrollToId, setScrollToId] = React.useState<string | undefined>();
   const [uploadProgress, setUploadProgress] = React.useState(0);
   const [replyingTo, setReplyingTo] = React.useState<Message | null>(null);
+  const [editingMessage, setEditingMessage] = React.useState<Message | null>(null);
+  const [isSelectMode, setIsSelectMode] = React.useState(false);
+  const [selectedMessageIds, setSelectedMessageIds] = React.useState<string[]>([]);
 
   // When opening from todo-list "Reply": scroll to message and open reply UI
   useEffect(() => {
@@ -226,28 +213,23 @@ export default function EngagementChatTab() {
       <div className="flex-1 flex flex-col min-w-0 relative">
         <ChatWindow
           chat={chat}
-          currentUserId={getDecodedUserId() ?? currentUserId}
           onSendMessage={handleSendMessage}
-          onFileUpload={handleFileUpload}
-          isUploading={uploadProgress > 0}
-          hasMore={hasMore}
-          onLoadMore={loadMore}
-          isLoadingMore={isLoading}
-          onSearchToggle={() => {
-            setShowSearch(!showSearch);
-            if (showInfo) setShowInfo(false);
+          onSearchToggle={() => setRightPaneMode(prev => prev === 'search' ? null : 'search')}
+          onInfoToggle={() => setRightPaneMode(prev => prev === 'info' ? null : 'info')}
+          onMute={() => {
+            if (roomId) chatService.updateRoomMute(roomId, true).catch(console.error);
           }}
-          onInfoToggle={() => {
-            setShowInfo(!showInfo);
-            if (showSearch) setShowSearch(false);
+          onClearChat={async () => {
+            if (roomId && window.confirm("Clear all messages?")) {
+              await chatService.clearRoom(roomId).catch(console.error);
+            }
           }}
-          onMediaClick={(msg) => setPreviewMessage(msg)}
+          onSelectMessages={() => setIsSelectMode(true)}
+          onMediaClick={(msg: any) => setPreviewMessage(msg)}
           scrollToMessageId={scrollToId}
           onScrollComplete={() => setScrollToId(undefined)}
           onReplyMessage={setReplyingTo}
-          replyingTo={replyingTo}
-          onCancelReply={() => setReplyingTo(null)}
-          onEditMessage={(msg) => console.log('Edit message', msg)} // Will handle via ChatWindow state and MessageInput
+          onEditMessage={setEditingMessage}
           onDeleteMessage={async (msgId) => {
             if (window.confirm("Are you sure you want to delete this message?")) {
               try {
@@ -259,34 +241,83 @@ export default function EngagementChatTab() {
           }}
           onReactToMessage={async (msgId, emoji) => {
             try {
-              const { chatService } = await import('@/api/chatService');
               await chatService.addReaction(msgId, emoji);
             } catch (err) {
               console.error("Failed to add reaction:", err);
             }
           }}
           onForwardMessage={(msg) => console.log('Forward message', msg)}
+          replyingTo={replyingTo}
+          editingMessage={editingMessage}
+          onCancelReply={() => setReplyingTo(null)}
+          onCancelEdit={() => setEditingMessage(null)}
+          isSelectMode={isSelectMode}
+          selectedMessageIds={selectedMessageIds}
+          onSelectMessage={(id) => setSelectedMessageIds(prev => 
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+          )}
+          onEnterSelectMode={() => setIsSelectMode(true)}
         />
       </div>
 
-      {showSearch && (
-        <div className="w-[350px] shrink-0 h-full border-l border-gray-100 flex flex-col animate-in slide-in-from-right duration-300">
-          <MessageSearchPane
-            messages={chat.messages}
-            participants={chat.participants}
-            onClose={() => setShowSearch(false)}
-            onMessageClick={(id) => setScrollToId(id)}
-          />
+      {/* Side Panes (unified with global layout) */}
+      <div className={cn(
+        'h-full border-l border-gray-100 transition-all duration-300 ease-in-out overflow-hidden shrink-0',
+        rightPaneMode ? 'w-[350px]' : 'w-0 border-transparent'
+      )}>
+        <div className="w-[350px] h-full">
+          {rightPaneMode === 'search' ? (
+            <MessageSearchPane
+              messages={chat.messages}
+              participants={chat.participants}
+              onClose={() => setRightPaneMode(null)}
+              onMessageClick={(id) => setScrollToId(id)}
+            />
+          ) : (
+            <GroupInfoPane
+              name={chat.name}
+              type={chat.type}
+              participants={chat.participants}
+              onClose={() => setRightPaneMode(null)}
+            />
+          )}
         </div>
-      )}
+      </div>
 
-      {showInfo && (
-        <GroupInfoPane
-          name={chat.name}
-          type={chat.type}
-          participants={chat.participants}
-          onClose={() => setShowInfo(false)}
-        />
+      {/* Bulk select toolbar */}
+      {isSelectMode && (
+        <div className="absolute bottom-0 left-0 right-0 bg-[#f0f2f5] border-t border-gray-200 z-50 flex items-center justify-between px-6 py-4 animate-in slide-in-from-bottom duration-200">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                setIsSelectMode(false);
+                setSelectedMessageIds([]);
+              }}
+              className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+            >
+              <span className="text-gray-500 font-bold">✕</span>
+            </button>
+            <span className="font-semibold text-gray-700">
+              {selectedMessageIds.length} selected
+            </span>
+          </div>
+          <div className="flex items-center gap-6">
+            <button
+              onClick={() => {
+                const text = chat.messages
+                  .filter(m => selectedMessageIds.includes(m.id))
+                  .map(m => m.text || '')
+                  .join('\n');
+                navigator.clipboard.writeText(text);
+                setIsSelectMode(false);
+                setSelectedMessageIds([]);
+              }}
+              className="p-2 hover:bg-gray-200 rounded-full transition-colors flex flex-col items-center gap-1 group"
+            >
+              <span className="text-xs text-gray-600 group-hover:text-primary font-medium">Copy</span>
+            </button>
+          </div>
+        </div>
       )}
 
       {previewMessage && (
@@ -297,7 +328,7 @@ export default function EngagementChatTab() {
       )}
 
       {uploadProgress > 0 && (
-        <div className="absolute bottom-20 left-6 right-6 max-w-sm p-3 bg-white rounded-lg shadow-lg border border-gray-200">
+        <div className="absolute bottom-20 left-6 right-6 max-w-sm p-3 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
             <div
               className="h-full bg-emerald-500 rounded-full transition-all"

@@ -232,7 +232,7 @@ class ChatService {
       }
 
       return {
-        data: (data || []) as ChatMessage[],
+        data: (data || []).map(normalizeChatMessage) as unknown as ChatMessage[],
       };
     }
 
@@ -335,7 +335,7 @@ class ChatService {
         .single();
 
       if (error) throw error;
-      const msg = data as ChatMessage;
+      const msg = normalizeChatMessage(data) as unknown as ChatMessage;
       this.notifyRoomMembers(roomId, content || "", msg?.id).catch(() => { });
       return msg;
     }
@@ -408,7 +408,7 @@ class ChatService {
           const eventType = payload.eventType as 'INSERT' | 'UPDATE' | 'DELETE';
           // For DELETE, there is only payload.old
           const raw = (eventType === 'DELETE' ? payload.old : payload.new) as Record<string, unknown>;
-          const msg = normalizeRealtimePayload(raw) as unknown as ChatMessage;
+          const msg = normalizeChatMessage(raw) as unknown as ChatMessage;
           onMessageChange(msg, eventType);
         }
       )
@@ -464,40 +464,50 @@ class ChatService {
   }
 }
 
-/** Normalize Supabase Realtime payload to match ChatMessage shape (sentAt for correct timestamp display). */
-function normalizeRealtimePayload(raw: Record<string, unknown>): Record<string, unknown> {
+/** Normalize ChatMessage payload from any source (REST, Realtime, Supabase Select) */
+export function normalizeChatMessage(raw: Record<string, unknown>): Record<string, unknown> {
   const r = raw || {};
   const sentAtRaw =
     r.sentAt ??
     r.sent_at ??
     (r as any).sentat ??
-    // Fallbacks: many tables store createdAt/created_at instead of sentAt
     (r as any).createdAt ??
     (r as any).created_at ??
     (r as any).insertedAt ??
     (r as any).inserted_at;
+
   let sentAt: string;
   if (typeof sentAtRaw === 'string') {
     sentAt = String(sentAtRaw).trim().replace(' ', 'T');
+    // Ensure ISO format with Z if no timezone is present
     if (!sentAt.endsWith('Z') && !/[+-]\d{2}(:?\d{2})?$/.test(sentAt)) {
       sentAt += 'Z';
     }
   } else if (typeof sentAtRaw === 'number') {
+    // Handle unix timestamps (seconds vs ms)
     sentAt = sentAtRaw < 1e12 ? new Date(sentAtRaw * 1000).toISOString() : new Date(sentAtRaw).toISOString();
+  } else if (sentAtRaw instanceof Date) {
+    sentAt = sentAtRaw.toISOString();
   } else {
     sentAt = new Date().toISOString();
   }
+
   return {
     ...r,
     id: r.id ?? (r as any).id,
     roomId: r.roomId ?? (r as any).room_id,
     senderId: r.senderId ?? (r as any).sender_id,
-    content: r.content,
+    content: r.content ?? (r as any).text,
     fileUrl: r.fileUrl ?? (r as any).file_url,
-    type: r.type,
+    type: r.type ?? (r as any).type ?? "TEXT",
     sentAt,
     replyToMessageId: r.replyToMessageId ?? (r as any).reply_to_message_id ?? null,
   };
+}
+
+/** @deprecated Use normalizeChatMessage */
+function normalizeRealtimePayload(raw: Record<string, unknown>): Record<string, unknown> {
+  return normalizeChatMessage(raw);
 }
 
 export const chatService = new ChatService();

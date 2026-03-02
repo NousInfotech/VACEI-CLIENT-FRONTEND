@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { chatService, type ChatMessage, type ChatMember } from "@/api/chatService";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-import { handleAuthError } from "@/utils/authUtils";
+import { handleAuthError, getDecodedUserId } from "@/utils/authUtils";
 
 export interface UseChatReturn {
   messages: ChatMessage[];
@@ -137,6 +137,24 @@ export function useChat(
   const sendMessage = useCallback(
     async (content: string, fileUrl?: string, replyToMessageId?: string | null) => {
       if (!roomId) return null;
+      
+      const userId = getDecodedUserId() ?? "";
+      const tempId = `optimistic-${Date.now()}`;
+      
+      const optimisticMsg: ChatMessage = {
+        id: tempId,
+        roomId,
+        senderId: userId,
+        content,
+        fileUrl: fileUrl ?? null,
+        type: fileUrl ? "FILE" : "TEXT",
+        sentAt: new Date().toISOString(),
+        replyToMessageId,
+      };
+
+      // Add optimistic message
+      setMessages((prev) => [...prev, optimisticMsg]);
+
       try {
         const msg = await chatService.sendMessage(
           roomId,
@@ -144,14 +162,22 @@ export function useChat(
           fileUrl,
           replyToMessageId ? { replyToMessageId } : undefined
         );
+        
         if (msg) {
           setMessages((prev) => {
-            if (prev.some((m) => m.id === msg.id)) return prev;
-            return [...prev, mapApiMessageToChatMessage(msg)];
+            // Replace optimistic with canonical
+            const filtered = prev.filter((m) => m.id !== tempId);
+            if (filtered.some((m) => m.id === msg.id)) return filtered;
+            return [...filtered, mapApiMessageToChatMessage(msg)];
           });
+        } else {
+          // If null, remove optimistic
+          setMessages((prev) => prev.filter((m) => m.id !== tempId));
         }
         return msg;
       } catch (err) {
+        // Rollback on error
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
         console.error("Failed to send message:", err);
         handleAuthError(err, router);
         throw err;
