@@ -252,7 +252,7 @@ export default function GlobalCompliancePage() {
 
             <div className="space-y-8">
                 {/* Summary Cards Strip */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                     {/* <SummaryCard
                         label="Overdue"
                         value={counts.overdue}

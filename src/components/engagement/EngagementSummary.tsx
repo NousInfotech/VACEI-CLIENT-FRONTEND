@@ -32,6 +32,8 @@ import {
   Info,
   RefreshCw,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { SERVICE_METADATA } from "@/lib/menuData";
 import {
   MBR_FILINGS_MOCK,
   getActiveMBRFiling,
@@ -74,7 +76,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useEngagement } from "./hooks/useEngagement";
-import { Skeleton } from "@/components/ui/skeleton";
 import UpdatesTab from "./UpdatesTab";
 import FilingsTab from "./FilingsTab";
 
@@ -155,6 +156,16 @@ const workflowStatusConfig: Record<
   },
 };
 
+const resolveServiceEngagementBase = (service?: string) => {
+  if (!service) return "";
+  const normalized = service.toUpperCase().replace(/[-\s&]/g, "_");
+  const metadataKey = (Object.keys(SERVICE_METADATA).find((k) =>
+    normalized === k || normalized.includes(k)
+  ) || "") as keyof typeof SERVICE_METADATA | "";
+  if (!metadataKey) return "";
+  return SERVICE_METADATA[metadataKey]?.href || "";
+};
+
 export const ServiceTodoTable = ({
   todos,
   loading,
@@ -165,26 +176,46 @@ export const ServiceTodoTable = ({
   onOpen?: (todo: TodoItem) => void;
 }) => {
   const router = useRouter();
-
   const handleOpen = (todo: TodoItem) => {
     if (onOpen) {
       onOpen(todo);
       return;
     }
 
-    if (todo.type === "CUSTOM") {
+    const type = (todo.type || "").toUpperCase();
+    const serviceBase = resolveServiceEngagementBase(todo.service);
+    
+    if (type === "CUSTOM") {
       router.push(`/dashboard/todo-list/todo-list-view?taskId=${btoa(todo.id)}`);
-    } else if (
-      (todo.type === "DOCUMENT_REQUEST" || todo.type === "REQUESTED_DOCUMENT") &&
+      return;
+    } 
+
+    if (
+      (type === "DOCUMENT_REQUEST" || type === "REQUESTED_DOCUMENT") &&
       todo.engagementId
     ) {
+      const base = serviceBase 
+        ? `${serviceBase}/engagements/${todo.engagementId}` 
+        : `/dashboard/engagements/${todo.engagementId}`;
       router.push(
-        `/dashboard/engagements/${todo.engagementId}?tab=document_requests${
+        `${base}?tab=document_requests${
           todo.moduleId ? `&scrollTo=${todo.moduleId}` : ""
         }`
       );
+    } else if (type === "CHAT" && todo.engagementId) {
+      const base = serviceBase 
+        ? `${serviceBase}/engagements/${todo.engagementId}` 
+        : `/dashboard/engagements/${todo.engagementId}`;
+      router.push(
+        `${base}?tab=chat${
+          todo.moduleId ? `&messageId=${todo.moduleId}` : ""
+        }`
+      );
     } else if (todo.engagementId) {
-      router.push(`/dashboard/engagements/${todo.engagementId}`);
+      const base = serviceBase 
+        ? `${serviceBase}/engagements/${todo.engagementId}` 
+        : `/dashboard/engagements/${todo.engagementId}`;
+      router.push(base);
     } else {
       router.push(`/dashboard/todo-list/todo-list-view?taskId=${btoa(todo.id)}`);
     }
@@ -238,7 +269,7 @@ export const ServiceTodoTable = ({
                   className="text-blue-600 hover:text-blue-800 text-[10px] font-bold uppercase tracking-widest p-0 h-auto"
                   onClick={() => handleOpen(todo)}
                 >
-                  Open
+                  {todo.cta ? (todo.cta.charAt(0).toUpperCase() + todo.cta.slice(1)) : 'Open'}
                 </Button>
               </td>
             </tr>

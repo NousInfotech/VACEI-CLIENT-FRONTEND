@@ -14,7 +14,7 @@ const page = () => {
 
   return (
     <CompanyProvider companyId={companyId}>
-      <Company />
+      <Company defaultTab="detail" />
     </CompanyProvider>
   )
 }

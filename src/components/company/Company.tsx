@@ -20,8 +20,12 @@ import { Company as CompanyType } from '@/api/auditService'
 import { DetailsSkeleton } from '../shared/CommonSkeletons'
 import PageHeader from '../shared/PageHeader'
 
-const Company = () => {
-  const [activeTab, setActiveTab] = useTabQuery('incorporation')
+interface CompanyProps {
+  defaultTab?: string;
+}
+
+const Company = ({ defaultTab = 'incorporation' }: CompanyProps) => {
+  const [activeTab, setActiveTab] = useTabQuery(defaultTab)
   const { company: data, loading, error } = useCompany()
   const searchParams = useSearchParams()
   const highlight = searchParams.get('highlight')
@@ -54,7 +58,7 @@ const Company = () => {
       case 'kyc':
         // Guard: only render KYC section if incorporation is done
         return incorporationVerified ? <Kyc /> : <IncorporationSection />
-      default: return <IncorporationSection />
+      default: return defaultTab === 'detail' ? <CompanyDetail /> : <IncorporationSection />
     }
   }
 

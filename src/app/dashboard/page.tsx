@@ -339,7 +339,9 @@ export default function DashboardPage() {
               service: nextItem.service,
               taskDescription: nextItem.title,
               status: derivedStatus,
-              primaryActionLabel: nextItem.cta || (nextItem.category ? 'View Task' : 'Take Action'),
+              primaryActionLabel: nextItem.cta 
+                ? (nextItem.cta.charAt(0).toUpperCase() + nextItem.cta.slice(1)) 
+                : (nextItem.category ? 'View Task' : 'Take Action'),
               todoId: nextItem.id
             };
           } else {
@@ -361,7 +363,10 @@ export default function DashboardPage() {
                 moduleId: fullTodo.moduleId,
                 engagementId: fullTodo.engagementId,
                 service: fullTodo.service,
-                serviceName: formatServiceName(fullTodo.service)
+                serviceName: formatServiceName(fullTodo.service),
+                primaryActionLabel: fullTodo.cta 
+                  ? (fullTodo.cta.charAt(0).toUpperCase() + fullTodo.cta.slice(1)) 
+                  : newFocus!.primaryActionLabel
               };
             }
           }
@@ -792,23 +797,34 @@ export default function DashboardPage() {
             const moduleId = activeFocus.moduleId;
             const serviceBase = resolveServiceEngagementBase(activeFocus.service);
 
-            if ((type === 'DOCUMENT_REQUEST' || type === 'REQUESTED_DOCUMENT') && engagementId) {
-              const base = serviceBase || `/dashboard/engagements/${engagementId}`;
-              const scrollQuery = moduleId ? `&scrollTo=${moduleId}` : "";
-              if (serviceBase) {
-                return `${serviceBase}/engagements/${engagementId}?tab=document_requests${scrollQuery}`;
-              }
-              return `${base}?tab=document_requests${scrollQuery}`;
-            }
+            // Chat handled specifically
             if (type === 'CHAT' && engagementId) {
-              const base = serviceBase || `/dashboard/engagements/${engagementId}`;
+              const base = serviceBase 
+                ? `${serviceBase}/engagements/${engagementId}`
+                : `/dashboard/engagements/${engagementId}`;
               const messageQuery = moduleId ? `&messageId=${moduleId}` : "";
-              if (serviceBase) {
-                return `${serviceBase}/engagements/${engagementId}?tab=chat${messageQuery}`;
-              }
               return `${base}?tab=chat${messageQuery}`;
             }
-            return `/dashboard/todo-list?id=${activeFocus.todoId}`;
+
+            // Document requests handled specifically
+            if ((type === 'DOCUMENT_REQUEST' || type === 'REQUESTED_DOCUMENT') && engagementId) {
+              const base = serviceBase 
+                ? `${serviceBase}/engagements/${engagementId}`
+                : `/dashboard/engagements/${engagementId}`;
+              const scrollQuery = moduleId ? `&scrollTo=${moduleId}` : "";
+              return `${base}?tab=document_requests${scrollQuery}`;
+            }
+
+            // Default redirection logic for other types
+            if (engagementId) {
+              const base = serviceBase 
+                ? `${serviceBase}/engagements/${engagementId}`
+                : `/dashboard/engagements/${engagementId}`;
+              return base;
+            }
+
+            // Fallback for tasks without engagement (custom tasks, general tasks)
+            return `/dashboard/todo-list/todo-list-view?taskId=${btoa(String(activeFocus.todoId))}`;
           })(),
           primaryActionLabel: activeFocus.primaryActionLabel || 'Take Action'
         } : null} />
