@@ -4,12 +4,22 @@ import { Suspense, useState, useEffect, ChangeEvent, FocusEvent } from 'react';
 import * as Yup from 'yup';
 import { ValidationError } from 'yup';
 import { changePassword } from '@/api/authService';
-import AlertMessage, { AlertVariant } from '@/components/AlertMessage'; // Import AlertMessage
+import AlertMessage, { AlertVariant } from '@/components/AlertMessage';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
 import Dropdown from "@/components/Dropdown";
-import { ChevronDown, Settings as SettingsIcon, Users, Bell, Shield, Wallet, Lock } from "lucide-react";
-import PillTabs from "@/components/shared/PillTabs";
+import {
+    ChevronDown,
+    Settings as SettingsIcon,
+    Users,
+    Bell,
+    Shield,
+    Wallet,
+    Lock,
+    Mail,
+    AppWindow,
+    Speaker,
+} from "lucide-react";
 import { useTabQuery } from "@/hooks/useTabQuery";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { fetchPreferencesAPI, updatePreferencesAPI, NotificationPreference } from '@/api/notificationService';
@@ -470,6 +480,12 @@ function SettingsContent() {
     };
 
     const [activeTab, setActiveTab] = useTabQuery("general");
+    const sidebarTabs = [
+        { id: "general", label: "Company profile", icon: SettingsIcon },
+        { id: "notifications", label: "Notifications", icon: Bell },
+        { id: "security", label: "Security & sessions", icon: Shield },
+        { id: "password", label: "Password", icon: Lock },
+    ] as const;
 
     return (
         <section className="mx-auto max-w-[1400px] w-full pt-5 space-y-6">
@@ -477,87 +493,205 @@ function SettingsContent() {
                 title="Settings"
                 subtitle="Manage your account preferences, company profile, and security settings."
             />
-            <div className="bg-card border border-border rounded-card p-6 shadow-md w-full mx-auto space-y-6">
 
-                {/* Tabs */}
-                <PillTabs
-                    tabs={[
-                        { id: "general", label: "Company profile", icon: SettingsIcon },
-                        { id: "notifications", label: "Notifications", icon: Bell },
-                        { id: "security", label: "Security & sessions", icon: Shield },
-                        { id: "password", label: "Password", icon: Lock },
-                    ]}
-                    activeTab={activeTab}
-                    onTabChange={setActiveTab}
-                />
+            <div className="flex flex-col lg:flex-row items-stretch gap-6 min-h-[560px]">
+                {/* Sidebar navigation */}
+                <aside className="lg:w-72 shrink-0 flex">
+                    <div className="bg-card border border-border rounded-[24px] p-3 space-y-1 shadow-sm flex-1">
+                        {sidebarTabs.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all group ${
+                                    activeTab === tab.id
+                                        ? "bg-primary text-primary-foreground shadow-md"
+                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                }`}
+                            >
+                                <tab.icon
+                                    size={18}
+                                    className={
+                                        activeTab === tab.id
+                                            ? "text-primary-foreground"
+                                            : "text-muted-foreground group-hover:text-primary"
+                                    }
+                                />
+                                <span className={activeTab === tab.id ? "translate-x-0.5 transition-transform" : ""}>
+                                    {tab.label}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                </aside>
 
-                {/* Profile */}
-                {activeTab === "general" && (
-                    <div className="space-y-3">
-                        <h2 className="text-lg font-semibold text-brand-body">Company profile</h2>
-                        {alert && activeTab === "general" && (
-                            <div className="mb-4">
-                                <AlertMessage message={alert.message} variant={alert.variant} onClose={() => setAlert(null)} duration={6000} />
+                {/* Main content card */}
+                <main className="flex-1 min-w-0 flex">
+                    <div className="bg-card border border-border rounded-[32px] p-6 md:p-8 shadow-md flex-1 space-y-6">
+
+                        {/* Profile */}
+                        {activeTab === "general" && (
+                            <div className="space-y-3">
+                                <h2 className="text-lg font-semibold text-brand-body">Company profile</h2>
+                                {alert && activeTab === "general" && (
+                                    <div className="mb-4">
+                                        <AlertMessage
+                                            message={alert.message}
+                                            variant={alert.variant}
+                                            onClose={() => setAlert(null)}
+                                            duration={6000}
+                                        />
+                                    </div>
+                                )}
+                                <div className="grid gap-3 md:grid-cols-2">
+                                    <Input
+                                        placeholder="Company name"
+                                        value={profile.name}
+                                        onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))}
+                                    />
+                                    <Input
+                                        placeholder="Registration number"
+                                        disabled
+                                        value={profile.registrationNumber}
+                                        title="Registration numbers cannot be edited directly."
+                                        className="bg-muted cursor-not-allowed text-muted-foreground"
+                                    />
+                                </div>
+                                <Textarea
+                                    rows={2}
+                                    placeholder="Address"
+                                    value={profile.address}
+                                    onChange={(e) => setProfile((p) => ({ ...p, address: e.target.value }))}
+                                />
+
+                                <div className="pt-2">
+                                    <Button
+                                        onClick={handleSaveProfile}
+                                        disabled={isSavingProfile || !activeCompanyId}
+                                        className="px-4 py-2 font-normal"
+                                    >
+                                        {isSavingProfile ? "Saving..." : "Save Changes"}
+                                    </Button>
+                                </div>
                             </div>
                         )}
-                        <div className="grid gap-3 md:grid-cols-2">
-                            <Input placeholder="Company name" value={profile.name} onChange={(e)=>setProfile(p=>({...p,name:e.target.value}))}/>
-                            <Input placeholder="Registration number" disabled value={profile.registrationNumber} title="Registration numbers cannot be edited directly." className="bg-muted cursor-not-allowed text-muted-foreground" />
-                        </div>
-                        <Textarea rows={2} placeholder="Address" value={profile.address} onChange={(e)=>setProfile(p=>({...p,address:e.target.value}))}/>
-                        
-                        <div className="pt-2">
-                            <Button 
-                                onClick={handleSaveProfile} 
-                                disabled={isSavingProfile || !activeCompanyId}
-                                className="px-4 py-2 font-normal"
-                            >
-                                {isSavingProfile ? 'Saving...' : 'Save Changes'}
-                            </Button>
-                        </div>
-                    </div>
-                )}
 
-                {/* Notifications */}
-                {activeTab === "notifications" && (
-                    <div className="space-y-3">
-                        <h2 className="text-lg font-semibold text-brand-body">Notification preferences</h2>
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <label className="flex items-center gap-3 text-sm p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary" checked={notifications.emailEnabled} onChange={()=>togglePreference('emailEnabled')}/>
-                                <div className="flex flex-col">
-                                    <span className="font-medium">Email Notifications</span>
-                                    <span className="text-xs text-muted-foreground">Receive important updates via email</span>
+                        {/* Notifications */}
+                        {activeTab === "notifications" && (
+                            <div className="space-y-4">
+                                <div className="space-y-1">
+                                    <h2 className="text-lg font-semibold text-brand-body">Notification preferences</h2>
+                                    <p className="text-xs text-muted-foreground">
+                                        Choose how you want to receive alerts from the client portal.
+                                    </p>
                                 </div>
-                            </label>
-                            <label className="flex items-center gap-3 text-sm p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary" checked={notifications.inAppEnabled} onChange={()=>togglePreference('inAppEnabled')}/>
-                                <div className="flex flex-col">
-                                    <span className="font-medium">In-App Notifications</span>
-                                    <span className="text-xs text-muted-foreground">Real-time alerts while using the platform</span>
-                                </div>
-                            </label>
-                            <label className="flex items-center gap-3 text-sm p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary" checked={notifications.pushEnabled} onChange={()=>togglePreference('pushEnabled')}/>
-                                <div className="flex flex-col">
-                                    <span className="font-medium">Push Notifications</span>
-                                    <span className="text-xs text-muted-foreground">Get notified on your mobile or desktop</span>
-                                </div>
-                            </label>
-                            <label className="flex items-center gap-3 text-sm p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary" checked={notifications.soundEnabled} onChange={()=>togglePreference('soundEnabled')}/>
-                                <div className="flex flex-col">
-                                    <span className="font-medium">Notification Sounds</span>
-                                    <span className="text-xs text-muted-foreground">Play a sound when a new notification arrives</span>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                )}
 
-                {/* Security / MFA + Sessions */}
-                {activeTab === "security" && (
-                    <div className="space-y-6">
+                                <div className="grid gap-6 md:grid-cols-2">
+                                    <div className="p-5 rounded-2xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-3 rounded-2xl bg-blue-50">
+                                                <Mail className="h-5 w-5 text-blue-600" />
+                                            </div>
+                                            <div className="flex-1 space-y-3">
+                                                <div>
+                                                    <h3 className="text-sm font-semibold text-brand-body">Email notifications</h3>
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        Receive important account and compliance updates via email.
+                                                    </p>
+                                                </div>
+                                                <label className="inline-flex items-center gap-2 text-xs font-medium cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                                                        checked={notifications.emailEnabled}
+                                                        onChange={() => togglePreference("emailEnabled")}
+                                                    />
+                                                    <span>Enabled</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-5 rounded-2xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-3 rounded-2xl bg-green-50">
+                                                <AppWindow className="h-5 w-5 text-green-600" />
+                                            </div>
+                                            <div className="flex-1 space-y-3">
+                                                <div>
+                                                    <h3 className="text-sm font-semibold text-brand-body">In‑app notifications</h3>
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        Real‑time alerts while you are using the client portal.
+                                                    </p>
+                                                </div>
+                                                <label className="inline-flex items-center gap-2 text-xs font-medium cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                                                        checked={notifications.inAppEnabled}
+                                                        onChange={() => togglePreference("inAppEnabled")}
+                                                    />
+                                                    <span>Enabled</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-5 rounded-2xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-3 rounded-2xl bg-purple-50">
+                                                <Bell className="h-5 w-5 text-purple-600" />
+                                            </div>
+                                            <div className="flex-1 space-y-3">
+                                                <div>
+                                                    <h3 className="text-sm font-semibold text-brand-body">Push notifications</h3>
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        Get notified on your desktop or mobile browser.
+                                                    </p>
+                                                </div>
+                                                <label className="inline-flex items-center gap-2 text-xs font-medium cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                                                        checked={notifications.pushEnabled}
+                                                        onChange={() => togglePreference("pushEnabled")}
+                                                    />
+                                                    <span>Enabled</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-5 rounded-2xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-3 rounded-2xl bg-orange-50">
+                                                <Speaker className="h-5 w-5 text-orange-600" />
+                                            </div>
+                                            <div className="flex-1 space-y-3">
+                                                <div>
+                                                    <h3 className="text-sm font-semibold text-brand-body">Notification sounds</h3>
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        Play a sound whenever a new alert arrives.
+                                                    </p>
+                                                </div>
+                                                <label className="inline-flex items-center gap-2 text-xs font-medium cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
+                                                        checked={notifications.soundEnabled}
+                                                        onChange={() => togglePreference("soundEnabled")}
+                                                    />
+                                                    <span>Enabled</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Security / MFA + Sessions */}
+                        {activeTab === "security" && (
+                            <div className="space-y-6">
                         <div className="space-y-3">
                             <h2 className="text-lg font-semibold text-brand-body">Security (MFA)</h2>
                             <p className="text-xs text-muted-foreground">
@@ -747,96 +881,102 @@ function SettingsContent() {
                                 {sessions.length === 0 && (
                                     <div className="text-muted-foreground text-xs">No active sessions (UI-only).</div>
                                 )}
+                                </div>
                             </div>
                         </div>
+                        )}
+
+                        {/* Change Password Section */}
+                        {activeTab === "password" && (
+                            <div className="mt-1">
+                                <h2 className="text-lg font-semibold text-brand-body mb-4">Change Password</h2>
+                                {alert && (
+                                    <div className="mb-4">
+                                        <AlertMessage
+                                            message={alert.message}
+                                            variant={alert.variant}
+                                            onClose={() => setAlert(null)}
+                                            duration={6000}
+                                        />
+                                    </div>
+                                )}
+
+                                <form onSubmit={handleSubmit} className="space-y-6">
+                                    <div>
+                                        <label
+                                            htmlFor="currentPassword"
+                                            className="block text-sm font-medium text-brand-body mb-1"
+                                        >
+                                            Current Password
+                                        </label>
+                                        <input
+                                            id="currentPassword"
+                                            name="currentPassword"
+                                            type="password"
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            value={formData.currentPassword}
+                                            className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm sm:text-sm"
+                                        />
+                                        {touched.currentPassword && errors.currentPassword ? (
+                                            <div className="text-red-600 text-sm mt-1">{errors.currentPassword}</div>
+                                        ) : null}
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="newPassword" className="block text-sm font-medium text-brand-body mb-1">
+                                            New Password
+                                        </label>
+                                        <input
+                                            id="newPassword"
+                                            name="newPassword"
+                                            type="password"
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            value={formData.newPassword}
+                                            className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm sm:text-sm"
+                                        />
+                                        {touched.newPassword && errors.newPassword ? (
+                                            <div className="text-red-600 text-sm mt-1">{errors.newPassword}</div>
+                                        ) : null}
+                                    </div>
+
+                                    <div>
+                                        <label
+                                            htmlFor="confirmNewPassword"
+                                            className="block text-sm font-medium text-brand-body mb-1"
+                                        >
+                                            Confirm New Password
+                                        </label>
+                                        <input
+                                            id="confirmNewPassword"
+                                            name="confirmNewPassword"
+                                            type="password"
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            value={formData.confirmNewPassword}
+                                            className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm sm:text-sm"
+                                        />
+                                        {touched.confirmNewPassword && errors.confirmNewPassword ? (
+                                            <div className="text-red-600 text-sm mt-1">{errors.confirmNewPassword}</div>
+                                        ) : null}
+                                    </div>
+
+                                    <div className="flex">
+                                        <Button
+                                            variant={"default"}
+                                            type="submit"
+                                            className="px-4 py-2 rounded-lg transition-all cursor-pointer font-normal shadow-sm hover:shadow-md text-primary-foreground"
+                                            disabled={isSubmitting}
+                                        >
+                                            {isSubmitting ? "Updating..." : "Change Password"}
+                                        </Button>
+                                    </div>
+                                </form>
+                            </div>
+                        )}
                     </div>
-                )}
-
-                {/* Billing (stub) removed */}
-
-                {/* Change Password Section (kept functional) */}
-                {activeTab === "password" && (
-                <div className="mt-1">
-                    <h2 className="text-lg font-semibold text-brand-body mb-4">Change Password</h2>
-                    {alert && (
-                        <div className="mb-4">
-                            <AlertMessage
-                                message={alert.message}
-                                variant={alert.variant}
-                                onClose={() => setAlert(null)}
-                                duration={6000}
-                            />
-                        </div>
-                    )}
-
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <label htmlFor="currentPassword" className="block text-sm font-medium text-brand-body mb-1">
-                                Current Password
-                            </label>
-                            <input
-                                id="currentPassword"
-                                name="currentPassword"
-                                type="password"
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                value={formData.currentPassword}
-                                className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm sm:text-sm"
-                            />
-                            {touched.currentPassword && errors.currentPassword ? (
-                                <div className="text-red-600 text-sm mt-1">{errors.currentPassword}</div>
-                            ) : null}
-                        </div>
-
-                        <div>
-                            <label htmlFor="newPassword" className="block text-sm font-medium text-brand-body mb-1">
-                                New Password
-                            </label>
-                            <input
-                                id="newPassword"
-                                name="newPassword"
-                                type="password"
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                value={formData.newPassword}
-                                className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm sm:text-sm"
-                            />
-                            {touched.newPassword && errors.newPassword ? (
-                                <div className="text-red-600 text-sm mt-1">{errors.newPassword}</div>
-                            ) : null}
-                        </div>
-
-                        <div>
-                            <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-brand-body mb-1">
-                                Confirm New Password
-                            </label>
-                            <input
-                                id="confirmNewPassword"
-                                name="confirmNewPassword"
-                                type="password"
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                value={formData.confirmNewPassword}
-                                className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm sm:text-sm"
-                            />
-                            {touched.confirmNewPassword && errors.confirmNewPassword ? (
-                                <div className="text-red-600 text-sm mt-1">{errors.confirmNewPassword}</div>
-                            ) : null}
-                        </div>
-
-                        <div className="flex">
-                            <Button
-                                variant={"default"}
-                                type="submit"
-                                className="px-4 py-2 rounded-lg transition-all cursor-pointer font-normal shadow-sm hover:shadow-md text-primary-foreground"
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting ? 'Updating...' : 'Change Password'}
-                            </Button>
-                        </div>
-                    </form>
-                </div>
-                )}
+                </main>
             </div>
         </section>
     );

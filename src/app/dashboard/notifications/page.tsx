@@ -13,29 +13,32 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { useSSE } from '@/hooks/useSSE';
 import { cn } from '@/lib/utils';
+import { Bell, AlertCircle, MessageSquare, Calendar, FileText } from 'lucide-react';
 
 interface NotificationItemProps {
     notification: Notification;
     onMarkAsRead: (id: string) => void;
 }
 
+const getIconForType = (type: string) => {
+    switch (type) {
+        case 'chat_message':
+            return <MessageSquare className="h-5 w-5 text-blue-500" />;
+        case 'meeting_scheduled':
+        case 'meeting_updated':
+            return <Calendar className="h-5 w-5 text-purple-500" />;
+        case 'error':
+        case 'meeting_canceled':
+            return <AlertCircle className="h-5 w-5 text-red-500" />;
+    case 'filing_status':
+      return <FileText className="h-5 w-5 text-emerald-500" />;
+        default:
+            return <Bell className="h-5 w-5 text-gray-500" />;
+    }
+};
+
 const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMarkAsRead }) => {
     const isRead = notification.isRead;
-    const isChat = notification.type === 'chat_message';
-
-    const containerClasses = cn(
-        'group relative overflow-hidden rounded-2xl border transition-all duration-200',
-        isChat
-            ? cn(
-                'bg-sidebar-background text-[hsl(var(--sidebar-foreground))]',
-                isRead
-                    ? 'border-[hsl(var(--sidebar-border))] shadow-sm'
-                    : 'border-emerald-400/50 shadow-lg ring-1 ring-emerald-400/40'
-            )
-            : isRead
-                ? 'bg-muted border-border shadow-sm'
-                : 'bg-white border-amber-100 shadow-md'
-    );
 
     const handleClick = () => {
         if (!isRead) {
@@ -44,56 +47,36 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMar
     };
 
     const content = (
-        <div className={containerClasses} onClick={handleClick}>
-            {/* Accent strip for chat + unread */}
-            {isChat && !isRead && (
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 via-emerald-300 to-emerald-500" />
+        <div
+            className={cn(
+                'p-4 sm:p-5 mb-4 border-l-4 rounded-2xl bg-white transition-all hover:bg-gray-50 cursor-pointer flex gap-4',
+                isRead ? 'border-gray-200' : 'border-primary bg-primary/5'
             )}
-
-            <div className="relative flex flex-col gap-2 p-4 sm:p-5">
-                <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                        <p
-                            className={cn(
-                                'font-semibold text-sm sm:text-base',
-                                isChat
-                                    ? 'text-emerald-200'
-                                    : 'text-slate-900'
-                            )}
-                        >
-                            {notification.title}
-                        </p>
-                        {notification.content && (
-                            <p
-                                className={cn(
-                                    'text-xs sm:text-sm leading-relaxed',
-                                    isChat
-                                        ? 'text-[hsl(var(--sidebar-foreground)/0.85)]'
-                                        : 'text-muted-foreground'
-                                )}
-                            >
-                                {notification.content}
-                            </p>
-                        )}
-                    </div>
-
+            onClick={handleClick}
+        >
+            <div className={cn('mt-1 p-2 rounded-xl', isRead ? 'bg-gray-100' : 'bg-white')}>
+                {getIconForType(notification.type)}
+            </div>
+            <div className="flex-1">
+                <div className="flex justify-between items-start gap-3">
+                    <h4 className={cn('font-bold text-gray-900 text-sm sm:text-base', isRead && 'opacity-70')}>
+                        {notification.title}
+                    </h4>
                     {!isRead && (
-                        <span
-                            className={cn(
-                                'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap',
-                                isChat
-                                    ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/40'
-                                    : 'bg-amber-50 text-amber-700 border border-amber-200'
-                            )}
-                        >
-                            Unread
+                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap bg-amber-50 text-amber-700 border border-amber-200">
+                            New
                         </span>
                     )}
                 </div>
-
-                <div className="flex items-center justify-between pt-1 text-[11px] sm:text-xs text-muted-foreground">
-                    <span>{new Date(notification.createdAt).toLocaleString()}</span>
-                    {isRead && <span className="italic">Read</span>}
+                {notification.content && (
+                    <p className={cn('text-xs sm:text-sm text-gray-600 mt-1 leading-relaxed', isRead && 'opacity-60')}>
+                        {notification.content}
+                    </p>
+                )}
+                <div className="flex items-center gap-4 mt-3 text-[11px] sm:text-xs text-gray-400 uppercase tracking-widest">
+                    <span className="font-semibold">
+                        {new Date(notification.createdAt).toLocaleString()}
+                    </span>
                 </div>
             </div>
         </div>
