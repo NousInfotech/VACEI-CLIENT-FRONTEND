@@ -276,7 +276,8 @@ export default function GlobalSupportPage() {
                                 />
                             </div>
 
-                                {formData.subject === "other" && (
+                            {formData.subject === "other" && (
+                                <div className="space-y-3">
                                     <Input 
                                         className="h-12 px-4 rounded-xl bg-slate-50/50 border-slate-200 focus:ring-slate-900/5 focus:border-slate-300 animate-in slide-in-from-top-2" 
                                         placeholder="Please specify the subject"
@@ -284,8 +285,8 @@ export default function GlobalSupportPage() {
                                         value={formData.customSubject}
                                         onChange={(e) => setFormData(prev => ({ ...prev, customSubject: e.target.value }))}
                                     />
-                                )}
-                            </div>
+                                </div>
+                            )}
 
                             {/* Brief */}
                             <div className="space-y-2">
