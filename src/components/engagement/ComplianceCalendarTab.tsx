@@ -235,8 +235,8 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
   if (loading) {
     return (
       <div className="space-y-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+        <div className="grid grid-cols-2 gap-4">
+          {Array.from({ length: 2 }).map((_, i) => (
             <Skeleton key={i} className="h-20 rounded-0" />
           ))}
         </div>
@@ -266,7 +266,7 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
   return (
     <div className="space-y-8">
       {/* Summary Cards Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         {/* <SummaryCard
           label="Overdue"
           value={counts.overdue}

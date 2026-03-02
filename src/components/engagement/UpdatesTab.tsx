@@ -1,7 +1,8 @@
 "use client"
 
 import React from "react"
-import DashboardCard from "../DashboardCard"
+import { MessageSquare, Clock } from "lucide-react"
+import { ShadowCard } from "@/components/ui/ShadowCard"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useEngagement } from "./hooks/useEngagement"
 import { useEngagementUpdates } from "./hooks/useEngagementUpdates"
@@ -9,7 +10,13 @@ import { useEngagementUpdates } from "./hooks/useEngagementUpdates"
 function formatTs(ts: string) {
   const d = new Date(ts)
   if (Number.isNaN(d.getTime())) return ts
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+  return d.toLocaleString(undefined, { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric', 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  })
 }
 
 export default function UpdatesTab() {
@@ -22,16 +29,16 @@ export default function UpdatesTab() {
 
   if (loading) {
     return (
-      <DashboardCard className="p-6 rounded-0 space-y-4">
-        <Skeleton className="h-6 w-48 rounded-0" />
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="p-4 border border-border rounded-0 space-y-2">
-            <Skeleton className="h-4 w-56 rounded-0" />
-            <Skeleton className="h-3 w-full rounded-0" />
-            <Skeleton className="h-3 w-3/4 rounded-0" />
-          </div>
-        ))}
-      </DashboardCard>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-48 rounded-lg" />
+        </div>
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-32 w-full rounded-2xl" />
+          ))}
+        </div>
+      </div>
     )
   }
 
@@ -45,43 +52,44 @@ export default function UpdatesTab() {
 
   if (!updates.length) {
     return (
-      <div className="text-center py-20">
-        <p className="text-gray-400">No updates for this service yet.</p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-gray-900">Engagement Updates</h2>
+        </div>
+        <ShadowCard className="p-12 text-center">
+          <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900">No updates yet</h3>
+          <p className="text-gray-500 mt-2">Post an update to keep the team informed.</p>
+        </ShadowCard>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
-      <DashboardCard className="p-6 rounded-0">
-        <div className="space-y-1">
-          <h3 className="text-lg font-medium tracking-tight">Updates</h3>
-          <p className="text-sm text-muted-foreground">
-            Read-only timeline of engagement updates.
-          </p>
-        </div>
-      </DashboardCard>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-gray-900">Engagement Updates</h2>
+      </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {updates.map((u) => {
-          const creator =
-            u.creator ? `${u.creator.firstName || ""} ${u.creator.lastName || ""}`.trim() : ""
           return (
-            <DashboardCard key={u.id} className="p-6 rounded-0">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div className="space-y-1">
-                  {u.title ? (
-                    <p className="text-sm font-semibold text-gray-900">{u.title}</p>
-                  ) : (
-                    <p className="text-sm font-semibold text-gray-900">Update</p>
+            <ShadowCard key={u.id} className="p-4 border-l-4 border-l-primary/30 group transition-all duration-300 hover:shadow-md">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <Clock className="h-3 w-3" />
+                      <span className="font-medium">{formatTs(u.createdAt || u.updatedAt)}</span>
+                    </div>
+                  </div>
+                  {u.title && (
+                    <h4 className="text-base font-bold text-slate-900 mt-1">{u.title}</h4>
                   )}
-                  <p className="text-xs text-muted-foreground">
-                    {creator ? `By ${creator}` : "By service team"} · {formatTs(u.createdAt || u.updatedAt)}
-                  </p>
+                  <p className="text-gray-600 mt-1.5 whitespace-pre-wrap text-[14px] leading-relaxed">{u.message}</p>
                 </div>
               </div>
-              <p className="mt-3 text-sm text-gray-700 whitespace-pre-wrap">{u.message}</p>
-            </DashboardCard>
+            </ShadowCard>
           )
         })}
       </div>

@@ -213,7 +213,7 @@ export default function EngagementChatTab() {
 
   if (!roomId || (isLoading && chat.messages.length === 0)) {
     return (
-      <div className="flex flex-col h-[600px] bg-white rounded-xl border border-gray-200 p-6 gap-4">
+      <div className="flex flex-col h-[calc(100vh-350px)] min-h-[500px] bg-white rounded-xl border border-gray-200 p-6 gap-4">
         <Skeleton className="h-12 w-48" />
         <Skeleton className="flex-1 w-full" />
         <Skeleton className="h-16 w-full" />
@@ -222,7 +222,7 @@ export default function EngagementChatTab() {
   }
 
   return (
-    <div className="flex bg-white rounded-xl shadow-xl border border-[#e2e8f0]/30 h-[700px] overflow-hidden relative">
+    <div className="flex bg-white rounded-xl shadow-xl border border-[#e2e8f0]/30 h-[calc(100vh-350px)] min-h-[500px] overflow-hidden relative">
       <div className="flex-1 flex flex-col min-w-0 relative">
         <ChatWindow
           chat={chat}

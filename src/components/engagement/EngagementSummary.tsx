@@ -78,6 +78,7 @@ import {
 import { useEngagement } from "./hooks/useEngagement";
 import UpdatesTab from "./UpdatesTab";
 import FilingsTab from "./FilingsTab";
+import { ENGAGEMENT_CONFIG } from "@/config/engagementConfig";
 
 export type EngagementStatus =
   | "on_track"
@@ -95,6 +96,45 @@ export interface EngagementAction {
   type: "upload" | "confirm" | "schedule";
   label: string;
   onClick?: () => void;
+}
+
+function formatMilestoneDate(m: any): string {
+  const raw = m?.date || m?.timestamp || m?.createdAt || m?.updatedAt
+  if (!raw) return ''
+  const d = new Date(raw)
+  if (Number.isNaN(d.getTime())) return String(raw)
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+}
+
+const MilestoneIconMini = ({ status }: { status: string }) => {
+  switch (status) {
+    case 'completed':
+      return (
+        <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white border-2 border-emerald-50">
+          <CheckCircle2 className="w-4 h-4" />
+        </div>
+      )
+    case 'in_progress':
+      return (
+        <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white border-2 border-blue-50">
+          <Clock className="w-4 h-4" />
+        </div>
+      )
+    default:
+      return (
+        <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 border border-dashed border-gray-300">
+          <Circle className="w-3.5 h-3.5" />
+        </div>
+      )
+  }
+}
+
+function normalizeMilestoneStatus(input: unknown): 'completed' | 'in_progress' | 'pending' | 'skipped' {
+  const s = String(input || '').toLowerCase()
+  if (['completed', 'done', 'closed', 'finalized', 'achieved'].includes(s)) return 'completed'
+  if (['in_progress', 'in progress', 'active', 'working'].includes(s)) return 'in_progress'
+  if (['skipped', 'skip', 'cancelled', 'cancel'].includes(s)) return 'skipped'
+  return 'pending'
 }
 
 interface EngagementSummaryProps {
@@ -308,21 +348,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
     null,
   );
 
-  const isMBRFilings = serviceName === "MBR Filings" || serviceName === "Filings";
-  const isVAT = serviceName === "VAT";
-  const isTax = serviceName === "Tax";
-  const isIncorporation = serviceName === "Incorporation";
-  const isBusinessPlans = serviceName === "Business Plans";
-  const isLiquidation = serviceName === "Liquidation";
-  const isPayroll = serviceName === "Payroll";
-  // Treat Legal service as a Corporate-style service so it also exposes the Filings tab
-  const isCorporate =
-    serviceName === "Corporate Services" ||
-    serviceSlug === "legal" ||
-    serviceName.toLowerCase().includes("legal");
-  const isCFO = serviceName === "CFO Services";
-  const isAccounting = serviceName === "Accounting & Bookkeeping";
-  const isAudit = serviceName === "Statutory Audit";
+
   const isBankingPayments = serviceName === "Banking & Payments";
   const isRegulatedLicenses = serviceName === "Regulated Licenses";
   const isInternationalStructuring = serviceName === "International Structuring";
@@ -332,7 +358,25 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { engagement, loading: engagementLoading, refetch: refetchEngagement } = useEngagement();
-  const engagementData = engagement as any;
+  const engagementData = (engagement || {}) as any;
+  const sCat = engagementData?.serviceCategory || '';
+
+  const isMBRFilings = sCat === "MBR" || serviceName === "MBR Filings" || serviceName === "Filings";
+  const isVAT = sCat === "VAT" || serviceName === "VAT";
+  const isTax = sCat === "TAX" || serviceName === "Tax";
+  const isIncorporation = sCat === "INCORPORATION" || serviceName === "Incorporation";
+  const isBusinessPlans = serviceName === "Business Plans";
+  const isLiquidation = sCat === "LIQUIDATION" || serviceName === "Liquidation";
+  const isPayroll = sCat === "PAYROLL" || serviceName === "Payroll";
+  // Treat Legal service as a Corporate-style service so it also exposes the Filings tab
+  const isCorporate =
+    sCat === "CSP" ||
+    serviceName === "Corporate Services" ||
+    serviceSlug === "legal" ||
+    serviceName.toLowerCase().includes("legal");
+  const isCFO = sCat === "CFO" || serviceName === "CFO Services";
+  const isAccounting = sCat === "ACCOUNTING" || serviceName === "Accounting & Bookkeeping";
+  const isAudit = sCat === "AUDITING" || serviceName === "Statutory Audit";
   const engagementId = engagementData?._id || engagementData?.id;
   const engagementLibraryFolderId =
     engagementData?.libraryFolderId ||
@@ -366,6 +410,10 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
     ]);
     setIsRefreshing(false);
   };
+
+  const hasAnyItems = React.useMemo(() => {
+    return (documentRequests || []).length > 0 || (engagementTodos || []).length > 0;
+  }, [documentRequests, engagementTodos]);
 
   const allPendingItems = React.useMemo(() => {
     const pendingDocs = (documentRequests || []).filter(r => {
@@ -452,7 +500,8 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
       ? "waiting"
       : workflowStatus;
 
-  const mbrFilings = engagementData?.filings || MBR_FILINGS_MOCK;
+  const mockDataAllowed = ENGAGEMENT_CONFIG.USE_MOCK_DATA && !engagementData?.id && !engagementData?._id;
+  const mbrFilings = (engagementData?.filings && engagementData.filings.length > 0) ? engagementData.filings : (mockDataAllowed ? MBR_FILINGS_MOCK : []);
   const mbrActiveFiling = isMBRFilings
     ? getActiveMBRFiling(mbrFilings, mbrCurrentFilingId)
     : undefined;
@@ -460,14 +509,27 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
     ? getMBRServiceStatusFromFilings(mbrFilings)
     : displayStatus;
 
-  const vatPeriods = engagementData?.periods || VAT_PERIODS_MOCK;
+  const vatPeriods = (engagementData?.periods && engagementData.periods.length > 0) ? engagementData.periods : (mockDataAllowed ? VAT_PERIODS_MOCK : []);
   const vatActivePeriod = isVAT
     ? getActiveVATPeriod(vatPeriods, activeVatPeriodId)
     : undefined;
 
   const currentStatusFromTodos = React.useMemo(() => {
     if (allPendingItems.length === 0) {
-      return statusConfig.on_track;
+      if (!hasAnyItems) return statusConfig.on_track;
+
+      const allTodos = engagementTodos || [];
+      const anyActionTaken = allTodos.some(t => t.status?.toUpperCase() === 'ACTION_TAKEN');
+      if (anyActionTaken) {
+        return {
+          label: "Action Taken",
+          color: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+        };
+      }
+      return {
+        label: "Completed",
+        color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+      };
     }
 
     const now = new Date();
@@ -480,33 +542,32 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
     });
 
     const top = sortedItems[0] as any;
-    const title = top.title || top.name || "Pending task";
 
     if (top.deadline) {
       const dl = new Date(top.deadline);
       const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
       if (dlDate < today) {
         return {
-          label: `Overdue – ${title}`,
+          label: statusConfig.overdue.label,
           color: statusConfig.overdue.color,
         };
       }
       if (dlDate.getTime() === today.getTime()) {
         return {
-          label: `Due today – ${title}`,
+          label: statusConfig.due_today.label,
           color: statusConfig.due_today.color,
         };
       }
       if (dlDate > today) {
         return {
-          label: `Due soon – ${title}`,
+          label: statusConfig.due_soon.label,
           color: statusConfig.due_soon.color,
         };
       }
     }
 
     return {
-      label: `Action required – ${title}`,
+      label: "Action Required",
       color: statusConfig.action_required.color,
     };
   }, [allPendingItems]);
@@ -2773,29 +2834,41 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
 
                     {/* ROW 3: Operations (Vertical Stacking) */}
                     <div className="flex flex-col gap-8">
-                      {/* 3.1 Recent Activity */}
+                      {/* 3.1 Updates */}
                       <DashboardCard className="p-6">
                         <div className="space-y-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                            <h3 className="text-lg font-medium tracking-tight">Recent Activity</h3>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                              <h3 className="text-lg font-medium tracking-tight">Updates</h3>
+                            </div>
+                            <Button variant="ghost" size="sm" className="text-xs font-bold text-blue-600 hover:text-blue-800 uppercase tracking-widest p-0 h-auto" onClick={() => setActiveTab("messages")}>
+                              View All
+                            </Button>
                           </div>
                           <div className="space-y-3">
                             {updatesLoading ? (
-                              <Skeleton className="h-20 w-full" />
+                              <div className="space-y-3">
+                                <Skeleton className="h-24 w-full rounded-xl" />
+                                <Skeleton className="h-24 w-full rounded-xl" />
+                              </div>
                             ) : (updates || []).slice(0, 5).map((item: any, idx: number) => (
-                              <div key={idx} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-2 h-2 rounded-full bg-primary" />
-                                  <span className="text-sm text-gray-900">{item.action || item.title || item.message}</span>
+                              <div key={idx} className="p-4 bg-white border border-gray-100 rounded-xl border-l-4 border-l-primary/30 shadow-sm transition-all duration-300 hover:shadow-md">
+                                <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium mb-2">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{new Date(item.createdAt || item.updatedAt || item.date).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                                 </div>
-                                <span className="text-xs text-gray-500">
-                                  {new Date(item.createdAt || item.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                                </span>
+                                {item.title && (
+                                  <h4 className="text-sm font-bold text-slate-900 mb-1">{item.title}</h4>
+                                )}
+                                <p className="text-sm text-gray-600 line-clamp-2">{item.message || item.action}</p>
                               </div>
                             ))}
                             {(!updates || updates.length === 0) && !updatesLoading && (
-                              <p className="text-sm text-gray-500 italic">No recent activity.</p>
+                              <div className="text-center py-6 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                                <MessageSquare className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                                <p className="text-sm font-medium text-gray-500">No updates yet</p>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -3207,23 +3280,25 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                           )}
                         </div>
                       </div>
-                      <div className="space-y-3">
-                        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                          Current status
-                        </p>
-                        {engagementLoading ? (
-                          <Skeleton className="h-6 w-28 rounded-0" />
-                        ) : (
-                          <Badge
-                            className={cn(
-                              "rounded-0 border px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit block",
-                              currentStatusFromTodos.color,
-                            )}
-                          >
-                            {currentStatusFromTodos.label}
-                          </Badge>
-                        )}
-                      </div>
+                      {hasAnyItems && currentStatusFromTodos.label !== "Completed" && (
+                        <div className="space-y-3">
+                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                            Current status
+                          </p>
+                          {engagementLoading ? (
+                            <Skeleton className="h-6 w-28 rounded-0" />
+                          ) : (
+                            <Badge
+                              className={cn(
+                                "rounded-0 border px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit block",
+                                currentStatusFromTodos.color,
+                              )}
+                            >
+                              {currentStatusFromTodos.label}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Right Side: Action Info */}
@@ -3415,62 +3490,102 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                   <div className="flex flex-col gap-8">
                     {/* 2.1 Milestones Snapshot */}
                     <DashboardCard className="p-6">
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                          <h3 className="text-lg font-medium tracking-tight">Milestones</h3>
-                        </div>
-                        <div className="space-y-3">
-                          {milestonesLoading ? (
-                            <Skeleton className="h-32 w-full" />
-                          ) : (milestones || []).slice(0, 5).map((m: any, idx: number) => (
-                            <div key={idx} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0 text-sm">
-                              <div className="flex items-center gap-3">
-                                {m.status === "Completed" ? (
-                                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                                ) : (
-                                  <div className="w-4 h-4 rounded-full border-2 border-gray-200" />
-                                )}
-                                <span className="text-gray-900 font-medium">{m.title || m.label}</span>
-                              </div>
-                              <Badge variant="outline" className={cn(
-                                "text-[10px] rounded-0 uppercase tracking-widest",
-                                m.status === "Completed" ? "text-emerald-600 border-emerald-100" : "text-gray-400 border-gray-100"
-                              )}>
-                                {m.status}
-                              </Badge>
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                            <h3 className="text-lg font-medium tracking-tight">Milestones</h3>
+                          </div>
+                          <div className="relative pl-4">
+                            {/* Vertical Timeline Line */}
+                            <div className="absolute left-[27px] top-2 bottom-2 w-0.5 bg-gray-100 -translate-x-1/2" />
+
+                            <div className="space-y-6">
+                              {milestonesLoading ? (
+                                <Skeleton className="h-32 w-full" />
+                              ) : (milestones || []).slice(0, 5).map((m: any, idx: number) => {
+                                const status = normalizeMilestoneStatus(m.status);
+                                return (
+                                  <div key={idx} className="flex gap-6 relative group">
+                                    <div className="relative z-10 pt-1 group-hover:scale-110 transition-transform duration-200">
+                                      <MilestoneIconMini status={status} />
+                                    </div>
+                                    <DashboardCard className={cn(
+                                      "flex-1 p-3 transition-all duration-300 border-l-4",
+                                      status === 'completed' ? "border-l-emerald-500 bg-white shadow-sm" :
+                                      status === 'in_progress' ? "border-l-blue-500 bg-blue-50/30 shadow-md ring-1 ring-blue-100" :
+                                      status === 'skipped' ? "border-l-gray-400 bg-gray-50/50 shadow-sm opacity-80" :
+                                      "border-l-amber-400 bg-white shadow-sm"
+                                    )}>
+                                      <div className="flex flex-col gap-1">
+                                        <div className="flex items-center justify-between gap-2">
+                                          <p className={cn(
+                                            "text-sm font-bold tracking-tight",
+                                            status === 'pending' ? "text-gray-500" : "text-gray-900"
+                                          )}>
+                                            {m.title || m.label}
+                                          </p>
+                                          <div className="flex items-center gap-2">
+                                            {status === 'in_progress' && (
+                                              <span className="px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 text-[8px] font-bold uppercase tracking-wider">
+                                                Active
+                                              </span>
+                                            )}
+                                            <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">
+                                              {formatMilestoneDate(m)}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <p className="text-[11px] text-gray-500 font-medium line-clamp-1">
+                                          {m.description || ""}
+                                        </p>
+                                      </div>
+                                    </DashboardCard>
+                                  </div>
+                                );
+                              })}
+                              {(!milestones || milestones.length === 0) && !milestonesLoading && (
+                                <p className="text-sm text-gray-500 italic">No milestones available.</p>
+                              )}
                             </div>
-                          ))}
-                          {(!milestones || milestones.length === 0) && !milestonesLoading && (
-                            <p className="text-sm text-gray-500 italic">No milestones available.</p>
-                          )}
+                          </div>
                         </div>
-                      </div>
                     </DashboardCard>
 
-                    {/* 2.2 Recent Activity */}
+                    {/* 2.2 Updates */}
                     <DashboardCard className="p-6">
                       <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                          <h3 className="text-lg font-medium tracking-tight">Recent Activity</h3>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-1 h-6 bg-gray-900 rounded-full" />
+                            <h3 className="text-lg font-medium tracking-tight">Updates</h3>
+                          </div>
+                          <Button variant="ghost" size="sm" className="text-xs font-bold text-blue-600 hover:text-blue-800 uppercase tracking-widest p-0 h-auto" onClick={() => setActiveTab("messages")}>
+                            View All
+                          </Button>
                         </div>
                         <div className="space-y-3">
                           {updatesLoading ? (
-                            <Skeleton className="h-32 w-full" />
+                            <div className="space-y-3">
+                              <Skeleton className="h-24 w-full rounded-xl" />
+                              <Skeleton className="h-24 w-full rounded-xl" />
+                            </div>
                           ) : (updates || []).slice(0, 5).map((item: any, idx: number) => (
-                            <div key={idx} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                              <div className="flex items-center gap-3">
-                                <div className="w-2 h-2 rounded-full bg-primary" />
-                                <span className="text-sm text-gray-900">{item.action || item.title || item.message}</span>
+                            <div key={idx} className="p-4 bg-white border border-gray-100 rounded-xl border-l-4 border-l-primary/30 shadow-sm transition-all duration-300 hover:shadow-md">
+                              <div className="flex items-center gap-1.5 text-xs text-gray-400 font-medium mb-2">
+                                <Clock className="w-3 h-3" />
+                                <span>{new Date(item.createdAt || item.updatedAt || item.date).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                               </div>
-                              <span className="text-xs text-gray-500">
-                                {new Date(item.createdAt || item.date).toLocaleDateString('en-GB')}
-                              </span>
+                              {item.title && (
+                                <h4 className="text-sm font-bold text-slate-900 mb-1">{item.title}</h4>
+                              )}
+                              <p className="text-sm text-gray-600 line-clamp-2">{item.message || item.action}</p>
                             </div>
                           ))}
                           {(!updates || updates.length === 0) && !updatesLoading && (
-                            <p className="text-sm text-gray-500 italic">No recent activity.</p>
+                            <div className="text-center py-6 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                              <MessageSquare className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                              <p className="text-sm font-medium text-gray-500">No updates yet</p>
+                            </div>
                           )}
                         </div>
                       </div>
