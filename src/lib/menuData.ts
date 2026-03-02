@@ -184,6 +184,14 @@ export const SERVICE_METADATA: Record<string, { icon: any; label: string; href: 
     description: "Bank account management, approvals, and payment workflows.",
     color: "blue",
   },
+  LIQUIDATION: {
+    icon: Unlink03Icon,
+    label: "Liquidation",
+    href: "/dashboard/services/liquidation",
+    category: "Compliance & Corporate",
+    description: "Statutory liquidation process, filings and closures.",
+    color: "red",
+  },
   CUSTOM: {
     icon: GitPullRequestIcon,
     label: "Custom Service",

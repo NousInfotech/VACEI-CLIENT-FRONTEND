@@ -163,194 +163,211 @@ const IncorporationSection = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
-      <div className="flex items-center justify-between bg-white/40 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md">
-        <div className="p-6">
-          <h2 className="text-3xl font-semibold">Incorporation Status</h2>
-          <div className="flex items-center gap-2 mt-2">
-            <p className="text-sm text-gray-500 font-medium">Current Status:</p>
-            {getStatusBadge(incorporation.status)}
+      {!company?.incorporationStatus && (
+        <div className="flex items-center justify-between bg-white/40 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md">
+          <div className="p-6">
+            <h2 className="text-3xl font-semibold">Incorporation Status</h2>
+            <div className="flex items-center gap-2 mt-2">
+              <p className="text-sm text-gray-500 font-medium">Current Status:</p>
+              {getStatusBadge(incorporation.status)}
+            </div>
+          </div>
+          <div className="p-4 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl text-white shadow-lg m-4">
+            <ClipboardList size={32} />
           </div>
         </div>
-        <div className="p-4 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl text-white shadow-lg m-4">
-          <ClipboardList size={32} />
-        </div>
-      </div>
+      )}
 
-      {/* Progress bar */}
-      {documentRequests.length > 0 && (() => {
-        const allDocs = documentRequests.flatMap((r: any) => r.requestedDocuments || []);
-        const totalDocs = allDocs.length;
-        const uploadedDocs = allDocs.filter((d: any) => d.status === 'UPLOADED' || d.status === 'ACCEPTED').length;
-        const percent = totalDocs > 0 ? Math.round((uploadedDocs / totalDocs) * 100) : 0;
-        return (
-          <div className="bg-white/60 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md px-6 py-4 space-y-2">
-            <div className="flex items-center justify-between text-sm font-semibold">
-              <span className="text-gray-700 flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-indigo-500" />
-                Document Upload Progress
-              </span>
-              <span className="text-indigo-600">{uploadedDocs} / {totalDocs} uploaded</span>
-            </div>
-            <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-              <div
-                className="h-2.5 rounded-full bg-green-500 transition-all duration-700"
-                style={{ width: `${percent}%` }}
-              />
-            </div>
-            <p className="text-[11px] text-gray-400 font-medium text-right">{percent}% complete</p>
+      {/* Verification Status */}
+      {company?.incorporationStatus ? (
+        <Card className="bg-white/60 border-emerald-100 shadow-sm backdrop-blur-md p-12 text-center flex flex-col items-center justify-center animate-in zoom-in-95 duration-500">
+          <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 mb-6 drop-shadow-sm">
+            <CheckCircle2 size={48} />
           </div>
-        );
-      })()}
+          <h3 className="text-3xl font-bold text-gray-900 mb-3 tracking-tight">Incorporation Verified</h3>
+          <p className="text-gray-500 max-w-sm mx-auto font-medium">
+            Your company incorporation process has been successfully completed and verified by our compliance team.
+          </p>
+        </Card>
+      ) : (
+        <>
+          {/* Progress bar */}
+          {documentRequests.length > 0 && (() => {
+            const allDocs = documentRequests.flatMap((r: any) => r.requestedDocuments || []);
+            const totalDocs = allDocs.length;
+            const uploadedDocs = allDocs.filter((d: any) => d.status === 'UPLOADED' || d.status === 'ACCEPTED').length;
+            const percent = totalDocs > 0 ? Math.round((uploadedDocs / totalDocs) * 100) : 0;
+            return (
+              <div className="bg-white/60 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md px-6 py-4 space-y-2">
+                <div className="flex items-center justify-between text-sm font-semibold">
+                  <span className="text-gray-700 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-indigo-500" />
+                    Document Upload Progress
+                  </span>
+                  <span className="text-indigo-600">{uploadedDocs} / {totalDocs} uploaded</span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                  <div
+                    className="h-2.5 rounded-full bg-green-500 transition-all duration-700"
+                    style={{ width: `${percent}%` }}
+                  />
+                </div>
+                <p className="text-[11px] text-gray-400 font-medium text-right">{percent}% complete</p>
+              </div>
+            );
+          })()}
 
-      <div className="space-y-4">
-          {documentRequests.length === 0 ? (
-             <EmptyState
-                icon={FileText}
-                title="No Documents Required"
-                description="There are no document requests for this incorporation at the moment."
-            />
-          ) : (
-             documentRequests.map((request: any) => {
-                const isExpanded = expandedRequests.has(request.id);
-                
-                const docs = request.requestedDocuments || []
-                const singleDocs = docs.filter((d: any) => d.count === 'SINGLE')
-                const multipleGroups = docs.filter((d: any) => d.count === 'MULTIPLE')
-                const totalDocs = docs.length
-                const uploadedDocsCount = docs.filter((d: any) => d.status === 'UPLOADED' || d.status === 'ACCEPTED').length
+          <div className="space-y-4">
+              {documentRequests.length === 0 ? (
+                <EmptyState
+                    icon={FileText}
+                    title="No Documents Required"
+                    description="There are no document requests for this incorporation at the moment."
+                />
+              ) : (
+                documentRequests.map((request: any) => {
+                    const isExpanded = expandedRequests.has(request.id);
+                    
+                    const docs = request.requestedDocuments || []
+                    const singleDocs = docs.filter((d: any) => d.count === 'SINGLE')
+                    const multipleGroups = docs.filter((d: any) => d.count === 'MULTIPLE')
+                    const totalDocs = docs.length
+                    const uploadedDocsCount = docs.filter((d: any) => d.status === 'UPLOADED' || d.status === 'ACCEPTED').length
 
-                return (
-                  <Card
-                    key={request.id}
-                    className="bg-white/80 border border-gray-300 rounded-xl shadow-sm hover:bg-white/70 transition-all overflow-hidden"
-                  >
-                    <CardContent className="p-0">
-                      <div className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-3">
-                              <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg">
-                                <FileText className="h-6 w-6" />
+                    return (
+                      <Card
+                        key={request.id}
+                        className="bg-white/80 border border-gray-300 rounded-xl shadow-sm hover:bg-white/70 transition-all overflow-hidden"
+                      >
+                        <CardContent className="p-0">
+                          <div className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-3">
+                                  <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 font-bold text-lg">
+                                    <FileText className="h-6 w-6" />
+                                  </div>
+                                  <div>
+                                    <h4 className="text-lg font-semibold text-gray-900">
+                                      {request.title || 'Document Request'}
+                                    </h4>
+                                    {request.description && (
+                                        <p className="text-sm text-gray-500">{request.description}</p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="mb-4 flex flex-wrap gap-2">
+                                  <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-100 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
+                                    {uploadedDocsCount}/{totalDocs} DOCUMENTS
+                                  </Badge>
+                                  {getStatusBadge(request.status)}
+                                </div>
                               </div>
-                              <div>
-                                <h4 className="text-lg font-semibold text-gray-900">
-                                  {request.title || 'Document Request'}
-                                </h4>
-                                {request.description && (
-                                    <p className="text-sm text-gray-500">{request.description}</p>
+
+                              <div className="flex flex-col items-end gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => toggleExpand(request.id)}
+                                  className="rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50 h-9 px-3"
+                                >
+                                  {isExpanded ? <ChevronUp size={16} className="mr-2" /> : <ChevronDown size={16} className="mr-2" />}
+                                  {isExpanded ? 'Hide Documents' : 'View Documents'}
+                                </Button>
+                                {isExpanded && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setUploadMode(prev => ({
+                                      ...prev,
+                                      [request.id]: prev[request.id] === 'bulk' ? 'single' : 'bulk'
+                                    }))}
+                                    className="text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-primary/5"
+                                  >
+                                    Switch to {uploadMode[request.id] === 'bulk' ? 'Single' : 'Bulk'} Upload
+                                  </Button>
                                 )}
                               </div>
                             </div>
-
-                            <div className="mb-4 flex flex-wrap gap-2">
-                              <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-100 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
-                                {uploadedDocsCount}/{totalDocs} DOCUMENTS
-                              </Badge>
-                              {getStatusBadge(request.status)}
-                            </div>
                           </div>
 
-                          <div className="flex flex-col items-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => toggleExpand(request.id)}
-                              className="rounded-xl border-gray-200 text-gray-600 hover:bg-gray-50 h-9 px-3"
-                            >
-                              {isExpanded ? <ChevronUp size={16} className="mr-2" /> : <ChevronDown size={16} className="mr-2" />}
-                              {isExpanded ? 'Hide Documents' : 'View Documents'}
-                            </Button>
-                            {isExpanded && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setUploadMode(prev => ({
-                                  ...prev,
-                                  [request.id]: prev[request.id] === 'bulk' ? 'single' : 'bulk'
-                                }))}
-                                className="text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-primary/5"
-                              >
-                                Switch to {uploadMode[request.id] === 'bulk' ? 'Single' : 'Bulk'} Upload
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {isExpanded && (
-                        <div className="bg-gray-50/50 border-t border-gray-100 animate-in slide-in-from-top-2 duration-300 p-4">
-                          {singleDocs.length === 0 && multipleGroups.length === 0 ? (
-                            <div className="text-center py-4 text-gray-500 text-sm bg-white rounded-lg">
-                              No documents in this request yet
-                            </div>
-                          ) : (
-                            <>
-                               {uploadMode[request.id] === 'bulk' ? (
-                                <BulkUploadZone
-                                  requestId={request.id}
-                                  onSuccess={async () => {
-                                    await refetch();
-                                  }}
-                                  onClear={handleClear}
-                                  documents={docs}
-                                />
+                          {isExpanded && (
+                            <div className="bg-gray-50/50 border-t border-gray-100 animate-in slide-in-from-top-2 duration-300 p-4">
+                              {singleDocs.length === 0 && multipleGroups.length === 0 ? (
+                                <div className="text-center py-4 text-gray-500 text-sm bg-white rounded-lg">
+                                  No documents in this request yet
+                                </div>
                               ) : (
                                 <>
-                                  {request.unassignedFiles && request.unassignedFiles.length > 0 && (
-                                    <div className="mb-6 bg-white/60 p-4 rounded-xl border border-indigo-100 shadow-xs">
-                                      <div className="flex items-center justify-between mb-3 pb-2 border-b border-indigo-50">
-                                        <h5 className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest flex items-center gap-1.5">
-                                          <FileText size={12} />
-                                          Unassigned Bulk Uploads ({request.unassignedFiles.length})
-                                        </h5>
-                                      </div>
-                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        {request.unassignedFiles.map((file: any) => (
-                                          <div key={file.id} className="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-100 group hover:border-indigo-200 transition-colors">
-                                            <div className="w-8 h-8 bg-indigo-50 rounded flex items-center justify-center text-indigo-500 shrink-0">
-                                              <FileText size={14} />
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                              <p className="text-[11px] font-bold text-gray-900 truncate" title={file.file_name}>
-                                                {file.file_name}
-                                              </p>
-                                              <p className="text-[9px] text-gray-400 font-medium">
-                                                {file.createdAt ? new Date(file.createdAt).toLocaleDateString() : 'N/A'}
-                                              </p>
-                                            </div>
+                                  {uploadMode[request.id] === 'bulk' ? (
+                                    <BulkUploadZone
+                                      requestId={request.id}
+                                      onSuccess={async () => {
+                                        await refetch();
+                                      }}
+                                      onClear={handleClear}
+                                      documents={docs}
+                                    />
+                                  ) : (
+                                    <>
+                                      {request.unassignedFiles && request.unassignedFiles.length > 0 && (
+                                        <div className="mb-6 bg-white/60 p-4 rounded-xl border border-indigo-100 shadow-xs">
+                                          <div className="flex items-center justify-between mb-3 pb-2 border-b border-indigo-50">
+                                            <h5 className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest flex items-center gap-1.5">
+                                              <FileText size={12} />
+                                              Unassigned Bulk Uploads ({request.unassignedFiles.length})
+                                            </h5>
                                           </div>
-                                        ))}
-                                      </div>
-                                    </div>
+                                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            {request.unassignedFiles.map((file: any) => (
+                                              <div key={file.id} className="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-100 group hover:border-indigo-200 transition-colors">
+                                                <div className="w-8 h-8 bg-indigo-50 rounded flex items-center justify-center text-indigo-500 shrink-0">
+                                                  <FileText size={14} />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                  <p className="text-[11px] font-bold text-gray-900 truncate" title={file.file_name}>
+                                                    {file.file_name}
+                                                  </p>
+                                                  <p className="text-[9px] text-gray-400 font-medium">
+                                                    {file.createdAt ? new Date(file.createdAt).toLocaleDateString() : 'N/A'}
+                                                  </p>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      <DocumentRequestSingle
+                                        requestId={request.id}
+                                        documents={singleDocs}
+                                        onUpload={handleUpload}
+                                        onClearDocument={handleClear}
+                                      />
+
+                                      <DocumentRequestDouble
+                                        requestId={request.id}
+                                        multipleDocuments={multipleGroups}
+                                        onUploadMultiple={handleUploadMultiple}
+                                        onClearMultipleItem={handleClearMultipleItem}
+                                        onClearMultipleGroup={handleClearMultipleGroup}
+                                        onDownloadMultipleGroup={handleDownloadMultipleGroup}
+                                      />
+                                    </>
                                   )}
-
-                                  <DocumentRequestSingle
-                                    requestId={request.id}
-                                    documents={singleDocs}
-                                    onUpload={handleUpload}
-                                    onClearDocument={handleClear}
-                                  />
-
-                                  <DocumentRequestDouble
-                                    requestId={request.id}
-                                    multipleDocuments={multipleGroups}
-                                    onUploadMultiple={handleUploadMultiple}
-                                    onClearMultipleItem={handleClearMultipleItem}
-                                    onClearMultipleGroup={handleClearMultipleGroup}
-                                    onDownloadMultipleGroup={handleDownloadMultipleGroup}
-                                  />
                                 </>
                               )}
-                            </>
+                            </div>
                           )}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                )
-             })
-          )}
-      </div>
+                        </CardContent>
+                      </Card>
+                    )
+                })
+              )}
+          </div>
+        </>
+      )}
     </div>
   )
 }
