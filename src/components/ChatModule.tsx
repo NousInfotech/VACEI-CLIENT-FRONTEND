@@ -95,7 +95,16 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
         chatService.markRoomAsRead(activeChatId).catch(console.error);
     }, [activeChatId, setRoomMessagesWithMerge, setUnreadCount]);
 
-    const activeChat = chats.find(c => c.id === activeChatId);
+    const activeChatBase = chats.find(c => c.id === activeChatId);
+    const activeChat = activeChatBase
+        ? {
+            ...activeChatBase,
+            // Always render messages ordered by time (oldest → newest)
+            messages: [...activeChatBase.messages].sort(
+                (a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0)
+            ),
+        }
+        : undefined;
 
 
     const handleSendMessage = async (content: {

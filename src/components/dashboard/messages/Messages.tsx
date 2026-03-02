@@ -394,7 +394,16 @@ const Messages: React.FC = () => {
   }, [resize, stopResizing]);
 
   // ─── Derived ──────────────────────────────────────────────────────────────
-  const activeChat = rooms.find(c => c.id === activeChatId);
+  const activeChatBase = rooms.find(c => c.id === activeChatId);
+  const activeChat = activeChatBase
+    ? {
+        ...activeChatBase,
+        // Always render messages ordered by time (oldest → newest)
+        messages: [...activeChatBase.messages].sort(
+          (a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0)
+        ),
+      }
+    : undefined;
 
   const filteredRooms = rooms.filter(c =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
