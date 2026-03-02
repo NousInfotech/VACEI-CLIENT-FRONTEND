@@ -26,7 +26,6 @@ interface ChatWindowProps {
   onReplyMessage: (message: Message) => void;
   onEditMessage: (message: Message) => void;
   onDeleteMessage: (messageId: string) => void;
-  onReactToMessage: (messageId: string, emoji: string) => void;
   onForwardMessage: (message: Message) => void;
   replyingTo: Message | null;
   editingMessage: Message | null;
@@ -73,7 +72,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onReplyMessage,
   onEditMessage,
   onDeleteMessage,
-  onReactToMessage,
   onForwardMessage,
   replyingTo,
   editingMessage,
@@ -163,7 +161,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         {(() => {
           let lastDateStr = '';
 
-          return chat.messages.map((msg) => {
+          return chat.messages
+            .map((msg) => {
             const isMe = msg.senderId === 'me';
             const sender = chat.participants.find(p => p.id === msg.senderId) ||
               (msg.senderName ? { id: msg.senderId, name: msg.senderName, role: 'PLATFORM_EMPLOYEE' as const, isOnline: false } : undefined);
@@ -201,7 +200,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     onReply={() => onReplyMessage(msg)}
                     onEdit={() => onEditMessage(msg)}
                     onDelete={() => onDeleteMessage(msg.id)}
-                    onReact={(emoji) => onReactToMessage(msg.id, emoji)}
                     onForward={() => onForwardMessage(msg)}
                     isSelectMode={isSelectMode}
                     isSelected={selectedMessageIds.includes(msg.id)}

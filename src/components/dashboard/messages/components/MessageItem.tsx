@@ -4,7 +4,6 @@ import type { Message, User } from '../types';
 import { cn } from '@/lib/utils';
 import { MessageOptions } from './MessageOptions';
 import type { MessageAction } from './MessageOptions';
-import { ReactionDetailsModal } from './ReactionDetailsModal';
 import { users as mockUsers } from '../mockData';
 
 interface MessageItemProps {
@@ -16,7 +15,6 @@ interface MessageItemProps {
   onReply?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
-  onReact?: (emoji: string) => void;
   onForward?: () => void;
   isSelectMode?: boolean;
   isSelected?: boolean;
@@ -36,7 +34,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onReply,
   onEdit,
   onDelete,
-  onReact,
   onForward,
   isSelectMode,
   isSelected,
@@ -46,16 +43,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onToggleOptions,
   onImageLoad
 }) => {
-  const [showReactionDetails, setShowReactionDetails] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const reactionContainerRef = useRef<HTMLDivElement>(null);
 
   const handleAction = (action: MessageAction, data?: string) => {
     if (action === 'reply') onReply?.();
-    else if (action === 'edit') onEdit?.();
     else if (action === 'delete') onDelete?.();
     else if (action === 'forward') onForward?.();
-    else if (action === 'react' && data) onReact?.(data as string);
     else if (action === 'copy') {
       if (message.text) navigator.clipboard.writeText(message.text);
     }
@@ -101,8 +94,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
           isMe 
             ? "bg-primary text-white rounded-lg rounded-tr-none" 
             : "bg-white text-gray-800 rounded-lg rounded-tl-none border border-[#e2e8f0]/30",
-          message.type === 'gif' ? "p-1" : "",
-          message.isDeleted && "bg-gray-50/50 border-gray-100 text-gray-400"
+          message.type === 'gif' ? "p-1" : ""
         )}
       >
         {/* Reply Preview - show replyToMessage content when available */}
@@ -192,23 +184,16 @@ export const MessageItem: React.FC<MessageItemProps> = ({
               </p>
             </div>
           </div>
-        ) : message.type === 'gif' ? (
-          <div className="overflow-hidden rounded-lg">
-            <img src={message.gifUrl} alt="GIF" className="max-w-full h-auto min-w-[200px]" />
-          </div>
         ) : message.isDeleted ? (
           <div className="flex items-center gap-2 py-1 select-none italic opacity-60">
             <span className="text-gray-400">🚫</span>
             <p className="text-[13.5px]">
-              {isMe ? "You deleted this message" : "This message was deleted"}
+              {isMe ? "(your message was deleted)" : "(message was deleted)"}
             </p>
           </div>
         ) : (
           <p className="text-[14.5px] pr-8 pb-4 leading-normal wrap-break-word whitespace-pre-wrap">
             {message.text}
-            {message.isEdited && (
-              <span className="ml-1 text-[10px] opacity-60 italic">(edited)</span>
-            )}
           </p>
         )}
         
@@ -230,48 +215,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         </div>
       </div>
 
-      {/* Reactions Display */}
-      {!message.isDeleted && message.reactions && Object.keys(message.reactions).length > 0 && (
-        <div 
-          ref={reactionContainerRef}
-          className={cn(
-          "flex flex-wrap gap-1 -mt-2.5 relative z-10",
-          isMe ? "justify-end mr-4" : "justify-start ml-4"
-        )}>
-          {Object.entries(message.reactions).map(([emoji, userIds]) => (
-            userIds.length > 0 && (
-              <button 
-                key={emoji}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowReactionDetails(!showReactionDetails);
-                }}
-                className={cn(
-                  "flex items-center gap-1 p-0.2 rounded-full text-[17px] transition-all duration-400 hover:scale-110",
-                  userIds.includes('me') ? "bg-primary/10 border-primary/20" : "bg-white"
-                )}
-              >
-                <span>{emoji}</span>
-                {userIds.length > 1 && <span className="font-bold text-gray-500">{userIds.length}</span>}
-              </button>
-            )
-          ))}
 
-          {showReactionDetails && message.reactions && (
-            <ReactionDetailsModal 
-              reactions={message.reactions}
-              users={mockUsers}
-              isMe={isMe}
-              onClose={() => setShowReactionDetails(false)}
-              onRemoveReaction={(emoji) => {
-                onReact?.(emoji);
-                setShowReactionDetails(false);
-              }}
-              triggerRect={reactionContainerRef.current?.getBoundingClientRect()}
-            />
-          )}
-        </div>
-      )}
 
 
       </div>

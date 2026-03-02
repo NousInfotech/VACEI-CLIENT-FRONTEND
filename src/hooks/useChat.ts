@@ -111,9 +111,18 @@ export function useChat(
 
   const subscribeToMessages = useCallback(() => {
     if (!roomId) return;
-    const channel = chatService.subscribeToMessages(roomId, (newMessage) => {
+    const channel = chatService.subscribeToMessages(roomId, (newMessage, eventType) => {
+      if (eventType === 'DELETE') {
+        setMessages((prev) => prev.filter((m) => m.id !== newMessage.id));
+        return;
+      }
       setMessages((prev) => {
-        if (prev.some((m) => m.id === newMessage.id)) return prev;
+        const idx = prev.findIndex((m) => m.id === newMessage.id);
+        if (idx !== -1) {
+          const next = [...prev];
+          next[idx] = mapApiMessageToChatMessage(newMessage);
+          return next;
+        }
         return [...prev, mapApiMessageToChatMessage(newMessage)];
       });
     });
@@ -206,7 +215,7 @@ export function useChat(
     async (messageId: string) => {
       try {
         await chatService.deleteMessage(messageId);
-        setMessages((prev) => prev.filter((m) => m.id !== messageId));
+        setMessages((prev) => prev.map(m => m.id === messageId ? { ...m, isDeleted: true } : m));
       } catch (err) {
         console.error("Failed to delete message:", err);
         handleAuthError(err, router);

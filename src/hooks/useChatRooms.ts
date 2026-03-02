@@ -125,6 +125,7 @@ export function mapApiMessage(
         text: (normalized.content as string) || undefined,
         fileUrl: (normalized.fileUrl as string) || undefined,
         createdAt: createdAtMs,
+        isDeleted: !!normalized.deletedAt,
         timestamp: new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
         status: (m.participantStates?.every((s: any) => s.status === "READ")
             ? "read"
