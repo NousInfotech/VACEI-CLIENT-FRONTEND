@@ -134,7 +134,7 @@ export default function FilingsTab() {
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="h-9 w-9 rounded-0 hover:bg-primary/10 hover:text-primary transition-all duration-200 border border-transparent hover:border-primary/20 shadow-none text-slate-400 font-bold"
+                              className="h-9 w-9 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-900 hover:text-white transition-all duration-200 border border-slate-200 hover:border-slate-900 shadow-sm"
                               onClick={() => {
                                 if (filing.file?.url) {
                                   const link = document.createElement('a');
@@ -149,7 +149,7 @@ export default function FilingsTab() {
                               <Download size={16} />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent className="rounded-0 bg-slate-900">
+                          <TooltipContent className="rounded-0 bg-slate-900 text-white">
                             <p className="text-[10px] uppercase font-black tracking-widest">Download Filing</p>
                           </TooltipContent>
                         </Tooltip>
@@ -161,7 +161,7 @@ export default function FilingsTab() {
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="h-9 w-9 rounded-0 hover:bg-primary/10 hover:text-primary transition-all duration-200 border border-transparent hover:border-primary/20 shadow-none text-slate-400 font-bold"
+                              className="h-9 w-9 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-900 hover:text-white transition-all duration-200 border border-slate-200 hover:border-slate-900 shadow-sm"
                               onClick={() => {
                                 if (filing.file?.url) {
                                   window.open(filing.file.url, '_blank');
@@ -171,7 +171,7 @@ export default function FilingsTab() {
                               <ExternalLink size={16} />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent className="rounded-0 bg-slate-900">
+                          <TooltipContent className="rounded-0 bg-slate-900 text-white">
                             <p className="text-[10px] uppercase font-black tracking-widest">View Online</p>
                           </TooltipContent>
                         </Tooltip>

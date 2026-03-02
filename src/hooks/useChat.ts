@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { chatService, type ChatMessage, type ChatMember } from "@/api/chatService";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
+import { handleAuthError } from "@/utils/authUtils";
 
 export interface UseChatReturn {
   messages: ChatMessage[];
@@ -39,8 +41,7 @@ export function useChat(
   options?: UseChatOptions
 ): UseChatReturn {
   const partnerId = options?.partnerId ?? null;
-
-
+  const router = useRouter();
 
   const [roomId, setRoomId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -78,11 +79,12 @@ export function useChat(
         setHasMore(response.meta?.hasMore ?? false);
       } catch (err) {
         console.error("Failed to load messages:", err);
+        handleAuthError(err, router);
       } finally {
         setIsLoading(false);
       }
     },
-    [roomId]
+    [roomId, router]
   );
 
   const loadUnreadCount = useCallback(async () => {
@@ -92,8 +94,9 @@ export function useChat(
       setUnreadCount(response.data?.unreadCount ?? 0);
     } catch (err) {
       console.error("Failed to load unread count:", err);
+      handleAuthError(err, router);
     }
-  }, [roomId]);
+  }, [roomId, router]);
 
   const loadMembers = useCallback(async () => {
     if (!roomId) return;
@@ -102,8 +105,9 @@ export function useChat(
       setMembers(response.data?.members ?? []);
     } catch (err) {
       console.error("Failed to load members:", err);
+      handleAuthError(err, router);
     }
-  }, [roomId]);
+  }, [roomId, router]);
 
   const subscribeToMessages = useCallback(() => {
     if (!roomId) return;
@@ -149,10 +153,11 @@ export function useChat(
         return msg;
       } catch (err) {
         console.error("Failed to send message:", err);
+        handleAuthError(err, router);
         throw err;
       }
     },
-    [roomId]
+    [roomId, router]
   );
 
   const loadMore = useCallback(async () => {
@@ -167,8 +172,9 @@ export function useChat(
       setUnreadCount(0);
     } catch (err) {
       console.error("Failed to mark as read:", err);
+      handleAuthError(err, router);
     }
-  }, [roomId]);
+  }, [roomId, router]);
 
   const deleteMessage = useCallback(
     async (messageId: string) => {
@@ -177,10 +183,11 @@ export function useChat(
         setMessages((prev) => prev.filter((m) => m.id !== messageId));
       } catch (err) {
         console.error("Failed to delete message:", err);
+        handleAuthError(err, router);
         throw err;
       }
     },
-    []
+    [router]
   );
 
   const uploadFile = useCallback(async (file: File): Promise<string> => {

@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
 import Dropdown from "@/components/Dropdown";
 import { ChevronDown, Settings as SettingsIcon, Users, Bell, Shield, Wallet, Lock } from "lucide-react";
-import PillTabs from "@/components/shared/PillTabs";
 import { useTabQuery } from "@/hooks/useTabQuery";
 import { PageHeader } from "@/components/shared/PageHeader";
 
@@ -236,6 +235,12 @@ function SettingsContent() {
     // Users tab removed for global settings
 
     const [activeTab, setActiveTab] = useTabQuery("general");
+    const sidebarTabs = [
+        { id: "general", label: "Profile", icon: SettingsIcon },
+        { id: "notifications", label: "Notifications", icon: Bell },
+        { id: "security", label: "Security & sessions", icon: Shield },
+        { id: "password", label: "Password", icon: Lock },
+    ] as const;
 
     // Load notification prefs (unchanged)
 
@@ -455,69 +460,138 @@ function SettingsContent() {
                 subtitle="Manage your global account preferences, profile, and security settings."
                 icon={SettingsIcon}
             />
-            <div className="bg-card border border-border rounded-card p-6 shadow-md w-full mx-auto space-y-6">
-                <PillTabs
-                    tabs={[
-                        { id: "general", label: "Profile", icon: SettingsIcon },
-                        { id: "notifications", label: "Notifications", icon: Bell },
-                        { id: "security", label: "Security & sessions", icon: Shield },
-                        { id: "password", label: "Password", icon: Lock },
-                    ]}
-                    activeTab={activeTab}
-                    onTabChange={setActiveTab}
-                />
 
-                {activeTab === "general" && (
-                    <div className="space-y-4">
-                        <h2 className="text-lg font-semibold text-brand-body">My Profile</h2>
-                        {alert && activeTab === "general" && (
-                            <AlertMessage message={alert.message} variant={alert.variant} onClose={() => setAlert(null)} />
-                        )}
-                        <div className="grid gap-3 md:grid-cols-2">
-                            <div>
-                                <label className="block text-sm font-medium text-brand-body mb-1">First Name</label>
-                                <Input placeholder="First Name" value={profile.firstName} onChange={(e)=>setProfile(p=>({...p,firstName:e.target.value}))}/>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-brand-body mb-1">Last Name</label>
-                                <Input placeholder="Last Name" value={profile.lastName} onChange={(e)=>setProfile(p=>({...p,lastName:e.target.value}))}/>
-                            </div>
-                        </div>
-                        <Button onClick={handleProfileSubmit} variant="default" className="mt-2 text-primary-foreground font-normal">Save Changes</Button>
+            <div className="flex flex-col lg:flex-row items-stretch gap-6 min-h-[560px]">
+                {/* Sidebar navigation */}
+                <aside className="lg:w-72 shrink-0 flex">
+                    <div className="bg-card border border-border rounded-[24px] p-3 space-y-1 shadow-sm flex-1">
+                        {sidebarTabs.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all group ${
+                                    activeTab === tab.id
+                                        ? "bg-primary text-primary-foreground shadow-md"
+                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                }`}
+                            >
+                                <tab.icon
+                                    size={18}
+                                    className={
+                                        activeTab === tab.id
+                                            ? "text-primary-foreground"
+                                            : "text-muted-foreground group-hover:text-primary"
+                                    }
+                                />
+                                <span className={activeTab === tab.id ? "translate-x-0.5 transition-transform" : ""}>
+                                    {tab.label}
+                                </span>
+                            </button>
+                        ))}
                     </div>
-                )}
+                </aside>
 
-                {/* Users tab removed */}
-
-                {activeTab === "notifications" && (
-                    <div className="space-y-3">
-                        <h2 className="text-lg font-semibold text-brand-body">Global Notification Preferences</h2>
-                        <div className="grid gap-4 md:grid-cols-2 mt-4">
-                            <label className="flex items-center justify-between p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                                <span className="text-sm font-medium text-brand-body">Email notifications</span>
-                                <input type="checkbox" checked={Boolean(notifications.emailEnabled)} onChange={()=>togglePreference('emailEnabled')} className="w-4 h-4 text-primary rounded border-gray-300"/>
-                            </label>
-                            <label className="flex items-center justify-between p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                                <span className="text-sm font-medium text-brand-body">In-app notifications</span>
-                                <input type="checkbox" checked={Boolean(notifications.inAppEnabled)} onChange={()=>togglePreference('inAppEnabled')} className="w-4 h-4 text-primary rounded border-gray-300"/>
-                            </label>
-                            <label className="flex items-center justify-between p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                                <span className="text-sm font-medium text-brand-body">Push Notifications</span>
-                                <input type="checkbox" checked={Boolean(notifications.pushEnabled)} onChange={()=>togglePreference('pushEnabled')} className="w-4 h-4 text-primary rounded border-gray-300"/>
-                            </label>
-                            <label className="flex items-center justify-between p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                                <span className="text-sm font-medium text-brand-body">Sound Notifications</span>
-                                <input type="checkbox" checked={Boolean(notifications.soundEnabled)} onChange={()=>togglePreference('soundEnabled')} className="w-4 h-4 text-primary rounded border-gray-300"/>
-                            </label>
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === "security" && (
-                    <div className="space-y-6">
-                        {alert && activeTab === "security" && (
-                            <AlertMessage message={alert.message} variant={alert.variant} onClose={() => setAlert(null)} />
+                {/* Main content card */}
+                <main className="flex-1 min-w-0 flex">
+                    <div className="bg-card border border-border rounded-[32px] p-6 md:p-8 shadow-md flex-1 space-y-6">
+                        {activeTab === "general" && (
+                            <div className="space-y-4">
+                                <h2 className="text-lg font-semibold text-brand-body">My Profile</h2>
+                                {alert && activeTab === "general" && (
+                                    <AlertMessage
+                                        message={alert.message}
+                                        variant={alert.variant}
+                                        onClose={() => setAlert(null)}
+                                    />
+                                )}
+                                <div className="grid gap-3 md:grid-cols-2">
+                                    <div>
+                                        <label className="block text-sm font-medium text-brand-body mb-1">First Name</label>
+                                        <Input
+                                            placeholder="First Name"
+                                            value={profile.firstName}
+                                            onChange={(e) =>
+                                                setProfile((p) => ({ ...p, firstName: e.target.value }))
+                                            }
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-brand-body mb-1">Last Name</label>
+                                        <Input
+                                            placeholder="Last Name"
+                                            value={profile.lastName}
+                                            onChange={(e) =>
+                                                setProfile((p) => ({ ...p, lastName: e.target.value }))
+                                            }
+                                        />
+                                    </div>
+                                </div>
+                                <Button
+                                    onClick={handleProfileSubmit}
+                                    variant="default"
+                                    className="mt-2 text-primary-foreground font-normal"
+                                >
+                                    Save Changes
+                                </Button>
+                            </div>
                         )}
+
+                        {/* Notifications */}
+                        {activeTab === "notifications" && (
+                            <div className="space-y-3">
+                                <h2 className="text-lg font-semibold text-brand-body">
+                                    Global Notification Preferences
+                                </h2>
+                                <div className="grid gap-4 md:grid-cols-2 mt-4">
+                                    <label className="flex items-center justify-between p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                        <span className="text-sm font-medium text-brand-body">Email notifications</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={Boolean(notifications.emailEnabled)}
+                                            onChange={() => togglePreference("emailEnabled")}
+                                            className="w-4 h-4 text-primary rounded border-gray-300"
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                        <span className="text-sm font-medium text-brand-body">In-app notifications</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={Boolean(notifications.inAppEnabled)}
+                                            onChange={() => togglePreference("inAppEnabled")}
+                                            className="w-4 h-4 text-primary rounded border-gray-300"
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                        <span className="text-sm font-medium text-brand-body">Push Notifications</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={Boolean(notifications.pushEnabled)}
+                                            onChange={() => togglePreference("pushEnabled")}
+                                            className="w-4 h-4 text-primary rounded border-gray-300"
+                                        />
+                                    </label>
+                                    <label className="flex items-center justify-between p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                        <span className="text-sm font-medium text-brand-body">Sound Notifications</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={Boolean(notifications.soundEnabled)}
+                                            onChange={() => togglePreference("soundEnabled")}
+                                            className="w-4 h-4 text-primary rounded border-gray-300"
+                                        />
+                                    </label>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === "security" && (
+                            <div className="space-y-6">
+                                {alert && activeTab === "security" && (
+                                    <AlertMessage
+                                        message={alert.message}
+                                        variant={alert.variant}
+                                        onClose={() => setAlert(null)}
+                                    />
+                                )}
                         {/* MFA controls – same behavior as dashboard settings */}
                         <div className="space-y-3">
                             <h2 className="text-lg font-semibold text-brand-body">Security (MFA)</h2>
@@ -708,93 +782,101 @@ function SettingsContent() {
                                 ))}
                             </div>
                         </div>
+                            </div>
+                        )}
+
+                        {/* Billing tab removed */}
+
+                        {activeTab === "password" && (
+                            <div className="mt-1">
+                                <h2 className="text-lg font-semibold text-brand-body mb-4">Change Password</h2>
+                                {alert && (
+                                    <div className="mb-4">
+                                        <AlertMessage
+                                            message={alert.message}
+                                            variant={alert.variant}
+                                            onClose={() => setAlert(null)}
+                                            duration={6000}
+                                        />
+                                    </div>
+                                )}
+
+                                <form onSubmit={handleSubmit} className="space-y-6">
+                                    <div>
+                                        <label
+                                            htmlFor="currentPassword"
+                                            className="block text-sm font-medium text-brand-body mb-1"
+                                        >
+                                            Current Password
+                                        </label>
+                                        <input
+                                            id="currentPassword"
+                                            name="currentPassword"
+                                            type="password"
+                                            onChange={(e: any) => handleChange(e)}
+                                            onBlur={(e: any) => handleBlur(e)}
+                                            value={formData.currentPassword}
+                                            className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm sm:text-sm"
+                                        />
+                                        {touched.currentPassword && errors.currentPassword ? (
+                                            <div className="text-red-600 text-sm mt-1">{errors.currentPassword}</div>
+                                        ) : null}
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="newPassword" className="block text-sm font-medium text-brand-body mb-1">
+                                            New Password
+                                        </label>
+                                        <input
+                                            id="newPassword"
+                                            name="newPassword"
+                                            type="password"
+                                            onChange={(e: any) => handleChange(e)}
+                                            onBlur={(e: any) => handleBlur(e)}
+                                            value={formData.newPassword}
+                                            className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm sm:text-sm"
+                                        />
+                                        {touched.newPassword && errors.newPassword ? (
+                                            <div className="text-red-600 text-sm mt-1">{errors.newPassword}</div>
+                                        ) : null}
+                                    </div>
+
+                                    <div>
+                                        <label
+                                            htmlFor="confirmNewPassword"
+                                            className="block text-sm font-medium text-brand-body mb-1"
+                                        >
+                                            Confirm New Password
+                                        </label>
+                                        <input
+                                            id="confirmNewPassword"
+                                            name="confirmNewPassword"
+                                            type="password"
+                                            onChange={(e: any) => handleChange(e)}
+                                            onBlur={(e: any) => handleBlur(e)}
+                                            value={formData.confirmNewPassword}
+                                            className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm sm:text-sm"
+                                        />
+                                        {touched.confirmNewPassword && errors.confirmNewPassword ? (
+                                            <div className="text-red-600 text-sm mt-1">{errors.confirmNewPassword}</div>
+                                        ) : null}
+                                    </div>
+
+                                    <div className="flex">
+                                        <Button
+                                            variant={"default"}
+                                            type="submit"
+                                            className="px-4 py-2 rounded-lg transition-all cursor-pointer font-normal shadow-sm hover:shadow-md text-primary-foreground"
+                                            disabled={isSubmitting}
+                                        >
+                                            {isSubmitting ? "Updating..." : "Change Password"}
+                                        </Button>
+                                    </div>
+                                </form>
+                            </div>
+                        )}
                     </div>
-                )}
-
-                {/* Billing tab removed */}
-
-                {activeTab === "password" && (
-                <div className="mt-1">
-                    <h2 className="text-lg font-semibold text-brand-body mb-4">Change Password</h2>
-                    {alert && (
-                        <div className="mb-4">
-                            <AlertMessage
-                                message={alert.message}
-                                variant={alert.variant}
-                                onClose={() => setAlert(null)}
-                                duration={6000}
-                            />
-                        </div>
-                    )}
-
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <label htmlFor="currentPassword" className="block text-sm font-medium text-brand-body mb-1">
-                                Current Password
-                            </label>
-                            <input
-                                id="currentPassword"
-                                name="currentPassword"
-                                type="password"
-                                onChange={(e: any) => handleChange(e)}
-                                onBlur={(e: any) => handleBlur(e)}
-                                value={formData.currentPassword}
-                                className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm sm:text-sm"
-                            />
-                            {touched.currentPassword && errors.currentPassword ? (
-                                <div className="text-red-600 text-sm mt-1">{errors.currentPassword}</div>
-                            ) : null}
-                        </div>
-
-                        <div>
-                            <label htmlFor="newPassword" className="block text-sm font-medium text-brand-body mb-1">
-                                New Password
-                            </label>
-                            <input
-                                id="newPassword"
-                                name="newPassword"
-                                type="password"
-                                onChange={(e: any) => handleChange(e)}
-                                onBlur={(e: any) => handleBlur(e)}
-                                value={formData.newPassword}
-                                className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm sm:text-sm"
-                            />
-                            {touched.newPassword && errors.newPassword ? (
-                                <div className="text-red-600 text-sm mt-1">{errors.newPassword}</div>
-                            ) : null}
-                        </div>
-
-                        <div>
-                            <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-brand-body mb-1">
-                                Confirm New Password
-                            </label>
-                            <input
-                                id="confirmNewPassword"
-                                name="confirmNewPassword"
-                                type="password"
-                                onChange={(e: any) => handleChange(e)}
-                                onBlur={(e: any) => handleBlur(e)}
-                                value={formData.confirmNewPassword}
-                                className="block w-full border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm sm:text-sm"
-                            />
-                            {touched.confirmNewPassword && errors.confirmNewPassword ? (
-                                <div className="text-red-600 text-sm mt-1">{errors.confirmNewPassword}</div>
-                            ) : null}
-                        </div>
-
-                        <div className="flex">
-                            <Button
-                                variant={"default"}
-                                type="submit"
-                                className="px-4 py-2 rounded-lg transition-all cursor-pointer font-normal shadow-sm hover:shadow-md text-primary-foreground"
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting ? 'Updating...' : 'Change Password'}
-                            </Button>
-                        </div>
-                    </form>
-                </div>
-                )}
+                </main>
             </div>
         </section>
     );
