@@ -12,7 +12,7 @@ interface OnboardingLayoutProps {
   totalSteps: number;
   children: React.ReactNode;
   onContinue: () => void;
-  onSaveExit: () => void;
+  onSaveExit?: () => void;
   onBack?: () => void;
   continueLabel?: string;
   hideActions?: boolean;
@@ -34,7 +34,7 @@ export function OnboardingLayout({
   logoSrc = '/logo/Logo.webp',
   className,
 }: OnboardingLayoutProps) {
-  const showBackButton = currentStep > 1 && onBack;
+  const showBackButton = !!onBack;
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-40 py-8">
       <Card className={cn("w-full shadow-lg h-[85vh] flex flex-col", className)}>
@@ -75,14 +75,16 @@ export function OnboardingLayout({
                     Back
                   </Button>
                 )}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onSaveExit}
-                  disabled={disabled}
-                >
-                  Save & exit
-                </Button>
+                {onSaveExit && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onSaveExit}
+                    disabled={disabled}
+                  >
+                    Save & exit
+                  </Button>
+                )}
               </div>
               <Button
                 type="button"

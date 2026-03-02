@@ -78,12 +78,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         const timer = setTimeout(() => {
           setHighlightedId(null);
           onScrollComplete?.();
-        }, 800);
+        }, 3000);
 
         return () => clearTimeout(timer);
       }
     }
-  }, [scrollToMessageId, onScrollComplete]);
+  }, [scrollToMessageId, onScrollComplete, chat.messages]);
 
   // Effect for new message scroll
   useEffect(() => {
@@ -189,7 +189,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               id={`msg-${msg.id}`}
               className={cn(
                 "transition-all duration-300 rounded-lg -mx-4 px-4",
-                highlightedId === msg.id && "bg-[#dfdfdf] z-20"
+                highlightedId === msg.id && "blink-item z-20"
               )}
             >
               <MessageItem

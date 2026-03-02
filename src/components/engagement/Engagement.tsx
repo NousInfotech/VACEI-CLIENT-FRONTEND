@@ -3,7 +3,8 @@
 import React, { useMemo, Suspense } from 'react';
 import ETBTable from './ETBTable';
 import AdjustmentsTab from './AdjustmentsTab';
-import { TableProperties, FileStack, Calculator, BarChart3, PieChart, Scale, FolderOpen, Building2, Receipt, Share2 } from 'lucide-react';
+import { TableProperties, FileStack, Calculator, BarChart3, PieChart, Scale, FolderOpen, Building2, Receipt, Share2, MessageSquare } from 'lucide-react';
+import EngagementChatTab from './EngagementChatTab';
 import { DetailsSkeleton } from '../shared/CommonSkeletons';
 import Reclassification from './Reclassification';
 import IncomeStatement from './IncomeStatement';
@@ -29,6 +30,8 @@ import EngagementSummary from './EngagementSummary';
 
 const Engagement = () => {
   const [activeTab, setActiveTab] = useTabQuery('etb');
+  // Handle 'requests' -> 'document_requests' legacy migration or direct mapping
+  const actualTab = activeTab === 'requests' ? 'document_requests' : activeTab;
   const { engagement, loading: engagementLoading, error: engagementError } = useEngagement();
   const { etb, loading: etbLoading, error: etbError } = useEtb(engagement?._id || null);
   
@@ -67,21 +70,23 @@ const Engagement = () => {
     { id: 'income_statement', label: 'Income Statement', icon: BarChart3 },
     { id: 'balance_sheet', label: 'Balance Sheet', icon: Scale },
     { id: 'classification', label: 'Classification', icon: PieChart },
-    { id: 'requests', label: 'Document Requests', icon: FolderOpen },
+    { id: 'document_requests', label: 'Document Requests', icon: FolderOpen },
+    { id: 'chat', label: 'Chat', icon: MessageSquare },
     { id: 'mbr', label: 'MBR', icon: Building2 },
     { id: 'tax', label: 'TAX', icon: Receipt },
     { id: 'library', label: 'Library', icon: Share2 },
   ];
 
   const renderContent = () => {
-    switch (activeTab) {
+    switch (actualTab) {
       case 'etb': return <ETBTable data={transformedEtbRows} />;
       case 'adjustments': return <AdjustmentsTab />;
       case 'reclassification': return <Reclassification />;
       case 'income_statement': return extractedData ? <IncomeStatement data={extractedData} /> : null;
       case 'balance_sheet': return extractedData ? <BalanceSheet data={extractedData} /> : null;
       case 'classification': return extractedData ? <Classification data={extractedData} /> : null;
-      case 'requests': return <Suspense fallback={<div className="p-8 text-center text-gray-500 font-medium">Loading document requests...</div>}><DocumentRequestsTab /></Suspense>;
+      case 'document_requests': return <Suspense fallback={<div className="p-8 text-center text-gray-500 font-medium">Loading document requests...</div>}><DocumentRequestsTab /></Suspense>;
+      case 'chat': return <EngagementChatTab />;
       case 'mbr': return <MBRTab />;
       case 'tax': return <TaxTab />;
       case 'library': return <LibrarySharedFolderTab />;
@@ -149,7 +154,7 @@ const Engagement = () => {
       <div className="space-y-6">
         <PillTabs 
           tabs={tabs} 
-          activeTab={activeTab} 
+          activeTab={actualTab} 
           onTabChange={setActiveTab} 
         />
 

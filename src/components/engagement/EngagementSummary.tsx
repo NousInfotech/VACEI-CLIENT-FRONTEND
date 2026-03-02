@@ -179,7 +179,7 @@ export const ServiceTodoTable = ({
       todo.engagementId
     ) {
       router.push(
-        `/dashboard/engagements/${todo.engagementId}?tab=requests${
+        `/dashboard/engagements/${todo.engagementId}?tab=document_requests${
           todo.moduleId ? `&scrollTo=${todo.moduleId}` : ""
         }`
       );

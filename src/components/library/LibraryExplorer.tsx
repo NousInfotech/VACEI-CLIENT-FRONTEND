@@ -3,7 +3,6 @@
 import React, { useEffect } from 'react';
 import { FolderIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLibrary, LibraryProvider } from '@/app/context/LibraryContext';
 
 // Modular Components
@@ -71,7 +70,7 @@ const LibraryContent: React.FC = () => {
 
         {/* Content Area */}
         <div className="flex-1 flex flex-col min-w-0" onClick={() => { setSelectedItems([]); closeContextMenu(); }}>
-          <ScrollArea className="flex-1">
+          <div className="flex-1 overflow-y-auto scrollbar-thin">
             <div className="p-4 md:p-6" onClick={(e) => e.stopPropagation()}>
               {error && (
                 <div className="mb-4 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm">
@@ -91,7 +90,7 @@ const LibraryContent: React.FC = () => {
                 <GridView />
               )}
             </div>
-          </ScrollArea>
+          </div>
         </div>
       </div>
 
@@ -102,7 +101,7 @@ const LibraryContent: React.FC = () => {
 
 export const LibraryExplorer: React.FC<LibraryExplorerProps & { items?: any[]; useApi?: boolean }> = ({ className, items, useApi = true, companyId, rootFolderId }) => {
   return (
-    <div className={cn("flex flex-col h-[600px] md:h-[700px] lg:h-[800px] bg-white border border-gray-200 rounded-2xl overflow-hidden", className)}>
+    <div className={cn("flex flex-col h-full flex-1 bg-white overflow-hidden", className)}>
       <LibraryProvider initialItems={items} useApi={useApi} companyId={companyId} rootFolderId={rootFolderId} children={<LibraryContent />} />
     </div>
   );

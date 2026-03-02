@@ -161,7 +161,9 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                 // Map backend companies to header format
                 const mappedCompanies = companiesData.map((company: any) => ({
                     id: company._id || company.id,
-                    name: company.name || 'Unnamed Company'
+                    name: company.name || 'Unnamed Company',
+                    incorporationStatus: company.incorporationStatus,
+                    kycStatus: company.kycStatus
                 }));
                 setCompanies(mappedCompanies);
                 localStorage.setItem("vacei-companies", JSON.stringify(mappedCompanies));
@@ -311,9 +313,10 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
         }
     };
 
+    const filteredCompanies = companies.filter(c => c.incorporationStatus === true && c.kycStatus === true);
     const activeCompanyName = companies.find(c => c.id === activeCompanyId)?.name || "Select Company";
 
-    const companyMenuItems = companies.map(c => {
+    const companyMenuItems = filteredCompanies.map(c => {
         const isActive = c.id === activeCompanyId;
         return {
             id: c.id,
@@ -433,26 +436,39 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
 
                         <div className="h-4 w-px bg-border mx-1" />
 
-                        <Dropdown
-                            align="left"
-                            label={activeCompanyName}
-                            items={companyMenuItems}
-                            searchable={true}
-                            searchPlaceholder="Search companies..."
-                            trigger={
-                                <div className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-medium text-gray-900 cursor-pointer shadow-sm hover:shadow-md hover:bg-white transition-all min-w-[160px] flex justify-between items-center group">
-                                    <span className="flex items-center gap-2">
-                                        <div className={cn(
-                                            "w-1.5 h-1.5 rounded-full",
-                                            globalCompanies.find(c => c.id === activeCompanyId)?.overdueCount ? "bg-destructive animate-pulse" :
-                                                globalCompanies.find(c => c.id === activeCompanyId)?.dueSoonCount ? "bg-amber-500" : "bg-success"
-                                        )} />
-                                        {isMounted ? (activeCompanyName.length > 20 ? activeCompanyName.substring(0, 17) + "..." : activeCompanyName) : "Loading..."}
-                                    </span>
-                                    <ChevronDown className="w-3.5 h-3.5 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />
-                                </div>
-                            }
-                        />
+                        {filteredCompanies.length === 1 ? (
+                            <div className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-medium text-gray-900 shadow-sm flex items-center min-w-[160px]">
+                                <span className="flex items-center gap-2">
+                                    <div className={cn(
+                                        "w-1.5 h-1.5 rounded-full",
+                                        globalCompanies.find(c => c.id === activeCompanyId)?.overdueCount ? "bg-destructive animate-pulse" :
+                                            globalCompanies.find(c => c.id === activeCompanyId)?.dueSoonCount ? "bg-amber-500" : "bg-success"
+                                    )} />
+                                    {isMounted ? (activeCompanyName.length > 20 ? activeCompanyName.substring(0, 17) + "..." : activeCompanyName) : "Loading..."}
+                                </span>
+                            </div>
+                        ) : (
+                            <Dropdown
+                                align="left"
+                                label={activeCompanyName}
+                                items={companyMenuItems}
+                                searchable={true}
+                                searchPlaceholder="Search companies..."
+                                trigger={
+                                    <div className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-medium text-gray-900 cursor-pointer shadow-sm hover:shadow-md hover:bg-white transition-all min-w-[160px] flex justify-between items-center group">
+                                        <span className="flex items-center gap-2">
+                                            <div className={cn(
+                                                "w-1.5 h-1.5 rounded-full",
+                                                globalCompanies.find(c => c.id === activeCompanyId)?.overdueCount ? "bg-destructive animate-pulse" :
+                                                    globalCompanies.find(c => c.id === activeCompanyId)?.dueSoonCount ? "bg-amber-500" : "bg-success"
+                                            )} />
+                                            {isMounted ? (activeCompanyName.length > 20 ? activeCompanyName.substring(0, 17) + "..." : activeCompanyName) : "Loading..."}
+                                        </span>
+                                        <ChevronDown className="w-3.5 h-3.5 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />
+                                    </div>
+                                }
+                            />
+                        )}
                     </div>
                 )}
 
