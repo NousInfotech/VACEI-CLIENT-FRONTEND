@@ -35,17 +35,13 @@ export const fetchSidebarData = async (
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to fetch sidebar data");
+    const message = errorData.message || "Failed to fetch sidebar data";
+    const error: any = new Error(message);
+    error.status = response.status;
+    throw error;
   }
 
   const result = await response.json();
-
-  // ✅ Log full API response
-  console.log("Sidebar API Full Response:", result);
-
-  // ✅ Log only sidebar data
-  console.log("Sidebar Data:", result.data);
-
   return result.data;
 };
 

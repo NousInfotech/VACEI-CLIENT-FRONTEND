@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { fetchSidebarData, SidebarServiceData } from "@/api/companyService";
 import { useActiveCompany } from "./ActiveCompanyContext";
+import { useRouter } from "next/navigation";
+import { handleAuthError } from "@/utils/authUtils";
 
 interface Company {
   id: string;
@@ -35,6 +37,7 @@ export function GlobalDashboardProvider({ children }: { children: React.ReactNod
   const [sidebarData, setSidebarData] = useState<SidebarServiceData[]>([]);
   const [isFetched, setIsFetched] = useState(false);
   const { activeCompanyId } = useActiveCompany();
+  const router = useRouter();
 
   const fetchDashboardData = useCallback(async (force = false) => {
     if (isFetched && !force) return;
@@ -89,16 +92,19 @@ export function GlobalDashboardProvider({ children }: { children: React.ReactNod
     } catch (error: any) {
       console.error("Failed to fetch sidebar data:", error);
       setSidebarData([]);
-      
+
+      // Handle auth errors by clearing session and redirecting to login
+      handleAuthError(error, router);
+
       // If company not found, it might be stale.
       if (error.message?.includes("not found") || error.status === 404) {
         console.warn("Active company not found, clearing stale ID");
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('vacei-active-company');
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("vacei-active-company");
         }
       }
     }
-  }, [activeCompanyId]);
+  }, [activeCompanyId, router]);
 
   useEffect(() => {
     fetchDashboardData();

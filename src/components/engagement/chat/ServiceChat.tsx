@@ -39,7 +39,7 @@ const ServiceChat: React.FC<ServiceChatProps> = ({ serviceSlug, serviceName }) =
   };
 
   return (
-    <div className="flex bg-white rounded-xl shadow-xl border border-[#e2e8f0]/30 h-[700px] overflow-hidden relative">
+    <div className="flex bg-white rounded-xl shadow-xl border border-[#e2e8f0]/30 h-[calc(100vh-350px)] min-h-[500px] overflow-hidden relative">
       <div className="flex-1 flex flex-col min-w-0 relative">
         <ChatWindow 
           chat={chat}
