@@ -61,7 +61,8 @@ import {
   fetchDashboardSummary,
   ProcessedDashboardStat,
 } from "@/api/financialReportsApi";
-import { getTodos, TodoItem } from "@/api/todoService";
+import { getTodos, TodoItem, updateTodoStatus } from "@/api/todoService";
+import { useGlobalDashboard } from "@/context/GlobalDashboardContext";
 import { useDocumentRequests } from "./hooks/useDocumentRequests";
 import { useEngagementUpdates } from "./hooks/useEngagementUpdates";
 import { useMilestones } from "./hooks/useMilestones";
@@ -216,7 +217,9 @@ export const ServiceTodoTable = ({
   onOpen?: (todo: TodoItem) => void;
 }) => {
   const router = useRouter();
-  const handleOpen = (todo: TodoItem) => {
+  const { refreshSidebar } = useGlobalDashboard();
+
+  const handleOpen = async (todo: TodoItem) => {
     if (onOpen) {
       onOpen(todo);
       return;
@@ -243,6 +246,14 @@ export const ServiceTodoTable = ({
         }`
       );
     } else if (type === "CHAT" && todo.engagementId) {
+      // Instant status update for chat todos
+      try {
+        await updateTodoStatus(todo.id, "ACTION_TAKEN");
+        refreshSidebar().catch(console.error);
+      } catch (e) {
+        console.error("Failed to auto-update chat todo status", e);
+      }
+
       const base = serviceBase 
         ? `${serviceBase}/engagements/${todo.engagementId}` 
         : `/dashboard/engagements/${todo.engagementId}`;
@@ -3599,7 +3610,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
             {/* SERVICE-SPECIFIC SECTIONS */}
 
             {/* Accounting & Bookkeeping: Financial Snapshot */}
-            {serviceName === "Accounting & Bookkeeping" && (
+            {/* {serviceName === "Accounting & Bookkeeping" && (
               <DashboardCard className="p-6">
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
@@ -3653,10 +3664,10 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                   </div>
                 </div>
               </DashboardCard>
-            )}
+            )} */}
 
             {/* Audit: Audit Progress Steps */}
-            {serviceName === "Statutory Audit" && (
+            {/* {serviceName === "Statutory Audit" && (
               <DashboardCard className="p-6">
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
@@ -3715,7 +3726,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                   </div>
                 </div>
               </DashboardCard>
-            )}
+            )} */}
 
             {/* VAT: Current Cycle (period name, status, Upload/Confirm) */}
             {isVAT && vatActivePeriod && (
@@ -4644,7 +4655,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
             )}
 
             {/* Financial Statistics Section - Only for Accounting & Bookkeeping */}
-            {serviceName === "Accounting & Bookkeeping" && (
+            {false && serviceName === "Accounting & Bookkeeping" && (
               <div className="space-y-8">
                 {/* Financial Statistics */}
                 <DashboardCard className="px-5 py-6">
@@ -4712,7 +4723,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                   <PLSummaryChart />
                 </div>
               </div>
-            )}
+            )} 
           </div>
         )}
 

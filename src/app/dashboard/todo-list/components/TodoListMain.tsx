@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { getTodos, TodoItem } from "@/api/todoService";
+import { getTodos, updateTodoStatus, TodoItem } from "@/api/todoService";
 import AlertMessage, { AlertVariant } from "@/components/AlertMessage";
 import { Pagination } from "@/interfaces";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import TaskDetailModal from "./TaskDetailModal";
 import { SERVICE_METADATA } from "@/lib/menuData";
+import { useGlobalDashboard } from "@/context/GlobalDashboardContext";
 
 
 
@@ -113,7 +114,9 @@ export default function TodoList() {
         return SERVICE_METADATA[metadataKey]?.href || "";
     };
 
-    const handleAction = (task: TodoItem) => {
+    const { refreshSidebar } = useGlobalDashboard();
+
+    const handleAction = async (task: TodoItem) => {
         const type = (task.type || "").toUpperCase();
         const serviceBase = resolveServiceEngagementBase(task.service);
 
@@ -126,10 +129,26 @@ export default function TodoList() {
         // Chat-related todos should open engagement chat tab, optionally scrolled to a specific message
         if (type === 'CHAT' && task.engagementId) {
             const messageQuery = task.moduleId ? `&messageId=${task.moduleId}` : "";
+            const todoQuery = `&todoId=${task.id}`;
+            
+            // Mark as Action Taken immediately upon click
+            // Await to ensure the request is sent before navigation starts
+            try {
+                // Optimistically update local state
+                setAllTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: 'ACTION_TAKEN' } : t));
+                
+                await updateTodoStatus(task.id, 'ACTION_TAKEN');
+                
+                // Refresh sidebar to reflect the change globally
+                refreshSidebar().catch(console.error);
+            } catch (e) {
+                console.error("Failed to update todo status on click", e);
+            }
+
             if (serviceBase) {
-                router.push(`${serviceBase}/engagements/${task.engagementId}?tab=chat${messageQuery}`);
+                router.push(`${serviceBase}/engagements/${task.engagementId}?tab=chat${messageQuery}${todoQuery}`);
             } else {
-                router.push(`/dashboard/engagements/${task.engagementId}?tab=chat${messageQuery}`);
+                router.push(`/dashboard/engagements/${task.engagementId}?tab=chat${messageQuery}${todoQuery}`);
             }
             return;
         }
@@ -378,7 +397,7 @@ export default function TodoList() {
                 <TaskDetailModal
                     isOpen={isModalOpen}
                     onClose={() => { setIsModalOpen(false); setSelectedTask(null); }}
-                    onSuccess={() => loadPaginatedTasks(pagination.page)}
+                    onSuccess={() => { loadData(); loadPaginatedTasks(pagination.page); }}
                     task={selectedTask}
                 />
             </div>

@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getUserIdFromLocalStorage, getDecodedUserId } from "@/utils/authUtils";
 import type { Chat, Message, User } from "./chat/types";
 import { chatService } from "@/api/chatService";
+import { updateTodoStatus } from "@/api/todoService";
 import { cn } from "@/lib/utils";
 
 /** 
@@ -31,6 +32,7 @@ export default function EngagementChatTab() {
   const engagementId = (engagement as { _id?: string; id?: string })?._id ?? (engagement as { _id?: string; id?: string })?.id ?? null;
 
   const searchParams = useSearchParams();
+  const todoId = searchParams.get("todoId");
 
   const currentUserId = getUserIdFromLocalStorage();
   const orgTeam = (engagement as { orgTeam?: Array<{ userId: string }> })?.orgTeam;
@@ -161,6 +163,13 @@ export default function EngagementChatTab() {
 
       if (replyingTo) {
         setReplyingTo(null);
+      }
+
+      // Automatically update todo status to ACTION_TAKEN if this chat originated from a todo
+      if (todoId) {
+        updateTodoStatus(todoId, "ACTION_TAKEN").catch((err) =>
+          console.error("Failed to update todo status automatically:", err)
+        );
       }
     } catch (err) {
       console.error("Send failed:", err);

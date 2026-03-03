@@ -32,7 +32,7 @@ export interface TodoItem {
 /**
  * GET /todos
  */
-export async function getTodos(params: { id?: string } = {}): Promise<TodoItem[]> {
+export async function getTodos(params: { id?: string; signal?: AbortSignal } = {}): Promise<TodoItem[]> {
   const url = new URL(`${backendUrl}todos`);
   if (params.id) {
     url.searchParams.append("id", params.id);
@@ -44,6 +44,7 @@ export async function getTodos(params: { id?: string } = {}): Promise<TodoItem[]
       ...getAuthHeaders(),
       "Content-Type": "application/json",
     },
+    signal: params.signal,
   });
 
   if (!response.ok) {

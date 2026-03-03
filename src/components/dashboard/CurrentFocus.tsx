@@ -20,6 +20,7 @@ export interface FocusItem {
   primaryActionLink: string;
   secondaryActionLink?: string;
   primaryActionLabel?: string;
+  onPrimaryActionClick?: () => void;
 }
 
 interface CurrentFocusProps {
@@ -79,6 +80,7 @@ export const CurrentFocus: React.FC<CurrentFocusProps> = ({ item, className }) =
           <Link href={item.primaryActionLink}>
             <Button 
               size="lg" 
+              onClick={item.onPrimaryActionClick}
               className={cn(
                 "font-bold px-8 shadow-lg hover:bg-primary-900 transition-all",
                 isOverdue ? "bg-red-600 hover:bg-red-700 text-white" : "bg-gray-900 hover:bg-black text-white"

@@ -11,59 +11,7 @@ export async function fetchTasks(params: FetchTasksParams = {}) {
   await new Promise(resolve => setTimeout(resolve, 300));
 
   // Mock tasks data
-  const mockTasks: any[] = [
-    {
-      id: 1,
-      companyId: "c1",
-      title: "Review Q4 Financial Statements",
-      description: "Complete review of Q4 financial statements and prepare summary report",
-      statusId: 1,
-      categoryId: 1,
-      createdById: 1,
-      assignedAccountants: [],
-      assignedToId: [],
-      status: "In Progress",
-      category: "Financial Review",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      priority: "High",
-    },
-    {
-      id: 2,
-      companyId: "c1",
-      title: "Tax Filing Preparation",
-      description: "Prepare all necessary documents for annual tax filing",
-      statusId: 2,
-      categoryId: 2,
-      createdById: 1,
-      assignedAccountants: [],
-      assignedToId: [],
-      status: "Pending",
-      category: "Tax",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-      priority: "Medium",
-    },
-    {
-      id: 3,
-      companyId: "c2",
-      title: "Audit Documentation",
-      description: "Compile and organize all audit-related documentation",
-      statusId: 3,
-      categoryId: 1,
-      createdById: 1,
-      assignedAccountants: [],
-      assignedToId: [],
-      status: "Completed",
-      category: "Audit",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      dueDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      priority: "Low",
-    },
-  ];
+  const mockTasks: any[] = [];
 
   const filteredTasks = params.companyId 
     ? mockTasks.filter(t => t.companyId === params.companyId)

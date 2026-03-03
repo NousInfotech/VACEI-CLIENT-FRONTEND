@@ -31,7 +31,6 @@ import { corporateMock } from "../components/services/mockData/corporateMock";
 import { payrollMock } from "../components/services/mockData/payrollMock";
 import { cfoMock } from "../components/services/mockData/cfoMock";
 import { mbrMock } from "../components/services/mockData/mbrMock";
-import { incorporationMock } from "../components/services/mockData/incorporationMock";
 import { businessPlansMock } from "../components/services/mockData/businessPlansMock";
 import { liquidationMock } from "../components/services/mockData/liquidationMock";
 import { regulatedLicensesMock } from "../components/services/mockData/regulatedLicensesMock";
@@ -145,14 +144,14 @@ export const SERVICE_METADATA: Record<string, { icon: any; label: string; href: 
     description: "Statutory filings and annual returns with the MBR.",
     color: "orange",
   },
-  INCORPORATION: {
-    icon: GitPullRequestIcon,
-    label: "Incorporation",
-    href: "/dashboard/services/incorporation",
-    category: "Compliance & Corporate",
-    description: "Legally forming new corporate entities in various jurisdictions.",
-    color: "teal",
-  },
+  // INCORPORATION: {
+  //   icon: GitPullRequestIcon,
+  //   label: "Incorporation",
+  //   href: "/dashboard/services/incorporation",
+  //   category: "Compliance & Corporate",
+  //   description: "Legally forming new corporate entities in various jurisdictions.",
+  //   color: "teal",
+  // },
   ADVISORY: {
     icon: DocumentValidationIcon,
     label: "Business Plans",

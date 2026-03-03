@@ -141,7 +141,7 @@ export default function SidebarMenu({
       if (!activeCompanyId) return;
       try {
         // Fetch todos
-        const todosData = await getTodos();
+        const todosData = await getTodos({ signal: controller.signal });
         if (cancelled) return;
         setTodos(Array.isArray(todosData) ? todosData : []);
 
@@ -159,7 +159,8 @@ export default function SidebarMenu({
           });
           setDocumentRequestsMap(map);
         }
-      } catch (e) {
+      } catch (e: any) {
+        if (e.name === 'AbortError') return;
         console.error("Failed to fetch sidebar status data", e);
       }
     };

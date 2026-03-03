@@ -176,6 +176,15 @@ export default function TodoListViewInner() {
       );
       if (messageInputRef.current) messageInputRef.current.value = "";
       setMessageError(null);
+
+      // Automatically update task status to "Action Taken" if it exists in statuses
+      const actionTakenStatus = statuses.find(s => s.name?.toUpperCase() === "ACTION TAKEN" || s.name?.toUpperCase() === "ACTION_TAKEN");
+      if (actionTakenStatus) {
+        await updateTaskStatus(task.id, actionTakenStatus.id);
+        const updated = await fetchTaskById(task.id);
+        setTask(updated);
+        setSelectedStatusId(actionTakenStatus.id);
+      }
     } catch (err) {
       console.error("Send failed:", err);
       setMessageError("Failed to send comment. Ensure the server supports file uploads.");

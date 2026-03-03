@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useActiveCompany } from "@/context/ActiveCompanyContext";
 import StatCard from "@/components/StatCard";
@@ -13,10 +13,11 @@ import { getDecodedUsername, verifyAuthentication, handleAuthError } from "@/uti
 import { ProcessedDashboardStat } from "@/api/financialReportsApi";
 import { fetchDashboardSummary as fetchFinancialSummary } from "@/api/financialReportsApi";
 import { fetchDashboardSummary, DashboardSummary } from "@/api/dashboardApi";
-import { getTodos } from "@/api/todoService";
+import { getTodos, updateTodoStatus } from "@/api/todoService";
 import NoticeBoard from "@/components/dashboard/NoticeBoard";
 import { fetchUploadStatusSummary } from "@/api/documentApi";
 import { fetchTasks } from "@/api/taskService";
+import { useGlobalDashboard } from "@/context/GlobalDashboardContext";
 import type { Task } from "@/interfaces";
 import { fetchPayrollData, transformPayrollSubmissionsToComplianceItems } from "@/lib/payrollComplianceIntegration";
 import { listComplianceCalendars, type ComplianceCalendarEntry } from "@/api/complianceCalendarService";
@@ -105,6 +106,7 @@ export default function DashboardPage() {
   const router = useRouter();
   // Use context instead of local state first, since we read it for lazy init
   const { activeCompanyId, companies, setCompanies } = useActiveCompany();
+  const { refreshSidebar } = useGlobalDashboard();
 
   const [uploadSummary, setUploadSummary] = useState<UploadStatusSummary | null>(null);
 
@@ -242,13 +244,14 @@ export default function DashboardPage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (authLoading || !activeCompanyId) return;
+  const loadDashboardSummary = useCallback(async (force = false) => {
+    if (!activeCompanyId) return;
 
     if (
+      !force &&
       dashboardCache.activeCompanyId === activeCompanyId &&
       dashboardCache.dashboardSummary &&
-      Date.now() - dashboardCache.timestamp < CACHE_TTL
+      Date.now() - dashboardCache.timestamp < 1000 // 1 second TTL for dashboard items
     ) {
       setDashboardSummary(dashboardCache.dashboardSummary);
       setActiveFocus(dashboardCache.activeFocus);
@@ -263,188 +266,197 @@ export default function DashboardPage() {
       return;
     }
 
-    const loadDashboardSummary = async () => {
-      dashboardCache.summaryInFlight = true;
-      try {
-        const summary = await fetchDashboardSummary(activeCompanyId);
+    dashboardCache.summaryInFlight = true;
+    try {
+      const summary = await fetchDashboardSummary(activeCompanyId);
 
-        // Fetch todos to calculate refined counts (only ACTION_REQUIRED)
-        const todos = await getTodos();
-        const handledStatuses = ['ACTION_TAKEN', 'COMPLETED', 'UPLOADED', 'PENDING_REVIEW', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'DONE'];
-        const actionRequiredTodos = todos.filter(t => {
-          const s = (t.status || '').toUpperCase();
-          return s === 'ACTION_REQUIRED' || (!handledStatuses.includes(s) && (s === 'OVERDUE' || s === 'DUE_SOON'));
-        });
+      // Fetch todos to calculate refined counts (only ACTION_REQUIRED)
+      const todos = await getTodos();
+      const handledStatuses = ['ACTION_TAKEN', 'COMPLETED', 'UPLOADED', 'PENDING_REVIEW', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'DONE'];
+      const actionRequiredTodos = todos.filter(t => {
+        const s = (t.status || '').toUpperCase();
+        return s === 'ACTION_REQUIRED' || (!handledStatuses.includes(s) && (s === 'OVERDUE' || s === 'DUE_SOON'));
+      });
 
-        // Fetch compliance tasks (statutory deadlines)
-        const taskResponse = await fetchTasks({ page: 1, limit: 100 });
-        const tasks = taskResponse.data || [];
+      // Fetch compliance tasks (statutory deadlines)
+      const taskResponse = await fetchTasks({ page: 1, limit: 100 });
+      const tasks = taskResponse.data || [];
 
-        // Filter tasks that require action 
-        const actionRequiredTasks = tasks.filter((task: Task) => {
-          if (!task.dueDate) return false;
-          if (task.status?.toLowerCase().includes("completed") || task.status?.toLowerCase().includes("done")) return false;
-          return true;
-        }).map((task: Task) => ({
-          ...task,
-          deadline: task.dueDate, // map dueDate to deadline for easier sorting
-          service: task.category || 'Compliance',
-          title: task.title || 'Untitled Task',
-        }));
+      // Filter tasks that require action 
+      const actionRequiredTasks = tasks.filter((task: Task) => {
+        if (!task.dueDate) return false;
+        if (task.status?.toLowerCase().includes("completed") || task.status?.toLowerCase().includes("done")) return false;
+        return true;
+      }).map((task: Task) => ({
+        ...task,
+        deadline: task.dueDate, // map dueDate to deadline for easier sorting
+        service: task.category || 'Compliance',
+        title: task.title || 'Untitled Task',
+      }));
 
-        // Combine todos and tasks for the upcoming deadlines
-        const allPendingItems: any[] = [...actionRequiredTodos, ...actionRequiredTasks];
+      // Combine todos and tasks for the upcoming deadlines
+      const allPendingItems: any[] = [...actionRequiredTodos, ...actionRequiredTasks];
 
-        const sortedItems = [...allPendingItems].sort((a, b) => {
-          const dateA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
-          const dateB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
-          return dateA - dateB;
-        });
+      const sortedItems = [...allPendingItems].sort((a, b) => {
+        const dateA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+        const dateB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+        return dateA - dateB;
+      });
 
-        const nowRaw = new Date();
-        const today = new Date(nowRaw.getFullYear(), nowRaw.getMonth(), nowRaw.getDate());
-        const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const nowRaw = new Date();
+      const today = new Date(nowRaw.getFullYear(), nowRaw.getMonth(), nowRaw.getDate());
+      const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-        // Ensure we filter out only correctly identified future deadlines for the snapshot
-        const upcomingDeadlinesItems = sortedItems.filter(t => {
-          if (!t.deadline) return false;
-          const dl = new Date(t.deadline);
-          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
-          return dlDate.getTime() >= today.getTime();
-        });
-        const futureDeadlines = upcomingDeadlinesItems.length > 0 ? upcomingDeadlinesItems.slice(0, 3) : sortedItems.slice(0, 3);
+      // Ensure we filter out only correctly identified future deadlines for the snapshot
+      const upcomingDeadlinesItems = sortedItems.filter(t => {
+        if (!t.deadline) return false;
+        const dl = new Date(t.deadline);
+        const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+        return dlDate.getTime() >= today.getTime();
+      });
+      const futureDeadlines = upcomingDeadlinesItems.length > 0 ? upcomingDeadlinesItems.slice(0, 3) : sortedItems.slice(0, 3);
 
-        // Also set upcoming deadlines for the compliance snapshot (top 3)
-        setUpcomingDeadlines(futureDeadlines);
+      // Also set upcoming deadlines for the compliance snapshot (top 3)
+      setUpcomingDeadlines(futureDeadlines);
 
-        let newFocus = summary.focus;
-        const isSummaryFocusHandled = newFocus && (
-          handledStatuses.includes((newFocus.status || '').toUpperCase()) ||
-          !actionRequiredTodos.some(t => String(t.id) === String(newFocus!.todoId))
-        );
+      let newFocus = summary.focus;
+      const isSummaryFocusHandled = newFocus && (
+        handledStatuses.includes((newFocus.status || '').toUpperCase()) ||
+        !actionRequiredTodos.some(t => String(t.id) === String(newFocus!.todoId))
+      );
 
-        if (!newFocus || isSummaryFocusHandled) {
-          if (sortedItems.length > 0) {
-            const nextItem = sortedItems[0];
-            const now = new Date();
-            const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-            let derivedStatus = 'waiting_on_you';
-            if (nextItem.deadline) {
-              const dl = new Date(nextItem.deadline);
-              if (dl.toDateString() !== now.toDateString() && dl < now) derivedStatus = 'overdue';
-              else if (dl.toDateString() !== now.toDateString() && dl > now && dl <= nextWeek) derivedStatus = 'due_soon';
-            }
-            newFocus = {
-              serviceName: formatServiceName(nextItem.service),
-              service: nextItem.service,
-              taskDescription: nextItem.title,
-              status: derivedStatus,
-              primaryActionLabel: nextItem.cta 
-                ? (nextItem.cta.charAt(0).toUpperCase() + nextItem.cta.slice(1)) 
-                : (nextItem.category ? 'View Task' : 'Take Action'),
-              todoId: nextItem.id
-            };
-          } else {
-            newFocus = null;
+      if (!newFocus || isSummaryFocusHandled) {
+        if (sortedItems.length > 0) {
+          const nextItem = sortedItems[0];
+          const now = new Date();
+          const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+          let derivedStatus = 'waiting_on_you';
+          if (nextItem.deadline) {
+            const dl = new Date(nextItem.deadline);
+            if (dl.toDateString() !== now.toDateString() && dl < now) derivedStatus = 'overdue';
+            else if (dl.toDateString() !== now.toDateString() && dl > now && dl <= nextWeek) derivedStatus = 'due_soon';
           }
+          newFocus = {
+            serviceName: formatServiceName(nextItem.service),
+            service: nextItem.service,
+            taskDescription: nextItem.title,
+            status: derivedStatus,
+            primaryActionLabel: nextItem.cta 
+              ? (nextItem.cta.charAt(0).toUpperCase() + nextItem.cta.slice(1)) 
+              : (nextItem.category ? 'View Task' : 'Take Action'),
+            todoId: nextItem.id
+          };
+        } else {
+          newFocus = null;
         }
-
-        if (newFocus) {
-          if (newFocus.id && !newFocus.todoId) {
-            newFocus.todoId = newFocus.id;
-          }
-
-          if (newFocus.todoId) {
-            const fullTodo = allPendingItems.find(t => String(t.id) === String(newFocus!.todoId));
-            if (fullTodo) {
-              newFocus = {
-                ...newFocus,
-                type: fullTodo.type,
-                moduleId: fullTodo.moduleId,
-                engagementId: fullTodo.engagementId,
-                service: fullTodo.service,
-                serviceName: formatServiceName(fullTodo.service),
-                primaryActionLabel: fullTodo.cta 
-                  ? (fullTodo.cta.charAt(0).toUpperCase() + fullTodo.cta.slice(1)) 
-                  : newFocus!.primaryActionLabel
-              };
-            }
-          }
-        }
-
-        setDashboardSummary(summary);
-        setActiveFocus(newFocus);
-
-        // Calculate Todo counts for Analytics (Top section)
-        const todoOverdue = actionRequiredTodos.filter(t => {
-          if (!t.deadline) return false;
-          const dl = new Date(t.deadline);
-          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
-          return dlDate.getTime() < today.getTime();
-        }).length;
-
-        const todoToday = actionRequiredTodos.filter(t => {
-          if (!t.deadline) return false;
-          const dl = new Date(t.deadline);
-          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
-          return dlDate.getTime() === today.getTime();
-        }).length;
-
-        const todoSoon = actionRequiredTodos.filter(t => {
-          if (!t.deadline) return false;
-          const dl = new Date(t.deadline);
-          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
-          return dlDate.getTime() > today.getTime() && dlDate.getTime() <= nextWeek.getTime();
-        }).length;
-
-        // Calculate Compliance counts for Snapshot (Sidebar)
-        const complianceOverdue = actionRequiredTasks.filter(t => {
-          if (!t.deadline) return false;
-          const dl = new Date(t.deadline);
-          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
-          return dlDate.getTime() < today.getTime();
-        }).length;
-
-        const complianceToday = actionRequiredTasks.filter(t => {
-          if (!t.deadline) return false;
-          const dl = new Date(t.deadline);
-          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
-          return dlDate.getTime() === today.getTime();
-        }).length;
-
-        const complianceSoon = actionRequiredTasks.filter(t => {
-          if (!t.deadline) return false;
-          const dl = new Date(t.deadline);
-          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
-          return dlDate.getTime() > today.getTime() && dlDate.getTime() <= nextWeek.getTime();
-        }).length;
-
-        setTodoCounts({
-          overdue: todoOverdue,
-          dueSoon: todoSoon,
-          waiting: todoToday,
-          done: actionRequiredTodos.length
-        });
-
-        // Update cache (remaining fields handled by loadComplianceCalendar)
-        dashboardCache.activeCompanyId = activeCompanyId;
-        dashboardCache.timestamp = Date.now();
-        dashboardCache.dashboardSummary = summary;
-        dashboardCache.activeFocus = newFocus;
-        dashboardCache.todoCounts = {
-          overdue: todoOverdue,
-          dueSoon: todoSoon,
-          waiting: todoToday,
-          done: actionRequiredTodos.length
-        };
-      } catch (error) {
-        console.error("Failed to fetch dashboard summary:", error);
-      } finally {
-        dashboardCache.summaryInFlight = false;
       }
-    };
+
+      if (newFocus) {
+        if (newFocus.id && !newFocus.todoId) {
+          newFocus.todoId = newFocus.id;
+        }
+
+        if (newFocus.todoId) {
+          const fullTodo = allPendingItems.find(t => String(t.id) === String(newFocus!.todoId));
+          if (fullTodo) {
+            newFocus = {
+              ...newFocus,
+              type: fullTodo.type,
+              moduleId: fullTodo.moduleId,
+              engagementId: fullTodo.engagementId,
+              service: fullTodo.service,
+              serviceName: formatServiceName(fullTodo.service),
+              primaryActionLabel: fullTodo.cta 
+                ? (fullTodo.cta.charAt(0).toUpperCase() + fullTodo.cta.slice(1)) 
+                : newFocus!.primaryActionLabel
+            };
+          }
+        }
+      }
+
+      setDashboardSummary(summary);
+      setActiveFocus(newFocus);
+
+      // Calculate Todo counts for Analytics (Top section)
+      const todoOverdue = actionRequiredTodos.filter(t => {
+        if (!t.deadline) return false;
+        const dl = new Date(t.deadline);
+        const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+        return dlDate.getTime() < today.getTime();
+      }).length;
+
+      const todoToday = actionRequiredTodos.filter(t => {
+        if (!t.deadline) return false;
+        const dl = new Date(t.deadline);
+        const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+        return dlDate.getTime() === today.getTime();
+      }).length;
+
+      const todoSoon = actionRequiredTodos.filter(t => {
+        if (!t.deadline) return false;
+        const dl = new Date(t.deadline);
+        const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+        return dlDate.getTime() > today.getTime() && dlDate.getTime() <= nextWeek.getTime();
+      }).length;
+
+      // Calculate Compliance counts for Snapshot (Sidebar)
+      const complianceOverdue = actionRequiredTasks.filter(t => {
+        if (!t.deadline) return false;
+        const dl = new Date(t.deadline);
+        const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+        return dlDate.getTime() < today.getTime();
+      }).length;
+
+      const complianceToday = actionRequiredTasks.filter(t => {
+        if (!t.deadline) return false;
+        const dl = new Date(t.deadline);
+        const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+        return dlDate.getTime() === today.getTime();
+      }).length;
+
+      const complianceSoon = actionRequiredTasks.filter(t => {
+        if (!t.deadline) return false;
+        const dl = new Date(t.deadline);
+        const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+        return dlDate.getTime() > today.getTime() && dlDate.getTime() <= nextWeek.getTime();
+      }).length;
+
+      setTodoCounts({
+        overdue: todoOverdue,
+        dueSoon: todoSoon,
+        waiting: todoToday,
+        done: actionRequiredTodos.length
+      });
+
+      setComplianceCounts({
+        overdue: complianceOverdue,
+        dueSoon: complianceSoon,
+        waiting: complianceToday,
+        done: tasks.length - (complianceOverdue + complianceSoon + complianceToday)
+      });
+
+      // Update cache (remaining fields handled by loadComplianceCalendar)
+      dashboardCache.activeCompanyId = activeCompanyId;
+      dashboardCache.timestamp = Date.now();
+      dashboardCache.dashboardSummary = summary;
+      dashboardCache.activeFocus = newFocus;
+      dashboardCache.todoCounts = {
+        overdue: todoOverdue,
+        dueSoon: todoSoon,
+        waiting: todoToday,
+        done: actionRequiredTodos.length
+      };
+    } catch (error) {
+      console.error("Failed to fetch dashboard summary:", error);
+    } finally {
+      dashboardCache.summaryInFlight = false;
+    }
+  }, [activeCompanyId]);
+
+  useEffect(() => {
+    if (authLoading || !activeCompanyId) return;
     loadDashboardSummary();
-  }, [authLoading, activeCompanyId]);
+  }, [authLoading, activeCompanyId, loadDashboardSummary]);
 
   // Load next compliance deadline from Compliance Calendar for the active company
   useEffect(() => {
@@ -695,7 +707,7 @@ export default function DashboardPage() {
     { text: "Need 1 more invoice", sender: "John (Accountant)", time: "1 hour ago" },
     { text: "Audit query sent", sender: "System", time: "3 hours ago" },
   ];
-  const healthStatus = (todoCounts.overdue > 0 || todoCounts.waiting > 0 || todoCounts.dueSoon > 0) ? "Action Required" : "Healthy";
+  const healthStatus = todoCounts.done > 0 ? "Action Required" : "Healthy";
 
   // Calculate Risk Level
   const getRiskLevel = () => {
@@ -742,14 +754,14 @@ export default function DashboardPage() {
         {/* Premium Dashboard Header */}
         <PageHeader
           title={getGreeting()}
-          subtitle={username ? "Here's your compliance status and what's happening with your business today." : "Welcome back! Here's what's happening with your business today."}
+          subtitle={username ? "Here's your business tasks and what's happening today." : "Welcome back! Here's what's happening with your business today."}
           activeCompany={companies.find(c => c.id === activeCompanyId)?.name || "ACME LTD"}
           todoStats={{
             total: todoCounts.done, // total items considered
-            completed: todoCounts.done - (todoCounts.overdue + todoCounts.waiting + todoCounts.dueSoon),
+            completed: 0,
             healthStatus: healthStatus as 'Action Required' | 'Healthy'
           }}
-          todoStatsHref={healthStatus === "Action Required" ? "/dashboard/todo-list" : "/dashboard/compliance"}
+          todoStatsHref="/dashboard/todo-list"
         />
 
         {/* 🔴 Priority Actions (Only if needed) */}
@@ -803,7 +815,8 @@ export default function DashboardPage() {
                 ? `${serviceBase}/engagements/${engagementId}`
                 : `/dashboard/engagements/${engagementId}`;
               const messageQuery = moduleId ? `&messageId=${moduleId}` : "";
-              return `${base}?tab=chat${messageQuery}`;
+              const todoQuery = `&todoId=${activeFocus.todoId}`;
+              return `${base}?tab=chat${messageQuery}${todoQuery}`;
             }
 
             // Document requests handled specifically
@@ -826,7 +839,21 @@ export default function DashboardPage() {
             // Fallback for tasks without engagement (custom tasks, general tasks)
             return `/dashboard/todo-list/todo-list-view?taskId=${btoa(String(activeFocus.todoId))}`;
           })(),
-          primaryActionLabel: activeFocus.primaryActionLabel || 'Take Action'
+          primaryActionLabel: activeFocus.primaryActionLabel || 'Take Action',
+          onPrimaryActionClick: async () => {
+            if (activeFocus && activeFocus.type === 'CHAT' && activeFocus.todoId) {
+                try {
+                    // Update status on backend
+                    await updateTodoStatus(activeFocus.todoId, 'ACTION_TAKEN');
+                    
+                    // Refresh data across the app
+                    refreshSidebar().catch(console.error);
+                    loadDashboardSummary(true).catch(console.error);
+                } catch (e) {
+                    console.error("Failed to update focus status on click", e);
+                }
+            }
+          }
         } : null} />
 
         {/* Notice Board and Stats Row */}
@@ -887,127 +914,95 @@ export default function DashboardPage() {
           <NextComplianceDeadline />
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6 bg-gray-100 p-2 rounded-[10px]">
-          {/* Left Column - Priority Actions & Services */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Redesigned Active Services */}
-            <div className="space-y-4">
-              <PageHeader
-                title="Active Engagements"
-                subtitle="Manage your ongoing accounting and tax services"
-                animate={false}
-                className="p-6"
-              />
-              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                {activeServices.length > 0 ? (
-                  activeServices.map((service, idx) => {
-                    const getIcon = (category: string) => {
-                      if (category === "Bookkeeping") return <FileText className="text-blue-600" size={24} />;
-                      if (category === "VAT") return <Briefcase className="text-amber-600" size={24} />;
-                      if (category === "Audit") return <Search className="text-rose-600" size={24} />;
-                      return <CheckCircle className="text-emerald-600" size={24} />;
-                    };
+        <div className="flex flex-col gap-6 bg-gray-100 rounded-[10px]">
+          {/* Redesigned Active Services - Top Full Width */}
+          <div className="space-y-4 bg-white/50 p-4 rounded-2xl">
+            <PageHeader
+              title="Active Engagements"
+              subtitle="Manage your ongoing accounting and tax services"
+              animate={false}
+              className="p-6"
+            />
+            <div className="grid grid-cols-1 gap-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+              {activeServices.length > 0 ? (
+                activeServices.map((service, idx) => {
+                  const getIcon = (category: string) => {
+                    if (category === "Bookkeeping") return <FileText className="text-blue-600" size={24} />;
+                    if (category === "VAT") return <Briefcase className="text-amber-600" size={24} />;
+                    if (category === "Audit") return <Search className="text-rose-600" size={24} />;
+                    return <CheckCircle className="text-emerald-600" size={24} />;
+                  };
 
-                    const getIconBg = (category: string) => {
-                      if (category === "Bookkeeping") return "bg-blue-50";
-                      if (category === "VAT") return "bg-amber-50";
-                      if (category === "Audit") return "bg-rose-50";
-                      return "bg-emerald-50";
-                    };
+                  const getIconBg = (category: string) => {
+                    if (category === "Bookkeeping") return "bg-blue-50";
+                    if (category === "VAT") return "bg-amber-50";
+                    if (category === "Audit") return "bg-rose-50";
+                    return "bg-emerald-50";
+                  };
 
-                    return (
-                      <div key={idx} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shrink-0", getIconBg(service.category))}>
-                            {getIcon(service.category)}
-                          </div>
-                          <div className="space-y-1">
-                            <h4 className="text-xl font-bold text-gray-900">{service.name}</h4>
-                            <div className="flex items-center gap-3">
-                              {service.category === "Bookkeeping" && (
-                                <span className="text-sm font-semibold text-gray-500">REG NO: REG#87777448</span>
-                              )}
-                              {service.nextDeadline && !['COMPLETED', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'ACTION_TAKEN', 'UPLOADED', 'PENDING_REVIEW', 'DONE'].includes(service.status.toUpperCase()) && (
-                                <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
-                                  Due {new Date(service.nextDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                                </span>
-                              )}
-                              {service.status.toUpperCase().includes("WAITING") && !['COMPLETED', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'ACTION_TAKEN', 'UPLOADED', 'PENDING_REVIEW', 'DONE'].includes(service.status.toUpperCase()) && (
-                                <div className="flex items-center gap-1.5 text-rose-600 font-semibold text-sm">
-                                  <AlertCircle size={14} />
-                                  Action Required
-                                </div>
-                              )}
-                            </div>
+                  return (
+                    <div key={idx} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shrink-0", getIconBg(service.category))}>
+                          {getIcon(service.category)}
+                        </div>
+                        <div className="space-y-1">
+                          <h4 className="text-xl font-bold text-gray-900">{service.name}</h4>
+                          <div className="flex items-center gap-3">
+                            {service.category === "Bookkeeping" && (
+                              <span className="text-sm font-semibold text-gray-500">REG NO: REG#87777448</span>
+                            )}
+                            {service.nextDeadline && !['COMPLETED', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'ACTION_TAKEN', 'UPLOADED', 'PENDING_REVIEW', 'DONE'].includes(service.status.toUpperCase()) && (
+                              <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                                Due {new Date(service.nextDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                              </span>
+                            )}
+                            {service.status.toUpperCase().includes("WAITING") && !['COMPLETED', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'ACTION_TAKEN', 'UPLOADED', 'PENDING_REVIEW', 'DONE'].includes(service.status.toUpperCase()) && (
+                              <div className="flex items-center gap-1.5 text-rose-600 font-semibold text-sm">
+                                <AlertCircle size={14} />
+                                Action Required
+                              </div>
+                            )}
                           </div>
                         </div>
-                        <Link href={service.href}>
-                          <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-50">
-                            <ArrowRight size={20} className="text-gray-400" />
-                          </Button>
-                        </Link>
                       </div>
-                    );
-                  })
-                ) : (
-                  <div className="bg-white rounded-3xl border border-dashed border-gray-200 p-12 flex flex-col items-center justify-center text-center space-y-4">
-                    <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center">
-                      <Briefcase className="text-gray-300" size={32} />
+                      <Link href={service.href}>
+                        <Button variant="default" size="icon" className="rounded-full hover:bg-gray-50">
+                          <ArrowRight size={20} className="text-white" />
+                        </Button>
+                      </Link>
                     </div>
-                    <div className="space-y-1">
-                      <h4 className="text-lg font-semibold text-gray-900">No active engagements</h4>
-                      <p className="text-sm text-gray-500 max-w-[280px]">
-                        You don&apos;t have any ongoing services at the moment. Explore our service library to get started.
-                      </p>
-                    </div>
-                    <Link href="/dashboard/library">
-                      <Button variant="outline" className="rounded-xl px-6">
-                        Explore Services
-                      </Button>
-                    </Link>
+                  );
+                })
+              ) : (
+                <div className="bg-white rounded-3xl border border-dashed border-gray-200 p-12 col-span-full flex flex-col items-center justify-center text-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center">
+                    <Briefcase className="text-gray-300" size={32} />
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* Recently Completed */}
-            {/* <DashboardCard className="overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                  <h3 className="text-xl font-semibold text-gray-900">Recently Completed</h3>
+                  <div className="space-y-1">
+                    <h4 className="text-lg font-semibold text-gray-900">No active engagements</h4>
+                    <p className="text-sm text-gray-500 max-w-[280px]">
+                      You don&apos;t have any ongoing services at the moment. Explore our service library to get started.
+                    </p>
+                  </div>
+                  <Link href="/dashboard/library">
+                    <Button variant="outline" className="rounded-xl px-6">
+                      Explore Services
+                    </Button>
+                  </Link>
                 </div>
-                <span className="text-[10px] uppercase bg-black text-white px-2 py-1 rounded-full font-medium">3 New</span>
-              </div>
-              <div className="p-4 space-y-3">
-                {recentlyCompleted.map((item, idx) => (
-                  <DashboardCard key={idx} className="group/completed flex items-center justify-between rounded-xl border border-gray-50 bg-gray-50/50 px-4 py-3 transition-all duration-300 gap-2">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-gray-100 shrink-0 flex items-center justify-center">
-                        <CheckCircle className="h-4 w-4 text-gray-600" />
-                      </div>
-                      <span className="text-base font-medium truncate">{item.text}</span>
-                    </div>
-                    <Link href={item.href} className="shrink-0">
-                      <Button size="sm" className="whitespace-nowrap">
-                        {item.action}
-                      </Button>
-                    </Link>
-                  </DashboardCard>
-                ))}
-              </div>
-            </DashboardCard> */}
+              )}
+            </div>
           </div>
 
-          {/* Right Column - Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <DashboardCard className="overflow-hidden">
+          <div className="grid lg:grid-cols-2 gap-6 items-stretch">
+            {/* Quick Actions - Bottom Left */}
+            <DashboardCard className="overflow-hidden h-full flex flex-col">
               <div className="px-6 py-4 border-b border-gray-300 flex items-center gap-4">
                 <div className="w-1 h-6 bg-gray-900 rounded-full" />
                 <h3 className="text-lg font-medium text-gray-900">Quick Actions</h3>
               </div>
-              <div className="flex flex-col gap-2 p-3">
+              <div className="flex flex-col gap-2 p-3 flex-1">
                 <Link href="/dashboard/todo-list">
                   <Button variant="outline" className="w-full justify-start gap-3 h-11 border-gray-100 hover:bg-gray-50 transition-colors">
                     <CheckSquare className="w-4 h-4" />
@@ -1026,108 +1021,61 @@ export default function DashboardPage() {
                     <span>Compliance</span>
                   </Button>
                 </Link>
+                <Link href="/dashboard/settings">
+                  <Button variant="outline" className="w-full justify-start gap-3 h-11 border-gray-100 hover:bg-gray-50 transition-colors">
+                    <User className="w-4 h-4" />
+                    <span>Settings</span>
+                  </Button>
+                </Link>
               </div>
             </DashboardCard>
 
-            {/* Refined Compliance Snapshot */}
-            <DashboardCard className="overflow-hidden">
+            {/* Refined Compliance Snapshot - Bottom Right */}
+            <DashboardCard className="overflow-hidden h-full flex flex-col">
               <div className="px-6 py-4 border-b border-gray-300 flex items-center gap-4">
                 <div className="w-1 h-6 bg-gray-900 rounded-full" />
                 <h3 className="text-lg font-medium text-gray-900">Compliance Snapshot</h3>
               </div>
-              <div className="p-4 space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <Link href="/dashboard/compliance">
-                    <Kpi label="Due Today" value={complianceCounts.waiting} tone="info" />
-                  </Link>
-                  <Link href="/dashboard/compliance">
-                    <Kpi label="Upcoming" value={complianceCounts.upcoming || 0} tone="warning" />
-                  </Link>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest px-1">Next Deadlines</p>
-                  {nextCalendarDeadline || calendarDeadlines.length > 0 ? (
-                    <div className="space-y-2">
-                      {nextCalendarDeadline && (
-                        <DashboardCard className="border border-info/30 bg-info/5 px-4 py-3">
-                          <p className="text-sm font-bold text-gray-900">
-                            {nextCalendarDeadline.company?.name ? `${nextCalendarDeadline.company.name} – ` : ""}
-                            {nextCalendarDeadline.title}
-                            {nextCalendarDeadline.dueDate
-                              ? ` – ${new Date(nextCalendarDeadline.dueDate).toLocaleDateString('en-GB', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                })}`
-                              : ''}
-                          </p>
-                          <span className="text-[10px] text-info font-bold uppercase mt-1 inline-block">Next Calendar Entry</span>
-                        </DashboardCard>
-                      )}
-                      {/* Removed secondary deadlines to only show the single next deadline as per user request */}
-                    </div>
-                  ) : (
-                    <DashboardCard className="border border-gray-200 bg-gray-50 px-4 py-6 text-center">
-                      <p className="text-sm font-bold text-gray-400 italic">No upcoming compliance deadlines</p>
-                    </DashboardCard>
-                  )}
+              <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <Link href="/dashboard/compliance">
+                      <Kpi label="Due Today" value={complianceCounts.waiting} tone="info" />
+                    </Link>
+                    <Link href="/dashboard/compliance">
+                      <Kpi label="Upcoming" value={complianceCounts.upcoming || 0} tone="warning" />
+                    </Link>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest px-1">Next Deadlines</p>
+                    {nextCalendarDeadline || calendarDeadlines.length > 0 ? (
+                      <div className="space-y-2">
+                        {nextCalendarDeadline && (
+                          <DashboardCard className="border border-info/30 bg-info/5 px-4 py-3">
+                            <p className="text-sm font-bold text-gray-900">
+                              {nextCalendarDeadline.company?.name ? `${nextCalendarDeadline.company.name} – ` : ""}
+                              {nextCalendarDeadline.title}
+                              {nextCalendarDeadline.dueDate
+                                ? ` – ${new Date(nextCalendarDeadline.dueDate).toLocaleDateString('en-GB', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                  })}`
+                                : ''}
+                            </p>
+                            <span className="text-[10px] text-info font-bold uppercase mt-1 inline-block">Next Calendar Entry</span>
+                          </DashboardCard>
+                        )}
+                      </div>
+                    ) : (
+                      <DashboardCard className="border border-gray-200 bg-gray-50 px-4 py-6 text-center">
+                        <p className="text-sm font-bold text-gray-400 italic">No upcoming compliance deadlines</p>
+                      </DashboardCard>
+                    )}
+                  </div>
                 </div>
               </div>
             </DashboardCard>
           </div>
-
-          {/* Activity Feed - Full Width */}
-          {/* <div className="lg:col-span-3">
-            <DashboardCard className="overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-4">
-                <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                <h3 className="text-xl font-semibold text-gray-900">Activity Feed</h3>
-              </div>
-              <div className="p-5 space-y-6">
-                <div className="grid md:grid-cols-2 gap-8">
-                  <div>
-                    <p className="text-[12px] font-bold uppercase tracking-widest mb-3 text-gray-400">Live Updates</p>
-                    <div className="flex flex-col gap-3">
-                      {recentActivity.map((activity, idx) => (
-                        <Link key={idx} href={activity.href}>
-                          <DashboardCard className="p-4 border-none shadow-sm bg-gray-50/50 hover:bg-white transition-all transform hover:-translate-x-1 cursor-pointer">
-                            <div className="flex gap-4 items-start">
-                              <div className="mt-1.5 shrink-0">
-                                <div className="w-2 h-2 rounded-full bg-gray-900" />
-                              </div>
-                              <div className="space-y-1 flex-1 min-w-0">
-                                <p className="text-base font-medium leading-tight text-gray-700">{activity.text}</p>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-primary/10 text-primary uppercase tracking-widest">
-                                    {activity.service}
-                                  </span>
-                                  <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">{activity.time}</p>
-                                </div>
-                              </div>
-                            </div>
-                          </DashboardCard>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="pt-5 md:pt-0 md:border-l md:border-gray-100 md:pl-8">
-                    <p className="text-[12px] font-bold uppercase tracking-widest mb-3 text-gray-400">Client Alerts</p>
-                    <div className="space-y-3">
-                      {messagesUpdates.map((msg, idx) => (
-                        <DashboardCard key={idx} className="p-4 border-none shadow-sm bg-gray-50/50 hover:bg-white transition-all transform hover:-translate-x-1">
-                          <p className="text-sm font-medium text-gray-700 italic leading-relaxed">"{msg.text}"</p>
-                          <div className="mt-2 flex justify-between items-center text-[10px] font-medium tracking-widest text-gray-700">
-                            <span>{msg.sender}</span>
-                            <span>{msg.time}</span>
-                          </div>
-                        </DashboardCard>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </DashboardCard>
-          </div> */}
         </div>
 
       </div>
