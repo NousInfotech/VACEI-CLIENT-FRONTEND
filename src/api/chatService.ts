@@ -224,7 +224,7 @@ class ChatService {
         .from("ChatMessage")
         .select("*")
         .eq("roomId", roomUuid)
-        .order("sentAt", { ascending: true })
+        .order("sentAt", { ascending: false })
         .limit(50);
 
       if (error) {
