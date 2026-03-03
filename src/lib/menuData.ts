@@ -20,6 +20,7 @@ import {
   UserCheck01Icon,
   GiftIcon,
   Unlink03Icon,
+  CustomerSupportFreeIcons,
 } from "@hugeicons/core-free-icons";
 
 import { accountingBookingMock } from "../components/services/mockData/accountingBookingMock";
@@ -429,6 +430,14 @@ export const globalMenuData: MenuItem[] = [
     section: "operations",
     description: "Centralized document vault",
   },
+  {
+    slug: "support",
+    icon: CustomerSupportFreeIcons,
+    label: "Settings",
+    href: "/global-dashboard/support",
+    section: "settings",
+    description: "System configuration",
+},
   {
     slug: "settings",
     icon: InstallingUpdates02Icon,

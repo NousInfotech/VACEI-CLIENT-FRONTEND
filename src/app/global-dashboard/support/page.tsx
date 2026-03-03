@@ -1,25 +1,26 @@
 "use client"
-import React, { useState, useRef } from "react";
-import { 
-    HelpCircle, 
-    Send, 
-    CheckCircle2, 
-    LifeBuoy, 
-    MessageSquare, 
-    Clock, 
+import React, { useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import {
+    HelpCircle,
+    Send,
+    CheckCircle2,
+    LifeBuoy,
+    MessageSquare,
+    Clock,
     ChevronDown,
     Upload,
     X,
-    ImageIcon,
-    FileText
+    ListChecks,
 } from "lucide-react";
 import PageHeader from "@/components/shared/PageHeader";
 import DashboardCard from "@/components/DashboardCard";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import Dropdown, { DropdownItem } from "@/components/Dropdown";
-import { cn } from "@/lib/utils";
+import Dropdown from "@/components/Dropdown";
+import { createSupportRequest } from "@/api/supportService";
+import { getCompanies } from "@/api/auditService";
 
 const SERVICES_SUBJECTS = [
     { id: "bookkeeping", label: "Bookkeeping" },
@@ -39,16 +40,32 @@ const SERVICES_SUBJECTS = [
     { id: "other", label: "Other" },
 ];
 
+interface CompanyOption {
+  id: string;
+  name: string;
+}
+
 export default function GlobalSupportPage() {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         subject: "",
         customSubject: "",
-        brief: ""
+        brief: "",
+        companyId: "",
     });
+    const [companies, setCompanies] = useState<CompanyOption[]>([]);
+    const [companiesLoading, setCompaniesLoading] = useState(true);
     const [attachments, setAttachments] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        getCompanies()
+            .then((list) => setCompanies(list.map((c: any) => ({ id: c.id ?? c._id, name: c.name ?? "" }))))
+            .catch(() => setCompanies([]))
+            .finally(() => setCompaniesLoading(false));
+    }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -71,28 +88,38 @@ export default function GlobalSupportPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setSubmitError(null);
         setIsLoading(true);
-
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        console.log("Support Request Submitted:", {
-            subject: formData.subject === "other" ? formData.customSubject : formData.subject,
-            brief: formData.brief,
-            attachments: attachments.map(f => f.name),
-            submittedAt: new Date().toISOString()
-        });
-
-        setIsLoading(false);
-        setIsSubmitted(true);
+        const subject = formData.subject === "other" ? formData.customSubject : formData.subject;
+        if (!subject?.trim()) {
+            setIsLoading(false);
+            return;
+        }
+        try {
+            await createSupportRequest(
+                {
+                    subject: subject.trim(),
+                    description: formData.brief?.trim() || undefined,
+                    companyId: formData.companyId?.trim() || undefined,
+                },
+                attachments.length > 0 ? attachments : undefined
+            );
+            setIsSubmitted(true);
+        } catch (err: any) {
+            setSubmitError(err?.message ?? "Failed to submit support request");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleReset = () => {
         setIsSubmitted(false);
+        setSubmitError(null);
         setFormData({
             subject: "",
             customSubject: "",
-            brief: ""
+            brief: "",
+            companyId: "",
         });
         setAttachments([]);
     };
@@ -118,13 +145,24 @@ export default function GlobalSupportPage() {
                             Your support request has been received. <br />
                             Our team will review the details and get back to you shortly.
                         </p>
-                        <Button 
-                            variant="default" 
-                            className="bg-slate-900 hover:bg-black text-white px-8 h-12 rounded-xl transition-all active:scale-95"
-                            onClick={handleReset}
-                        >
-                            Send Another Request
-                        </Button>
+                        <div className="flex flex-wrap gap-3 justify-center">
+                            <Button
+                                variant="default"
+                                className="bg-slate-900 hover:bg-black text-white px-8 h-12 rounded-xl transition-all active:scale-95"
+                                onClick={handleReset}
+                            >
+                                Send Another Request
+                            </Button>
+                            <Link href="/global-dashboard/support/tickets">
+                                <Button
+                                    variant="outline"
+                                    className="border-slate-300 text-slate-700 px-8 h-12 rounded-xl"
+                                >
+                                    <ListChecks className="w-4 h-4 mr-2" />
+                                    My Requests
+                                </Button>
+                            </Link>
+                        </div>
                     </DashboardCard>
                 </div>
             </div>
@@ -137,6 +175,14 @@ export default function GlobalSupportPage() {
                 title="Support"
                 subtitle="Get assistance and help from our team."
                 icon={HelpCircle}
+                actions={
+                    <Link href="/global-dashboard/support/tickets">
+                        <Button variant="outline" className="border-slate-200 text-slate-700">
+                            <ListChecks className="w-4 h-4 mr-2" />
+                            View my requests
+                        </Button>
+                    </Link>
+                }
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -195,7 +241,51 @@ export default function GlobalSupportPage() {
                                     }))}
                                     fullWidth
                                 />
-                                {formData.subject === "other" && (
+                            </div>
+
+                            {/* Company (optional) */}
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold uppercase tracking-widest text-slate-400 px-1">
+                                    Company (optional)
+                                </label>
+                                <Dropdown
+                                    className="w-full"
+                                    label={
+                                        companiesLoading
+                                            ? "Loading..."
+                                            : formData.companyId
+                                                ? companies.find(c => c.id === formData.companyId)?.name ?? "Select company"
+                                                : "Select company"
+                                    }
+                                    trigger={
+                                        <button
+                                            type="button"
+                                            className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center justify-between hover:border-slate-300 transition-all font-medium text-slate-700"
+                                        >
+                                            <span>
+                                                {companiesLoading
+                                                    ? "Loading..."
+                                                    : formData.companyId
+                                                        ? companies.find(c => c.id === formData.companyId)?.name ?? "Select company"
+                                                        : "Select company"}
+                                            </span>
+                                            <ChevronDown className="w-4 h-4 opacity-50" />
+                                        </button>
+                                    }
+                                    items={[
+                                        { id: "", label: "None", onClick: () => setFormData(prev => ({ ...prev, companyId: "" })) },
+                                        ...companies.map(c => ({
+                                            id: c.id,
+                                            label: c.name,
+                                            onClick: () => setFormData(prev => ({ ...prev, companyId: c.id }))
+                                        }))
+                                    ]}
+                                    fullWidth
+                                />
+                            </div>
+
+                            {formData.subject === "other" && (
+                                <div className="space-y-3">
                                     <Input 
                                         className="h-12 px-4 rounded-xl bg-slate-50/50 border-slate-200 focus:ring-slate-900/5 focus:border-slate-300 animate-in slide-in-from-top-2" 
                                         placeholder="Please specify the subject"
@@ -203,8 +293,8 @@ export default function GlobalSupportPage() {
                                         value={formData.customSubject}
                                         onChange={(e) => setFormData(prev => ({ ...prev, customSubject: e.target.value }))}
                                     />
-                                )}
-                            </div>
+                                </div>
+                            )}
 
                             {/* Brief */}
                             <div className="space-y-2">
@@ -219,6 +309,10 @@ export default function GlobalSupportPage() {
                                     onChange={(e) => setFormData(prev => ({ ...prev, brief: e.target.value }))}
                                 />
                             </div>
+
+                            {submitError && (
+                                <p className="text-sm text-red-600 bg-red-50 px-4 py-2 rounded-xl">{submitError}</p>
+                            )}
 
                             {/* Attachments */}
                             <div className="space-y-2">
