@@ -123,22 +123,6 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                     </a>
                   </Button>
                 )}
-                {group.children && group.children.some((item) => item.file?.url) && onDownloadMultipleGroup && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      const uploadedItems = group.children!.filter((item) => item.file?.url);
-                      onDownloadMultipleGroup(requestId, group.id, group.documentName, uploadedItems);
-                    }}
-                    className="border-green-300 hover:bg-green-50 hover:text-green-800 text-green-700 h-8 px-3"
-                    title="Download All Files"
-                    disabled={isDisabled}
-                  >
-                    <Download className="h-4 w-4 mr-1" />
-                    <span className="text-xs">Download All</span>
-                  </Button>
-                )}
               </div>
             </div>
           

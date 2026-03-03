@@ -18,8 +18,7 @@ import { TableSkeleton } from "../shared/CommonSkeletons";
 import { Card, CardContent } from '@/components/ui/card2'
 import { Badge } from '@/components/ui/badge'
 import { Button } from "@/components/ui/button"
-import { SuccessModal } from '@/components/ui/SuccessModal'
-import { ClearReasonModal } from '@/components/ui/ClearReasonModal'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useDocumentRequests } from './hooks/useDocumentRequests'
 import { useEngagement } from './hooks/useEngagement'
 import { uploadDocumentRequestFile, clearDocumentRequestFile } from '@/api/documentRequestService'
@@ -28,6 +27,8 @@ import DocumentRequestDouble from '../company/kyc/DoubleDocumentRequest'
 import { cn } from '@/lib/utils'
 import EmptyState from '../shared/EmptyState'
 import BulkUploadZone from './BulkUploadZone'
+import { SuccessModal } from '../ui/SuccessModal'
+import { ClearReasonModal } from '../ui/ClearReasonModal'
 
 type UploadingState = { requestId: string; documentId: string }
 
@@ -35,11 +36,12 @@ type ClearAction = (reason: string) => Promise<void>
 
 const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
   const [expandedRequests, setExpandedRequests] = useState<Set<string>>(new Set())
-  const [uploadMode, setUploadMode] = useState<Record<string, 'single' | 'bulk'>>({})
+  const [requestTabs, setRequestTabs] = useState<Record<string, string>>({})
   const [uploadingState, setUploadingState] = useState<UploadingState | null>(null)
   const [uploadSuccessOpen, setUploadSuccessOpen] = useState(false)
   const [clearSuccessOpen, setClearSuccessOpen] = useState(false)
   const [clearModal, setClearModal] = useState<{ isOpen: boolean; onConfirm: ClearAction; title?: string; message?: string } | null>(null)
+  
   const { engagement } = useEngagement()
   const { documentRequests, loading, error, refetch } = useDocumentRequests(
     (engagement as any)?._id ?? (engagement as any)?.id ?? null
@@ -77,6 +79,9 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
         const targetRequestId = targetRequest.id ?? targetRequest._id;
         setExpandedRequests(prev => new Set(prev).add(targetRequestId));
         
+        // Ensure the "Single Request" tab is selected so the target item is visible
+        setRequestTabs(prev => ({ ...prev, [targetRequestId]: 'single' }));
+        
         // Wait for expansion animation/render
         setTimeout(() => {
           const element = document.getElementById(scrollToId);
@@ -105,9 +110,7 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
     setExpandedRequests(newSet)
   }
 
-  const toggleUploadMode = (requestId: string, mode: 'single' | 'bulk') => {
-    setUploadMode(prev => ({ ...prev, [requestId]: mode }))
-  }
+  // Removed toggleGlobalBulkMode
 
 
   const handleUpload = async (requestId: string, documentId: string, file: File) => {
@@ -260,6 +263,7 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
   }
 
   const visibleRequests = (documentRequests || []).filter(r => r.status?.toUpperCase() !== 'DRAFT');
+  const requestCount = visibleRequests.length;
 
   if (visibleRequests.length === 0) {
     return (
@@ -273,15 +277,12 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
 
   return (
     <div className="space-y-3 animate-in fade-in duration-700">
-      <div className="flex items-center justify-between bg-white/40 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md mb-5">
-        <div>
-          <h2 className="text-3xl font-semibold">Document Requests</h2>
-          <p className="text-sm text-gray-500 mt-1 font-medium">Manage document requests and track progress</p>
+        <div className="flex items-center justify-between bg-white/40 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md mb-5 p-6">
+          <div>
+            <h2 className="text-3xl font-semibold">Document Requests</h2>
+            <p className="text-sm text-gray-500 mt-1 font-medium">Manage document requests and track progress</p>
+          </div>
         </div>
-        {/* <div className="p-4 bg-linear-to-br from-amber-500 to-orange-600 rounded-2xl text-white shadow-lg shadow-orange-200">
-          <ClipboardList size={32} />
-        </div> */}
-      </div>
 
       <div className="space-y-4">
         {visibleRequests.map((request) => {
@@ -290,7 +291,11 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
           
           const singleDocs = (request.documents || []) as any[]
           const multipleGroups = (request.multipleDocuments || []) as any[]
-          const isUploaded = (d: any) => !!(d?.url ?? d?.file?.url ?? d?.fileId)
+          const isUploaded = (d: any) => {
+            const hasFile = !!(d?.file?.url ?? d?.fileId ?? d?.uploadedFileName);
+            const isCompleted = ['UPLOADED', 'ACCEPTED', 'SUBMITTED', 'COMPLETED'].includes(d?.status?.toUpperCase());
+            return hasFile || isCompleted;
+          };
           
           const totalDocs = singleDocs.length + multipleGroups.reduce((acc, md) => acc + (md.multiple?.length || 0), 0)
           const uploadedDocsCount = singleDocs.filter(isUploaded).length + 
@@ -377,17 +382,6 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
                     </div>
 
                     <div className="flex flex-col items-end gap-2">
-                      {uploadedDocsCount > 0 && (request.status?.toUpperCase() !== 'COMPLETED') && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleClearAllForRequest(requestIdVal)}
-                          className="rounded-xl border-amber-200 text-amber-700 hover:bg-amber-50 h-9 px-4"
-                        >
-                          <Eraser className="h-4 w-4 mr-2" />
-                          Clear All Uploaded
-                        </Button>
-                      )}
                       <Button 
                         variant="outline" 
                         size="sm" 
@@ -402,75 +396,27 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
                 </div>
 
                 {isExpanded && (
-                  <div className="bg-gray-50/50 border-t border-gray-100 p-6 animate-in slide-in-from-top-2 duration-300">
-                    <div className="flex items-center justify-between mb-6">
-                      {(request.status?.toUpperCase() !== 'COMPLETED') && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => toggleUploadMode(requestIdVal, uploadMode[requestIdVal] === 'bulk' ? 'single' : 'bulk')}
-                          className={cn(
-                            "rounded-xl px-5 h-9 text-xs font-bold flex items-center gap-2 transition-all border-orange-200",
-                            uploadMode[requestIdVal] === 'bulk'
-                              ? "bg-orange-600 text-white border-orange-600 shadow-md shadow-orange-100 hover:bg-orange-700"
-                              : "bg-white text-orange-600 hover:bg-orange-50 hover:text-orange-700"
-                          )}
-                        >
-                          <Layers size={16} />
-                          {uploadMode[requestIdVal] === 'bulk' ? 'Exit Bulk Upload' : 'Bulk Upload'}
-                        </Button>
-                      )}
-                      <span className="text-[10px] text-gray-400 italic font-medium">
-                        {uploadMode[requestIdVal] === 'bulk' 
-                          ? 'Upload multiple files and match automatically' 
-                          : 'Click "Bulk Upload" to submit multiple documents at once'}
-                      </span>
-                    </div>
-
-                    {(uploadMode[requestIdVal] || 'single') === 'single' ? (
-                      <div className="space-y-6">
-                        <div className="mb-4 flex items-center justify-between">
-                          <h5 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Requested Items</h5>
-                          <span className="text-[10px] text-gray-400 italic">Submit supporting evidence for this category</span>
-                        </div>
-                        {singleDocs.length === 0 && multipleGroups.length === 0 ? (
-                          <div className="text-center py-4 text-gray-500 text-sm bg-white rounded-lg">
-                            No documents in this request yet
-                          </div>
-                        ) : (
-                          <>
-                            <DocumentRequestSingle 
-                              requestId={requestIdVal}
-                              documents={singleDocs}
-                              onUpload={handleUpload}
-                              onClearDocument={handleClear}
-                              uploadingDocument={
-                                uploadingState?.documentId
-                                  ? { documentId: uploadingState.documentId }
-                                  : undefined
-                              }
-                              isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
-                            />
-
-                            <DocumentRequestDouble 
-                              requestId={requestIdVal}
-                              multipleDocuments={multipleGroups}
-                              onUploadMultiple={handleUploadMultiple}
-                              onClearMultipleItem={handleClearMultipleItem}
-                              onClearMultipleGroup={handleClearMultipleGroup}
-                              onDownloadMultipleGroup={handleDownloadMultipleGroup}
-                              uploadingState={
-                                uploadingState?.documentId
-                                  ? { documentId: uploadingState.documentId }
-                                  : undefined
-                              }
-                              isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
-                            />
-                          </>
-                        )}
+                  <div className="bg-gray-50/50 border-t border-gray-100 p-0 animate-in slide-in-from-top-2 duration-300">
+                    <Tabs 
+                      value={requestTabs[requestIdVal] || 'bulk'} 
+                      onValueChange={(val) => setRequestTabs(prev => ({ ...prev, [requestIdVal]: val }))}
+                      className="w-full"
+                    >
+                      <div className="px-6 py-3 bg-white/50 border-b border-gray-100 flex items-center justify-between">
+                        <TabsList className="bg-gray-100/80 p-1 rounded-xl">
+                          <TabsTrigger value="bulk" className="rounded-lg px-4 text-xs font-bold data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
+                            Bulk Upload
+                          </TabsTrigger>
+                          <TabsTrigger value="single" className="rounded-lg px-4 text-xs font-bold data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
+                            Single Request
+                          </TabsTrigger>
+                        </TabsList>
+                        <span className="text-[10px] text-gray-400 italic font-medium">
+                          Switch between bulk matching and individual submission
+                        </span>
                       </div>
-                    ) : (
-                      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+
+                      <TabsContent value="bulk" className="p-6 m-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
                         <BulkUploadZone 
                           requestId={requestIdVal}
                           onSuccess={async () => {
@@ -480,13 +426,58 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
                           onClear={handleClear}
                           isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
                           documents={[
-                            ...singleDocs.map(d => ({ ...d, type: 'single' })),
-                            ...multipleGroups.flatMap(g => (g.multiple || []).map((m: any) => ({ ...m, type: 'multiple', groupId: g._id })))
+                            ...singleDocs.map(d => ({ ...d, requestId: requestIdVal })),
+                            ...multipleGroups.map(g => ({ ...g, requestId: requestIdVal, count: 'MULTIPLE' }))
                           ]}
+                          isGlobal={false}
                         />
-                      </div>
-                    )}
-                    </div>
+                      </TabsContent>
+
+                      <TabsContent value="single" className="p-6 m-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <div className="space-y-6">
+                          <div className="mb-4 flex items-center justify-between">
+                            <h5 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Requested Items</h5>
+                            <span className="text-[10px] text-gray-400 italic font-medium">Submit supporting evidence for this category</span>
+                          </div>
+                          {singleDocs.length === 0 && multipleGroups.length === 0 ? (
+                            <div className="text-center py-4 text-gray-500 text-sm bg-white rounded-lg">
+                              No documents in this request yet
+                            </div>
+                          ) : (
+                            <>
+                              <DocumentRequestSingle 
+                                requestId={requestIdVal}
+                                documents={singleDocs}
+                                onUpload={handleUpload}
+                                onClearDocument={handleClear}
+                                uploadingDocument={
+                                  uploadingState?.documentId
+                                    ? { documentId: uploadingState.documentId }
+                                    : undefined
+                                }
+                                isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
+                              />
+
+                              <DocumentRequestDouble 
+                                requestId={requestIdVal}
+                                multipleDocuments={multipleGroups}
+                                onUploadMultiple={handleUploadMultiple}
+                                onClearMultipleItem={handleClearMultipleItem}
+                                onClearMultipleGroup={handleClearMultipleGroup}
+                                onDownloadMultipleGroup={handleDownloadMultipleGroup}
+                                uploadingState={
+                                  uploadingState?.documentId
+                                    ? { documentId: uploadingState.documentId }
+                                    : undefined
+                                }
+                                isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
+                              />
+                            </>
+                          )}
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
                 )}
               </CardContent>
             </Card>
