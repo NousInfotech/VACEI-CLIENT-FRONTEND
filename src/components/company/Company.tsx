@@ -86,7 +86,7 @@ const Company = ({ defaultTab = 'incorporation' }: CompanyProps) => {
 
   if (!data) {
     return (
-      <div className="p-4 max-w-7xl mx-auto space-y-6">
+      <div className="mx-auto space-y-6">
         <BackButton />
         <EmptyState 
           icon={AlertCircle}

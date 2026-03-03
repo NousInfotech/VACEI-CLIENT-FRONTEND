@@ -924,7 +924,7 @@ export default function DashboardPage() {
               animate={false}
               className="p-6"
             />
-            <div className="grid grid-cols-1 gap-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="grid grid-cols-1 gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
               {activeServices.length > 0 ? (
                 activeServices.map((service, idx) => {
                   const getIcon = (category: string) => {

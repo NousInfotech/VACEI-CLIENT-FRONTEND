@@ -264,6 +264,12 @@ export default function ServicesHubPage() {
         description="Manage your services in one centralized location with real-time status tracking."
         actions={
           <div className="flex flex-wrap gap-3">
+            <Link href="/dashboard/services/request/history">
+              <Button variant="outline" className="bg-white text-primary flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                View Request
+              </Button>
+            </Link>
             <Link href="/dashboard/services/request">
               <Button variant="outline" className="bg-light text-primary-color-new">
                 <Plus className="w-4 h-4" />
