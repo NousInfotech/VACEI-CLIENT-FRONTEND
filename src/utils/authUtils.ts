@@ -49,6 +49,8 @@ export function getDecodedUserId(): string | null {
   return raw;
 }
 
+import { clearAuthStorage } from '@/lib/authRefresh';
+
 /**
  * Utility function to handle authentication errors and redirect to login
  * This prevents page flash by handling 401 errors consistently
@@ -62,20 +64,8 @@ export function handleAuthError(error: any, router: any): void {
     error?.status === 401 ||
     error?.status === 403;
 
-  if (isAuthError) {
-    // Clear auth data
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('email');
-      localStorage.removeItem('user_id');
-      localStorage.removeItem('username');
-
-      // Clear cookie
-      document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax';
-      document.cookie = 'client-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=None; Secure';
-    }
-
-    // Redirect to login
+  if (isAuthError && typeof window !== 'undefined') {
+    clearAuthStorage();
     router.push('/login?message=' + encodeURIComponent('Session expired. Please login again.'));
   }
 }

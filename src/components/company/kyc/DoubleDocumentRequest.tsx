@@ -224,7 +224,6 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                                 onClick={() => window.open(itemUrl!, "_blank")}
                                 className="border-blue-300 hover:bg-blue-50 hover:text-blue-800 text-blue-700 h-8 w-8 p-0"
                                 title="View Document"
-                                disabled={isDisabled}
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
@@ -234,7 +233,6 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                                 onClick={() => downloadFile(itemUrl!, item.file?.file_name || item.documentName)}
                                 className="border-green-300 hover:bg-green-50 hover:text-green-800 text-green-700 h-8 w-8 p-0"
                                 title="Download Uploaded Document"
-                                disabled={isDisabled}
                               >
                                 <Download className="h-4 w-4" />
                               </Button>
@@ -260,14 +258,13 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                               variant="outline"
                               className="border-amber-300 hover:bg-amber-50 hover:text-amber-700 text-amber-700"
                               title="Download Template"
-                              disabled={isDisabled}
                               asChild
                             >
                               <a
                                 href={templateUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`inline-flex items-center gap-1 text-sm ${isDisabled ? 'pointer-events-none opacity-50' : ''}`}
+                                className="inline-flex items-center gap-1 text-sm"
                               >
                                 <FileIcon className="h-4 w-4"/>
                               </a>

@@ -215,7 +215,6 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
                     onClick={() => window.open(docUrl!, "_blank")}
                     className="border-blue-300 hover:bg-blue-50 hover:text-blue-800 text-blue-700 h-8 w-8 p-0"
                     title="View Document"
-                    disabled={isDisabled}
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
@@ -225,7 +224,6 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
                     onClick={() => downloadFile(docUrl!, doc.file?.file_name || doc.documentName)}
                     className="border-green-300 hover:bg-green-50 hover:text-green-800 text-green-700 h-8 w-8 p-0"
                     title="Download Document"
-                    disabled={isDisabled}
                   >
                     <Download className="h-4 w-4" />
                   </Button>
@@ -253,14 +251,13 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
                   variant="outline"
                   className="border-amber-300 text-amber-700 hover:bg-amber-700/20 hover:text-amber-700"
                   title="View Template"
-                  disabled={isDisabled}
                   asChild
                 >
                   <a
                     href={templateFileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`inline-flex items-center h-8 w-8 p-0 ${isDisabled ? 'pointer-events-none opacity-50' : ''}`}
+                    className="inline-flex items-center h-8 w-8 p-0"
                   >  
                     <span><FileIcon className="h-4 w-4"/></span>
                   </a>

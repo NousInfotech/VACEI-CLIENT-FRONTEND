@@ -123,6 +123,7 @@ interface LoginResponse {
   client?: any | null;
   organizationMember?: any | null;
   token?: string;
+  refreshToken?: string;
 }
 
 /**
@@ -146,6 +147,7 @@ interface LoginPayload {
  */
 interface TransformedLoginResponse {
   token: string;
+  refreshToken?: string;
   username: string;
   user_id: string;
   user: User;
@@ -189,6 +191,7 @@ export async function login({ email, password }: LoginPayload): Promise<Transfor
     // Transform response to match frontend expectations
     return {
       token,
+      refreshToken: loginData.refreshToken,
       username: `${user.firstName || ''} ${user.lastName || ''}`.trim() || email.split("@")[0],
       user_id: user.id,
       user,

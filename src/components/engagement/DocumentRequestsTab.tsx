@@ -377,7 +377,7 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
                     </div>
 
                     <div className="flex flex-col items-end gap-2">
-                      {uploadedDocsCount > 0 && (
+                      {uploadedDocsCount > 0 && (request.status?.toUpperCase() !== 'COMPLETED') && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -404,20 +404,22 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
                 {isExpanded && (
                   <div className="bg-gray-50/50 border-t border-gray-100 p-6 animate-in slide-in-from-top-2 duration-300">
                     <div className="flex items-center justify-between mb-6">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => toggleUploadMode(requestIdVal, uploadMode[requestIdVal] === 'bulk' ? 'single' : 'bulk')}
-                        className={cn(
-                          "rounded-xl px-5 h-9 text-xs font-bold flex items-center gap-2 transition-all border-orange-200",
-                          uploadMode[requestIdVal] === 'bulk'
-                            ? "bg-orange-600 text-white border-orange-600 shadow-md shadow-orange-100 hover:bg-orange-700"
-                            : "bg-white text-orange-600 hover:bg-orange-50 hover:text-orange-700"
-                        )}
-                      >
-                        <Layers size={16} />
-                        {uploadMode[requestIdVal] === 'bulk' ? 'Exit Bulk Upload' : 'Bulk Upload'}
-                      </Button>
+                      {(request.status?.toUpperCase() !== 'COMPLETED') && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => toggleUploadMode(requestIdVal, uploadMode[requestIdVal] === 'bulk' ? 'single' : 'bulk')}
+                          className={cn(
+                            "rounded-xl px-5 h-9 text-xs font-bold flex items-center gap-2 transition-all border-orange-200",
+                            uploadMode[requestIdVal] === 'bulk'
+                              ? "bg-orange-600 text-white border-orange-600 shadow-md shadow-orange-100 hover:bg-orange-700"
+                              : "bg-white text-orange-600 hover:bg-orange-50 hover:text-orange-700"
+                          )}
+                        >
+                          <Layers size={16} />
+                          {uploadMode[requestIdVal] === 'bulk' ? 'Exit Bulk Upload' : 'Bulk Upload'}
+                        </Button>
+                      )}
                       <span className="text-[10px] text-gray-400 italic font-medium">
                         {uploadMode[requestIdVal] === 'bulk' 
                           ? 'Upload multiple files and match automatically' 
@@ -447,7 +449,7 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
                                   ? { documentId: uploadingState.documentId }
                                   : undefined
                               }
-                              isDisabled={request.status === 'REJECTED'}
+                              isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
                             />
 
                             <DocumentRequestDouble 
@@ -462,7 +464,7 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
                                   ? { documentId: uploadingState.documentId }
                                   : undefined
                               }
-                              isDisabled={request.status === 'REJECTED'}
+                              isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
                             />
                           </>
                         )}
@@ -476,7 +478,7 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
                             setUploadSuccessOpen(true)
                           }}
                           onClear={handleClear}
-                          isDisabled={request.status === 'REJECTED'}
+                          isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
                           documents={[
                             ...singleDocs.map(d => ({ ...d, type: 'single' })),
                             ...multipleGroups.flatMap(g => (g.multiple || []).map((m: any) => ({ ...m, type: 'multiple', groupId: g._id })))

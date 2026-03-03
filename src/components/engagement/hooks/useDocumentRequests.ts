@@ -60,6 +60,8 @@ export const useDocumentRequests = (engagementId: string | null): UseDocumentReq
             const full = byId.get(id) ?? d
             const url = getUrl(full) ?? getUrl(d)
             const name = d.name ?? d.documentName
+            const rejectionReason = full?.rejectionReason ?? d?.rejectionReason
+            const status = full?.status ?? d?.status
             const children = d.children?.map((c: any) => {
               const cid = c.id ?? c._id
               const cfull = byId.get(cid) ?? c
@@ -71,9 +73,11 @@ export const useDocumentRequests = (engagementId: string | null): UseDocumentReq
                 label: c.documentName ?? c.label ?? c.name,
                 url: curl,
                 uploadedFileName: cfull?.file?.file_name ?? c?.file?.file_name,
+                rejectionReason: cfull?.rejectionReason ?? c?.rejectionReason,
+                status: cfull?.status ?? c?.status,
               }
             })
-            return { ...d, id, _id: id, name, url, uploadedFileName: full?.file?.file_name ?? full?.file_name ?? d?.file?.file_name, children }
+            return { ...d, id, _id: id, name, url, uploadedFileName: full?.file?.file_name ?? full?.file_name ?? d?.file?.file_name, rejectionReason, status, children }
           }
           const merged = docs.map(merge)
           const singleDocs = merged.filter((d: any) => d.count !== 'MULTIPLE')

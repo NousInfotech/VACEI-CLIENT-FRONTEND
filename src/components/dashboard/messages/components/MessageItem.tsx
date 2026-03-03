@@ -185,7 +185,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             </div>
           </div>
         ) : message.isDeleted ? (
-          <div className="flex items-center gap-2 py-1 select-none italic opacity-60">
+          <div className="flex items-center gap-2 py-1 pr-14 select-none italic opacity-60">
             <span className="text-gray-400">🚫</span>
             <p className="text-[13.5px]">
               {isMe ? "(your message was deleted)" : "(message was deleted)"}

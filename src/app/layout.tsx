@@ -4,6 +4,7 @@ import { Poppins } from 'next/font/google'
 import "@flaticon/flaticon-uicons/css/all/all.css";
 import "@flaticon/flaticon-uicons/css/brands/all.css";
 import { AlertProvider } from "./context/AlertContext";
+import AuthRefreshInit from "./components/AuthRefreshInit";
 import "./globals.css";
 
 
@@ -28,7 +29,10 @@ export default function RootLayout({
     return (
         <html lang="en" className={poppins.variable}>
             <body className={poppins.className} style={{ position: "relative", minHeight: "100vh" }}>
-                <AlertProvider>   {children}</AlertProvider>
+                <AlertProvider>
+                <AuthRefreshInit />
+                {children}
+            </AlertProvider>
             </body>
         </html>
     );

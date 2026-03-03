@@ -27,6 +27,7 @@ export default function LoginForm() {
         if (message) {
             // Clear only auth-related items, preserve onboarding data
             localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
             localStorage.removeItem('username');
             localStorage.removeItem('email');
             localStorage.removeItem('user_id');
@@ -97,8 +98,11 @@ export default function LoginForm() {
                 throw new Error("No authentication token received. Please contact support.");
             }
             
-            // Store auth token and user info
+            // Store auth token, refresh token, and user info
             localStorage.setItem("token", token);
+            if (loginData.refreshToken) {
+                localStorage.setItem("refreshToken", loginData.refreshToken);
+            }
             localStorage.setItem("username", btoa(`${user?.firstName || ''} ${user?.lastName || ''}`));
             localStorage.setItem("email", btoa(email));
             localStorage.setItem("user_id", btoa(user?.id || ''));
