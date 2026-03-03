@@ -680,6 +680,7 @@ export default function DashboardPage() {
       PROJECTS_TRANSACTIONS: "project-transactions",
       ADVISORY: "business-plans",
       GRANTS_AND_INCENTIVES: "grants-incentives",
+      LIQUIDATION: "liquidation",
     };
     const slug = serviceSlugMap[e.serviceCategory] || e.serviceCategory.toLowerCase();
 

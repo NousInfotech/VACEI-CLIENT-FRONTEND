@@ -40,6 +40,7 @@ const SLUG_TO_SERVICE_TYPE: Record<string, string> = {
   'technology': 'TECHNOLOGY',
   'project-transactions': 'PROJECTS_TRANSACTIONS',
   'grants-incentives': 'GRANTS_AND_INCENTIVES',
+  'liquidation': 'LIQUIDATION',
   'custom': 'CUSTOM'
 };
 

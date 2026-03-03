@@ -44,6 +44,7 @@ export type ServiceCategory =
   | "INCORPORATION"
   | "MBR"
   | "TAX"
+  | "LIQUIDATION"
   | "CUSTOM";
 
 export interface ComplianceCalendarCompany {

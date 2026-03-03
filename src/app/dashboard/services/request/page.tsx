@@ -28,6 +28,7 @@ type ServiceCode =
   | "INCORPORATION"
   | "MBR"
   | "TAX"
+  | "LIQUIDATION"
   | "ADVISORY"
   | "CUSTOM";
 
@@ -45,6 +46,7 @@ const serviceLabels: Record<ServiceCode, string> = {
   MBR: "MBR",
   CFO: "CFO",
   TAX: "TAX",
+  LIQUIDATION: "Liquidation",
   ADVISORY: "Advisory",
   CUSTOM: "Custom",
 };

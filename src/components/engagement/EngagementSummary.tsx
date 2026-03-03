@@ -3832,7 +3832,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
             )}
 
             {/* Corporate Services: Active Corporate Services */}
-            {serviceName === "Corporate Services" && (
+            {/* {serviceName === "Corporate Services" && (
               <DashboardCard className="p-6">
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
@@ -3952,7 +3952,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                   </div>
                 </div>
               </DashboardCard>
-            )}
+            )} */}
 
             {/* Payroll: Employees Overview */}
             {serviceName === "Payroll" && (
@@ -4044,7 +4044,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
             )}
 
             {/* CFO: Overview, Engagements, Activity */}
-            {serviceName === "CFO Services" && (
+            {/* {serviceName === "CFO Services" && (
               <>
                 <DashboardCard className="p-6">
                   <div className="space-y-4">
@@ -4219,7 +4219,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                   </div>
                 </DashboardCard>
               </>
-            )}
+            )} */}
 
             {/* MBR Filing: period, status, requirements, filings table */}
             {serviceName === "MBR Filing" && (
