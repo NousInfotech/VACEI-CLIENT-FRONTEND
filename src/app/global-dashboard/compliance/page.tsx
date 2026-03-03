@@ -39,6 +39,10 @@ interface ComplianceItem {
   authority: string
   description: string
   cta: string
+  engagementId: string
+  apiStatus: string
+  serviceCategory: string
+  canMarkDone?: boolean
 }
 
 function mapApiToComplianceItem(c: ComplianceCalendarEntry): ComplianceItem {
@@ -69,6 +73,10 @@ function mapApiToComplianceItem(c: ComplianceCalendarEntry): ComplianceItem {
     authority: c.customServiceCycle?.title || c.serviceCategory,
     description: c.description || '',
     cta: 'Mark as done',
+    engagementId: '',
+    apiStatus: '',
+    serviceCategory: c.serviceCategory,
+    canMarkDone: false,
   }
 }
 

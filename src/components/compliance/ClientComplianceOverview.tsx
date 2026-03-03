@@ -428,10 +428,17 @@ export default function ClientComplianceOverview() {
               items={allItems.map((i) => ({
                 id: i.id,
                 complianceId: i.complianceId,
+                engagementId: i.companyId || "",
                 title: i.title,
-                status: i.status,
+                type: i.type,
                 dueDate: i.dueDate,
+                status: i.status,
                 authority: i.authority,
+                description: i.description,
+                cta: i.cta,
+                apiStatus: "",
+                serviceCategory: "",
+                canMarkDone: false,
               }))}
             />
           )}

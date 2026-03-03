@@ -2723,24 +2723,38 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       )}
                     </div>
 
-                    {engagementData?.status && (
-                      <div className="space-y-1">
-                        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
-                          Current Cycle Status
-                        </p>
-                        <Badge
-                          className={cn(
-                            "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit",
-                            engagementData.status === "COMPLETED" ? "border-emerald-500/20 text-emerald-600" :
-                              engagementData.status === "ACTIVE" ? "border-blue-500/20 text-blue-600" :
-                                (engagementData.status === "CANCELLED" || engagementData.status === "TERMINATED") ? "border-red-500/20 text-red-600" :
-                                  "border-gray-500/20 text-gray-600"
-                          )}
-                        >
-                          {engagementData.status.replaceAll("_", " ")}
-                        </Badge>
-                      </div>
-                    )}
+                    {(() => {
+                      const cycleStatus = engagementData?.accountingCycle?.status ||
+                                          engagementData?.auditCycle?.status ||
+                                          engagementData?.vatCycle?.status ||
+                                          engagementData?.payrollCycle?.status ||
+                                          engagementData?.cfoCycle?.status ||
+                                          engagementData?.cspCycle?.status ||
+                                          engagementData?.taxCycle?.status ||
+                                          engagementData?.mbrCycle?.status;
+                      
+                      if (!cycleStatus) return null;
+
+                      return (
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                            Current Cycle Status
+                          </p>
+                          <Badge
+                            className={cn(
+                              "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit",
+                              cycleStatus === "COMPLETED" ? "border-emerald-500/20 text-emerald-600" :
+                                cycleStatus === "IN_PROGRESS" || cycleStatus === "ACTIVE" ? "border-blue-500/20 text-blue-600" :
+                                  (cycleStatus === "CANCELLED" || cycleStatus === "TERMINATED" || cycleStatus === "REJECTED") ? "border-red-500/20 text-red-600" :
+                                    "border-gray-500/20 text-gray-600"
+                            )}
+                          >
+                            {cycleStatus.replaceAll("_", " ")}
+                          </Badge>
+                        </div>
+                      );
+                    })()}
+
 
                     <div className="space-y-1">
                       <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
