@@ -2689,7 +2689,10 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
               <>
                 {/* SECTION 1: Service Overview Summary */}
                 <DashboardCard className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className={cn(
+                    "grid grid-cols-1 gap-4",
+                    engagementData?.status ? "md:grid-cols-5" : "md:grid-cols-4"
+                  )}>
                     <div className="space-y-1">
                       <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
                         Current Period
@@ -2719,6 +2722,26 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                         </Badge>
                       )}
                     </div>
+
+                    {engagementData?.status && (
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
+                          Current Cycle Status
+                        </p>
+                        <Badge
+                          className={cn(
+                            "rounded-0 border px-2 py-0.5 text-xs font-semibold uppercase tracking-widest bg-transparent w-fit",
+                            engagementData.status === "COMPLETED" ? "border-emerald-500/20 text-emerald-600" :
+                              engagementData.status === "ACTIVE" ? "border-blue-500/20 text-blue-600" :
+                                (engagementData.status === "CANCELLED" || engagementData.status === "TERMINATED") ? "border-red-500/20 text-red-600" :
+                                  "border-gray-500/20 text-gray-600"
+                          )}
+                        >
+                          {engagementData.status.replaceAll("_", " ")}
+                        </Badge>
+                      </div>
+                    )}
+
                     <div className="space-y-1">
                       <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
                         Last Update
