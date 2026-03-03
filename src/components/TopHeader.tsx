@@ -508,17 +508,26 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                     <div className="flex flex-col max-h-[480px]">
                         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest">Latest Notifications</h3>
-                            {unreadCount > 0 ? (
-                                <button
-                                    type="button"
-                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleMarkAllAsReadFromDropdown(); }}
-                                    className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest"
+                            <div className="flex items-center gap-3">
+                                <Link
+                                    href="/dashboard/notifications"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-[10px] font-bold text-muted-foreground hover:text-primary uppercase tracking-widest"
                                 >
-                                    Mark all as read
-                                </button>
-                            ) : (
-                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">All read</span>
-                            )}
+                                    View more
+                                </Link>
+                                {unreadCount > 0 ? (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleMarkAllAsReadFromDropdown(); }}
+                                        className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest"
+                                    >
+                                        Mark all as read
+                                    </button>
+                                ) : (
+                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">All read</span>
+                                )}
+                            </div>
                         </div>
                         <div className="p-3 overflow-y-auto">
                             {latestNotifications.length > 0 ? (
