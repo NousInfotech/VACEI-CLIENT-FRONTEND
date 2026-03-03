@@ -24,13 +24,10 @@ interface ChatWindowProps {
   scrollToMessageId?: string;
   onScrollComplete?: () => void;
   onReplyMessage: (message: Message) => void;
-  onEditMessage: (message: Message) => void;
   onDeleteMessage: (messageId: string) => void;
   onForwardMessage: (message: Message) => void;
   replyingTo: Message | null;
-  editingMessage: Message | null;
   onCancelReply: () => void;
-  onCancelEdit: () => void;
   isSelectMode: boolean;
   selectedMessageIds: string[];
   onSelectMessage: (messageId: string) => void;
@@ -70,13 +67,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   scrollToMessageId,
   onScrollComplete,
   onReplyMessage,
-  onEditMessage,
   onDeleteMessage,
   onForwardMessage,
   replyingTo,
-  editingMessage,
   onCancelReply,
-  onCancelEdit,
   isSelectMode,
   selectedMessageIds,
   onSelectMessage,
@@ -198,7 +192,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     showSenderName={showSenderName}
                     onMediaClick={onMediaClick}
                     onReply={() => onReplyMessage(msg)}
-                    onEdit={() => onEditMessage(msg)}
                     onDelete={() => onDeleteMessage(msg.id)}
                     onForward={() => onForwardMessage(msg)}
                     isSelectMode={isSelectMode}
@@ -223,9 +216,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       <MessageInput
         onSendMessage={onSendMessage}
         replyingTo={replyingTo}
-        editingMessage={editingMessage}
         onCancelReply={onCancelReply}
-        onCancelEdit={onCancelEdit}
       />
     </div>
   );

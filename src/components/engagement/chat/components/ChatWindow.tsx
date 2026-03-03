@@ -29,9 +29,7 @@ interface ChatWindowProps {
   onReplyMessage?: (message: Message) => void;
   replyingTo?: Message | null;
   onCancelReply?: () => void;
-  onEditMessage?: (message: Message) => void;
   onDeleteMessage?: (messageId: string) => void;
-  onReactToMessage?: (messageId: string, emoji: string) => void;
   onForwardMessage?: (message: Message) => void;
 }
 
@@ -52,9 +50,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onReplyMessage = () => { },
   replyingTo: replyingToProp,
   onCancelReply: onCancelReplyProp,
-  onEditMessage = () => { },
   onDeleteMessage = () => { },
-  onReactToMessage = () => { },
   onForwardMessage = () => { }
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -106,13 +102,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     if (replyingToProp === undefined) setInternalReplyingTo(message);
     setEditingMessage(null); // Cancel editing if replying
     onReplyMessage(message);
-  };
-
-  const handleEdit = (message: Message) => {
-    setEditingMessage(message);
-    if (replyingToProp !== undefined && onCancelReplyProp) onCancelReplyProp();
-    else if (replyingToProp === undefined) setInternalReplyingTo(null);
-    onEditMessage(message);
   };
 
   const handleCancelReply = () => {
@@ -201,9 +190,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 showOptions={activeOptionsId === msg.id}
                 onToggleOptions={(show) => setActiveOptionsId(show ? msg.id : null)}
                 onReply={() => handleReply(msg)}
-                onEdit={() => handleEdit(msg)}
                 onDelete={() => onDeleteMessage(msg.id)}
-                onReact={(emoji) => onReactToMessage(msg.id, emoji)}
                 onForward={() => onForwardMessage(msg)}
                 isSelectMode={isSelectMode}
                 isSelected={selectedMessageIds.includes(msg.id)}

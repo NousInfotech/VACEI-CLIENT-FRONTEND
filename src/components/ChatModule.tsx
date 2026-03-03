@@ -267,14 +267,10 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
                             onSelectMessages={() => setIsSelectMode(true)}
                             onMediaClick={setPreviewMessage}
                             onReplyMessage={setReplyToMessage}
-                            onEditMessage={setEditingMessage}
                             onDeleteMessage={(id) => setConfirmState({ isOpen: true, type: 'message', messageId: id })}
-                            onReactToMessage={handleReactToMessage}
                             onForwardMessage={() => setForwardingMessages(activeChat.messages.filter(m => selectedMessageIds.includes(m.id)))}
                             replyingTo={replyToMessage}
-                            editingMessage={editingMessage}
                             onCancelReply={() => setReplyToMessage(null)}
-                            onCancelEdit={() => setEditingMessage(null)}
                             isSelectMode={isSelectMode}
                             selectedMessageIds={selectedMessageIds}
                             onSelectMessage={() => { }}
@@ -405,14 +401,10 @@ export default function ChatModule({ isEmbedded = false }: ChatModuleProps) {
                                 onSelectMessages={() => setIsSelectMode(true)}
                                 onMediaClick={setPreviewMessage}
                                 onReplyMessage={setReplyToMessage}
-                                onEditMessage={setEditingMessage}
                                 onDeleteMessage={(id) => setConfirmState({ isOpen: true, type: 'message', messageId: id })}
-                                onReactToMessage={handleReactToMessage}
                                 onForwardMessage={() => setForwardingMessages(activeChat.messages.filter(m => selectedMessageIds.includes(m.id)))}
                                 replyingTo={replyToMessage}
-                                editingMessage={editingMessage}
                                 onCancelReply={() => setReplyToMessage(null)}
-                                onCancelEdit={() => setEditingMessage(null)}
                                 isSelectMode={isSelectMode}
                                 selectedMessageIds={selectedMessageIds}
                                 onSelectMessage={() => { }}

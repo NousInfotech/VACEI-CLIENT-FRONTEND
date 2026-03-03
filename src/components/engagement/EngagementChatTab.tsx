@@ -114,7 +114,6 @@ export default function EngagementChatTab() {
   const [scrollToId, setScrollToId] = React.useState<string | undefined>();
   const [uploadProgress, setUploadProgress] = React.useState(0);
   const [replyingTo, setReplyingTo] = React.useState<Message | null>(null);
-  const [editingMessage, setEditingMessage] = React.useState<Message | null>(null);
   const [isSelectMode, setIsSelectMode] = React.useState(false);
   const [selectedMessageIds, setSelectedMessageIds] = React.useState<string[]>([]);
 
@@ -229,7 +228,6 @@ export default function EngagementChatTab() {
           scrollToMessageId={scrollToId}
           onScrollComplete={() => setScrollToId(undefined)}
           onReplyMessage={setReplyingTo}
-          onEditMessage={setEditingMessage}
           onDeleteMessage={async (msgId) => {
             if (window.confirm("Are you sure you want to delete this message?")) {
               try {
@@ -239,18 +237,9 @@ export default function EngagementChatTab() {
               }
             }
           }}
-          onReactToMessage={async (msgId, emoji) => {
-            try {
-              await chatService.addReaction(msgId, emoji);
-            } catch (err) {
-              console.error("Failed to add reaction:", err);
-            }
-          }}
           onForwardMessage={(msg) => console.log('Forward message', msg)}
           replyingTo={replyingTo}
-          editingMessage={editingMessage}
           onCancelReply={() => setReplyingTo(null)}
-          onCancelEdit={() => setEditingMessage(null)}
           isSelectMode={isSelectMode}
           selectedMessageIds={selectedMessageIds}
           onSelectMessage={(id) => setSelectedMessageIds(prev => 

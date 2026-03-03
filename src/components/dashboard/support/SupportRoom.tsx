@@ -12,7 +12,6 @@ const SupportRoom: React.FC = () => {
   const [chat, setChat] = useState<Chat>(initialSupportChat);
   const [previewMessage, setPreviewMessage] = useState<Message | null>(null);
   const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
-  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [scrollTargetId, setScrollTargetId] = useState<string | undefined>(undefined);
 
@@ -28,19 +27,6 @@ const SupportRoom: React.FC = () => {
     fileSize?: string;
     type: 'text' | 'gif' | 'image' | 'document' 
   }) => {
-    if (editingMessage) {
-      setChat(prevChat => ({
-        ...prevChat,
-        messages: prevChat.messages.map(m => 
-          m.id === editingMessage.id 
-            ? { ...m, text: content.text, isEdited: true }
-            : m
-        )
-      }));
-      setEditingMessage(null);
-      return;
-    }
-
     const newMessage: Message = {
       id: `s-${Date.now()}`,
       senderId: 'me',
@@ -80,14 +66,10 @@ const SupportRoom: React.FC = () => {
           scrollToMessageId={scrollTargetId}
           onScrollComplete={() => setScrollTargetId(undefined)}
           onReplyMessage={setReplyToMessage}
-          onEditMessage={setEditingMessage}
           onDeleteMessage={() => {}}
-          onReactToMessage={() => {}}
           onForwardMessage={() => {}}
           replyingTo={replyToMessage}
-          editingMessage={editingMessage}
           onCancelReply={() => setReplyToMessage(null)}
-          onCancelEdit={() => setEditingMessage(null)}
           isSelectMode={false}
           selectedMessageIds={[]}
           onSelectMessage={() => {}}
