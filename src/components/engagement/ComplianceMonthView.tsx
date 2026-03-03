@@ -14,7 +14,7 @@ const localizer = dateFnsLocalizer({
   locales: { "en-US": enUS },
 })
 
-type ComplianceStatus = "filed" | "upcoming" | "due_today" | "overdue"
+import { ComplianceStatus, ComplianceItem } from "./types/compliance"
 
 interface ComplianceEvent {
   id: string
@@ -26,24 +26,11 @@ interface ComplianceEvent {
 }
 
 interface ComplianceMonthViewProps {
-  items: Array<{
-    id: string
-    complianceId: string
-    title: string
-    status: ComplianceStatus
-    dueDate: string
-    authority: string
-  }>
+  items: ComplianceItem[]
+  onSelectEvent?: (item: ComplianceItem) => void
 }
 
-function mapToCalendarEvent(item: {
-  id: string
-  complianceId: string
-  title: string
-  status: ComplianceStatus
-  dueDate: string
-  authority: string
-}): ComplianceEvent {
+function mapToCalendarEvent(item: ComplianceItem): ComplianceEvent {
   const d = new Date(item.dueDate)
   return {
     id: item.id,
@@ -55,7 +42,7 @@ function mapToCalendarEvent(item: {
   }
 }
 
-export default function ComplianceMonthView({ items }: ComplianceMonthViewProps) {
+export default function ComplianceMonthView({ items, onSelectEvent }: ComplianceMonthViewProps) {
   const [date, setDate] = React.useState(new Date())
 
   const events = useMemo(
@@ -89,7 +76,10 @@ export default function ComplianceMonthView({ items }: ComplianceMonthViewProps)
       view={Views.MONTH}
       date={date}
       onNavigate={setDate}
-      onSelectEvent={() => {}}
+      onSelectEvent={(event: ComplianceEvent) => {
+        const item = items.find(i => i.id === event.id);
+        if (item && onSelectEvent) onSelectEvent(item);
+      }}
       eventPropGetter={eventPropGetter}
     />
   )

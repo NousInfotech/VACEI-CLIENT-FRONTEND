@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { Badge } from '@/components/ui/badge'
-import { Calendar, CheckCircle2, Clock, AlertCircle, List, Calendar as CalendarIcon } from 'lucide-react'
+import { Calendar, CheckCircle2, Clock, AlertCircle, List, Calendar as CalendarIcon, Eye } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import ComplianceMonthView from "./ComplianceMonthView";
 import PillTabs from '../shared/PillTabs'
@@ -11,25 +11,9 @@ import { useEngagement } from './hooks/useEngagement'
 import { useCompliances } from './hooks/useCompliances'
 import { updateComplianceStatus, type EngagementCompliance } from '@/api/auditService'
 import { Button } from '@/components/ui/button'
+import { Modal } from '@/components/ui/modal'
 
-export type ComplianceStatus = 'filed' | 'upcoming' | 'due_today' | 'overdue'
-
-interface ComplianceItem {
-  id: string
-  complianceId: string
-  engagementId: string
-  title: string
-  type: string
-  dueDate: string
-  status: ComplianceStatus
-  authority: string
-  description: string
-  cta: string
-  apiStatus: string
-  serviceCategory: string
-  /** When false, "Mark as done" is hidden (e.g. from Compliance Calendar API which has no status update) */
-  canMarkDone?: boolean
-}
+import { ComplianceStatus, ComplianceItem } from './types/compliance'
 
 function mapApiToComplianceItem(c: EngagementCompliance & { _fromComplianceCalendar?: boolean, deadline?: string }): ComplianceItem {
   const today = new Date()
@@ -163,6 +147,8 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
   const companyId = (engagement as any)?.companyId ?? (engagement as any)?.company?.id ?? null;
   const { compliances, loading, error, refetch } = useCompliances(engagementId, companyId)
   const [updatingId, setUpdatingId] = React.useState<string | null>(null)
+  const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false)
+  const [selectedItem, setSelectedItem] = React.useState<ComplianceItem | null>(null)
 
   React.useEffect(() => {
     if (refreshKey !== undefined) {
@@ -201,7 +187,17 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
         return incomingService === expectedCategory.toUpperCase();
       })
     }
-    return mapped
+    
+    // Deduplicate items with the same title and due date
+    const uniqueMap = new Map<string, ComplianceItem>();
+    mapped.forEach(item => {
+      const key = `${item.title}-${item.dueDate}`;
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, item);
+      }
+    });
+
+    return Array.from(uniqueMap.values())
   }, [compliances, serviceName])
 
   const filteredItems = activeFilter === 'all'
@@ -375,7 +371,20 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
                     </div>
 
                     <div className="shrink-0 flex items-center md:justify-end gap-3 mt-4 md:mt-0">
-                      {canMarkActionTaken(item) ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedItem(item);
+                          setIsDetailModalOpen(true);
+                        }}
+                        className="bg-white hover:bg-gray-50 text-gray-700 border-gray-200"
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        View
+                      </Button>
+                      
+                      {canMarkActionTaken(item) && (
                         <Button
                           size="sm"
                           onClick={() => handleMarkActionTaken(item)}
@@ -383,10 +392,6 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
                         >
                           {updatingId === item.complianceId ? 'Updating...' : item.cta}
                         </Button>
-                      ) : (
-                        <Badge variant="outline" className="text-xs font-medium text-gray-500 border-gray-200">
-                          {item.apiStatus === 'ACTION_TAKEN' ? 'Action taken' : 'Completed'}
-                        </Badge>
                       )}
                     </div>
                   </div>
@@ -396,10 +401,81 @@ const ComplianceCalendarTab: React.FC<ComplianceCalendarTabProps> = ({ serviceNa
           </div>
         ) : (
           <div className="bg-white border border-gray-100 p-6 overflow-hidden">
-            <ComplianceMonthView items={allItems} />
+            <ComplianceMonthView 
+              items={allItems} 
+              onSelectEvent={(item) => {
+                setSelectedItem(item);
+                setIsDetailModalOpen(true);
+              }}
+            />
           </div>
         )}
       </div>
+      <Modal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        title="Compliance Details"
+        size="wide"
+      >
+        {selectedItem && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-3">
+                  <Badge className={cn("px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest border", statusConfig[selectedItem.status]?.color)}>
+                    {statusConfig[selectedItem.status]?.label}
+                  </Badge>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{selectedItem.type}</span>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mt-2">{selectedItem.title}</h3>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6 py-6 border-y border-gray-100">
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Due Date</p>
+                <div className="flex items-center gap-2 text-gray-900 font-semibold">
+                  <Calendar className="w-4 h-4 text-gray-400" />
+                  {new Date(selectedItem.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Authority</p>
+                <div className="flex items-center gap-2 text-gray-900 font-semibold">
+                  <Clock className="w-4 h-4 text-gray-400" />
+                  {selectedItem.authority}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Description</p>
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 min-h-[100px]">
+                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                  {selectedItem.description || "No description provided for this compliance requirement."}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4 gap-3">
+              <Button variant="outline" onClick={() => setIsDetailModalOpen(false)}>
+                Close
+              </Button>
+              {canMarkActionTaken(selectedItem) && (
+                <Button 
+                  onClick={() => {
+                    handleMarkActionTaken(selectedItem);
+                    setIsDetailModalOpen(false);
+                  }}
+                  disabled={updatingId === selectedItem.complianceId}
+                >
+                  {updatingId === selectedItem.complianceId ? 'Updating...' : selectedItem.cta}
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

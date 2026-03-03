@@ -19,7 +19,7 @@ export function useCompliances(engagementId: string | null, companyId?: string |
     setError(null);
     try {
       const [engagementData, calendarData] = await Promise.all([
-        getEngagementCompliances(engagementId, { companyId: companyId ?? undefined }),
+        getEngagementCompliances(engagementId),
         companyId ? listComplianceCalendars({ companyId }) : Promise.resolve([])
       ]);
       

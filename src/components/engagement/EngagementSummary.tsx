@@ -2740,17 +2740,28 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                       <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
                         Next Step
                       </p>
-                      {engagementLoading && !isBankingPayments && !isRegulatedLicenses ? (
+                      {(engagementLoading || milestonesLoading) && !isBankingPayments && !isRegulatedLicenses ? (
                         <Skeleton className="h-4 w-32" />
                       ) : (
-                        <p className="text-sm font-semibold text-gray-900">
-                          {(isBankingPayments || isRegulatedLicenses) ? engagementData?.nextStep : (displayWorkflowStatus === "waiting"
-                            ? "Action needed from you"
-                            : displayWorkflowStatus === "in_progress"
-                              ? `Processing ${displayCycle} records`
-                              : displayWorkflowStatus === "submitted"
-                                ? "Submitted to authority"
-                                : "Completed")}
+                        <p className="text-sm font-semibold text-gray-900 line-clamp-1">
+                          {(() => {
+                            if (isBankingPayments || isRegulatedLicenses) return engagementData?.nextStep || "N/A";
+
+                            const nextMilestone = milestones?.find(m => {
+                              const s = normalizeMilestoneStatus(m.status);
+                              return s === 'pending' || s === 'in_progress';
+                            });
+
+                            if (nextMilestone) return nextMilestone.title;
+
+                            return displayWorkflowStatus === "waiting"
+                              ? "Action needed from you"
+                              : displayWorkflowStatus === "in_progress"
+                                ? `Processing ${displayCycle} records`
+                                : displayWorkflowStatus === "submitted"
+                                  ? "Submitted to authority"
+                                  : "Completed";
+                          })()}
                         </p>
                       )}
                     </div>
