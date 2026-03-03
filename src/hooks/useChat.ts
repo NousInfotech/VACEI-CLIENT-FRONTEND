@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { chatService, type ChatMessage, type ChatMember } from "@/api/chatService";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-import { handleAuthError } from "@/utils/authUtils";
+import { handleAuthError, getDecodedUserId } from "@/utils/authUtils";
 
 export interface UseChatReturn {
   messages: ChatMessage[];
@@ -111,9 +111,18 @@ export function useChat(
 
   const subscribeToMessages = useCallback(() => {
     if (!roomId) return;
-    const channel = chatService.subscribeToMessages(roomId, (newMessage) => {
+    const channel = chatService.subscribeToMessages(roomId, (newMessage, eventType) => {
+      if (eventType === 'DELETE') {
+        setMessages((prev) => prev.filter((m) => m.id !== newMessage.id));
+        return;
+      }
       setMessages((prev) => {
-        if (prev.some((m) => m.id === newMessage.id)) return prev;
+        const idx = prev.findIndex((m) => m.id === newMessage.id);
+        if (idx !== -1) {
+          const next = [...prev];
+          next[idx] = mapApiMessageToChatMessage(newMessage);
+          return next;
+        }
         return [...prev, mapApiMessageToChatMessage(newMessage)];
       });
     });
@@ -137,6 +146,24 @@ export function useChat(
   const sendMessage = useCallback(
     async (content: string, fileUrl?: string, replyToMessageId?: string | null) => {
       if (!roomId) return null;
+      
+      const userId = getDecodedUserId() ?? "";
+      const tempId = `optimistic-${Date.now()}`;
+      
+      const optimisticMsg: ChatMessage = {
+        id: tempId,
+        roomId,
+        senderId: userId,
+        content,
+        fileUrl: fileUrl ?? null,
+        type: fileUrl ? "FILE" : "TEXT",
+        sentAt: new Date().toISOString(),
+        replyToMessageId,
+      };
+
+      // Add optimistic message
+      setMessages((prev) => [...prev, optimisticMsg]);
+
       try {
         const msg = await chatService.sendMessage(
           roomId,
@@ -144,14 +171,22 @@ export function useChat(
           fileUrl,
           replyToMessageId ? { replyToMessageId } : undefined
         );
+        
         if (msg) {
           setMessages((prev) => {
-            if (prev.some((m) => m.id === msg.id)) return prev;
-            return [...prev, mapApiMessageToChatMessage(msg)];
+            // Replace optimistic with canonical
+            const filtered = prev.filter((m) => m.id !== tempId);
+            if (filtered.some((m) => m.id === msg.id)) return filtered;
+            return [...filtered, mapApiMessageToChatMessage(msg)];
           });
+        } else {
+          // If null, remove optimistic
+          setMessages((prev) => prev.filter((m) => m.id !== tempId));
         }
         return msg;
       } catch (err) {
+        // Rollback on error
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
         console.error("Failed to send message:", err);
         handleAuthError(err, router);
         throw err;
@@ -180,7 +215,7 @@ export function useChat(
     async (messageId: string) => {
       try {
         await chatService.deleteMessage(messageId);
-        setMessages((prev) => prev.filter((m) => m.id !== messageId));
+        setMessages((prev) => prev.map(m => m.id === messageId ? { ...m, isDeleted: true } : m));
       } catch (err) {
         console.error("Failed to delete message:", err);
         handleAuthError(err, router);

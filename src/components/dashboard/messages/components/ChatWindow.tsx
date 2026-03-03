@@ -24,14 +24,10 @@ interface ChatWindowProps {
   scrollToMessageId?: string;
   onScrollComplete?: () => void;
   onReplyMessage: (message: Message) => void;
-  onEditMessage: (message: Message) => void;
   onDeleteMessage: (messageId: string) => void;
-  onReactToMessage: (messageId: string, emoji: string) => void;
   onForwardMessage: (message: Message) => void;
   replyingTo: Message | null;
-  editingMessage: Message | null;
   onCancelReply: () => void;
-  onCancelEdit: () => void;
   isSelectMode: boolean;
   selectedMessageIds: string[];
   onSelectMessage: (messageId: string) => void;
@@ -71,14 +67,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   scrollToMessageId,
   onScrollComplete,
   onReplyMessage,
-  onEditMessage,
   onDeleteMessage,
-  onReactToMessage,
   onForwardMessage,
   replyingTo,
-  editingMessage,
   onCancelReply,
-  onCancelEdit,
   isSelectMode,
   selectedMessageIds,
   onSelectMessage,
@@ -163,7 +155,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         {(() => {
           let lastDateStr = '';
 
-          return chat.messages.map((msg) => {
+          return chat.messages
+            .map((msg) => {
             const isMe = msg.senderId === 'me';
             const sender = chat.participants.find(p => p.id === msg.senderId) ||
               (msg.senderName ? { id: msg.senderId, name: msg.senderName, role: 'PLATFORM_EMPLOYEE' as const, isOnline: false } : undefined);
@@ -199,9 +192,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     showSenderName={showSenderName}
                     onMediaClick={onMediaClick}
                     onReply={() => onReplyMessage(msg)}
-                    onEdit={() => onEditMessage(msg)}
                     onDelete={() => onDeleteMessage(msg.id)}
-                    onReact={(emoji) => onReactToMessage(msg.id, emoji)}
                     onForward={() => onForwardMessage(msg)}
                     isSelectMode={isSelectMode}
                     isSelected={selectedMessageIds.includes(msg.id)}
@@ -225,9 +216,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       <MessageInput
         onSendMessage={onSendMessage}
         replyingTo={replyingTo}
-        editingMessage={editingMessage}
         onCancelReply={onCancelReply}
-        onCancelEdit={onCancelEdit}
       />
     </div>
   );

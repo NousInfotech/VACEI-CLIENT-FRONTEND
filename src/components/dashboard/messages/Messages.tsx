@@ -485,14 +485,10 @@ const Messages: React.FC = () => {
                 scrollToMessageId={scrollTargetId}
                 onScrollComplete={() => setScrollTargetId(undefined)}
                 onReplyMessage={setReplyToMessage}
-                onEditMessage={setEditingMessage}
                 onDeleteMessage={(msgId: string) => handleDeleteMessage(activeChat.id, msgId)}
-                onReactToMessage={(msgId: string, emoji: string) => handleReactToMessage(activeChat.id, msgId, emoji)}
                 onForwardMessage={(msg: Message) => setForwardingMessages([msg])}
                 replyingTo={replyToMessage}
-                editingMessage={editingMessage}
                 onCancelReply={() => setReplyToMessage(null)}
-                onCancelEdit={() => setEditingMessage(null)}
                 isSelectMode={isSelectMode}
                 selectedMessageIds={selectedMessageIds}
                 onSelectMessage={handleToggleSelectMessage}

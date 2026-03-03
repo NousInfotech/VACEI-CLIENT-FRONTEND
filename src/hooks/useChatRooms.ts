@@ -5,6 +5,7 @@ import {
     chatService,
     type ClientChatRoom,
     type ChatMessage,
+    normalizeChatMessage,
 } from "@/api/chatService";
 import { getDecodedUserId } from "@/utils/authUtils";
 import type { Chat, Message, User, UserRole } from "@/components/dashboard/messages/types";
@@ -85,57 +86,54 @@ function mapClientRoomToChat(room: ClientChatRoom): Chat {
 export function mapApiMessage(
     m: ChatMessage & Record<string, any>
 ): Message {
-
     const currentUserId = getDecodedUserId() ?? "";
-    const rawSenderId = m.senderId ?? m.sender_id;
+    const normalized = normalizeChatMessage(m);
+    
+    const rawSenderId = normalized.senderId as string;
     const isMe = rawSenderId === currentUserId;
 
-    const sender = m.sender ?? (m as any).sender;
+    const sender = (m.sender ?? (m as any).sender);
     const resolvedName = sender
         ? `${sender.firstName ?? sender.first_name ?? ""} ${sender.lastName ?? sender.last_name ?? ""}`.trim()
         : undefined;
 
-    const sentAt =
-        m.sentAt ??
-        m.sent_at ??
-        m.createdAt ??
-        m.created_at ??
-        new Date().toISOString();
-
+    const sentAt = normalized.sentAt as string;
     const createdAtMs = new Date(sentAt).getTime();
 
     const replyToMsgObj = m.replyToMessage ?? m.reply_to_message;
     let mappedReply: Message | undefined = undefined;
     if (replyToMsgObj) {
-        const replyUserId = replyToMsgObj.senderId ?? replyToMsgObj.sender_id;
+        const nr = normalizeChatMessage(replyToMsgObj);
+        const replyUserId = nr.senderId as string;
         mappedReply = {
-            id: replyToMsgObj.id,
+            id: nr.id as string,
             senderId: replyUserId === currentUserId ? "me" : replyUserId,
-            text: replyToMsgObj.content ?? replyToMsgObj.text,
-            fileName: replyToMsgObj.fileName ?? replyToMsgObj.file_name,
-            timestamp: new Date(replyToMsgObj.sentAt ?? replyToMsgObj.sent_at ?? new Date()).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-            createdAt: new Date(replyToMsgObj.sentAt ?? replyToMsgObj.sent_at ?? new Date()).getTime(),
-            type: "text", // fallback
+            text: (nr.content as string) || undefined,
+            fileName: (nr.fileUrl as string)?.split('/').pop() || undefined,
+            timestamp: new Date(nr.sentAt as string).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
+            createdAt: new Date(nr.sentAt as string).getTime(),
+            type: "text",
             status: "sent"
         };
     }
 
     return {
-        id: m.id,
+        id: normalized.id as string,
         senderId: isMe ? "me" : rawSenderId,
         senderName: isMe ? undefined : resolvedName || undefined,
-        type: String(m.type ?? (m as any).type).toUpperCase() === "FILE" ? "document" : "text",
-        text: (m.content ?? (m as any).content ?? undefined) ?? undefined,
-        fileUrl: m.fileUrl ?? m.file_url ?? undefined,
-        createdAt: createdAtMs, // ✅ ONLY STORE UTC
-        timestamp: new Date(sentAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        type: String(normalized.type).toUpperCase() === "FILE" ? "document" : "text",
+        text: (normalized.content as string) || undefined,
+        fileUrl: (normalized.fileUrl as string) || undefined,
+        createdAt: createdAtMs,
+        isDeleted: !!normalized.deletedAt,
+        timestamp: new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
         status: (m.participantStates?.every((s: any) => s.status === "READ")
             ? "read"
             : m.participantStates?.some((s: any) => s.status === "DELIVERED")
                 ? "delivered"
                 : "sent") as "sent" | "delivered" | "read",
-        replyToId: m.replyToMessageId ?? undefined,
-        replyToMessageId: m.replyToMessageId ?? undefined,
+        replyToId: normalized.replyToMessageId as string ?? undefined,
+        replyToMessageId: normalized.replyToMessageId as string ?? undefined,
         replyToMessage: mappedReply,
     };
 }

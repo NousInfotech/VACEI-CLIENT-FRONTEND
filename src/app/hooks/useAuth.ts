@@ -27,6 +27,7 @@ export function useAuth() {
 
       // Clear only auth-related items, preserve onboarding data
       localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
       localStorage.removeItem('username');
       localStorage.removeItem('email');
       localStorage.removeItem('user_id');
@@ -43,6 +44,7 @@ export function useAuth() {
       console.error('Logout failed:', err);
       // Even if logout API fails, clear only auth-related items, preserve onboarding data
       localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
       localStorage.removeItem('username');
       localStorage.removeItem('email');
       localStorage.removeItem('user_id');
