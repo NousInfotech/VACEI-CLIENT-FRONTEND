@@ -2691,7 +2691,17 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                 <DashboardCard className="p-6">
                   <div className={cn(
                     "grid grid-cols-1 gap-4",
-                    engagementData?.status ? "md:grid-cols-5" : "md:grid-cols-4"
+                    (() => {
+                      const cycleStatus = engagementData?.accountingCycle?.status ||
+                                          engagementData?.auditCycle?.status ||
+                                          engagementData?.vatCycle?.status ||
+                                          engagementData?.payrollCycle?.status ||
+                                          engagementData?.cfoCycle?.status ||
+                                          engagementData?.cspCycle?.status ||
+                                          engagementData?.taxCycle?.status ||
+                                          engagementData?.mbrCycle?.status;
+                      return cycleStatus ? "md:grid-cols-5" : "md:grid-cols-4";
+                    })()
                   )}>
                     <div className="space-y-1">
                       <p className="text-[10px] font-medium text-gray-400 uppercase tracking-[0.2em]">
