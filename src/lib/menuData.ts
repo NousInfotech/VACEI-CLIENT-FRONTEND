@@ -429,14 +429,14 @@ export const globalMenuData: MenuItem[] = [
     section: "operations",
     description: "Centralized document vault",
   },
-  {
-    slug: "support",
-    icon: CustomerSupportFreeIcons,
-    label: "Settings",
-    href: "/global-dashboard/support",
-    section: "settings",
-    description: "System configuration",
-},
+//   {
+//     slug: "support",
+//     icon: CustomerSupportFreeIcons,
+//     label: "Settings",
+//     href: "/global-dashboard/support",
+//     section: "settings",
+//     description: "System configuration",
+// },
   {
     slug: "settings",
     icon: InstallingUpdates02Icon,
