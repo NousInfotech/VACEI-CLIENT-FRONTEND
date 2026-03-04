@@ -1,13 +1,14 @@
 "use client"
 
 import React, { useState, useCallback } from 'react'
-import { Upload, X, File as FileIcon, Loader2, AlertCircle, CloudDownload } from 'lucide-react'
+import { Upload, X, File as FileIcon, Loader2, AlertCircle, CloudDownload, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { bulkUploadDocumentRequestFiles } from '@/api/documentRequestService'
 
 interface BulkUploadZoneProps {
   requestId: string
+  requestTitle?: string
   onSuccess: () => void
   onClear: (requestId: string, documentId: string) => void
   isDisabled?: boolean
@@ -17,6 +18,7 @@ interface BulkUploadZoneProps {
 
 const BulkUploadZone: React.FC<BulkUploadZoneProps> = ({
   requestId,
+  requestTitle,
   onSuccess,
   onClear,
   isDisabled = false,
@@ -93,48 +95,59 @@ const BulkUploadZone: React.FC<BulkUploadZoneProps> = ({
   }
 
   const isItemPending = (doc: any) => {
-    // Only count as uploaded if there's an actual user-provided file URL or uploaded name
     const isUploaded = !!(doc.file?.url || doc.fileId || doc.uploadedFileName);
+    const isAccepted = ['UPLOADED', 'ACCEPTED', 'SUBMITTED', 'COMPLETED'].includes(doc.status?.toUpperCase());
     const isRejected = (doc.status?.toUpperCase() === 'REJECTED');
-    return !isUploaded || isRejected;
+    return (!isUploaded && !isAccepted) || isRejected;
   };
 
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
         <div className="p-4 bg-gray-50/80 border-b border-gray-100 flex items-center justify-between">
-          <h5 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Requested Documents:</h5>
-        </div>
-        <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
+          <h5 className="text-sm font-bold text-gray-700 uppercase tracking-wider whitespace-normal leading-snug">
+            {requestTitle || 'Requested Documents'}:
+          </h5>
           {(() => {
-            const pendingItems = documents.filter(doc => {
-              if (doc.count === 'MULTIPLE') {
-                return (doc.multiple || []).some(isItemPending);
-              }
-              return isItemPending(doc);
-            });
+            const allItems = documents.flatMap(doc => doc.count === 'MULTIPLE' ? (doc.children || doc.multiple || []) : [doc]);
+            const total = allItems.length;
+            const uploaded = allItems.filter(d => !isItemPending(d)).length;
+            return (
+              <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100">
+                {uploaded}/{total} COMPLETED
+              </span>
+            );
+          })()}
+        </div>
 
-            if (pendingItems.length === 0) {
-              return (
-                <div className="p-10 text-center bg-white/50">
-                  <p className="text-gray-400 text-xs italic">All requested documents have been uploaded.</p>
-                </div>
-              );
-            }
-
-            return pendingItems.map((doc, index) => {
+        <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
+          {documents.length === 0 ? (
+            <div className="p-10 text-center bg-white/50">
+              <p className="text-gray-400 text-xs italic">No documents requested for this section.</p>
+            </div>
+          ) : (
+            documents.map((doc, index) => {
               const docId = doc.id ?? doc._id;
               const isMultiple = doc.count === 'MULTIPLE';
               const template = doc.templateFile || doc.templateFileId;
               
               if (!isMultiple) {
+                const isDown = !isItemPending(doc);
                 return (
                   <div key={docId || index} className="p-3.5 flex items-center justify-between hover:bg-gray-50/30 transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-5 h-5 rounded-full bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0 ml-1.5 shadow-sm">
-                        <span className="text-[10px] font-bold text-orange-600">{index + 1}</span>
+                      <div className={cn(
+                        "w-5 h-5 rounded-full flex items-center justify-center shrink-0 ml-1.5 shadow-xs border",
+                        isDown 
+                          ? "bg-green-50 border-green-100 text-green-600" 
+                          : "bg-orange-50 border-orange-100 text-orange-600"
+                      )}>
+                        {isDown ? <CheckCircle2 size={12} strokeWidth={3} /> : <span className="text-[10px] font-bold">{index + 1}</span>}
                       </div>
-                      <p className="text-sm font-semibold text-gray-800 truncate">
+                      <p className={cn(
+                        "text-sm font-semibold whitespace-normal wrap-break-word",
+                        isDown ? "text-gray-400" : "text-gray-800"
+                      )}>
                         {doc.documentName || doc.name || doc.label || 'Untitled'}
                       </p>
                       {(doc.status?.toUpperCase() === 'REJECTED' && doc.rejectionReason) && (
@@ -161,42 +174,68 @@ const BulkUploadZone: React.FC<BulkUploadZoneProps> = ({
                   </div>
                 );
               } else {
-                const pendingChildren = (doc.multiple || []).filter(isItemPending);
                 return (
-                  <div key={docId || index} className="p-3.5 space-y-2 hover:bg-gray-50/30 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 rounded-full bg-orange-100 border border-orange-200 flex items-center justify-center shrink-0 ml-1.5 shadow-sm">
-                          <span className="text-[10px] font-bold text-orange-700">{index + 1}</span>
-                        </div>
-                        <p className="text-sm font-bold text-gray-900">
-                          {doc.documentName || doc.name || 'Group Requirement'}
-                        </p>
+                  <div key={docId || index} className="p-3.5 space-y-3 hover:bg-gray-50/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-5 h-5 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 ml-1.5 shadow-xs">
+                        <span className="text-[10px] font-bold text-gray-500">{index + 1}</span>
                       </div>
+                      <p className="text-sm font-bold text-gray-900 uppercase tracking-tight whitespace-normal wrap-break-word">
+                        {doc.documentName || doc.name || 'Group Requirement'}
+                      </p>
                     </div>
-                    <ul className="ml-10 space-y-1.5">
-                      {pendingChildren.map((child: any, cIdx: number) => (
-                        <li key={child.id || cIdx} className="flex items-start gap-2">
-                          <div className="w-1.5 h-1.5 rounded-full bg-orange-400 mt-1.5 shrink-0" />
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[13px] text-gray-600 font-medium">
-                              {child.documentName || child.label || 'Untitled Sub-item'}
-                            </span>
-                            {child.status?.toUpperCase() === 'REJECTED' && child.rejectionReason && (
-                              <div className="flex items-start gap-1.5 text-[10px] text-rose-600 bg-rose-50/50 p-1 rounded-md border border-rose-100/50">
-                                <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" />
-                                <span>Rejected: {child.rejectionReason}</span>
+                    
+                    <ul className="ml-10 space-y-2.5">
+                      {(doc.children || doc.multiple || []).map((child: any, cIdx: number) => {
+                        const isChildDown = !isItemPending(child);
+                        const childTemplate = child.templateFile || child.templateFileId;
+                        
+                        return (
+                          <li key={child.id || cIdx} className="flex items-center justify-between group/child">
+                            <div className="flex items-start gap-2.5 min-w-0">
+                              <div className={cn(
+                                "w-1.5 h-1.5 rounded-full mt-2 shrink-0",
+                                isChildDown ? "bg-green-400" : "bg-orange-400"
+                              )} />
+                              <div className="flex flex-col gap-0.5 min-w-0">
+                                <span className={cn(
+                                  "text-[13px] font-medium leading-tight whitespace-normal wrap-break-word",
+                                  isChildDown ? "text-gray-400" : "text-gray-600"
+                                )}>
+                                  {child.documentName || child.label || 'Untitled Sub-item'}
+                                </span>
+                                {child.status?.toUpperCase() === 'REJECTED' && child.rejectionReason && (
+                                  <div className="flex items-start gap-1.5 text-[10px] text-rose-600 bg-rose-50/50 p-1 rounded-md border border-rose-100/50">
+                                    <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" />
+                                    <span>Rejected: {child.rejectionReason}</span>
+                                  </div>
+                                )}
                               </div>
+                            </div>
+                            
+                            {childTemplate && !isChildDown && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    const url = typeof childTemplate === 'string' ? `/api/files/${childTemplate}/download` : childTemplate.url;
+                                    window.open(url, '_blank')
+                                }}
+                                className="h-6 px-2 text-[9px] font-bold text-orange-600 hover:text-orange-700 hover:bg-orange-50 flex items-center gap-1.5 rounded-lg border border-orange-100 ml-4 shrink-0 transition-all"
+                              >
+                                <CloudDownload size={12} />
+                                Template
+                              </Button>
                             )}
-                          </div>
-                        </li>
-                      ))}
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 );
               }
-            });
-          })()}
+            })
+          )}
         </div>
       </div>
 
