@@ -12,11 +12,14 @@ interface UserMenuProps {
 
 import Dropdown from "./Dropdown";
 
+import { useActiveCompany } from "@/context/ActiveCompanyContext";
+
 interface UserMenuProps {
     isCollapsed?: boolean;
 }
 
 export default function UserMenu({ isCollapsed = false }: UserMenuProps) {
+    const { activeCompanyId } = useActiveCompany();
     const [userName, setUserName] = useState("User");
     const [userEmail, setUserEmail] = useState("Email");
 
@@ -46,7 +49,9 @@ export default function UserMenu({ isCollapsed = false }: UserMenuProps) {
         {
             id: "profile",
             label: "Profile",
-            onClick: () => { window.location.href = "/dashboard/profile"; }
+            onClick: () => { 
+                window.location.href = "/dashboard/profile"; 
+            }
         },
         {
             id: "logout",

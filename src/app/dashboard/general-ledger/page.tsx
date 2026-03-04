@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useRouter } from "next/navigation";
+import { useActiveCompany } from "@/context/ActiveCompanyContext";
 import {
     Table,
     TableBody,
@@ -43,6 +44,7 @@ export default function JournalList() {
     const router = useRouter();
     const [totalDebit, setTotalDebit] = useState(0);
     const [totalCredit, setTotalCredit] = useState(0);
+    const { activeCompanyId } = useActiveCompany();
 
     // Use Date objects here instead of strings
     const [fromDate, setFromDate] = useState<Date | null>(null);
@@ -51,10 +53,10 @@ export default function JournalList() {
     const itemsPerPage = 10;
 
     // Handle view details
-    const handleView = (entry: any) => {
-        var encodedId = btoa(entry.id);
-        router.push(`/dashboard/general-ledger/items?parent=${encodedId}`);
-    };
+    const handleView = (id: string | number) => {
+    const encodedId = encodeURIComponent(id.toString());
+    router.push(`/dashboard/general-ledger/items?parent=${encodedId}`);
+  };
 
     // When fromDate changes, ensure toDate is never before fromDate
     const handleFromDateChange = (date: Date | null) => {

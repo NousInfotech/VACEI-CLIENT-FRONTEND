@@ -114,7 +114,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
     useEffect(() => {
         setIsMounted(true);
         const qParam = searchParams.get('q');
-        if (pathname === '/dashboard/search' && qParam !== null) {
+        if (pathname?.includes('/search') && pathname?.startsWith('/dashboard') && qParam !== null) {
             setSearchTerm(decodeURIComponent(qParam));
         }
         // Don't clear search term when navigating away - keep it for better UX
@@ -308,8 +308,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
         if (searchTerm.trim()) {
             router.push(`/dashboard/search?q=${encodeURIComponent(searchTerm.trim())}`);
         } else {
-            // If no search term, navigate to search page anyway
-            router.push('/dashboard/search');
+            router.push("/dashboard/search");
         }
     };
 
@@ -325,7 +324,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             icon: <div className={cn("w-2 h-2 rounded-full", isActive ? "bg-success" : "bg-gray-200")} />,
             onClick: () => {
                 setActiveCompanyId(c.id);
-                router.push(`/dashboard`);
+                router.push(`/dashboard/${c.id}`);
             }
         };
     });
@@ -341,14 +340,14 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             id: 'request',
             label: 'Request service',
             icon: <HugeiconsIcon icon={Video01Icon} className="w-4 h-4" />,
-            onClick: () => router.push('/dashboard/services/request')
+            onClick: () => router.push(activeCompanyId ? `/dashboard/${activeCompanyId}/services/request` : '/dashboard/services/request')
         }] : []),
         {
-            id: 'schedule',
-            label: 'Schedule a call',
+            id: "schedule",
+            label: "Schedule a call",
             icon: <HugeiconsIcon icon={Video01Icon} className="w-4 h-4" />,
-            onClick: () => router.push('/dashboard/schedule')
-        }
+            onClick: () => router.push("/dashboard/schedule"),
+        },
     ];
 
     return (
@@ -375,15 +374,15 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                     </button>
                 )}
 
-                {pathname !== '/dashboard' && pathname !== '/global-dashboard' && (
+                {pathname !== `/dashboard/${activeCompanyId}` && pathname !== '/dashboard' && pathname !== '/global-dashboard' && (
                     <Button
                         onClick={() => {
-                            if (pathname === '/dashboard/services/request/history' || pathname === '/global-dashboard/services/request/history') {
-                                router.push('/dashboard/services/request');
+                            if (pathname?.includes('/services/request/history')) {
+                                router.push(activeCompanyId ? `/dashboard/${activeCompanyId}/services/request` : '/dashboard/services/request');
                             } else if (window.history.length > 2) {
                                 router.back();
                             } else {
-                                router.push('/dashboard');
+                                router.push(activeCompanyId ? `/dashboard/${activeCompanyId}` : '/dashboard');
                             }
                         }}
                         variant="secondary"
@@ -510,7 +509,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest">Latest Notifications</h3>
                             <div className="flex items-center gap-3">
                                 <Link
-                                    href="/dashboard/notifications"
+                                    href={activeCompanyId ? `/dashboard/${activeCompanyId}/notifications` : '/dashboard/notifications'}
                                     onClick={(e) => e.stopPropagation()}
                                     className="text-[10px] font-bold text-muted-foreground hover:text-primary uppercase tracking-widest"
                                 >
@@ -562,7 +561,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                             )}
                         </div>
                         <div className="p-3 border-t border-gray-100 bg-gray-50/50">
-                            <Link href="/dashboard/notifications" passHref className="block">
+                            <Link href={activeCompanyId ? `/dashboard/${activeCompanyId}/notifications` : '/dashboard/notifications'} passHref className="block">
                                 <Button
                                     variant="ghost"
                                     className="w-full text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-gray-900 hover:bg-white rounded-xl h-10 transition-all"

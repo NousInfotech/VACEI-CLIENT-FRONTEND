@@ -186,7 +186,7 @@ export default function CompanyListTable() {
                                             className="rounded-xl h-9 bg-emerald-600 hover:bg-emerald-700 text-white"
                                             onClick={() => {
                                                 setActiveCompanyId(company.id);
-                                                router.push('/dashboard');
+                                                router.push(`/dashboard/${company.id}`);
                                             }}
                                         >
                                             <Eye className="h-4 w-4 mr-2" />

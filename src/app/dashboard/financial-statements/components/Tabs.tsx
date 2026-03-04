@@ -2,15 +2,17 @@
 
 import { useRouter, usePathname } from "next/navigation";
 
-const tabs = [
-  { label: "Profit & Loss", href: "/dashboard/financial-statements/profit-loss" },
-  { label: "Balance Sheet", href: "/dashboard/financial-statements/balance-sheet" },
-  { label: "Cash Flow Statement", href: "/dashboard/financial-statements/cash-flow-statement" },
-];
-
 export default function ReportTabs() {
   const router = useRouter();
   const pathname = usePathname();  // <-- get current path here
+
+  const prefix = "/dashboard/financial-statements";
+
+  const tabs = [
+    { label: "Profit & Loss", href: `${prefix}/profit-loss` },
+    { label: "Balance Sheet", href: `${prefix}/balance-sheet` },
+    { label: "Cash Flow Statement", href: `${prefix}/cash-flow-statement` },
+  ];
 
   return (
     <div className="mb-6 border-b border-border dark:border-gray-700">

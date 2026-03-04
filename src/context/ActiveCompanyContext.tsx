@@ -1,6 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react'
+import { useParams } from 'next/navigation'
 
 interface Company {
   id: string
@@ -27,6 +28,18 @@ export const ActiveCompanyProvider: React.FC<ActiveCompanyProviderProps> = ({ ch
   const [activeCompanyId, setActiveCompanyIdState] = useState<string | null>(null)
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState<boolean>(true)
+  const params = useParams()
+  const companyIdFromUrl = params?.companyId as string | undefined
+
+  // Sync with URL companyId parameter
+  useEffect(() => {
+    if (companyIdFromUrl && companyIdFromUrl !== activeCompanyId) {
+      setActiveCompanyIdState(companyIdFromUrl)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('vacei-active-company', companyIdFromUrl)
+      }
+    }
+  }, [companyIdFromUrl, activeCompanyId])
 
   // Initialize from localStorage on mount
   useEffect(() => {

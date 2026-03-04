@@ -328,12 +328,12 @@ function LegacyComplianceCalendarPage() {
 
     // Link payroll items to payroll page
     const href = item.service === "Payroll"
-      ? `/dashboard/services/payroll`
+      ? `/dashboard/${activeCompanyId}/services/payroll`
       : item.actionType === "upload" 
-      ? `/dashboard/document-organizer/document-upload`
+      ? `/dashboard/${activeCompanyId}/document-organizer/document-upload`
       : item.actionType === "reply" || item.actionType === "approve"
-      ? `/dashboard/messages`
-      : `/dashboard/compliance/detail?taskId=${btoa(item.id.toString())}`;
+      ? `/dashboard/${activeCompanyId}/messages`
+      : `/dashboard/${activeCompanyId}/compliance/detail?taskId=${btoa(item.id.toString())}`;
 
     return (
       <Link href={href}>

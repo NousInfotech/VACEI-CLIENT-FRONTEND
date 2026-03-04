@@ -12,6 +12,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useGlobalDashboard } from "@/context/GlobalDashboardContext";
+import { useActiveCompany } from "@/context/ActiveCompanyContext";
 import { SERVICE_METADATA } from "@/lib/menuData";
 import { 
   CheckCircle2, 
@@ -156,6 +157,7 @@ export default function ServicesHubPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState<string[]>([]);
   const { sidebarData, loading: sidebarLoading } = useGlobalDashboard();
+  const { activeCompanyId } = useActiveCompany();
 
   const dynamicCategories = useMemo(() => {
     const categories: Record<string, { id: string; title: string; description: string; services: ServiceType[] }> = {};
@@ -171,7 +173,10 @@ export default function ServicesHubPage() {
 
       // Determine href (handle single engagement)
       const hasSingleEngagement = s.activeEngagements && s.activeEngagements.length === 1;
-      const href = hasSingleEngagement ? `${metadata.href}/${s.activeEngagements[0].id}` : metadata.href;
+      const baseHref = metadata.href.startsWith('/dashboard') 
+        ? metadata.href.replace('/dashboard', `/dashboard/${activeCompanyId}`)
+        : metadata.href;
+      const href = hasSingleEngagement ? `${baseHref}/${s.activeEngagements[0].id}` : baseHref;
 
       const service: ServiceType = {
         slug: s.serviceName.toLowerCase().replace(/\s+/g, "-"),
@@ -264,13 +269,13 @@ export default function ServicesHubPage() {
         description="Manage your services in one centralized location with real-time status tracking."
         actions={
           <div className="flex flex-wrap gap-3">
-            <Link href="/dashboard/services/request/history">
+            <Link href={`/dashboard/${activeCompanyId}/services/request/history`}>
               <Button variant="outline" className="bg-white text-primary flex items-center gap-2">
                 <FileText className="w-4 h-4" />
                 View Request
               </Button>
             </Link>
-            <Link href="/dashboard/services/request">
+            <Link href={`/dashboard/${activeCompanyId}/services/request`}>
               <Button variant="outline" className="bg-light text-primary-color-new">
                 <Plus className="w-4 h-4" />
                 Request Service
@@ -388,7 +393,7 @@ export default function ServicesHubPage() {
         ) : (
             <div className="text-center py-20 bg-muted/20 rounded-card border border-dashed">
                 <p className="text-muted-foreground">No active services found for this company.</p>
-                <Link href="/dashboard/services/request" className="text-primary font-medium mt-2 inline-block">Request your first service</Link>
+                <Link href={`/dashboard/${activeCompanyId}/services/request`} className="text-primary font-medium mt-2 inline-block">Request your first service</Link>
             </div>
         )}
       </div>
@@ -412,7 +417,7 @@ export default function ServicesHubPage() {
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-4 shrink-0">
-            <Link href="/dashboard/services/request">
+            <Link href={`/dashboard/${activeCompanyId}/services/request`}>
               <Button variant="default">
                 <Plus className="w-4 h-4 mr-2" />
                 Request Service
@@ -426,7 +431,7 @@ export default function ServicesHubPage() {
       <div className="grid md:grid-cols-2 gap-6 pb-8">
         {[
           {
-            href: "/dashboard/compliance",
+            href: `/dashboard/${activeCompanyId}/compliance`,
             icon: AlertCircle,
             iconBg: "bg-warning/10 border-warning/20",
             iconColor: "text-warning",
@@ -435,7 +440,7 @@ export default function ServicesHubPage() {
             linkText: "View Calendar",
           },
           {
-            href: "/dashboard/messages",
+            href: `/dashboard/${activeCompanyId}/messages`,
             icon: FileText,
             iconBg: "bg-info/10 border-info/20",
             iconColor: "text-info",

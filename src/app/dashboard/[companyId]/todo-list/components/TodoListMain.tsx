@@ -10,6 +10,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import TaskDetailModal from "./TaskDetailModal";
 import { SERVICE_METADATA } from "@/lib/menuData";
 import { useGlobalDashboard } from "@/context/GlobalDashboardContext";
+import { useActiveCompany } from "@/context/ActiveCompanyContext";
+import { useParams } from "next/navigation";
 
 
 
@@ -112,6 +114,7 @@ export default function TodoList() {
         return SERVICE_METADATA[metadataKey]?.href || "";
     };
 
+    const { activeCompanyId } = useActiveCompany();
     const { refreshSidebar } = useGlobalDashboard();
 
     const handleAction = async (task: TodoItem) => {
@@ -144,9 +147,9 @@ export default function TodoList() {
             }
 
             if (serviceBase) {
-                router.push(`${serviceBase}/engagements/${task.engagementId}?tab=chat${messageQuery}${todoQuery}`);
+                router.push(`${serviceBase.replace('/dashboard/', `/dashboard/${activeCompanyId}/`)}/engagements/${task.engagementId}?tab=chat${messageQuery}${todoQuery}`);
             } else {
-                router.push(`/dashboard/engagements/${task.engagementId}?tab=chat${messageQuery}${todoQuery}`);
+                router.push(`/dashboard/${activeCompanyId}/engagements/${task.engagementId}?tab=chat${messageQuery}${todoQuery}`);
             }
             return;
         }
@@ -155,21 +158,21 @@ export default function TodoList() {
         if ((type === 'DOCUMENT_REQUEST' || type === 'REQUESTED_DOCUMENT') && task.engagementId) {
             const scrollQuery = task.moduleId ? `&scrollTo=${task.moduleId}` : "";
             if (serviceBase) {
-                router.push(`${serviceBase}/engagements/${task.engagementId}?tab=document_requests${scrollQuery}`);
+                router.push(`${serviceBase.replace('/dashboard/', `/dashboard/${activeCompanyId}/`)}/engagements/${task.engagementId}?tab=document_requests${scrollQuery}`);
             } else {
-                router.push(`/dashboard/engagements/${task.engagementId}?tab=document_requests${scrollQuery}`);
+                router.push(`/dashboard/${activeCompanyId}/engagements/${task.engagementId}?tab=document_requests${scrollQuery}`);
             }
             return;
         }
 
         if (task.engagementId) {
             if (serviceBase) {
-                router.push(`${serviceBase}/engagements/${task.engagementId}`);
+                router.push(`${serviceBase.replace('/dashboard/', `/dashboard/${activeCompanyId}/`)}/engagements/${task.engagementId}`);
             } else {
-                router.push(`/dashboard/engagements/${task.engagementId}`);
+                router.push(`/dashboard/${activeCompanyId}/engagements/${task.engagementId}`);
             }
         } else {
-            router.push(`/dashboard/todo-list/todo-list-view?taskId=${btoa(task.id)}`);
+            router.push(`/dashboard/${activeCompanyId}/todo-list/todo-list-view?taskId=${btoa(task.id)}`);
         }
     };
 
@@ -207,7 +210,7 @@ export default function TodoList() {
                 title="To-Do List"
                 subtitle="Manage your tasks, track progress, and collaborate with your team."
                 todoStats={todoStats}
-                todoStatsHref="/dashboard/todo-list"
+                todoStatsHref={`/dashboard/${activeCompanyId}/todo-list`}
             />
 
             <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">

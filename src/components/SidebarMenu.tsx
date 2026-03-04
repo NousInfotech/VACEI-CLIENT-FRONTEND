@@ -34,6 +34,17 @@ interface SidebarMenuProps {
 
 type StatusConfig = { label: string; color: string; dotColor: string; description?: string };
 
+const COMPANY_SPECIFIC_SUBROUTES = [
+  "company",
+  "services",
+  "compliance",
+  "messages",
+  "library",
+  "todo-list",
+  "notifications",
+  "settings",
+];
+
 
 
 
@@ -186,60 +197,81 @@ export default function SidebarMenu({
       .map((item) => {
         let nextItem: MenuItem = { ...item };
 
+        // Prepend activeCompanyId to href if it's a company-specific dashboard link
+        if (activeCompanyId && nextItem.href?.startsWith("/dashboard")) {
+          if (nextItem.href === "/dashboard" || nextItem.href === "/dashboard/") {
+            nextItem.href = `/dashboard/${activeCompanyId}`;
+          } else {
+            const pathAfterDashboard = nextItem.href.slice(11); // remove '/dashboard/'
+            const firstSegment = pathAfterDashboard.split("/")[0];
+            if (COMPANY_SPECIFIC_SUBROUTES.includes(firstSegment)) {
+              nextItem.href = nextItem.href.replace("/dashboard/", `/dashboard/${activeCompanyId}/`);
+            }
+          }
+        }
+
         // Disable restricted items if no active company
         if (!hasActiveCompany && hiddenSlugs.includes(item.slug)) {
           nextItem.disabled = true;
         }
 
         if (item.slug === "services-root") {
-        const dynamicChildren = sidebarData.map((s) => {
-          // Normalize service name to match SERVICE_METADATA keys
-          // Replace all non-alphanumeric with _, collapse multiple _, trim _
-          const normalized = s.serviceName.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+          const dynamicChildren = sidebarData.map((s) => {
+            // Normalize service name to match SERVICE_METADATA keys
+            const normalized = s.serviceName.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
 
-          // Try to find a matching metadata key by comparing normalized name with key or label
-          const metadataKey = (Object.keys(SERVICE_METADATA).find(k => {
-            const metadata = SERVICE_METADATA[k];
-            const normalizedKey = k.replace(/[^A-Z0-9]+/g, "_");
-            const normalizedLabel = metadata.label.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+            // Try to find a matching metadata key
+            const metadataKey = (Object.keys(SERVICE_METADATA).find(k => {
+              const metadata = SERVICE_METADATA[k];
+              const normalizedKey = k.replace(/[^A-Z0-9]+/g, "_");
+              const normalizedLabel = metadata.label.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
 
-            return normalized === normalizedKey || normalized === normalizedLabel ||
-              normalizedKey.includes(normalized) || normalizedLabel.includes(normalized);
-          }) || "CUSTOM") as keyof typeof SERVICE_METADATA;
+              return normalized === normalizedKey || normalized === normalizedLabel ||
+                normalizedKey.includes(normalized) || normalizedLabel.includes(normalized);
+            }) || "CUSTOM") as keyof typeof SERVICE_METADATA;
 
-          const metadata = SERVICE_METADATA[metadataKey];
+            const metadata = SERVICE_METADATA[metadataKey];
 
-          // Check for single engagement to modify href
-          const hasSingleEngagement = s.activeEngagements && s.activeEngagements.length === 1;
-          const engagementId = hasSingleEngagement ? s.activeEngagements[0].id : undefined;
+            // Check for single engagement to modify href
+            const hasSingleEngagement = s.activeEngagements && s.activeEngagements.length === 1;
+            const engagementId = hasSingleEngagement ? s.activeEngagements[0].id : undefined;
 
-          const isCustom = metadataKey === "CUSTOM";
-          const serviceHref = isCustom && s.customServiceCycleId
-            ? `${metadata.href}?customServiceId=${s.customServiceCycleId}`
-            : metadata.href;
+            const isCustom = metadataKey === "CUSTOM";
+            let serviceHref = isCustom && s.customServiceCycleId
+              ? `${metadata.href}?customServiceId=${s.customServiceCycleId}`
+              : metadata.href;
 
-          return {
-            slug: s.serviceName.toLowerCase().replace(/\s+/g, "-"),
-            icon: metadata.icon,
-            label: s.serviceName,
-            href: serviceHref,
-            isActive: true,
-          } as MenuItem;
-        });
-        nextItem = { ...item, children: dynamicChildren };
-      }
+            // Prepend activeCompanyId to serviceHref if it's company-specific
+            if (activeCompanyId && serviceHref.startsWith("/dashboard")) {
+              const pathAfterDashboard = serviceHref.slice(11);
+              const firstSegment = pathAfterDashboard.split("/")[0];
+              if (COMPANY_SPECIFIC_SUBROUTES.includes(firstSegment)) {
+                serviceHref = serviceHref.replace("/dashboard/", `/dashboard/${activeCompanyId}/`);
+              }
+            }
 
-      if (nextItem.slug === "messages" && messagesTotal !== null) {
-        nextItem = { ...nextItem, count: messagesTotal };
-      }
+            return {
+              slug: s.serviceName.toLowerCase().replace(/\s+/g, "-"),
+              icon: metadata.icon,
+              label: s.serviceName,
+              href: serviceHref,
+              isActive: true,
+            } as MenuItem;
+          });
+          nextItem = { ...nextItem, children: dynamicChildren };
+        }
 
-      if (nextItem.slug === "notifications") {
-        nextItem = { ...nextItem, count: undefined };
-      }
+        if (nextItem.slug === "messages" && messagesTotal !== null) {
+          nextItem = { ...nextItem, count: messagesTotal };
+        }
 
-      return nextItem;
-    });
-  }, [menu, sidebarData, messagesTotal, notificationsUnread]);
+        if (nextItem.slug === "notifications") {
+          nextItem = { ...nextItem, count: undefined };
+        }
+
+        return nextItem;
+      });
+  }, [menu, sidebarData, messagesTotal, notificationsUnread, activeCompanyId, hasActiveCompany]);
 
   const grouped: Record<MenuSection, MenuItem[]> = useMemo(() => {
     const res: Record<MenuSection, MenuItem[]> = {
@@ -689,10 +721,23 @@ export default function SidebarMenu({
     const itemConfig = serviceStatusConfig.items[item.slug];
     const engagementId = itemConfig?.engagementId;
 
+    let baseHref = item.href || "#";
+    if (activeCompanyId && baseHref.startsWith("/dashboard")) {
+      if (baseHref === "/dashboard" || baseHref === "/dashboard/") {
+        baseHref = `/dashboard/${activeCompanyId}`;
+      } else {
+        const pathAfterDashboard = baseHref.slice(11);
+        const firstSegment = pathAfterDashboard.split("/")[0];
+        if (COMPANY_SPECIFIC_SUBROUTES.includes(firstSegment)) {
+          baseHref = baseHref.replace("/dashboard/", `/dashboard/${activeCompanyId}/`);
+        }
+      }
+    }
+
     const serviceHref = isServiceActive
       ? engagementId
-        ? `${item.href}/${engagementId}`
-        : item.href || "#"
+        ? `${baseHref}/${engagementId}`
+        : baseHref
       : "/dashboard/services/request";
 
     return (

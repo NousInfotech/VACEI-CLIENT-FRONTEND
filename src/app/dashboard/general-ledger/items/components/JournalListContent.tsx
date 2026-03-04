@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { JournalLine } from "../../../../../api/journalApi";
+import { useActiveCompany } from "@/context/ActiveCompanyContext";
+import { JournalLine } from "@/api/journalApi";
 import Link from "next/link"; // Import Link for client-side navigation
 import Dropdown from "@/components/Dropdown";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ const SkeletonCard = () => (
 export default function JournalListContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
+    const { activeCompanyId } = useActiveCompany();
 
     const [parentId, setParentId] = useState<string | null>(null);
     const [journalLines, setJournalLines] = useState<JournalLine[]>([]);
@@ -44,7 +46,7 @@ export default function JournalListContent() {
 
     const itemsPerPage: number = 10;
 
-    const handleView = (line: JournalLine) => {
+    const handleView = (line: any) => {
         router.push(`/dashboard/general-ledger/items?id=${encodeURIComponent(line.id)}`);
     };
 
@@ -115,7 +117,7 @@ export default function JournalListContent() {
                 {/* Use flexbox to position the heading and button */}
                 <div className="flex justify-between items-center pb-5 border-b border-border">
                     <h1 className="text-2xl font-medium">Ledger Items</h1>
-                    <Link href="/dashboard/general-ledger" passHref>
+                    <Link href={`/dashboard/general-ledger`} className="flex items-center gap-2 text-brand-body hover:text-brand-primary transition-colors mb-4 w-fit">
                         <button className="bg-sidebar-background hover:bg-sidebar-hover text-sidebar-foreground py-2 px-4 rounded focus:outline-none shadow-md">
                             Go Back
                         </button>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import TotalBalanceChart from '@/components/TotalBalanceChart';
 import { useRouter } from 'next/navigation';
+import { useActiveCompany } from "@/context/ActiveCompanyContext";
 import { Button } from "@/components/ui/button";
 
 interface Account {
@@ -20,6 +21,7 @@ export default function CashPage() {
     const [creditCards, setCreditCards] = useState<Account[]>([]);
     const [totalBalance, setTotalBalance] = useState(0);
     const [loading, setLoading] = useState(true);
+    const { activeCompanyId } = useActiveCompany();
 
 
     useEffect(() => {
@@ -53,7 +55,7 @@ export default function CashPage() {
     }, []);
 
     const handleViewAll = () => {
-        router.push('/dashboard/cash/accounts/all-accounts');
+        router.push("/dashboard/cash/accounts/all-accounts");
     };
     // Simple skeleton loader component for list items
     const SkeletonItem = () => (

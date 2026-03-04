@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useActiveCompany } from "@/context/ActiveCompanyContext";
 
 const LABELS: Record<string, string> = {
   dashboard: "Dashboard",
@@ -18,6 +19,7 @@ const LABELS: Record<string, string> = {
 
 export default function Breadcrumbs() {
   const pathname = usePathname();
+  const { companies } = useActiveCompany();
 
   if (!pathname || !pathname.startsWith("/dashboard")) {
     return null;
@@ -30,7 +32,11 @@ export default function Breadcrumbs() {
   const items = segments.map((seg, index) => {
     const href = "/" + segments.slice(0, index + 1).join("/");
     const isLast = index === segments.length - 1;
-    const label = LABELS[seg] ?? seg.replace(/-/g, " ");
+    
+    // Check if segment is a company ID
+    const company = companies.find(c => c.id === seg);
+    const label = company ? company.name : (LABELS[seg] ?? seg.replace(/-/g, " "));
+    
     return { href, label, isLast };
   });
 

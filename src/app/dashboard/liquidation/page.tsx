@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import DashboardCard from "@/components/DashboardCard";
 import DashboardActionButton from "@/components/DashboardActionButton";
 import PageHeader from "@/components/shared/PageHeader";
+import { useActiveCompany } from "@/context/ActiveCompanyContext";
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle,
@@ -39,6 +40,7 @@ const steps = [
 export default function LiquidationPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { activeCompanyId } = useActiveCompany();
   const [activeLiquidation, setActiveLiquidation] = useState(false);
   const [liquidationType, setLiquidationType] = useState<string | null>(null);
   const [initiatedAt, setInitiatedAt] = useState<Date | null>(null);
@@ -495,7 +497,7 @@ export default function LiquidationPage() {
             <h2 className="text-lg md:text-xl font-semibold text-gray-900">Key Deadlines</h2>
           </div>
           <a
-            href="/dashboard/compliance"
+            href={`/dashboard/${activeCompanyId}/compliance`}
             className="inline-flex items-center rounded-lg px-3 py-1.5 text-sm bg-brand-primary hover:bg-brand-active text-white transition-colors"
           >
             Open Compliance Calendar

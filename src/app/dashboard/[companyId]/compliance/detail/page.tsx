@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import TodoListViewInner from "@/app/dashboard/todo-list/components/TodoListViewInner";
+import TodoListViewInner from "@/app/dashboard/[companyId]/todo-list/components/TodoListViewInner";
 
 function ComplianceDetailContent() {
   // TodoListViewInner already handles decoding taskId from the query string

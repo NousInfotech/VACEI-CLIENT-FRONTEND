@@ -70,17 +70,18 @@ export default function ComplianceListPage() {
 
   const handleOpenTask = (taskId: number) => {
     const encoded = btoa(taskId.toString());
-    router.push(`/dashboard/compliance/detail?taskId=${encoded}`);
+    router.push(`/dashboard/${activeCompanyId}/compliance/detail?taskId=${encoded}`);
   };
 
   const serviceLinkFor = (task: Task) => {
     const name = (task.category || "").toLowerCase();
-    if (name.includes("vat")) return "/dashboard/tax";
-    if (name.includes("payroll")) return "/dashboard/invoices";
-    if (name.includes("book") || name.includes("bk")) return "/dashboard/financial-statements/profit-loss";
-    if (name.includes("audit")) return "/dashboard/services";
-    if (name.includes("mbr") || name.includes("csp") || name.includes("corp")) return "/dashboard/services";
-    return "/dashboard/services";
+    const prefix = `/dashboard/${activeCompanyId}`;
+    if (name.includes("vat")) return `${prefix}/tax`;
+    if (name.includes("payroll")) return `${prefix}/services/payroll`;
+    if (name.includes("book") || name.includes("bk")) return `${prefix}/financial-statements/profit-loss`;
+    if (name.includes("audit")) return `${prefix}/services`;
+    if (name.includes("mbr") || name.includes("csp") || name.includes("corp")) return `${prefix}/services`;
+    return `${prefix}/services`;
   };
 
   const formatDate = (value: string | null | undefined) => {
@@ -116,7 +117,7 @@ export default function ComplianceListPage() {
         <Button
           variant="outline"
           className="rounded-lg px-4 text-sm shadow-sm hover:shadow-md transition-shadow"
-          onClick={() => router.push("/dashboard/compliance")}
+          onClick={() => router.push(`/dashboard/${activeCompanyId}/compliance`)}
         >
           Back to calendar view
         </Button>
