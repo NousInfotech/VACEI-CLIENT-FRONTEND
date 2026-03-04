@@ -182,6 +182,14 @@ export interface UseChatRoomsReturn {
     setRoomMessages: (roomId: string, messages: Message[], participants?: User[]) => void;
     setRoomMessagesWithMerge: (roomId: string, apiMessages: Message[], participants?: User[]) => void;
     appendMessage: (roomId: string, message: Message) => void;
+    /** Prepend older messages above current ones (for infinite scroll) */
+    prependMessages: (roomId: string, messages: Message[]) => void;
+    /** Store the pagination cursor for a room after a message fetch */
+    setRoomCursor: (roomId: string, cursor: string | null, hasMore: boolean) => void;
+    /** Get the next cursor for a room (for pagination) */
+    getRoomCursor: (roomId: string) => string | null;
+    /** Whether there are more messages to load for a room */
+    roomHasMore: (roomId: string) => boolean;
     /** Zero-out or set unread badge for a specific room */
     setUnreadCount: (roomId: string, count: number) => void;
 }
@@ -196,6 +204,8 @@ export function useChatRooms(activeRoomId?: string): UseChatRoomsReturn {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [tick, setTick] = useState(0);
+    // Track pagination cursors and hasMore per room, keyed by roomId
+    const roomCursors = useRef<Map<string, { cursor: string | null; hasMore: boolean }>>(new Map());
 
     // Keep a ref so subscription callbacks always see the latest activeRoomId
     // without needing to re-subscribe every time it changes.
@@ -461,6 +471,34 @@ export function useChatRooms(activeRoomId?: string): UseChatRoomsReturn {
         );
     }, []);
 
+    /** Prepend older messages above current (for infinite scroll). Deduplicates by id. */
+    const prependMessages = useCallback((roomId: string, olderMessages: Message[]) => {
+        setRooms((prev) =>
+            prev.map((r) => {
+                if (r.id !== roomId) return r;
+                const existingIds = new Set(r.messages.map((m) => m.id));
+                const newOnes = olderMessages.filter((m) => !existingIds.has(m.id));
+                if (newOnes.length === 0) return r;
+                const merged = [...newOnes, ...r.messages].sort(
+                    (a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0)
+                );
+                return { ...r, messages: merged };
+            })
+        );
+    }, []);
+
+    const setRoomCursor = useCallback((roomId: string, cursor: string | null, hasMore: boolean) => {
+        roomCursors.current.set(roomId, { cursor, hasMore });
+    }, []);
+
+    const getRoomCursor = useCallback((roomId: string): string | null => {
+        return roomCursors.current.get(roomId)?.cursor ?? null;
+    }, []);
+
+    const roomHasMore = useCallback((roomId: string): boolean => {
+        return roomCursors.current.get(roomId)?.hasMore ?? false;
+    }, []);
+
     return {
         rooms,
         isLoading,
@@ -471,6 +509,10 @@ export function useChatRooms(activeRoomId?: string): UseChatRoomsReturn {
         setRoomMessages,
         setRoomMessagesWithMerge,
         appendMessage,
+        prependMessages,
+        setRoomCursor,
+        getRoomCursor,
+        roomHasMore,
         setUnreadCount,
     };
 }

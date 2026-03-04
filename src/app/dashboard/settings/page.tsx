@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect, ChangeEvent, FocusEvent } from 'react';
 import * as Yup from 'yup';
 import { ValidationError } from 'yup';
 import { changePassword } from '@/api/authService';
-import AlertMessage, { AlertVariant } from '@/components/AlertMessage';
+import { useAlert } from '@/app/context/AlertContext';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
 import Dropdown from "@/components/Dropdown";
@@ -111,8 +111,7 @@ function SettingsContent() {
     const [touched, setTouched] = useState<Partial<Record<keyof FormData, boolean>>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Consolidated state for the AlertMessage
-    const [alert, setAlert] = useState<{ message: string; variant: AlertVariant } | null>(null);
+    const { setAlert } = useAlert();
 
     // Function to validate a single field
     const validateField = async (fieldName: keyof FormData, value: string) => {
@@ -140,7 +139,6 @@ function SettingsContent() {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setAlert(null); // Clear any previous alerts
         setIsSubmitting(true);
 
         try {
@@ -532,16 +530,6 @@ function SettingsContent() {
                         {activeTab === "general" && (
                             <div className="space-y-3">
                                 <h2 className="text-lg font-semibold text-brand-body">Company profile</h2>
-                                {alert && activeTab === "general" && (
-                                    <div className="mb-4">
-                                        <AlertMessage
-                                            message={alert.message}
-                                            variant={alert.variant}
-                                            onClose={() => setAlert(null)}
-                                            duration={6000}
-                                        />
-                                    </div>
-                                )}
                                 <div className="grid gap-3 md:grid-cols-2">
                                     <Input
                                         placeholder="Company name"
@@ -890,16 +878,6 @@ function SettingsContent() {
                         {activeTab === "password" && (
                             <div className="mt-1">
                                 <h2 className="text-lg font-semibold text-brand-body mb-4">Change Password</h2>
-                                {alert && (
-                                    <div className="mb-4">
-                                        <AlertMessage
-                                            message={alert.message}
-                                            variant={alert.variant}
-                                            onClose={() => setAlert(null)}
-                                            duration={6000}
-                                        />
-                                    </div>
-                                )}
 
                                 <form onSubmit={handleSubmit} className="space-y-6">
                                     <div>

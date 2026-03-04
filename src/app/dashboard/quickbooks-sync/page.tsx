@@ -4,7 +4,7 @@
 import { useEffect, useState,Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { format } from 'date-fns';
-import AlertMessage from '../../../components/AlertMessage';
+import { useAlert } from '@/app/context/AlertContext';
 import Image from 'next/image';
 import { syncItems } from './components/syncItems'; // Assuming this defines your sync items
 import { checkQuickbooksAuth, syncQuickbooksData } from '@/api/quickbooksApi'; // Import the new API functions
@@ -14,7 +14,7 @@ function SettingsContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    const [alert, setAlert] = useState<{ text: string; type: 'success' | 'danger' } | null>(null);
+    const { setAlert } = useAlert();
     const [authenticated, setAuthenticated] = useState(false);
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
     const [lastAuthenticated, setLastAuthenticated] = useState<Date | null>(null);
@@ -42,15 +42,14 @@ function SettingsContent() {
 
         if (error) {
             try {
-                setAlert({ text: decodeURIComponent(error), type: 'danger' });
+                setAlert({ message: decodeURIComponent(error), variant: 'danger' });
             } catch {
-                setAlert({ text: 'An error occurred. Please try again later.', type: 'danger' });
+                setAlert({ message: 'An error occurred. Please try again later.', variant: 'danger' });
             }
         }
 
         const checkAuthentication = async () => {
             setIsCheckingAuth(true);
-            setAlert(null); // Clear previous alerts
             try {
                 const { mockCheckQuickbooksAuth } = await import('@/api/mockApiService');
                 const { success, data } = await mockCheckQuickbooksAuth();
@@ -74,11 +73,11 @@ function SettingsContent() {
                     setLastAuthenticated(null);
                     setRealmId(null);
                     if (!success) {
-                        setAlert({ text: 'QuickBooks authentication check failed', type: 'danger' });
+                        setAlert({ message: 'QuickBooks authentication check failed', variant: 'danger' });
                     }
                 }
             } catch (err) {
-                setAlert({ text: 'An unexpected error occurred during authentication check.', type: 'danger' });
+                setAlert({ message: 'An unexpected error occurred during authentication check.', variant: 'danger' });
                 setAuthenticated(false);
                 setLastAuthenticated(null);
                 setRealmId(null);
@@ -103,19 +102,18 @@ function SettingsContent() {
         failureMessage: string
     ) => {
         setSyncStatus(prev => ({ ...prev, [syncingKey]: true }));
-        setAlert(null);
 
         try {
             const { mockSyncQuickbooksData } = await import('@/api/mockApiService');
             const { success, data } = await mockSyncQuickbooksData(endpoint);
 
             if (success) {
-                setAlert({ text: successMessage, type: 'success' });
+                setAlert({ message: successMessage, variant: 'success' });
             } else {
-                setAlert({ text: data?.message || failureMessage, type: 'danger' });
+                setAlert({ message: data?.message || failureMessage, variant: 'danger' });
             }
         } catch (err) {
-            setAlert({ text: `An unexpected error occurred during ${failureMessage.toLowerCase()}`, type: 'danger' });
+            setAlert({ message: `An unexpected error occurred during ${failureMessage.toLowerCase()}`, variant: 'danger' });
         } finally {
             setSyncStatus(prev => ({ ...prev, [syncingKey]: false }));
         }
@@ -128,14 +126,6 @@ function SettingsContent() {
                 subtitle="Sync your financial data from QuickBooks to VACEI."
             />
             <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
-
-                {alert && (
-                    <AlertMessage
-                        message={alert.text}
-                        variant={alert.type}
-                        onClose={() => setAlert(null)}
-                    />
-                )}
 
                 {isCheckingAuth ? (
                     <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md mb-5">

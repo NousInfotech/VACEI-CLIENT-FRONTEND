@@ -75,7 +75,7 @@ export function OnboardingLayout({
                     Back
                   </Button>
                 )}
-                {onSaveExit && (
+                {onSaveExit && currentStep > 1 && (
                   <Button
                     type="button"
                     variant="outline"

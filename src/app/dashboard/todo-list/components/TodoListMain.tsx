@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { getTodos, updateTodoStatus, TodoItem } from "@/api/todoService";
-import AlertMessage, { AlertVariant } from "@/components/AlertMessage";
+import { useAlert } from "@/app/context/AlertContext";
 import { Pagination } from "@/interfaces";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -20,8 +20,7 @@ export default function TodoList() {
     const [tasks, setTasks] = useState<TodoItem[]>([]);
     const [pagination, setPagination] = useState<Pagination>({ page: 1, totalPages: 1, total: 0, limit: 10 });
 
-    const [message, setMessage] = useState<string>("");
-    const [alertVariant, setAlertVariant] = useState<AlertVariant | undefined>(undefined);
+    const { setAlert } = useAlert();
 
     const [typeFilter, setTypeFilter] = useState<string>("");
     const [serviceFilter, setServiceFilter] = useState<string>("");
@@ -49,8 +48,7 @@ export default function TodoList() {
             setAllTasks(sortedTodos);
         } catch (err) {
             console.error("Failed to load data:", err);
-            setMessage("Failed to load data.");
-            setAlertVariant("danger");
+            setAlert({ message: "Failed to load data.", variant: "danger" });
         } finally {
             setIsLoading(false);
         }
@@ -213,7 +211,6 @@ export default function TodoList() {
             />
 
             <div className="bg-card border border-border rounded-[16px] p-4 shadow-md w-full mx-auto transition-all duration-300 hover:shadow-md">
-                {message && <AlertMessage message={message} variant={alertVariant} onClose={() => setMessage("")} duration={6000} />}
 
                 {/* Filters */}
                 <div className="flex flex-col md:flex-row gap-3 mb-5 items-center">

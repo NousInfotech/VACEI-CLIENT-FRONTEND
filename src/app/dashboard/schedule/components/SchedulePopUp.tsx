@@ -5,7 +5,7 @@ import React, { useMemo, useState } from "react";
 // Make sure MeetingInfoPopupProps includes updated meeting structure (client and accountant objects)
 import { MeetingInfoPopupProps } from "@/interfaces";
 import { deleteMeeting } from "@/api/meetingService";
-import AlertMessage, { AlertVariant } from "@/components/AlertMessage";
+import { useAlert } from "@/app/context/AlertContext";
 
 // Import the main React component for Hugeicons
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -55,8 +55,7 @@ const MeetingInfoPopup: React.FC<MeetingInfoPopupProps> = ({
   onView,
   onMeetingDeleted,
 }) => {
-  const [message, setMessage] = useState<string>("");
-  const [alertVariant, setAlertVariant] = useState<AlertVariant | undefined>(undefined);
+  const { setAlert } = useAlert();
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
    console.log(meeting); // This is good for debugging, but can be removed in production
@@ -87,8 +86,7 @@ const MeetingInfoPopup: React.FC<MeetingInfoPopupProps> = ({
         // Ensure meeting.id is a number before toString() and btoa()
         const encodedId = btoa(String(meeting.id)); // Safely convert to string before encoding
         await deleteMeeting(encodedId);
-        setMessage("Meeting deleted successfully!");
-        setAlertVariant("success");
+        setAlert({ message: "Meeting deleted successfully!", variant: "success" });
         setTimeout(() => {
           onClose();
           if (onMeetingDeleted) {
@@ -97,8 +95,7 @@ const MeetingInfoPopup: React.FC<MeetingInfoPopupProps> = ({
         }, 1500);
       } catch (error) {
         console.error("Failed to delete meeting:", error);
-        setMessage("Failed to delete meeting. Please try again.");
-        setAlertVariant("danger");
+        setAlert({ message: "Failed to delete meeting. Please try again.", variant: "danger" });
       } finally {
         setIsDeleting(false);
       }
@@ -109,14 +106,9 @@ const MeetingInfoPopup: React.FC<MeetingInfoPopupProps> = ({
     <div className="fixed inset-0 bg-sidebar-background bg-opacity-75 flex items-center justify-center z-50 p-4 sm:p-6">
       {/* Modal Container - Smaller border-radius, more subtle shadow */}
       <div className="bg-card rounded-xl shadow-lg w-full max-w-2xl h-[80vh] mx-auto flex flex-col overflow-hidden">
-        {message && (
-          <div className="p-4 sm:p-5 flex-shrink-0">
-            <AlertMessage message={message} variant={alertVariant} onClose={() => setMessage("")} duration={3000} />
-          </div>
-        )}
 
         {/* Modal Header - Gmail-like header with actions */}
-        <div className="flex items-center justify-between p-4 sm:px-6 border-b border-border flex-shrink-0">
+        <div className="flex items-center justify-between p-4 sm:px-6 border-b border-border shrink-0">
           <h3 className="text-xl sm:text-2xl font-bold text-brand-body truncate pr-8">
             {meeting.title}
           </h3>
@@ -174,7 +166,7 @@ const MeetingInfoPopup: React.FC<MeetingInfoPopupProps> = ({
         </div>
 
         {/* Modal Body (Content) - Updated text sizes and spacing */}
-        <div className="flex-grow overflow-y-auto p-4 sm:p-6">
+        <div className="grow overflow-y-auto p-4 sm:p-6">
           <div className="mb-6 pb-4 border-b border-border">
             <div className="flex justify-between items-center mb-2">
               {/* Display Client and Accountant */}

@@ -163,7 +163,7 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
                   <Badge variant="outline" className={docStatus === 'REJECTED' ? "text-rose-600 border-rose-300 bg-rose-50" : "text-gray-600 border-gray-300"}>
                     {doc.status}
                   </Badge>
-                  {docUrl && doc.createdAt && (
+                  {doc.createdAt && (
                     <span className="text-xs text-gray-500">
                       Uploaded: {(() => {
                         const date = new Date(doc.createdAt);

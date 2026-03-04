@@ -16,6 +16,13 @@ import {
   ServiceToggleOption
 } from '@/interfaces';
 import { saveOnboardingStep, createCompany, getOnboardingDataFromDB, updateCompany } from '@/api/onboardingService';
+import { useAlert } from '@/app/context/AlertContext';
+
+const industries = [
+  'Technology', 'Healthcare', 'Finance', 'Manufacturing', 'Retail',
+  'Energy', 'Construction', 'Education', 'Transportation', 'Real Estate',
+  'Consulting', 'Other',
+];
 
 interface CompanyDetailsScreenProps {
   onComplete: () => void;
@@ -24,9 +31,17 @@ interface CompanyDetailsScreenProps {
 }
 
 export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }: CompanyDetailsScreenProps) {
+  const { setAlert } = useAlert();
   const [companyType, setCompanyType] = useState<CompanyType | undefined>(undefined);
+  const [industrySelection, setIndustrySelection] = useState<string>('');
   const [directorError, setDirectorError] = useState<string>('');
   const [shareholderError, setShareholderError] = useState<string>('');
+  const [fieldErrors, setFieldErrors] = useState<{
+    companyName?: string;
+    registrationNumber?: string;
+    registeredAddress?: string;
+    industry?: string;
+  }>({});
   const [loading, setLoading] = useState(false);
   const [existingDetails, setExistingDetails] = useState<ExistingCompanyDetails & {
     directors: { option: ServiceToggleOption; persons?: Person[] };
@@ -124,6 +139,19 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
             proposedNames: { ...prev.proposedNames, ...data.newCompanyDetails.proposedNames }
           }));
         }
+
+        // Initialize industrySelection
+        const currentIndustry = data.companyType === 'existing' 
+          ? (data.existingCompanyDetails?.industry?.[0] || '') 
+          : (data.newCompanyDetails?.industry?.[0] || '');
+        
+        if (currentIndustry) {
+          if (industries.includes(currentIndustry)) {
+            setIndustrySelection(currentIndustry);
+          } else {
+            setIndustrySelection('Other');
+          }
+        }
       } else {
         // If still no data and not loading anything else, maybe we should go back
         console.warn('No onboarding data found in localStorage or DB');
@@ -136,36 +164,36 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
   const handleContinue = async () => {
     // Validate companyType is set
     if (!companyType) {
-      alert('Please select a company type first. Go back to step 1.');
+      setAlert({ message: 'Please select a company type first. Go back to step 1.', variant: 'warning' });
       return;
     }
+
+    const newFieldErrors: typeof fieldErrors = {};
 
     // Validate common required fields
     if (companyType === 'existing') {
       if (!existingDetails.companyName.trim()) {
-        alert('Company name is required.');
-        return;
+        newFieldErrors.companyName = 'Company name is required.';
       }
       if (!existingDetails.registrationNumber.trim()) {
-        alert('Registration number is required.');
-        return;
+        newFieldErrors.registrationNumber = 'Registration number is required.';
       }
       if (!existingDetails.registeredAddress.trim()) {
-        alert('Registered address is required.');
-        return;
+        newFieldErrors.registeredAddress = 'Registered address is required.';
+      }
+    } else if (companyType === 'new') {
+      if (!(newDetails.proposedNames?.name1 || '').trim()) {
+        newFieldErrors.companyName = 'Company name is required.';
       }
     }
 
-    if (companyType === 'new') {
-      if (!(newDetails.proposedNames?.name1 || '').trim()) {
-        alert('Company name is required.');
-        return;
-      }
-      if (!newDetails.registeredAddress.address?.trim()) {
-        alert('Registered address is required.');
-        return;
-      }
+    if (Object.keys(newFieldErrors).length > 0) {
+      setFieldErrors(newFieldErrors);
+      setAlert({ message: 'Please fill in all required fields.', variant: 'warning' });
+      return;
     }
+
+    setFieldErrors({});
     
     // Clear any previous errors if validation passes
     setDirectorError('');
@@ -580,7 +608,10 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
         const errorMessage = error.message || 'Failed to create company. Please try again.';
         
         // Show error and block navigation
-        alert(`Failed to create company: ${errorMessage}\n\nPlease check your connection and try again.`);
+        setAlert({ 
+          message: `Failed to create company: ${errorMessage}\n\nPlease check your connection and try again.`, 
+          variant: 'danger' 
+        });
         setLoading(false);
         return; // Block navigation - user must fix the error
       }
@@ -616,7 +647,7 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
       onComplete();
     } catch (error) {
       console.error('Failed to save step:', error);
-      alert('Failed to save. Please try again.');
+      setAlert({ message: 'Failed to save. Please try again.', variant: 'danger' });
       setLoading(false);
     }
   };
@@ -765,6 +796,7 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
             <Input
               value={companyType === 'existing' ? existingDetails.companyName : (newDetails.proposedNames?.name1 || '')}
               onChange={(e) => {
+                setFieldErrors(prev => ({ ...prev, companyName: undefined }));
                 if (companyType === 'existing') {
                   setExistingDetails(prev => ({ ...prev, companyName: e.target.value }));
                 } else {
@@ -775,7 +807,11 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
                 }
               }}
               placeholder="e.g., ACME LTD"
+              className={fieldErrors.companyName ? 'border-red-500' : ''}
             />
+            {fieldErrors.companyName && (
+              <p className="text-sm text-red-500 mt-1">{fieldErrors.companyName}</p>
+            )}
           </div>
 
           {companyType === 'existing' && (
@@ -784,18 +820,24 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
             <Input
               value={existingDetails.registrationNumber}
               onChange={(e) => {
+                setFieldErrors(prev => ({ ...prev, registrationNumber: undefined }));
                 setExistingDetails(prev => ({ ...prev, registrationNumber: e.target.value }));
               }}
               placeholder="e.g., C12345"
+              className={fieldErrors.registrationNumber ? 'border-red-500' : ''}
             />
+            {fieldErrors.registrationNumber && (
+              <p className="text-sm text-red-500 mt-1">{fieldErrors.registrationNumber}</p>
+            )}
           </div>
           )}
 
           <div>
-            <label className="text-sm font-medium mb-2 block">Registered address *</label>
+            <label className="text-sm font-medium mb-2 block">Registered address {companyType === 'existing' ? '*' : '(optional)'}</label>
             <Textarea
               value={companyType === 'existing' ? existingDetails.registeredAddress : newDetails.registeredAddress.address}
               onChange={(e) => {
+                setFieldErrors(prev => ({ ...prev, registeredAddress: undefined }));
                 if (companyType === 'existing') {
                   setExistingDetails(prev => ({ ...prev, registeredAddress: e.target.value }));
                 } else {
@@ -807,23 +849,71 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
               }}
               placeholder="Enter full registered address"
               rows={3}
+              className={fieldErrors.registeredAddress ? 'border-red-500' : ''}
             />
+            {fieldErrors.registeredAddress && (
+              <p className="text-sm text-red-500 mt-1">{fieldErrors.registeredAddress}</p>
+            )}
           </div>
 
           <div>
             <label className="text-sm font-medium mb-2 block">Industry (optional)</label>
-            <Input
-              value={companyType === 'existing' ? (existingDetails.industry?.join(', ') || '') : (newDetails.industry?.join(', ') || '')}
-              onChange={(e) => {
-                const industries = e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
-                if (companyType === 'existing') {
-                  setExistingDetails(prev => ({ ...prev, industry: industries }));
-                } else {
-                  setNewDetails(prev => ({ ...prev, industry: industries }));
-                }
-              }}
-              placeholder="e.g., Technology, Finance (comma-separated)"
-            />
+            <div className="space-y-3">
+              <select
+                value={industrySelection}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setIndustrySelection(val);
+                  if (val !== 'Other') {
+                    const industryArr = val ? [val] : [];
+                    if (companyType === 'existing') {
+                      setExistingDetails(prev => ({ ...prev, industry: industryArr }));
+                    } else {
+                      setNewDetails(prev => ({ ...prev, industry: industryArr }));
+                    }
+                  } else {
+                    // When 'Other' is selected, don't clear the array if it already has a custom value
+                    // but if it's currently one of the predefined ones, clear it for the user to type
+                    const currentIndustry = companyType === 'existing' ? (existingDetails.industry?.[0] || '') : (newDetails.industry?.[0] || '');
+                    if (industries.includes(currentIndustry) && currentIndustry !== 'Other') {
+                      if (companyType === 'existing') {
+                        setExistingDetails(prev => ({ ...prev, industry: [] }));
+                      } else {
+                        setNewDetails(prev => ({ ...prev, industry: [] }));
+                      }
+                    }
+                  }
+                }}
+                className="w-full h-10 px-3 py-2 bg-white border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 0.75rem center',
+                  backgroundSize: '1rem'
+                }}
+              >
+                <option value="">Select industry</option>
+                {industries.map(ind => (
+                  <option key={ind} value={ind}>{ind}</option>
+                ))}
+              </select>
+
+              {industrySelection === 'Other' && (
+                <Input
+                  value={companyType === 'existing' ? (existingDetails.industry?.[0] || '') : (newDetails.industry?.[0] || '')}
+                  onChange={(e) => {
+                    const industryArr = [e.target.value];
+                    if (companyType === 'existing') {
+                      setExistingDetails(prev => ({ ...prev, industry: industryArr }));
+                    } else {
+                      setNewDetails(prev => ({ ...prev, industry: industryArr }));
+                    }
+                  }}
+                  placeholder="Enter your industry manually"
+                  className="animate-in fade-in slide-in-from-top-1 duration-200"
+                />
+              )}
+            </div>
           </div>
 
           <div>

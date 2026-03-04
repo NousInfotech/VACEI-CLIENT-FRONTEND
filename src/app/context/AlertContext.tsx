@@ -1,7 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
-import AlertMessage from "@/components/AlertMessage";
+import React, { createContext, useContext, ReactNode } from "react";
+import { toast } from "sonner";
 
 type AlertVariant = "success" | "danger" | "warning" | "info";
 
@@ -26,22 +26,27 @@ export const useAlert = (): AlertContextType => {
 };
 
 export const AlertProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [alert, setAlertState] = useState<Alert | null>(null);
-
   const setAlert = (alert: Alert) => {
-    setAlertState(alert);
+    switch (alert.variant) {
+      case "success":
+        toast.success(alert.message);
+        break;
+      case "danger":
+        toast.error(alert.message);
+        break;
+      case "warning":
+        toast.warning(alert.message);
+        break;
+      case "info":
+        toast.info(alert.message);
+        break;
+      default:
+        toast(alert.message);
+    }
   };
 
   return (
     <AlertContext.Provider value={{ setAlert }}>
-      {alert && (
-        <AlertMessage
-          message={alert.message}
-          variant={alert.variant}
-          duration={alert.duration}
-          onClose={() => setAlertState(null)}
-        />
-      )}
       {children}
     </AlertContext.Provider>
   );

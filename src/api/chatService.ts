@@ -33,7 +33,7 @@ export interface ChatMessage {
   content: string | null;
   fileUrl: string | null;
   type: "TEXT" | "FILE";
-  sentAt: string;
+  sentAt?: string;
   replyToMessageId?: string | null;
   replyToMessage?: ChatMessage | null;
   sender?: {
@@ -219,20 +219,39 @@ class ChatService {
     // When Supabase is available, read directly from ChatMessage so
     // history matches what realtime inserts into.
     if (this.hasSupabase) {
+      const LIMIT = 50;
       const roomUuid = this.toUuidIfBase64(roomId);
-      const { data, error } = await (this.supabase as any)
+      let query = (this.supabase as any)
         .from("ChatMessage")
         .select("*")
         .eq("roomId", roomUuid)
         .order("sentAt", { ascending: false })
-        .limit(50);
+        .limit(LIMIT);
+
+      // cursor = sentAt of the oldest message from the previous fetch
+      if (cursor) {
+        query = query.lt("sentAt", cursor);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         throw error;
       }
 
+      const items = (data || []).map(normalizeChatMessage) as unknown as ChatMessage[];
+      const hasMore = items.length === LIMIT;
+      // next cursor = sentAt of the oldest item in this batch (to fetch messages before it)
+      const nextCursor = hasMore && items.length > 0
+        ? (items[items.length - 1] as any).sentAt as string
+        : null;
+
       return {
-        data: (data || []).map(normalizeChatMessage) as unknown as ChatMessage[],
+        data: items,
+        meta: {
+          nextCursor,
+          hasMore,
+        },
       };
     }
 
@@ -244,6 +263,7 @@ class ChatService {
       `chat/rooms/${roomId}/messages?${params}`
     );
   }
+
 
   async getUnreadCount(roomId: string): Promise<{ data: { unreadCount: number } }> {
     return this.request("GET", `chat/rooms/${roomId}/unread-count`);
@@ -324,7 +344,7 @@ class ChatService {
         content: content || null,
         fileUrl: fileUrl || null,
         type: fileUrl ? "FILE" : "TEXT",
-        sentAt: new Date().toISOString(),
+        // sentAt: new Date().toISOString(),
       };
       if (replyToMessageId) message.replyToMessageId = replyToMessageId;
 
