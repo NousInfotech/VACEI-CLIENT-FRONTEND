@@ -585,15 +585,17 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                     </div>
                 </Dropdown>
 
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10 rounded-xl hover:bg-white hover:shadow-md transition-all"
-                    aria-label="Open settings"
-                    title="Settings"
-                >
-                    <i className="fi fi-rr-settings text-gray-900"></i>
-                </Button>
+                <Link href={pathname.includes('global-dashboard') ? '/global-dashboard/settings' : `/dashboard/${activeCompanyId || params?.companyId}/settings`}>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 rounded-xl hover:bg-white hover:shadow-md transition-all"
+                        aria-label="Open settings"
+                        title="Settings"
+                    >
+                        <i className="fi fi-rr-settings text-gray-900"></i>
+                    </Button>
+                </Link>
 
                 <div
                     className="flex items-center gap-4 pl-4 border-l border-gray-200"
