@@ -165,31 +165,31 @@ const IncorporationSection = () => {
     (req: any) => req.status !== 'DRAFT'
   );
 
-  const incorporationStatus = (incorporation.status || 'PENDING').toUpperCase();
+  // const incorporationStatus = (incorporation.status || 'PENDING').toUpperCase();
 
-  if (incorporationStatus === 'PENDING') {
-    return (
-      <div className="space-y-6 animate-in fade-in duration-700">
-        <div className="flex items-center justify-between bg-white/40 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md">
-            <div className="p-6">
-            <h2 className="text-3xl font-semibold">Incorporation Status</h2>
-            <div className="flex items-center gap-2 mt-2">
-              <p className="text-sm text-gray-500 font-medium">Current Status:</p>
-              {getStatusBadge(incorporation.status)}
-            </div>
-            </div>
-            <div className="p-4 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl text-white shadow-lg m-4">
-            <ClipboardList size={32} />
-            </div>
-        </div>
-        <EmptyState
-            icon={Clock}
-            title="Incorporation Pending"
-            description="Your incorporation cycle has been created by the admin and is currently pending. Please wait for the document requests to be activated."
-        />
-      </div>
-    );
-  }
+  // if (incorporationStatus === 'PENDING') {
+  //   return (
+  //     <div className="space-y-6 animate-in fade-in duration-700">
+  //       <div className="flex items-center justify-between bg-white/40 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md">
+  //           <div className="p-6">
+  //           <h2 className="text-3xl font-semibold">Incorporation Status</h2>
+  //           <div className="flex items-center gap-2 mt-2">
+  //             <p className="text-sm text-gray-500 font-medium">Current Status:</p>
+  //             {getStatusBadge(incorporation.status)}
+  //           </div>
+  //           </div>
+  //           <div className="p-4 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl text-white shadow-lg m-4">
+  //           <ClipboardList size={32} />
+  //           </div>
+  //       </div>
+  //       <EmptyState
+  //           icon={Clock}
+  //           title="Incorporation Pending"
+  //           description="Your incorporation cycle has been created by the admin and is currently pending. Please wait for the document requests to be activated."
+  //       />
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700">

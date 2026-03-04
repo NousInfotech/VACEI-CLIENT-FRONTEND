@@ -201,6 +201,7 @@ export default function ServiceRequestPage() {
             : "Select the service and complete the form."
         }
         activeCompany={activeCompanyName}
+        onBack={() => router.back()}
         actions={
           <div className="flex gap-2">
             {showHistory ? (

@@ -4,11 +4,13 @@ import React from "react";
 import Link from "next/link";
 import DashboardCard from "@/components/DashboardCard";
 import { cn } from "@/lib/utils";
+import { Button } from "../ui/button";
 
 interface PageHeaderProps {
   title: React.ReactNode;
   subtitle?: React.ReactNode;
   description?: React.ReactNode;
+  onBack?: () => void;
   icon?: React.ComponentType<{ className?: string }>;
   activeCompany?: string;
   badge?: React.ReactNode;
@@ -33,6 +35,7 @@ export const PageHeader = ({
   title,
   subtitle,
   description,
+  onBack,
   icon: Icon,
   activeCompany,
   badge,
@@ -63,7 +66,7 @@ export const PageHeader = ({
             {Icon && (
               <div className={cn(
                 "w-12 h-12 rounded-lg flex items-center justify-center border shrink-0 shadow-sm",
-                isLight ? "bg-slate-50 border-slate-100" : "bg-white/15 border-white/30"
+                isLight ? "bg-slate-50 border-slate-200" : "bg-white/15 border-white/30"
               )}>
                 <Icon className={cn("w-6 h-6", isLight ? "text-primary-color-new" : "text-white")} />
               </div>
@@ -139,11 +142,17 @@ export const PageHeader = ({
           )}
         </div>
 
-        {actions && (
-          <div className="flex items-center gap-4">
-            {actions}
-          </div>
-        )}
+        <div className="flex items-center gap-4">
+          {actions}
+          {onBack && (
+            <Button
+              onClick={onBack}
+              variant='header'
+            >
+              Back             
+            </Button>
+          )}
+        </div>
       </div>
     </DashboardCard>
   );

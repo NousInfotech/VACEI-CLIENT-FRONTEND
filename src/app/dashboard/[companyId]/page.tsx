@@ -507,28 +507,17 @@ export default function DashboardPage() {
           return dlDate.getTime() === normalizedToday.getTime();
         }).length;
 
-        const calSoon = withValidDates.filter(e => {
-          const dl = new Date(e.dueDate);
-          const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
-          // Include Yesterday and items within the next 7 days in "Due Soon" per user request
-          const nextWeek = new Date(normalizedToday);
-          nextWeek.setDate(nextWeek.getDate() + 7);
-          
-          const isYesterdayOrPast = dlDate.getTime() < normalizedToday.getTime();
-          const isUpcomingSoon = dlDate.getTime() > normalizedToday.getTime() && dlDate.getTime() <= nextWeek.getTime();
-          
-          return isYesterdayOrPast || isUpcomingSoon;
-        }).length;
-
+        // In the compliance page, "Upcoming" is simply any date strictly greater than today.
+        // It does not separate out "Due Soon". The user requested the exact same count here.
         const calUpcoming = withValidDates.filter(e => {
           const dl = new Date(e.dueDate);
           const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
-          return dlDate.getTime() >= normalizedToday.getTime();
+          return dlDate.getTime() > normalizedToday.getTime();
         }).length;
 
         const newCounts = {
-          overdue: 0, // Not used in sidebar anymore
-          dueSoon: calSoon,
+          overdue: overdueEntries.length,
+          dueSoon: 0, // Not used when matching the precise "Upcoming" count from the compliance page
           waiting: calToday,
           upcoming: calUpcoming,
           done: entries.length

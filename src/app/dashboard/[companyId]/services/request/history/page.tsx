@@ -22,6 +22,7 @@ export default function ServiceRequestHistoryPage() {
                 title="Service Request History"
                 subtitle="View and track your previous service requests."
                 activeCompany={activeCompanyName}
+                onBack={() => router.back()}
             />
 
             <DashboardCard className="p-6 space-y-6">

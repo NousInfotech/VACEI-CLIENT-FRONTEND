@@ -23,7 +23,7 @@ import PillTabs from "@/components/shared/PillTabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import ComplianceMonthView from "@/components/engagement/ComplianceMonthView";
 import { getCompanies } from "@/api/auditService";
-import ComplianceCalendarApiSection from "@/app/dashboard/compliance/ComplianceCalendarApiSection";
+import ComplianceCalendarApiSection from "@/app/dashboard/[companyId]/compliance/ComplianceCalendarApiSection";
 
 export type ComplianceStatus = "filed" | "upcoming" | "due_today" | "overdue";
 
