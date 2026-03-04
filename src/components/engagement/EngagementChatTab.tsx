@@ -42,6 +42,7 @@ export default function EngagementChatTab() {
     messages: apiMessages,
     members,
     isLoading,
+    isLoadingMore,
     hasMore,
     loadMore,
     sendMessage,
@@ -255,6 +256,9 @@ export default function EngagementChatTab() {
             prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
           )}
           onEnterSelectMode={() => setIsSelectMode(true)}
+          onLoadMore={loadMore}
+          hasMore={hasMore}
+          isLoadingMore={isLoadingMore}
         />
       </div>
 

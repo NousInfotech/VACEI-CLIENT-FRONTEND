@@ -10,6 +10,7 @@ export interface UseChatReturn {
   messages: ChatMessage[];
   members: ChatMember[];
   isLoading: boolean;
+  isLoadingMore: boolean;
   hasMore: boolean;
   nextCursor: string | null;
   unreadCount: number;
@@ -47,6 +48,7 @@ export function useChat(
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [members, setMembers] = useState<ChatMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -196,9 +198,14 @@ export function useChat(
   );
 
   const loadMore = useCallback(async () => {
-    if (!hasMore || isLoading) return;
-    await loadMessages(nextCursor);
-  }, [hasMore, isLoading, loadMessages, nextCursor]);
+    if (!hasMore || isLoading || isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      await loadMessages(nextCursor);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [hasMore, isLoading, isLoadingMore, loadMessages, nextCursor]);
 
   const markAsRead = useCallback(async () => {
     if (!roomId) return;
@@ -311,6 +318,7 @@ export function useChat(
     messages,
     members,
     isLoading,
+    isLoadingMore,
     hasMore,
     nextCursor,
     unreadCount,

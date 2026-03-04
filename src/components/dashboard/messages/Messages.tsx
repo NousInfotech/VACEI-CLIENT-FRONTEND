@@ -30,10 +30,15 @@ const Messages: React.FC = () => {
     setRoomMessages,
     setRoomMessagesWithMerge,
     appendMessage,
+    prependMessages,
+    setRoomCursor,
+    getRoomCursor,
+    roomHasMore,
     setUnreadCount,
   } = useChatRooms(activeChatId);
 
   const [messagesLoading, setMessagesLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarWidth, setSidebarWidth] = useState(380);
   const [isResizing, setIsResizing] = useState(false);
@@ -91,6 +96,12 @@ const Messages: React.FC = () => {
       const rawMsgs = (resMsgs.data ?? []).reverse();
       const apiMsgs = rawMsgs.map(mapApiMessage).sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
 
+      // ── Store pagination cursor for this room ──
+      const paginationMeta = (resMsgs as any);
+      const nextCursor = paginationMeta?.nextCursor ?? paginationMeta?.meta?.nextCursor ?? null;
+      const hasMore = paginationMeta?.hasMore ?? paginationMeta?.meta?.hasMore ?? false;
+      setRoomCursor(roomId, nextCursor, hasMore);
+
       const fromMessages = extractParticipants(resMsgs.data ?? []);
       const room = rooms.find((r) => r.id === roomId);
 
@@ -136,6 +147,30 @@ const Messages: React.FC = () => {
     chatService.markRoomAsRead(roomId).catch(console.error);
     // Note: Supabase Realtime subscriptions are now fully managed by useChatRooms
   }, [activeChatId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── Load older messages (infinite scroll) ───────────────────────────────
+  const handleLoadMore = useCallback(async () => {
+    if (!activeChatId || isLoadingMore) return;
+    const cursor = getRoomCursor(activeChatId);
+    if (!cursor) return;
+
+    setIsLoadingMore(true);
+    try {
+      const resMsgs = await chatService.getClientRoomMessages(activeChatId, 50, cursor);
+      const rawMsgs = (resMsgs.data ?? []).reverse();
+      const olderMsgs = rawMsgs.map(mapApiMessage);
+
+      const nextCursor = resMsgs?.meta?.nextCursor ?? null;
+      const hasMore = resMsgs?.meta?.hasMore ?? false;
+      setRoomCursor(activeChatId, nextCursor, hasMore);
+
+      prependMessages(activeChatId, olderMsgs);
+    } catch (err) {
+      console.error('Failed to load more messages:', err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [activeChatId, isLoadingMore, getRoomCursor, setRoomCursor, prependMessages]);
 
   const toggleRightPane = (mode: RightPaneMode) => {
     setRightPaneMode(prev => (prev === mode ? null : mode));
@@ -493,6 +528,9 @@ const Messages: React.FC = () => {
                 selectedMessageIds={selectedMessageIds}
                 onSelectMessage={handleToggleSelectMessage}
                 onEnterSelectMode={() => setIsSelectMode(true)}
+                onLoadMore={handleLoadMore}
+                hasMore={activeChatId ? roomHasMore(activeChatId) : false}
+                isLoadingMore={isLoadingMore}
               />
             </div>
 
