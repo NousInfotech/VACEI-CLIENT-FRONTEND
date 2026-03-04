@@ -5,7 +5,7 @@ import * as Yup from 'yup';
 import { ValidationError } from 'yup';
 import { changePassword, updateProfile } from '@/api/authService';
 import { fetchPreferencesAPI, updatePreferencesAPI, type NotificationPreference } from '@/api/notificationService';
-import AlertMessage, { AlertVariant } from '@/components/AlertMessage';
+import { useAlert } from '@/app/context/AlertContext';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
 import Dropdown from "@/components/Dropdown";
@@ -91,7 +91,7 @@ function SettingsContent() {
     const [errors, setErrors] = useState<FormErrors>({});
     const [touched, setTouched] = useState<Partial<Record<keyof FormData, boolean>>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [alert, setAlert] = useState<{ message: string; variant: AlertVariant } | null>(null);
+    const { setAlert } = useAlert();
 
     const validateField = async (fieldName: keyof FormData, value: string) => {
         try {
@@ -118,7 +118,6 @@ function SettingsContent() {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setAlert(null);
         setIsSubmitting(true);
 
         try {
@@ -497,13 +496,6 @@ function SettingsContent() {
                         {activeTab === "general" && (
                             <div className="space-y-4">
                                 <h2 className="text-lg font-semibold text-brand-body">My Profile</h2>
-                                {alert && activeTab === "general" && (
-                                    <AlertMessage
-                                        message={alert.message}
-                                        variant={alert.variant}
-                                        onClose={() => setAlert(null)}
-                                    />
-                                )}
                                 <div className="grid gap-3 md:grid-cols-2">
                                     <div>
                                         <label className="block text-sm font-medium text-brand-body mb-1">First Name</label>
@@ -585,13 +577,6 @@ function SettingsContent() {
 
                         {activeTab === "security" && (
                             <div className="space-y-6">
-                                {alert && activeTab === "security" && (
-                                    <AlertMessage
-                                        message={alert.message}
-                                        variant={alert.variant}
-                                        onClose={() => setAlert(null)}
-                                    />
-                                )}
                         {/* MFA controls – same behavior as dashboard settings */}
                         <div className="space-y-3">
                             <h2 className="text-lg font-semibold text-brand-body">Security (MFA)</h2>
@@ -790,16 +775,6 @@ function SettingsContent() {
                         {activeTab === "password" && (
                             <div className="mt-1">
                                 <h2 className="text-lg font-semibold text-brand-body mb-4">Change Password</h2>
-                                {alert && (
-                                    <div className="mb-4">
-                                        <AlertMessage
-                                            message={alert.message}
-                                            variant={alert.variant}
-                                            onClose={() => setAlert(null)}
-                                            duration={6000}
-                                        />
-                                    </div>
-                                )}
 
                                 <form onSubmit={handleSubmit} className="space-y-6">
                                     <div>

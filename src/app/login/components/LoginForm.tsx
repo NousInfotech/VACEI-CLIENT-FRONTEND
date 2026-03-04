@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import AlertMessage from "../../../components/AlertMessage";
+import { useAlert } from "@/app/context/AlertContext";
 import { Button } from "@/components/ui/button";
 // Using Flaticon icons that are already available in the project
 
@@ -19,7 +19,7 @@ export default function LoginForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
     const [loading, setLoading] = useState(false);
-    const [alertMessage, setAlertMessage] = useState<string | null>(null);
+    const { setAlert } = useAlert();
 
     // Get alert message from query param on mount
     useEffect(() => {
@@ -31,7 +31,7 @@ export default function LoginForm() {
             localStorage.removeItem('username');
             localStorage.removeItem('email');
             localStorage.removeItem('user_id');
-            setAlertMessage(message);
+            setAlert({ message, variant: "danger" });
             router.replace("/login", { scroll: false });
         }
     }, [searchParams, router]);
@@ -278,15 +278,6 @@ export default function LoginForm() {
             {/* Right Section - Light Theme */}
             <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-16" style={{ backgroundColor: `hsl(var(--background))` }}>
                 <div className="relative w-full max-w-md space-y-8">
-                        {alertMessage && (
-                            <AlertMessage
-                                message={alertMessage}
-                                variant="danger"
-                                duration={4000}
-                                onClose={() => setAlertMessage(null)}
-                            />
-                        )}
-
                     <div className="space-y-6 text-center lg:text-left">
                         <div className="flex items-center justify-center lg:justify-start space-x-3">
                             <div 

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { StatusBadge } from '@/components/onboarding/StatusBadge';
 import { Quotation } from '@/interfaces';
 import { getQuotation, acceptQuotation, requestQuotationChanges, getIncorporationDocuments, uploadIncorporationDocument } from '@/api/onboardingService';
+import { useAlert } from '@/app/context/AlertContext';
 
 interface QuotationScreenProps {
   onComplete: () => void;
@@ -23,7 +24,12 @@ interface IncorporationDocument {
 }
 
 export default function QuotationScreen({ onComplete, onSaveExit, onBack }: QuotationScreenProps) {
+  const { setAlert } = useAlert();
   const [quotation, setQuotation] = useState<Quotation | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{
+    terms?: string;
+    comments?: string;
+  }>({});
   const [loading, setLoading] = useState(true);
   const [accepted, setAccepted] = useState(false);
   const [showChangeRequest, setShowChangeRequest] = useState(false);
@@ -99,7 +105,7 @@ export default function QuotationScreen({ onComplete, onSaveExit, onBack }: Quot
   const handleDocumentUpload = async (documentId: string, file: File) => {
     const incorporationCycleId = localStorage.getItem('incorporation-cycle-id');
     if (!incorporationCycleId) {
-      alert('Incorporation cycle ID not found. Please try again.');
+      setAlert({ message: 'Incorporation cycle ID not found. Please try again.', variant: 'warning' });
       return;
     }
 
@@ -108,10 +114,10 @@ export default function QuotationScreen({ onComplete, onSaveExit, onBack }: Quot
       await uploadIncorporationDocument(incorporationCycleId, documentId, file);
       // Reload documents after upload
       await loadIncorporationDocuments();
-      alert('Document uploaded successfully!');
+      setAlert({ message: 'Document uploaded successfully!', variant: 'success' });
     } catch (error: any) {
       console.error('Failed to upload document:', error);
-      alert(`Failed to upload document: ${error.message || 'Please try again.'}`);
+      setAlert({ message: `Failed to upload document: ${error.message || 'Please try again.'}`, variant: 'danger' });
     } finally {
       setUploadingDocId(null);
       // Reset file input
@@ -124,7 +130,7 @@ export default function QuotationScreen({ onComplete, onSaveExit, onBack }: Quot
 
   const handleAccept = async () => {
     if (!termsAccepted) {
-      alert('Please accept the terms and conditions.');
+      setFieldErrors(prev => ({ ...prev, terms: 'Please accept the terms and conditions.' }));
       return;
     }
 
@@ -145,26 +151,26 @@ export default function QuotationScreen({ onComplete, onSaveExit, onBack }: Quot
       }
     } catch (error) {
       console.error('Failed to accept quotation:', error);
-      alert('Failed to accept quotation. Please try again.');
+      setAlert({ message: 'Failed to accept quotation. Please try again.', variant: 'danger' });
       setIsProcessing(false);
     }
   };
 
   const handleRequestChanges = async () => {
     if (!quotation || !changeComments.trim()) {
-      alert('Please provide comments for the requested changes.');
+      setFieldErrors(prev => ({ ...prev, comments: 'Please provide comments for the requested changes.' }));
       return;
     }
 
     setIsProcessing(true);
     try {
       await requestQuotationChanges(quotation.id, changeComments);
-      alert('Change request submitted. We will review and get back to you.');
+      setAlert({ message: 'Change request submitted. We will review and get back to you.', variant: 'success' });
       setShowChangeRequest(false);
       setChangeComments('');
     } catch (error) {
       console.error('Failed to request changes:', error);
-      alert('Failed to submit change request. Please try again.');
+      setAlert({ message: 'Failed to submit change request. Please try again.', variant: 'danger' });
     } finally {
       setIsProcessing(false);
     }
@@ -412,13 +418,19 @@ export default function QuotationScreen({ onComplete, onSaveExit, onBack }: Quot
                 <input
                   type="checkbox"
                   checked={termsAccepted}
-                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  onChange={(e) => {
+                    setTermsAccepted(e.target.checked);
+                    setFieldErrors(prev => ({ ...prev, terms: undefined }));
+                  }}
                   className="mt-1"
                 />
                 <span className="text-sm text-muted-foreground">
                   I accept the terms and conditions
                 </span>
               </label>
+              {fieldErrors.terms && (
+                <p className="text-sm text-red-500 mt-1">{fieldErrors.terms}</p>
+              )}
             </div>
 
             {showChangeRequest ? (
@@ -426,11 +438,17 @@ export default function QuotationScreen({ onComplete, onSaveExit, onBack }: Quot
                 <label className="text-sm font-medium block">Request changes</label>
                 <textarea
                   value={changeComments}
-                  onChange={(e) => setChangeComments(e.target.value)}
+                  onChange={(e) => {
+                    setChangeComments(e.target.value);
+                    setFieldErrors(prev => ({ ...prev, comments: undefined }));
+                  }}
                   placeholder="Please describe the changes you'd like..."
                   rows={4}
-                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                  className={`w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ${fieldErrors.comments ? 'border-red-500' : ''}`}
                 />
+                {fieldErrors.comments && (
+                  <p className="text-sm text-red-500 mt-1">{fieldErrors.comments}</p>
+                )}
                 <div className="flex gap-2">
                   <Button
                     variant="outline"

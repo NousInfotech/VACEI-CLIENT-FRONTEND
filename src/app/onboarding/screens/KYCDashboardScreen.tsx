@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card2';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/onboarding/StatusBadge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import AlertMessage from '@/components/AlertMessage';
+import { useAlert } from '@/app/context/AlertContext';
 import { KYCPerson, KYCCompanyDocument } from '@/interfaces';
 import { 
   getKYCPersons, 
@@ -33,7 +33,7 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
   const [incorporationDocuments, setIncorporationDocuments] = useState<KYCCompanyDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCompleting, setIsCompleting] = useState(false); // Loading state for "Complete Onboarding" button
-  const [errorMessage, setErrorMessage] = useState<{ message: string; variant: 'danger' | 'warning' | 'info' | 'success' } | null>(null);
+  const { setAlert } = useAlert();
   const [isUserExists, setIsUserExists] = useState(false);
   const [uploadingDocId, setUploadingDocId] = useState<string | null>(null); // Track which document is being uploaded
   // Initialize incorporationStatus from localStorage to avoid null state
@@ -286,11 +286,10 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
     try {
       await inviteKYCPerson(personId);
       await loadData(); // Refresh data
-      setErrorMessage({ message: 'Invite sent successfully.', variant: 'success' });
-      setTimeout(() => setErrorMessage(null), 3000);
+      setAlert({ message: 'Invite sent successfully.', variant: 'success' });
     } catch (error) {
       console.error('Failed to invite person:', error);
-      setErrorMessage({ message: 'Failed to send invite. Please try again.', variant: 'danger' });
+      setAlert({ message: 'Failed to send invite. Please try again.', variant: 'danger' });
     }
   };
 
@@ -300,12 +299,11 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
       console.log('Uploading KYC document:', { documentId, fileName: file.name });
       await uploadKYCCompanyDocument(documentId, file);
       await loadData(); // Refresh data
-      setErrorMessage({ message: 'Document uploaded successfully.', variant: 'success' });
-      setTimeout(() => setErrorMessage(null), 3000);
+      setAlert({ message: 'Document uploaded successfully.', variant: 'success' });
     } catch (error: any) {
       console.error('Failed to upload document:', error);
       const errorMsg = error.message || 'Failed to upload document. Please try again.';
-      setErrorMessage({ message: errorMsg, variant: 'danger' });
+      setAlert({ message: errorMsg, variant: 'danger' });
     } finally {
       setUploadingDocId(null);
       // Reset file input
@@ -319,7 +317,7 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
   const handleIncorporationDocumentUpload = async (documentId: string, file: File) => {
     const incorporationCycleId = localStorage.getItem('incorporation-cycle-id');
     if (!incorporationCycleId) {
-      setErrorMessage({ 
+      setAlert({ 
         message: 'Incorporation cycle not found. Please complete the service request submission first.', 
         variant: 'warning' 
       });
@@ -331,12 +329,11 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
       console.log('Uploading incorporation document:', { incorporationCycleId, documentId, fileName: file.name });
       await uploadIncorporationDocument(incorporationCycleId, documentId, file);
       await loadData(); // Refresh data
-      setErrorMessage({ message: 'Incorporation document uploaded successfully.', variant: 'success' });
-      setTimeout(() => setErrorMessage(null), 3000);
+      setAlert({ message: 'Incorporation document uploaded successfully.', variant: 'success' });
     } catch (error: any) {
       console.error('Failed to upload incorporation document:', error);
       const errorMsg = error.message || 'Failed to upload document. Please try again.';
-      setErrorMessage({ message: errorMsg, variant: 'danger' });
+      setAlert({ message: errorMsg, variant: 'danger' });
     } finally {
       setUploadingDocId(null);
       // Reset file input
@@ -391,12 +388,11 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
       );
       localStorage.setItem('default-kyc-documents', JSON.stringify(updatedDocs));
 
-      setErrorMessage({ message: 'Document uploaded successfully.', variant: 'success' });
-      setTimeout(() => setErrorMessage(null), 3000);
+      setAlert({ message: 'Document uploaded successfully.', variant: 'success' });
     } catch (error: any) {
       console.error('Failed to upload default KYC document:', error);
       const errorMsg = error.message || 'Failed to upload document. Please try again.';
-      setErrorMessage({ message: errorMsg, variant: 'danger' });
+      setAlert({ message: errorMsg, variant: 'danger' });
     } finally {
       setUploadingDocId(null);
       // Reset file input
@@ -451,12 +447,11 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
       );
       localStorage.setItem('default-incorporation-documents', JSON.stringify(updatedDocs));
 
-      setErrorMessage({ message: 'Document uploaded successfully.', variant: 'success' });
-      setTimeout(() => setErrorMessage(null), 3000);
+      setAlert({ message: 'Document uploaded successfully.', variant: 'success' });
     } catch (error: any) {
       console.error('Failed to upload default incorporation document:', error);
       const errorMsg = error.message || 'Failed to upload document. Please try again.';
-      setErrorMessage({ message: errorMsg, variant: 'danger' });
+      setAlert({ message: errorMsg, variant: 'danger' });
     } finally {
       setUploadingDocId(null);
       // Reset file input
@@ -470,7 +465,6 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
   const handleContinue = async () => {
     // CRITICAL: Set loading state IMMEDIATELY when button is clicked
     setIsCompleting(true);
-    setErrorMessage(null); // Clear any previous errors
     
     // Complete sign-up: Create User, Client, and Company records
     try {
@@ -478,7 +472,7 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
       const onboardingDataStr = localStorage.getItem('onboarding-data');
       if (!onboardingDataStr) {
         setIsCompleting(false);
-        setErrorMessage({ message: 'Onboarding data not found. Please start over.', variant: 'danger' });
+        setAlert({ message: 'Onboarding data not found. Please start over.', variant: 'danger' });
         return;
       }
 
@@ -487,7 +481,7 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
       // Validate required user data
       if (!onboardingData.email || !onboardingData.password || !onboardingData.firstName || !onboardingData.lastName) {
         setIsCompleting(false);
-        setErrorMessage({ 
+        setAlert({ 
           message: 'Missing required information. Please go back to step 1 to complete your registration.', 
           variant: 'warning' 
         });
@@ -634,12 +628,12 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
       // Check if user already exists
       if (errorMsg.toLowerCase().includes('already exists') || errorMsg.toLowerCase().includes('user with this')) {
         setIsUserExists(true);
-        setErrorMessage({
+        setAlert({
           message: 'An account with this email or phone number already exists. Would you like to log in instead?',
           variant: 'warning',
         });
       } else {
-        setErrorMessage({
+        setAlert({
           message: errorMsg,
           variant: 'danger',
         });
@@ -664,18 +658,7 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
 
   return (
     <>
-      {/* Toast notification - rendered outside layout for proper positioning */}
-      {errorMessage && (
-        <AlertMessage
-          message={errorMessage.message}
-          variant={errorMessage.variant}
-          onClose={() => {
-            setErrorMessage(null);
-            setIsUserExists(false);
-          }}
-          duration={isUserExists ? 0 : 6000} // Don't auto-close if user exists, let them choose
-        />
-      )}
+      {/* Toast notification - replaced by sonner */}
       
       {/* Loading overlay - shown when completing onboarding */}
       {isCompleting && (
@@ -702,7 +685,7 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
       >
         <div className="space-y-6">
           {/* Action buttons for user exists error - shown inline */}
-          {errorMessage && isUserExists && (
+          {isUserExists && (
             <div className="flex gap-2 p-4 bg-warning/10 border border-warning/30 rounded-lg">
               <Button
                 onClick={handleGoToLogin}
@@ -713,7 +696,6 @@ export default function KYCDashboardScreen({ onComplete, onSaveExit }: KYCDashbo
               <Button
                 variant="outline"
                 onClick={() => {
-                  setErrorMessage(null);
                   setIsUserExists(false);
                 }}
               >

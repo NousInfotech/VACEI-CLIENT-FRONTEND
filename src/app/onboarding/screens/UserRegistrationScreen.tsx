@@ -5,6 +5,7 @@ import { OnboardingLayout } from '@/components/onboarding/OnboardingLayout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { saveOnboardingStep, createClient } from '@/api/onboardingService';
+import { useAlert } from '@/app/context/AlertContext';
 
 interface UserRegistrationScreenProps {
   onComplete: () => void;
@@ -13,6 +14,7 @@ interface UserRegistrationScreenProps {
 }
 
 export default function UserRegistrationScreen({ onComplete, onSaveExit, onBack }: UserRegistrationScreenProps) {
+  const { setAlert } = useAlert();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -127,13 +129,19 @@ export default function UserRegistrationScreen({ onComplete, onSaveExit, onBack 
         const errorMessage = error.message || 'Failed to create account. Please try again.';
         
         if (errorMessage.includes('already exists') || errorMessage.includes('USER_EXISTS')) {
-          alert('An account with this email or phone already exists. Please use a different email or phone number.');
+          setAlert({ 
+            message: 'An account with this email or phone already exists. Please use a different email or phone number.', 
+            variant: 'danger' 
+          });
           setLoading(false);
           return; // Block navigation
         }
         
         // Show error and block navigation
-        alert(`Failed to create account: ${errorMessage}\n\nPlease check your connection and try again.`);
+        setAlert({ 
+          message: `Failed to create account: ${errorMessage}\n\nPlease check your connection and try again.`, 
+          variant: 'danger' 
+        });
         setLoading(false);
         return; // Block navigation - user must fix the error
       }
@@ -141,7 +149,7 @@ export default function UserRegistrationScreen({ onComplete, onSaveExit, onBack 
       onComplete();
     } catch (error) {
       console.error('Failed to save step:', error);
-      alert('Failed to save. Please try again.');
+      setAlert({ message: 'Failed to save. Please try again.', variant: 'danger' });
       setLoading(false);
     }
   };

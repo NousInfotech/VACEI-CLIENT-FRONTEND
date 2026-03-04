@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect, useRef, useState } from "react";
-import AlertMessage from "../../../../components/AlertMessage";
+import { useAlert } from "@/app/context/AlertContext";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Edit03Icon, Delete02Icon } from "@hugeicons/core-free-icons";
 import { Dropdown } from "@/components/Dropdown";
@@ -36,9 +36,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [alert, setAlert] = useState<
-    { message: string; variant?: "success" | "danger" | "warning" | "info" } | null
-  >(null);
+  const { setAlert } = useAlert();
 
   const [latestCommentTimestamp, setLatestCommentTimestamp] = useState<string | null>(null);
   const latestTimestampRef = useRef<string | null>(null);
@@ -225,14 +223,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
         />
       </div>
 
-      {alert && (
-        <AlertMessage
-          message={alert.message}
-          variant={alert.variant}
-          onClose={() => setAlert(null)}
-        />
-      )}
-
       {initialLoading ? (
         <p className="text-center text-muted-foreground italic">Loading comments...</p>
       ) : (
@@ -246,7 +236,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
                 className="flex items-start bg-card p-4 gap-4"
               >
                 <div
-                  className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-400 text-card-foreground rounded-full font-semibold text-lg select-none"
+                  className="w-12 h-12 flex items-center justify-center bg-linear-to-br from-blue-600 to-blue-400 text-card-foreground rounded-full font-semibold text-lg select-none"
                   title={comment.createdBy}
                 >
                   {comment.createdBy?.charAt(0).toUpperCase() || "U"}
@@ -294,7 +284,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ fileId, files }) => {
                     </>
                   ) : (
                     <>
-                      <p className="text-gray-800 text-sm whitespace-pre-wrap break-words">{comment.message}</p>
+                      <p className="text-gray-800 text-sm whitespace-pre-wrap wrap-break-word">{comment.message}</p>
                       {comment.canDelete ? (
                         <div className="mt-3 flex space-x-4 text-sm select-none">
                           <button

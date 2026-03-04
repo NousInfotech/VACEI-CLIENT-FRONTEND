@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import AlertMessage from "../../../components/AlertMessage";
+import { useAlert } from "@/app/context/AlertContext";
 import { Button } from "@/components/ui/button";
 
 export default function ForgotPasswordForm() {
@@ -14,8 +14,7 @@ export default function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState<{ email?: string }>({}); 
   const [loading, setLoading] = useState(false);
-  const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const [messageVariant, setMessageVariant] = useState<"success" | "danger">("danger");
+  const { setAlert } = useAlert();
 
   const validate = () => {
     const newErrors: typeof errors = {};
@@ -32,7 +31,6 @@ export default function ForgotPasswordForm() {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setAlertMessage(null);
 
     try {
       const response = await fetch(`${backendUrl}auth/forgot-password`, {
@@ -46,15 +44,13 @@ export default function ForgotPasswordForm() {
         throw new Error(errorData.message || "Failed to send OTP.");
       }
 
-      setAlertMessage("OTP sent successfully! Redirecting...");
-      setMessageVariant("success");
+      setAlert({ message: "OTP sent successfully! Redirecting...", variant: "success" });
       setTimeout(() => {
         router.push(`/reset-password?email=${encodeURIComponent(email)}`);
       }, 1500);
     } catch (err) {
       const errorMessage = (err as Error)?.message || "An unknown error occurred. Please try again.";
-      setAlertMessage(errorMessage);
-      setMessageVariant("danger");
+      setAlert({ message: errorMessage, variant: "danger" });
     } finally {
       setLoading(false);
     }
@@ -65,15 +61,6 @@ export default function ForgotPasswordForm() {
       <div className="mx-auto max-w-[1200px] px-8 w-full">
         <section className="login_section flex justify-center">
           <div className="bg-card border border-border rounded-[16px] shadow-md p-8 w-full max-w-md">
-            {alertMessage && (
-              <AlertMessage
-                message={alertMessage}
-                variant={messageVariant}
-                duration={messageVariant === "success" ? 8000 : 4000} // Longer duration for success messages
-                onClose={() => setAlertMessage(null)}
-              />
-            )}
-
             <div className="login_card_header flex flex-col items-center mb-6">
               <Image
                   src="/logo.svg"

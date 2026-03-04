@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from 'next/navigation'; // For accessing URL query parameters
-import AlertMessage from "@/components/AlertMessage"; // This is the correct import
+import { useAlert } from "@/app/context/AlertContext";
 
 
 
@@ -21,8 +21,7 @@ export default function ResetPasswordForm() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [errors, setErrors] = useState<{ otp?: string; password?: string; confirmPassword?: string }>({});
     const [loading, setLoading] = useState(false);
-    const [alertMessage, setAlertMessage] = useState<string | null>(null);
-    const [messageVariant, setMessageVariant] = useState<"success" | "danger">("danger");
+    const { setAlert } = useAlert();
 
     const validate = () => {
         const newErrors: typeof errors = {};
@@ -53,11 +52,9 @@ export default function ResetPasswordForm() {
         e.preventDefault();
         if (!validate()) return;
         setLoading(true);
-        setAlertMessage(null);
 
         if (!emailFromUrl) {
-            setAlertMessage("Email is missing. Please try again from the forgot password page.");
-            setMessageVariant("danger");
+            setAlert({ message: "Email is missing. Please try again from the forgot password page.", variant: "danger" });
             setLoading(false);
             return;
         }
@@ -82,8 +79,7 @@ export default function ResetPasswordForm() {
             // Backend response structure: { message: string }
             const message = responseData.message || "Your password has been reset successfully! You can now log in with your new password.";
 
-            setAlertMessage(message);
-            setMessageVariant("success");
+            setAlert({ message, variant: "success" });
             setTimeout(() => {
                 router.push("/login");
             }, 2000);
@@ -94,8 +90,7 @@ export default function ResetPasswordForm() {
 
         } catch (err) {
             const errorMessage = (err as Error)?.message || "An unknown error occurred. Please try again.";
-            setAlertMessage(errorMessage);
-            setMessageVariant("danger");
+            setAlert({ message: errorMessage, variant: "danger" });
         } finally {
             setLoading(false);
         }
@@ -106,15 +101,6 @@ export default function ResetPasswordForm() {
             <div className="mx-auto max-w-[1200px] px-8 w-full">
                 <section className="login_section flex justify-center">
                     <div className="bg-card border border-border rounded-[16px] shadow-md p-8 w-full max-w-md">
-                        {alertMessage && (
-                            <AlertMessage
-                                message={alertMessage}
-                                variant={messageVariant}
-                                duration={messageVariant === "success" ? 8000 : 4000}
-                                onClose={() => setAlertMessage(null)}
-                            />
-                        )}
-
                         <div className="login_card_header flex flex-col items-center mb-6">
                             <Image
                                 src="/logo.svg"

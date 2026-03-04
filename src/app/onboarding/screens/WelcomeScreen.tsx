@@ -61,7 +61,7 @@ export default function WelcomeScreen({ onComplete, onSaveExit, onBack }: Welcom
         <div>
           <h1 className="text-2xl font-semibold mb-2">Welcome — let&apos;s get you set up</h1>
           <p className="text-sm text-muted-foreground">
-            This takes about 5–10 minutes. You can save and continue anytime.
+            This takes about 5–10 minutes. {/* You can save and continue anytime. */}
           </p>
         </div>
 

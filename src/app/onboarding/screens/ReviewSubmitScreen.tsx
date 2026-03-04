@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card2';
 import { Button } from '@/components/ui/button';
 import { OnboardingData } from '@/interfaces';
 import { submitOnboardingRequest, getOnboardingDataFromDB } from '@/api/onboardingService';
+import { useAlert } from '@/app/context/AlertContext';
 import Link from 'next/link';
 
 interface ReviewSubmitScreenProps {
@@ -15,6 +16,7 @@ interface ReviewSubmitScreenProps {
 }
 
 export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: ReviewSubmitScreenProps) {
+  const { setAlert } = useAlert();
   const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -88,7 +90,10 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
       // CRITICAL: If submission fails, DO NOT allow continuation
       console.error('Failed to submit:', error);
       const errorMessage = error.message || 'Failed to submit request. Please try again.';
-      alert(`Failed to submit request: ${errorMessage}\n\nPlease check your connection and try again.`);
+      setAlert({ 
+        message: `Failed to submit request: ${errorMessage}\n\nPlease check your connection and try again.`, 
+        variant: 'danger' 
+      });
       setIsSubmitting(false);
       // Block navigation - don't call onComplete()
       return;
@@ -182,9 +187,15 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
             </div>
             {onboardingData.companyType === 'existing' && onboardingData.existingCompanyDetails && (
               <div className="space-y-2 text-sm">
-                <p><span className="font-medium">Company Name:</span> {onboardingData.existingCompanyDetails.companyName}</p>
-                <p><span className="font-medium">Registration Number:</span> {onboardingData.existingCompanyDetails.registrationNumber}</p>
-                <p><span className="font-medium">Registered Address:</span> {onboardingData.existingCompanyDetails.registeredAddress}</p>
+                {onboardingData.existingCompanyDetails.companyName && (
+                  <p><span className="font-medium">Company Name:</span> {onboardingData.existingCompanyDetails.companyName}</p>
+                )}
+                {onboardingData.existingCompanyDetails.registrationNumber && (
+                  <p><span className="font-medium">Registration Number:</span> {onboardingData.existingCompanyDetails.registrationNumber}</p>
+                )}
+                {onboardingData.existingCompanyDetails.registeredAddress && (
+                  <p><span className="font-medium">Registered Address:</span> {onboardingData.existingCompanyDetails.registeredAddress}</p>
+                )}
                 {onboardingData.existingCompanyDetails.industry && onboardingData.existingCompanyDetails.industry.length > 0 && (
                   <p><span className="font-medium">Industry:</span> {onboardingData.existingCompanyDetails.industry.join(', ')}</p>
                 )}
@@ -195,9 +206,15 @@ export default function ReviewSubmitScreen({ onComplete, onSaveExit, onBack }: R
             )}
             {onboardingData.companyType === 'new' && onboardingData.newCompanyDetails && (
               <div className="space-y-2 text-sm">
-                <p><span className="font-medium">Company Name:</span> {onboardingData.newCompanyDetails.proposedNames.name1}</p>
-                <p><span className="font-medium">Registration Number:</span> {onboardingData.newCompanyDetails.registrationNumber}</p>
-                <p><span className="font-medium">Registered Address:</span> {onboardingData.newCompanyDetails.registeredAddress.address}</p>
+                {onboardingData.newCompanyDetails.proposedNames?.name1 && (
+                  <p><span className="font-medium">Company Name:</span> {onboardingData.newCompanyDetails.proposedNames.name1}</p>
+                )}
+                {onboardingData.newCompanyDetails.registrationNumber && (
+                  <p><span className="font-medium">Registration Number:</span> {onboardingData.newCompanyDetails.registrationNumber}</p>
+                )}
+                {onboardingData.newCompanyDetails.registeredAddress?.address && (
+                  <p><span className="font-medium">Registered Address:</span> {onboardingData.newCompanyDetails.registeredAddress.address}</p>
+                )}
                 {onboardingData.newCompanyDetails.industry && onboardingData.newCompanyDetails.industry.length > 0 && (
                   <p><span className="font-medium">Industry:</span> {onboardingData.newCompanyDetails.industry.join(', ')}</p>
                 )}

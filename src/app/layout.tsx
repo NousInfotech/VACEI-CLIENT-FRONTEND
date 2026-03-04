@@ -5,6 +5,7 @@ import "@flaticon/flaticon-uicons/css/all/all.css";
 import "@flaticon/flaticon-uicons/css/brands/all.css";
 import { AlertProvider } from "./context/AlertContext";
 import AuthRefreshInit from "./components/AuthRefreshInit";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 
@@ -32,6 +33,7 @@ export default function RootLayout({
                 <AlertProvider>
                 <AuthRefreshInit />
                 {children}
+                <Toaster position="top-right" richColors closeButton />
             </AlertProvider>
             </body>
         </html>

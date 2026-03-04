@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import TextInput from '@/components/TextInput'; // Assuming TextInput component is styled
-import AlertMessage from '@/components/AlertMessage'; // Assuming AlertMessage component is styled
+import { useAlert } from '@/app/context/AlertContext';
 
 interface UserProfile {
   email: string;
@@ -33,8 +33,7 @@ const ProfilePage: React.FC = () => {
   const [formData, setFormData] = useState({ first_name: '', last_name: '', phone: '', username: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
-  const [alertVariant, setAlertVariant] = useState<'success' | 'danger' | 'warning' | 'info'>('success');
+    const { setAlert } = useAlert();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -91,8 +90,7 @@ const ProfilePage: React.FC = () => {
         });
       } catch (error) {
         console.error('Error fetching user profile:', error);
-        setAlertVariant('danger');
-        setMessage(error instanceof Error ? error.message : 'Failed to load profile. Please try again later.');
+        setAlert({ message: error instanceof Error ? error.message : 'Failed to load profile. Please try again later.', variant: 'danger' });
       } finally {
         setLoading(false);
       }
@@ -108,12 +106,10 @@ const ProfilePage: React.FC = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setMessage('');
 
     const phoneRegex = /^\+?[0-9]{7,15}$/;
     if (formData.phone && !phoneRegex.test(formData.phone)) {
-      setAlertVariant('warning');
-      setMessage('Please enter a valid phone number.');
+      setAlert({ message: 'Please enter a valid phone number.', variant: 'warning' });
       setSaving(false);
       return;
     }
@@ -170,11 +166,9 @@ const ProfilePage: React.FC = () => {
       };
 
       setUserProfile(updatedProfile);
-      setAlertVariant('success');
-      setMessage('Profile updated successfully!');
+      setAlert({ message: 'Profile updated successfully!', variant: 'success' });
     } catch (error) {
-      setAlertVariant('danger');
-      setMessage(error instanceof Error ? error.message : 'Error updating profile');
+      setAlert({ message: error instanceof Error ? error.message : 'Error updating profile', variant: 'danger' });
     } finally {
       setSaving(false);
     }
@@ -184,17 +178,6 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="mt-4"> {/* Soft background color for the entire page */}
-      {/* Alert message */}
-      {message && (
-        <div className="mb-6"> {/* Add some margin below the alert */}
-          <AlertMessage
-            message={message}
-            variant={alertVariant}
-            onClose={() => setMessage('')}
-            duration={6000}
-          />
-        </div>
-      )}
 
         {/* Show skeletons while loading */}
       {loading && (

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as yup from "yup";
-import AlertMessage, { AlertVariant } from "@/components/AlertMessage";
+import { useAlert } from "@/app/context/AlertContext";
 import { getUserIdFromLocalStorage } from "@/utils/authUtils";
 import MeetingForm from "../components/ScheduleForm";
 import DashboardCard from "@/components/DashboardCard";
@@ -115,13 +115,9 @@ function SchedulePageContent() {
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
     {}
   );
-  const [alertMessage, setAlertMessage] = useState<string>("");
-  const [alertVariant, setAlertVariant] = useState<AlertVariant | undefined>(
-    undefined
-  );
+  const { setAlert } = useAlert();
 
   const clearAlertAndValidationErrors = useCallback(() => {
-    setAlertMessage("");
     setValidationErrors({});
   }, []);
 
@@ -173,8 +169,7 @@ function SchedulePageContent() {
     } catch (err: any) {
       const errorMessage = err.message || "Failed to load data.";
       setError(errorMessage);
-      setAlertMessage(errorMessage);
-      setAlertVariant("danger");
+      setAlert({ message: errorMessage, variant: "danger" });
       console.error("Failed to load data:", err);
       setMeetingDetails(initialMeetingDetails); // Reset on error
     } finally {
@@ -294,26 +289,23 @@ function SchedulePageContent() {
         // --- Update Meeting Path ---
         const encodedMeetingIdForUpdate = btoa(String(meetingDetails.id));
         await updateMeeting(encodedMeetingIdForUpdate, commonPayload);
-        setAlertMessage("Meeting updated successfully!");
+        setAlert({ message: "Meeting updated successfully!", variant: "success" });
       } else {
         // --- Create Meeting Path ---
         await createMeeting(commonPayload);
-        setAlertMessage("Meeting scheduled successfully!");
+        setAlert({ message: "Meeting scheduled successfully!", variant: "success" });
       }
-      setAlertVariant("success");
       router.push("/dashboard/schedule");
     } catch (error: any) {
       if (error instanceof yup.ValidationError) {
         setValidationErrors(mapValidationErrors(error));
-        setAlertMessage("Please correct the highlighted errors.");
-        setAlertVariant("danger");
+        setAlert({ message: "Please correct the highlighted errors.", variant: "danger" });
       } else {
         const errorMessage =
           error.message ||
           "An unexpected error occurred while processing the meeting.";
         setValidationErrors({ general: errorMessage });
-        setAlertMessage(errorMessage);
-        setAlertVariant("danger");
+        setAlert({ message: errorMessage, variant: "danger" });
         console.error("Failed to process meeting:", error);
       }
     } finally {
@@ -326,20 +318,11 @@ function SchedulePageContent() {
   };
 
   return (
-     <section className="mx-auto max-w-[1400px] w-full pt-5">
-     <DashboardCard className="px-5 py-6">
-          <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">
+    <section className="mx-auto max-w-[1400px] w-full pt-5">
+      <DashboardCard className="px-5 py-6">
+        <h1 className="text-xl leading-normal text-brand-body capitalize font-medium">
           {meetingDetails.id ? "Edit Meeting" : "Schedule New Meeting"}
         </h1>
-
-        {alertMessage && (
-          <AlertMessage
-            message={alertMessage}
-            variant={alertVariant}
-            onClose={() => setAlertMessage("")}
-            duration={6000}
-          />
-        )}
 
         {loading ? (
           <p className="text-muted-foreground">
@@ -349,11 +332,7 @@ function SchedulePageContent() {
               : "accountants..."}
           </p>
         ) : error ? (
-          <AlertMessage
-            message={error}
-            variant="danger"
-            onClose={() => setError(null)}
-          />
+          <p className="text-red-500">{error}</p>
         ) : (
           <MeetingForm
             meetingDetails={meetingDetails}
