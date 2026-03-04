@@ -33,7 +33,7 @@ export interface ChatMessage {
   content: string | null;
   fileUrl: string | null;
   type: "TEXT" | "FILE";
-  sentAt: string;
+  sentAt?: string;
   replyToMessageId?: string | null;
   replyToMessage?: ChatMessage | null;
   sender?: {
@@ -344,7 +344,7 @@ class ChatService {
         content: content || null,
         fileUrl: fileUrl || null,
         type: fileUrl ? "FILE" : "TEXT",
-        sentAt: new Date().toISOString(),
+        // sentAt: new Date().toISOString(),
       };
       if (replyToMessageId) message.replyToMessageId = replyToMessageId;
 

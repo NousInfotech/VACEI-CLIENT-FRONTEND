@@ -159,7 +159,7 @@ export function useChat(
         content,
         fileUrl: fileUrl ?? null,
         type: fileUrl ? "FILE" : "TEXT",
-        sentAt: new Date().toISOString(),
+        // sentAt: new Date().toISOString(),
         replyToMessageId,
       };
 

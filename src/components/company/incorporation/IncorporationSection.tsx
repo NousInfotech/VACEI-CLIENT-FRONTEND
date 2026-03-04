@@ -165,7 +165,9 @@ const IncorporationSection = () => {
     (req: any) => req.status !== 'DRAFT'
   );
 
-  if (incorporation.status.toUpperCase() === 'PENDING') {
+  const incorporationStatus = (incorporation.status || 'PENDING').toUpperCase();
+
+  if (incorporationStatus === 'PENDING') {
     return (
       <div className="space-y-6 animate-in fade-in duration-700">
         <div className="flex items-center justify-between bg-white/40 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md">
