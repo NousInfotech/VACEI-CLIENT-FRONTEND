@@ -9,6 +9,7 @@ import EngagementSummary, {
 import { EngagementProvider } from "./hooks/useEngagement";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
+import { ArrowLeft, ClipboardList, Plus } from "lucide-react";
 import { getEngagements } from "@/api/auditService";
 import { ENGAGEMENT_CONFIG } from "@/config/engagementConfig";
 import { useActiveCompany } from "@/context/ActiveCompanyContext";
@@ -363,25 +364,46 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
   // No engagement found - show request service CTA
   if (engagementNotFound && !engagementIdToUse) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-6 p-8 max-w-lg mx-auto text-center">
-        <div className="rounded-full bg-muted p-4 text-muted-foreground">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="12" y1="18" x2="12" y2="12" />
-            <line x1="9" y1="15" x2="15" y2="15" />
-          </svg>
+      <div className="flex flex-col items-center justify-center min-h-[500px] p-6 animate-in fade-in duration-700">
+        <div className="relative group max-w-md w-full">
+          <div className="relative bg-white/60 backdrop-blur-2xl border border-white/20 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] rounded-[2rem] p-10 flex flex-col items-center text-center space-y-8 overflow-hidden">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-40 bg-primary/5 rounded-full blur-3xl -translate-y-20 pointer-events-none" />
+            
+            <div className="relative">
+              <div className="relative flex items-center justify-center w-24 h-24 rounded-3xl bg-primary/10 shadow-xl shadow-primary/5 transform transition-transform group-hover:scale-110 duration-500">
+                <ClipboardList className="w-10 h-10 text-primary" />
+                <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-white shadow-lg flex items-center justify-center border-4 border-white">
+                  <Plus className="w-5 h-5 text-primary" />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 relative z-10">
+              <h2 className="text-2xl font-bold tracking-tight text-gray-900 drop-shadow-sm">
+                No active engagement for <span className="text-primary">{data.name}</span>
+              </h2>
+              <p className="text-base text-gray-500 leading-relaxed max-w-xs mx-auto">
+                You haven&apos;t started an engagement for this service yet. Request it now to begin your journey with us.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full pt-4 relative z-10">
+              <button
+                onClick={() => router.back()}
+                className="w-full sm:flex-1 h-12 inline-flex items-center justify-center rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-all duration-300 active:scale-95 gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Go Back
+              </button>
+              <Link
+                href={`/dashboard/services/request?service=${SLUG_TO_SERVICE_TYPE[serviceSlug] || ''}${serviceSlug === 'custom' && searchParams.get('customServiceId') ? `&customServiceId=${searchParams.get('customServiceId')}` : ''}`}
+                className="w-full sm:flex-1 h-12 inline-flex items-center justify-center rounded-xl bg-primary text-white font-semibold shadow-lg shadow-primary/25 hover:bg-primary/90 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 active:scale-95"
+              >
+                Request service
+              </Link>
+            </div>
+          </div>
         </div>
-        <h2 className="text-lg font-semibold">No active engagement for {data.name}</h2>
-        <p className="text-sm text-muted-foreground">
-          You don&apos;t have an active engagement for this service yet. Request the service to get started.
-        </p>
-        <Link
-          href={`/dashboard/services/request?service=${SLUG_TO_SERVICE_TYPE[serviceSlug] || ''}${serviceSlug === 'custom' && searchParams.get('customServiceId') ? `&customServiceId=${searchParams.get('customServiceId')}` : ''}`}
-          className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          Request service
-        </Link>
       </div>
     );
   }
