@@ -29,6 +29,7 @@ import EmptyState from '../shared/EmptyState'
 import BulkUploadZone from './BulkUploadZone'
 import { SuccessModal } from '../ui/SuccessModal'
 import { ClearReasonModal } from '../ui/ClearReasonModal'
+import UnassignedFilesSection from '../company/shared/UnassignedFilesSection'
 
 type UploadingState = { requestId: string; documentId: string }
 
@@ -431,6 +432,7 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
                           ]}
                           isGlobal={false}
                         />
+                        <UnassignedFilesSection files={request.unassignedFiles || []} />
                       </TabsContent>
 
                       <TabsContent value="single" className="p-6 m-0 animate-in fade-in slide-in-from-bottom-2 duration-300">

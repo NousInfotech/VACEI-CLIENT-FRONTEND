@@ -396,7 +396,7 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
                 Go Back
               </button>
               <Link
-                href={`/dashboard/services/request?service=${SLUG_TO_SERVICE_TYPE[serviceSlug] || ''}${serviceSlug === 'custom' && searchParams.get('customServiceId') ? `&customServiceId=${searchParams.get('customServiceId')}` : ''}`}
+                href={`/dashboard/${activeCompanyId}/services/request?service=${SLUG_TO_SERVICE_TYPE[serviceSlug] || ''}${serviceSlug === 'custom' && searchParams.get('customServiceId') ? `&customServiceId=${searchParams.get('customServiceId')}` : ''}`}
                 className="w-full sm:flex-1 h-12 inline-flex items-center justify-center rounded-xl bg-primary text-white font-semibold shadow-lg shadow-primary/25 hover:bg-primary/90 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 active:scale-95"
               >
                 Request service

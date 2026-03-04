@@ -72,6 +72,7 @@ export interface DocumentRequest {
   documents?: DocumentItem[];
   requestedDocuments?: DocumentItem[];
   multipleDocuments?: DocumentRequestDocumentMultiple[];
+  unassignedFiles?: DocumentFile[];
   createdAt?: string;
 }
 
