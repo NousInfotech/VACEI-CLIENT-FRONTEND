@@ -22,12 +22,30 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return result.data || result; // Backend wraps success response in "data"
 }
 
-export function getPortalRedirectUrl(url?: string): string {
-  if (!url) return '';
-  const cleaned = url.replace(/^\/(partner|platform|client)/, '');
-  if (cleaned.startsWith('/dashboard')) return cleaned;
-  if (cleaned.startsWith('/')) return `/dashboard${cleaned}`;
-  return cleaned;
+export function getPortalRedirectUrl(url?: string | null): string {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+
+  let pathWithSearch = trimmed;
+
+  // Handle absolute URLs like https://devclient.vacei.com/...
+  try {
+    if (/^https?:\/\//i.test(trimmed)) {
+      const parsed = new URL(trimmed);
+      pathWithSearch = `${parsed.pathname}${parsed.search}`;
+    }
+  } catch {
+    pathWithSearch = trimmed;
+  }
+
+  // Strip portal prefix if present (e.g. /client/... or /partner/...)
+  const withoutPrefix = pathWithSearch.replace(/^\/?(partner|platform|client)(?=\/)/, '');
+
+  // For client portal we trust backend to send full app paths
+  // like /dashboard/..., /global-dashboard/..., /kyc/...
+  if (withoutPrefix.startsWith('/')) return withoutPrefix;
+  return `/${withoutPrefix}`;
 }
 
 export interface Notification {
