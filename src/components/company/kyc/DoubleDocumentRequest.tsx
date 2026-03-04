@@ -147,16 +147,6 @@ const DocumentRequestDouble: React.FC<DocumentRequestMultipleProps> = ({
                           </p>
                           <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
                             {renderItemStatus(item)}
-                            {itemUrl && item.createdAt && (
-                              <span className="text-xs text-gray-500">
-                                Uploaded: {(() => {
-                                  const date = new Date(item.createdAt);
-                                  return isNaN(date.getTime())
-                                    ? "N/A"
-                                    : format(date, "MMM dd, yyyy HH:mm");
-                                })()}
-                              </span>
-                            )}
                           </div>
                         </div>
 

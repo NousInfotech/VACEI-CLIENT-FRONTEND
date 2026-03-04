@@ -8,7 +8,10 @@ import {
   Globe,
   Shield,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  FileText,
+  Clock,
+  CheckCircle2
 } from "lucide-react";
 import { ListSkeleton } from "../../shared/CommonSkeletons";
 import { Card, CardContent } from '../../ui/card2'
@@ -29,6 +32,7 @@ const KYCSection = () => {
   const [uploadMode, setUploadMode] = useState<Record<string, 'single' | 'bulk'>>({})
   const { company } = useCompany()
   const { kyc, refetch, loading, error } = useKyc(company?._id || company?.id || null)
+  const kycArray = Array.isArray(kyc) ? kyc : (kyc ? [kyc] : []);
 
   const tabs = [
     { id: 'Company', label: 'COMPANY' },
@@ -93,17 +97,32 @@ const KYCSection = () => {
   }
 
   const getStatusBadge = (status: string) => {
+    const formattedStatus = (status || "").replace(/_/g, " ");
+    const baseClasses = "transition-all duration-200 hover:scale-105 cursor-default select-none shadow-xs";
+
     switch (status?.toLowerCase()) {
       case 'completed':
-        return <Badge className="bg-green-100 text-green-700 border-green-200">Completed</Badge>
+        return <Badge className={`${baseClasses} bg-green-100 text-green-700 border-green-200 hover:bg-green-200`}>Completed</Badge>
       case 'submitted':
-        return <Badge className="bg-blue-100 text-blue-700 border-blue-200">Submitted</Badge>
+        return <Badge className={`${baseClasses} bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200`}>Submitted</Badge>
       case 'pending':
-        return <Badge className="bg-amber-100 text-amber-700 border-amber-200">Pending</Badge>
+        return <Badge className={`${baseClasses} bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200`}>Pending</Badge>
       case 'reopened':
-        return <Badge className="bg-rose-100 text-rose-700 border-rose-200">Reopened</Badge>
+        return <Badge className={`${baseClasses} bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-200`}>Reopened</Badge>
+      case 'in_review':
+      case 'in review':
+        return <Badge className={`${baseClasses} bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-200`}>In Review</Badge>
+      case 'active':
+        return <Badge className={`${baseClasses} bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200`}>Active</Badge>
       default:
-        return <Badge variant="outline">{status || 'Active'}</Badge>
+        return (
+          <Badge 
+            variant="outline" 
+            className={`${baseClasses} capitalize hover:bg-gray-100`}
+          >
+            {formattedStatus || 'Active'}
+          </Badge>
+        )
     }
   }
 
@@ -127,11 +146,13 @@ const KYCSection = () => {
     
     if (kycArray.length === 0) {
       return (
-        <EmptyState
-          icon={Shield}
-          title="KYC Not Initiated"
-          description={`No KYC process has been initiated for ${workflowType.toLowerCase()}s by the platform admin yet.`}
-        />
+        <div className="space-y-6">
+          <EmptyState
+            icon={Building2}
+            title="KYC Not Started"
+            description="Entity KYC process has not been initiated by the admin yet. Please wait for the admin to create the KYC cycle."
+          />
+        </div>
       )
     }
 
@@ -139,12 +160,18 @@ const KYCSection = () => {
       const companyCycles = kycArray.filter((cycle: any) =>
         !!cycle.documentRequest && cycle.documentRequest.status !== 'DRAFT'
       )
+      
       if (companyCycles.length === 0) {
+        // Check if there are any cycles at all to determine if it's pending or just no docs
+        const hasPendingCycle = kycArray.some((cycle: any) => cycle.status === 'PENDING');
+        
         return (
           <EmptyState
-            icon={Shield}
-            title="KYC Not Initiated"
-            description="No company-level KYC process has been initiated by the platform admin yet."
+            icon={hasPendingCycle ? Clock : FileText}
+            title={hasPendingCycle ? "KYC Pending" : "No Documents Required"}
+            description={hasPendingCycle 
+              ? "Your company KYC cycle has been created by the admin and is currently pending. Please wait for the document requests to be activated."
+              : "No company-level document requests have been initiated by the platform admin yet."}
           />
         )
       }
@@ -158,8 +185,15 @@ const KYCSection = () => {
             const docs = request.requestedDocuments || []
             const singleDocs = docs.filter((d: any) => d.count === 'SINGLE')
             const multipleGroups = docs.filter((d: any) => d.count === 'MULTIPLE')
-            const totalDocs = docs.length
-            const uploadedDocsCount = docs.filter((d: any) => d.status === 'UPLOADED' || d.status === 'ACCEPTED').length
+            
+            // Accurate flattened count logic
+            const allFlattenedDocs = docs.flatMap((d: any) => 
+              d.count === 'MULTIPLE' ? (d.children || d.multiple || []) : [d]
+            );
+            const totalDocsCount = allFlattenedDocs.length;
+            const isUploaded = (d: any) => !!(d.fileId || d.uploadedFileName || d.file?.url || ['UPLOADED', 'ACCEPTED', 'SUBMITTED', 'COMPLETED'].includes(d.status?.toUpperCase()));
+            const uploadedDocsCount = allFlattenedDocs.filter(isUploaded).length;
+            const completionRate = totalDocsCount > 0 ? Math.round((uploadedDocsCount / totalDocsCount) * 100) : 0;
 
             return (
               <Card
@@ -186,10 +220,23 @@ const KYCSection = () => {
                             ENTITY KYC
                           </Badge>
                           <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
-                            {uploadedDocsCount}/{totalDocs} DOCUMENTS
+                            {uploadedDocsCount}/{totalDocsCount} DOCUMENTS ({completionRate}%)
                           </Badge>
-                          {cycle.status && getStatusBadge(cycle.status)}
                         </div>
+
+                        {totalDocsCount > 0 && (
+                          <div className="flex items-center gap-4 mb-4">
+                            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out"
+                                style={{ width: `${completionRate}%` }}
+                              />
+                            </div>
+                            <span className="text-[14px] font-medium text-emerald-600 tracking-tight">
+                              {completionRate}%
+                            </span>
+                          </div>
+                        )}
 
                         <div className="space-y-2">
                           <div className="flex items-start gap-2 text-sm text-gray-600">
@@ -210,17 +257,28 @@ const KYCSection = () => {
                           {isExpanded ? 'Hide Documents' : 'View Documents'}
                         </Button>
                         {isExpanded && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setUploadMode(prev => ({
-                              ...prev,
-                              [request.id]: prev[request.id] === 'bulk' ? 'single' : 'bulk'
-                            }))}
-                            className="text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-primary/5"
-                          >
-                            Switch to {uploadMode[request.id] === 'bulk' ? 'Single' : 'Bulk'} Upload
-                          </Button>
+                          <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200">
+                            <button
+                              onClick={() => setUploadMode(prev => ({ ...prev, [request.id]: 'bulk' }))}
+                              className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
+                                (uploadMode[request.id] ?? 'bulk') === 'bulk' 
+                                  ? "bg-white text-indigo-600 shadow-sm border border-gray-100" 
+                                  : "text-gray-500 hover:text-gray-700"
+                              }`}
+                            >
+                              Bulk Upload
+                            </button>
+                            <button
+                              onClick={() => setUploadMode(prev => ({ ...prev, [request.id]: 'single' }))}
+                              className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
+                                uploadMode[request.id] === 'single' 
+                                  ? "bg-white text-indigo-600 shadow-sm border border-gray-100" 
+                                  : "text-gray-500 hover:text-gray-700"
+                              }`}
+                            >
+                              Single Upload
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -233,12 +291,13 @@ const KYCSection = () => {
                         <span className="text-[10px] text-gray-400 italic">Core identification and incorporation documents</span>
                       </div>
 
-                      {uploadMode[request.id] === 'bulk' ? (
+                      { (uploadMode[request.id] ?? 'bulk') === 'bulk' ? (
                         <BulkUploadZone 
                           requestId={request.id}
                           onSuccess={handleBulkUploadSuccess}
                           onClear={handleClear}
                           documents={docs}
+                          isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
                         />
                       ) : (
                         <>
@@ -247,6 +306,7 @@ const KYCSection = () => {
                             documents={singleDocs}
                             onUpload={handleUpload}
                             onClearDocument={handleClear}
+                            isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
                           />
 
                           <DocumentRequestDouble
@@ -256,6 +316,7 @@ const KYCSection = () => {
                             onClearMultipleItem={handleClearMultipleItem}
                             onClearMultipleGroup={handleClearMultipleGroup}
                             onDownloadMultipleGroup={handleDownloadMultipleGroup}
+                            isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
                           />
                         </>
                       )}
@@ -274,10 +335,15 @@ const KYCSection = () => {
   const renderInvolvements = () => {
     if (loading) return <ListSkeleton count={3} />
     if (error) return <EmptyState icon={Shield} title="Error Loading KYC" description={error} />
-
     const kycArray = Array.isArray(kyc) ? kyc : (kyc ? [kyc] : []);
     if (kycArray.length === 0) {
-      return <EmptyState icon={Shield} title="KYC Not Initiated" description="No KYC process has been initiated for involvements yet." />
+      return (
+        <EmptyState
+          icon={Building2}
+          title="KYC Not Started"
+          description="Involvement KYC process has not been initiated by the admin yet. Please wait for the admin to create the KYC cycle."
+        />
+      )
     }
 
     // Build combined persons list from shareHolders + representationalSchema
@@ -331,7 +397,7 @@ const KYCSection = () => {
     const persons = Array.from(personMap.values()).filter(p => kycMap.has(p._id))
 
     if (persons.length === 0) {
-      return <EmptyState icon={Shield} title="No KYC Initiated" description="No KYC process has been initiated for any involvement by the platform admin yet." />
+      return <EmptyState icon={Shield} title="No Involvements" description="No involvements (shareholders or representatives) found for this company." />
     }
 
     return (
@@ -341,14 +407,21 @@ const KYCSection = () => {
           const request = kycItem?.documentRequest
           const isExpanded = request ? expandedRequests.has(request.id) : false
 
-          let totalDocs = 0, uploadedDocsCount = 0
+          let totalDocsCount = 0, uploadedDocsCount = 0, completionRate = 0
           let singleDocs: any[] = [], multipleGroups: any[] = []
           if (request) {
             const docs = request.requestedDocuments || []
             singleDocs = docs.filter((d: any) => d.count === 'SINGLE')
             multipleGroups = docs.filter((d: any) => d.count === 'MULTIPLE')
-            totalDocs = docs.length
-            uploadedDocsCount = docs.filter((d: any) => d.status === 'UPLOADED' || d.status === 'ACCEPTED').length
+            
+            // Accurate flattened count logic
+            const allFlattenedDocs = docs.flatMap((d: any) => 
+              d.count === 'MULTIPLE' ? (d.children || d.multiple || []) : [d]
+            );
+            totalDocsCount = allFlattenedDocs.length;
+            const isUploaded = (d: any) => !!(d.fileId || d.uploadedFileName || d.file?.url || ['UPLOADED', 'ACCEPTED', 'SUBMITTED', 'COMPLETED'].includes(d.status?.toUpperCase()));
+            uploadedDocsCount = allFlattenedDocs.filter(isUploaded).length;
+            completionRate = totalDocsCount > 0 ? Math.round((uploadedDocsCount / totalDocsCount) * 100) : 0;
           }
 
           return (
@@ -377,16 +450,35 @@ const KYCSection = () => {
                         {request ? (
                           <>
                             <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-100 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
-                              {uploadedDocsCount}/{totalDocs} DOCUMENTS
+                              {uploadedDocsCount}/{totalDocsCount} DOCUMENTS ({completionRate}%)
                             </Badge>
-                            {getStatusBadge(request.status)}
+                            {kycItem.status && getStatusBadge(kycItem.status)}
                           </>
                         ) : (
-                          <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-200 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
-                            NO KYC WORKFLOW
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-200 rounded-lg px-2 py-0.5 text-[11px] font-semibold">
+                              NO DOCUMENT REQUEST
+                            </Badge>
+                            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-100 rounded-lg px-2 py-0.5 text-[11px] font-semibold flex items-center gap-1">
+                              <Clock size={10} /> PENDING
+                            </Badge>
+                          </div>
                         )}
                       </div>
+
+                      {request && totalDocsCount > 0 && (
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="w-full  h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out"
+                              style={{ width: `${completionRate}%` }}
+                            />
+                          </div>
+                          <span className="text-[14px] font-medium text-emerald-600 tracking-tight">
+                            {completionRate}%
+                          </span>
+                        </div>
+                      )}
 
                       <div className="space-y-2">
                         {person.address && (
@@ -395,18 +487,18 @@ const KYCSection = () => {
                             <span className="text-xs leading-relaxed">{person.address}</span>
                           </div>
                         )}
-                        {person.nationality && (
+                        {/* {person.nationality && (
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <Globe className="h-4 w-4 text-gray-400 shrink-0" />
                             <span className="text-xs">{person.nationality}</span>
                           </div>
-                        )}
-                        {person.sharePercentage !== undefined && (
+                        )} */}
+                        {/* {person.sharePercentage !== undefined && (
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <User className="h-4 w-4 text-gray-400 shrink-0" />
                             <span className="text-xs">Share: {person.sharePercentage.toFixed(2)}%</span>
                           </div>
-                        )}
+                        )} */}
                       </div>
                     </div>
 
@@ -422,17 +514,28 @@ const KYCSection = () => {
                           {isExpanded ? 'Hide Documents' : 'View Documents'}
                         </Button>
                         {isExpanded && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setUploadMode(prev => ({
-                              ...prev,
-                              [request.id]: prev[request.id] === 'bulk' ? 'single' : 'bulk'
-                            }))}
-                            className="text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-primary/5"
-                          >
-                            Switch to {uploadMode[request.id] === 'bulk' ? 'Single' : 'Bulk'} Upload
-                          </Button>
+                          <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200">
+                            <button
+                              onClick={() => setUploadMode(prev => ({ ...prev, [request.id]: 'bulk' }))}
+                              className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
+                                (uploadMode[request.id] ?? 'bulk') === 'bulk' 
+                                  ? "bg-white text-indigo-600 shadow-sm border border-gray-100" 
+                                  : "text-gray-500 hover:text-gray-700"
+                              }`}
+                            >
+                              Bulk Upload
+                            </button>
+                            <button
+                              onClick={() => setUploadMode(prev => ({ ...prev, [request.id]: 'single' }))}
+                              className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
+                                uploadMode[request.id] === 'single' 
+                                  ? "bg-white text-indigo-600 shadow-sm border border-gray-100" 
+                                  : "text-gray-500 hover:text-gray-700"
+                              }`}
+                            >
+                              Single Upload
+                            </button>
+                          </div>
                         )}
                       </div>
                     )}
@@ -443,17 +546,32 @@ const KYCSection = () => {
                   <div className="bg-gray-50/50 border-t border-gray-100 p-6 animate-in slide-in-from-top-2 duration-300 space-y-4">
                     {singleDocs.length === 0 && multipleGroups.length === 0 ? (
                       <div className="text-center py-4 text-gray-500 text-sm bg-white rounded-lg">No documents yet</div>
-                    ) : uploadMode[request.id] === 'bulk' ? (
+                    ) : (uploadMode[request.id] ?? 'bulk') === 'bulk' ? (
                       <BulkUploadZone 
                         requestId={request.id}
                         onSuccess={handleBulkUploadSuccess}
                         onClear={handleClear}
                         documents={request.requestedDocuments || []}
+                        isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
                       />
                     ) : (
                       <>
-                        <DocumentRequestSingle requestId={request.id} documents={singleDocs} onUpload={handleUpload} onClearDocument={handleClear} />
-                        <DocumentRequestDouble requestId={request.id} multipleDocuments={multipleGroups} onUploadMultiple={handleUploadMultiple} onClearMultipleItem={handleClearMultipleItem} onClearMultipleGroup={handleClearMultipleGroup} onDownloadMultipleGroup={handleDownloadMultipleGroup} />
+                        <DocumentRequestSingle 
+                          requestId={request.id} 
+                          documents={singleDocs} 
+                          onUpload={handleUpload} 
+                          onClearDocument={handleClear} 
+                          isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
+                        />
+                        <DocumentRequestDouble 
+                          requestId={request.id} 
+                          multipleDocuments={multipleGroups} 
+                          onUploadMultiple={handleUploadMultiple} 
+                          onClearMultipleItem={handleClearMultipleItem} 
+                          onClearMultipleGroup={handleClearMultipleGroup} 
+                          onDownloadMultipleGroup={handleDownloadMultipleGroup} 
+                          isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
+                        />
                       </>
                     )}
                   </div>
@@ -470,10 +588,17 @@ const KYCSection = () => {
     <div className="space-y-6 animate-in fade-in duration-700">
       {!company?.kycStatus && (
         <>
-          <div className="flex items-center justify-between bg-white/40 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md">
-            <div>
-              <h2 className="text-3xl font-semibold">KYC Workflow Details</h2>
-              <p className="text-sm text-gray-500 mt-1 font-medium">Manage document requests and workflow status</p>
+           <div className="flex items-center justify-between bg-white/40 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md">
+            <div className="flex items-center gap-4">
+              <div>
+                <h2 className="text-3xl font-semibold">KYC Workflow Details</h2>
+                <p className="text-sm text-gray-500 mt-1 font-medium">Manage document requests and workflow status</p>
+              </div>
+              {kycArray[0]?.status && (
+                <div className="mt-1">
+                  {getStatusBadge(kycArray[0].status)}
+                </div>
+              )}
             </div>
             <div className="p-4 bg-linear-to-br from-blue-500 to-indigo-600 rounded-2xl text-white shadow-lg shadow-blue-200">
               <Shield size={32} />

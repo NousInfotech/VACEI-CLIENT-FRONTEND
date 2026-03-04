@@ -98,7 +98,7 @@ const Company = ({ defaultTab = 'incorporation' }: CompanyProps) => {
   }
 
   return (
-    <div className="p-4 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 mx-auto space-y-6">
       {/* <BackButton /> */}
       <PageHeader
         title={data?.name || "Company Overview"}

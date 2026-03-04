@@ -73,7 +73,7 @@ function SingleDocUploadCell({
       >
         <span>
           <Upload className="h-4 w-4 mr-1" />
-          {isRejected ? "Reupload" : "Choose File"}
+          {isRejected ? "Reupload" : "Upload"}
         </span>
       </Button>
     </label>
@@ -163,16 +163,6 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
                   <Badge variant="outline" className={docStatus === 'REJECTED' ? "text-rose-600 border-rose-300 bg-rose-50" : "text-gray-600 border-gray-300"}>
                     {doc.status}
                   </Badge>
-                  {doc.createdAt && (
-                    <span className="text-xs text-gray-500">
-                      Uploaded: {(() => {
-                        const date = new Date(doc.createdAt);
-                        return isNaN(date.getTime())
-                          ? "N/A"
-                          : format(date, "MMM dd, yyyy HH:mm");
-                      })()}
-                    </span>
-                  )}
                 </div>
                 {docStatus === 'REJECTED' && doc.rejectionReason && (
                     <div className="text-[10px] bg-rose-50 text-rose-700 p-2 rounded-lg border border-rose-100 flex items-start gap-2 mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
@@ -201,14 +191,6 @@ const DocumentRequestSingle: React.FC<DocumentRequestSingleProps> = ({
               )}
               {docUrl && (
                 <>
-                  <span className="text-xs text-gray-600 mr-1 truncate max-w-[120px]" title={doc.file?.file_name ?? "File"}>
-                    {doc.file?.file_name ?? "File"}
-                    {doc.file?.size != null && (
-                      <span className="text-gray-400 ml-1">
-                        ({formatFileSize(doc.file.size)})
-                      </span>
-                    )}
-                  </span>
                   <Button
                     size="sm"
                     variant="outline"
