@@ -25,6 +25,7 @@ import PillTabs from '../../shared/PillTabs'
 import EmptyState from '../../shared/EmptyState'
 import { clearRequestedDocument, uploadRequestedDocument } from '@/api/auditService'
 import BulkUploadZone from '../../engagement/BulkUploadZone'
+import UnassignedFilesSection from '../shared/UnassignedFilesSection'
 
 const KYCSection = () => {
   const [activeTab, setActiveTab] = useState('Company')
@@ -290,15 +291,17 @@ const KYCSection = () => {
                         <h5 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Entity Verification Records</h5>
                         <span className="text-[10px] text-gray-400 italic">Core identification and incorporation documents</span>
                       </div>
-
-                      { (uploadMode[request.id] ?? 'bulk') === 'bulk' ? (
-                        <BulkUploadZone 
-                          requestId={request.id}
-                          onSuccess={handleBulkUploadSuccess}
-                          onClear={handleClear}
-                          documents={docs}
-                          isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
-                        />
+                      {(uploadMode[request.id] ?? 'bulk') === 'bulk' ? (
+                        <>
+                          <BulkUploadZone 
+                            requestId={request.id}
+                            onSuccess={handleBulkUploadSuccess}
+                            onClear={handleClear}
+                            documents={docs}
+                            isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
+                          />
+                          <UnassignedFilesSection files={request.unassignedFiles || []} />
+                        </>
                       ) : (
                         <>
                           <DocumentRequestSingle
@@ -547,13 +550,16 @@ const KYCSection = () => {
                     {singleDocs.length === 0 && multipleGroups.length === 0 ? (
                       <div className="text-center py-4 text-gray-500 text-sm bg-white rounded-lg">No documents yet</div>
                     ) : (uploadMode[request.id] ?? 'bulk') === 'bulk' ? (
-                      <BulkUploadZone 
-                        requestId={request.id}
-                        onSuccess={handleBulkUploadSuccess}
-                        onClear={handleClear}
-                        documents={request.requestedDocuments || []}
-                        isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
-                      />
+                      <>
+                        <BulkUploadZone 
+                          requestId={request.id}
+                          onSuccess={handleBulkUploadSuccess}
+                          onClear={handleClear}
+                          documents={request.requestedDocuments || []}
+                          isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
+                        />
+                        <UnassignedFilesSection files={request.unassignedFiles || []} />
+                      </>
                     ) : (
                       <>
                         <DocumentRequestSingle 

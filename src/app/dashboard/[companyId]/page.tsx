@@ -220,6 +220,8 @@ export default function DashboardPage() {
             id: c.id,
             name: c.name,
             registrationNumber: c.registrationNumber,
+            incorporationStatus: c.incorporationStatus,
+            kycStatus: c.kycStatus,
           }));
           setCompanies(mappedCompanies);
           dashboardCache.companiesFetched = true;

@@ -26,6 +26,7 @@ import { clearRequestedDocument, uploadRequestedDocument } from '@/api/auditServ
 import BulkUploadZone from '../../engagement/BulkUploadZone'
 import { cn } from '@/lib/utils'
 import { TruncatedTooltip } from '@/components/ui/TruncatedTooltip'
+import UnassignedFilesSection from '../shared/UnassignedFilesSection'
 
 const IncorporationSection = () => {
   const [expandedRequests, setExpandedRequests] = useState<Set<string>>(new Set())
@@ -350,52 +351,8 @@ const IncorporationSection = () => {
                                         onClear={handleClear}
                                         documents={docs}
                                       />
-
-                                      {request.unassignedFiles && request.unassignedFiles.length > 0 && (
-                                        <div className="mt-6 bg-white/60 p-4 rounded-xl border border-indigo-100 shadow-xs">
-                                          <div className="flex items-center gap-2 mb-4">
-                                            <div className="w-6 h-6 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600">
-                                              <ClipboardList size={14} />
-                                            </div>
-                                            <h6 className="text-[11px] font-bold text-indigo-900 uppercase tracking-wider">
-                                              Unassigned Bulk Uploads ({request.unassignedFiles.length})
-                                            </h6>
-                                          </div>
-                                          
-                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            {request.unassignedFiles.map((file: any) => (
-                                              <div 
-                                                key={file.id}
-                                                className="group relative flex items-center justify-between p-3 bg-white/40 hover:bg-white/80 border border-gray-100/50 rounded-xl transition-all duration-300"
-                                              >
-                                                <div className="min-w-0 pr-8">
-                                                  <div className="flex items-center gap-2 mb-1">
-                                                    <div className="w-8 h-8 bg-indigo-50/50 rounded-lg flex items-center justify-center text-indigo-400 shrink-0">
-                                                      <FileText size={16} />
-                                                    </div>
-                                                    <p className="text-sm font-semibold text-gray-700 truncate">
-                                                      {file.originalName || file.file_name}
-                                                    </p>
-                                                  </div>
-                                                  <p className="text-[9px] text-gray-400 font-medium ml-10">
-                                                    {file.createdAt ? new Date(file.createdAt).toLocaleDateString() : 'N/A'}
-                                                  </p>
-                                                </div>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() => file.url && window.open(file.url, '_blank')}
-                                                  className="h-8 w-8 p-0 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg group-hover:bg-white transition-colors"
-                                                  title="View File"
-                                                >
-                                                  <Eye size={14} />
-                                                </Button>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
+                                        <UnassignedFilesSection files={request.unassignedFiles || []} />
+                                      </div>
                                   ) : (
                                     <>
                                       <DocumentRequestSingle
@@ -427,6 +384,7 @@ const IncorporationSection = () => {
           </div>
         </>
       )}
+      
     </div>
   )
 }

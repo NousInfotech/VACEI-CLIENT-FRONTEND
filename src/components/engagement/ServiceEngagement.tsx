@@ -379,7 +379,7 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
             </div>
 
             <div className="space-y-4 relative z-10">
-              <h2 className="text-2xl font-bold tracking-tight text-gray-900 drop-shadow-sm">
+              <h2 className="text-2xl font-semibold tracking-tight text-gray-900 drop-shadow-sm">
                 No active engagement for <span className="text-primary">{data.name}</span>
               </h2>
               <p className="text-base text-gray-500 leading-relaxed max-w-xs mx-auto">

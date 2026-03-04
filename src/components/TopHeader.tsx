@@ -81,7 +81,7 @@ const HeaderNotificationItem: React.FC<HeaderNotificationItemProps> = ({ notific
                         e.stopPropagation();
                         onMarkAsRead(notification.id);
                     }}
-                    className="ml-2 h-7 px-3 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors text-[10px] font-bold uppercase tracking-widest flex-shrink-0 cursor-pointer shadow-sm"
+                    className="ml-2 h-7 px-3 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors text-[10px] font-bold uppercase tracking-widest shrink-0 cursor-pointer shadow-sm"
                 >
                     Mark
                 </Button>
@@ -364,7 +364,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
 
     return (
         <header
-            className="h-16 backdrop-blur-xl border flex items-center justify-between px-6 sticky top-0 z-40 rounded-[2rem] m-2 mb-0 mr-2 bg-background/80 shadow-lg"
+            className="h-16 backdrop-blur-xl border flex items-center justify-between px-6 sticky top-0 z-40 rounded-4xl m-2 mb-0 mr-2 bg-background/80 shadow-lg"
             style={{
                 borderColor: `hsl(var(--border))`,
                 boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)'
@@ -373,7 +373,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
             <div className="flex items-center gap-4">
                 {onSidebarToggle && (
                     <button
-                        className="md:flex hidden p-2 rounded-2xl hover:bg-[hsl(var(--muted))] transition-colors group"
+                        className="md:flex hidden p-2 rounded-2xl hover:bg-muted transition-colors group"
                         onClick={onSidebarToggle}
                         aria-label={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
                         title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
@@ -458,7 +458,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                                     {isMounted ? (activeCompanyName.length > 20 ? activeCompanyName.substring(0, 17) + "..." : activeCompanyName) : "Loading..."}
                                 </span>
                             </div>
-                        ) : (
+                        ) : filteredCompanies.length > 1 ? (
                             <Dropdown
                                 align="left"
                                 label={activeCompanyName}
@@ -479,7 +479,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                                     </div>
                                 }
                             />
-                        )}
+                        ) : null}
                     </div>
                 )}
 
