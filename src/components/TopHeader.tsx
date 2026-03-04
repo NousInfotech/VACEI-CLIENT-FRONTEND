@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams, useParams } from 'next/navigation';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { GlobalUploadDrawer } from "@/components/GlobalUploadDrawer";
@@ -22,7 +22,7 @@ import {
 import { getCompanies } from '@/api/auditService';
 import { useActiveCompany } from '@/context/ActiveCompanyContext';
 import { useGlobalDashboard } from '@/context/GlobalDashboardContext';
-import { useSSE } from '@/hooks/useSSE';
+import { useSSE, constructCompanyNotificationUrl } from '@/hooks/useSSE';
 
 // NotificationItem component
 interface HeaderNotificationItemProps {
@@ -108,8 +108,20 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
     const { activeCompanyId, setActiveCompanyId, companies, setCompanies } = useActiveCompany();
     const { companies: globalCompanies } = useGlobalDashboard();
     const router = useRouter();
-    const pathname = usePathname();
+    const pathname = usePathname() ?? '';
     const searchParams = useSearchParams();
+    const params = useParams();
+
+    const redirectionUrlDecider = useCallback((redirectUrl: string, type: string) => {
+        const isCompanyNotificationType = type === 'chat_message' || type === 'compliance_deadline';
+        if (!isCompanyNotificationType) return redirectUrl || '#';
+        if (pathname.includes('global-dashboard')) return redirectUrl || '#';
+        const companyId = params?.companyId as string | undefined;
+        if (pathname.includes('/dashboard/') && companyId) {
+            return constructCompanyNotificationUrl(redirectUrl, companyId);
+        }
+        return redirectUrl || '#';
+    }, [pathname, params?.companyId]);
 
     useEffect(() => {
         setIsMounted(true);
@@ -531,7 +543,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                         <div className="p-3 overflow-y-auto">
                             {latestNotifications.length > 0 ? (
                                 latestNotifications.map((notification) => (
-                                    <Link href={notification.redirectUrl || '#'} key={notification.id} passHref>
+                                    <Link href={redirectionUrlDecider(notification.redirectUrl || '#', notification.type)} key={notification.id} passHref>
                                         <div
                                             onClick={async () => {
                                                 if (!notification.isRead) {

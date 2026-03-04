@@ -6,6 +6,18 @@ const getBackendUrl = () => {
     return process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
 };
 
+/** e.g. /global-dashboard/compliance => /dashboard/{companyId}/compliance */
+export function constructCompanyNotificationUrl(url: string, companyId: string): string {
+    const cleanedUrl = url.replace(/^\/(partner|platform|client)\/?/, '');
+    const withLeadingSlash = cleanedUrl.startsWith('/') ? cleanedUrl : `/${cleanedUrl}`;
+    const withCompanyDashboard = withLeadingSlash.replace(
+        /\/global-dashboard(?=\/|$)/,
+        `/dashboard/${companyId}`
+    );
+    return withCompanyDashboard;
+}
+
+
 export const useSSE = (shouldConnect: boolean = true) => {
     const [notifications, setNotifications] = useState<any[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -26,6 +38,7 @@ export const useSSE = (shouldConnect: boolean = true) => {
             eventSource.onmessage = (event) => {
                 try {
                     const newNotification = JSON.parse(event.data);
+                    //
                     setNotifications((prev) => [newNotification, ...prev]);
                     setUnreadCount((prev) => prev + 1);
 

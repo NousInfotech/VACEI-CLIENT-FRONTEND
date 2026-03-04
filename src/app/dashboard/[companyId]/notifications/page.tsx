@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { useSSE } from '@/hooks/useSSE';
 import { cn } from '@/lib/utils';
 import { Bell, AlertCircle, MessageSquare, Calendar, FileText } from 'lucide-react';
+import { useParams, usePathname } from 'next/navigation';
+import { constructCompanyNotificationUrl } from '@/hooks/useSSE';
 
 interface NotificationItemProps {
     notification: Notification;
@@ -30,8 +32,8 @@ const getIconForType = (type: string) => {
         case 'error':
         case 'meeting_canceled':
             return <AlertCircle className="h-5 w-5 text-red-500" />;
-    case 'filing_status':
-      return <FileText className="h-5 w-5 text-emerald-500" />;
+        case 'filing_status':
+            return <FileText className="h-5 w-5 text-emerald-500" />;
         default:
             return <Bell className="h-5 w-5 text-gray-500" />;
     }
@@ -39,6 +41,22 @@ const getIconForType = (type: string) => {
 
 const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMarkAsRead }) => {
     const isRead = notification.isRead;
+    const params = useParams();
+    const pathname = usePathname() ?? '';
+
+    const redirectionUrlDecider = (redirectUrl: string, type: string) => {
+        const isCompanyNotificationType = type === 'chat_message' || type === 'compliance_deadline';
+        if (!isCompanyNotificationType) return redirectUrl;
+
+        if (pathname.includes('global-dashboard')) return redirectUrl;
+
+        const companyId = params?.companyId as string | undefined;
+        if (pathname.includes('/dashboard/') && companyId) {
+            return constructCompanyNotificationUrl(redirectUrl, companyId);
+        }
+        return redirectUrl;
+    }
+
 
     const handleClick = () => {
         if (!isRead) {
@@ -85,7 +103,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMar
     return (
         <div className="mb-4">
             {notification.redirectUrl ? (
-                <Link href={notification.redirectUrl} passHref onClick={handleClick}>
+                <Link href={redirectionUrlDecider(notification.redirectUrl, notification.type)} passHref onClick={handleClick}>
                     {content}
                 </Link>
             ) : (
