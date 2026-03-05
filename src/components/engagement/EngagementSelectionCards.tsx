@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import PageHeader from "@/components/shared/PageHeader";
 import DashboardCard from "@/components/DashboardCard";
 import { Button } from "../ui/button";
+import { useActiveCompany } from "@/context/ActiveCompanyContext";
 
 interface Engagement {
   id: string;
@@ -31,6 +32,7 @@ const EngagementSelectionCards = ({
   serviceSlug,
   serviceName,
 }: EngagementSelectionCardsProps) => {
+  const { activeCompanyId } = useActiveCompany();
   const formatDate = (dateString?: string) => {
     if (!dateString) return "N/A";
     try {
@@ -76,7 +78,9 @@ const EngagementSelectionCards = ({
           return (
             <Link 
               key={id} 
-              href={`/dashboard/services/${serviceSlug}/engagements/${id}`}
+              href={activeCompanyId 
+                ? `/dashboard/${activeCompanyId}/services/${serviceSlug}/engagements/${id}`
+                : `/dashboard/services/${serviceSlug}/engagements/${id}`}
               className="block group h-full"
             >
               <DashboardCard className="h-full p-0 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-slate-200">

@@ -334,13 +334,18 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
         setActiveEngagementId(matchId);
         // Replace current URL with the specific engagement URL
         // Structure: /dashboard/services/[slug]/[id]
-        const targetUrl = `/dashboard/services/${serviceSlug}/${matchId}`;
+        const targetUrl = activeCompanyId 
+          ? `/dashboard/${activeCompanyId}/services/${serviceSlug}/${matchId}`
+          : `/dashboard/services/${serviceSlug}/${matchId}`;
         if (pathname !== targetUrl) {
           router.replace(targetUrl);
         }
       } else if (sidebarItem.activeEngagements.length > 1 && !pathname.includes('/engagements')) {
         // Redirection to list page if multiple and not already there
-        router.replace(`/dashboard/services/${serviceSlug}/engagements`);
+        const targetUrl = activeCompanyId
+          ? `/dashboard/${activeCompanyId}/services/${serviceSlug}/engagements`
+          : `/dashboard/services/${serviceSlug}/engagements`;
+        router.replace(targetUrl);
       }
       
       setEngagementLoading(false);
