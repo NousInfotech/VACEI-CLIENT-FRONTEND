@@ -236,10 +236,13 @@ export default function SidebarMenu({
             const hasSingleEngagement = s.activeEngagements && s.activeEngagements.length === 1;
             const engagementId = hasSingleEngagement ? s.activeEngagements[0].id : undefined;
 
-            const isCustom = metadataKey === "CUSTOM";
-            let serviceHref = isCustom && s.customServiceCycleId
-              ? `${metadata.href}?customServiceId=${s.customServiceCycleId}`
-              : metadata.href;
+            const isCustom = !!s.customServiceCycleId;
+            const serviceSlug = s.serviceName.toLowerCase().replace(/\s+/g, "-");
+
+            let serviceHref = metadata.href;
+            if (isCustom) {
+              serviceHref = `/dashboard/services/${serviceSlug}`;
+            }
 
             // Prepend activeCompanyId to serviceHref if it's company-specific
             if (activeCompanyId && serviceHref.startsWith("/dashboard")) {
@@ -251,7 +254,7 @@ export default function SidebarMenu({
             }
 
             return {
-              slug: s.serviceName.toLowerCase().replace(/\s+/g, "-"),
+              slug: serviceSlug,
               icon: metadata.icon,
               label: s.serviceName,
               href: serviceHref,

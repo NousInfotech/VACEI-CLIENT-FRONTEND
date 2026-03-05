@@ -281,6 +281,8 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
 
   const [matchingEngagements, setMatchingEngagements] = useState<any[]>([]);
   const [activeEngagementId, setActiveEngagementId] = useState<string | null>(null);
+  const [resolvedMetadataKey, setResolvedMetadataKey] = useState<string | null>(null);
+  const [resolvedCustomServiceId, setResolvedCustomServiceId] = useState<string | null>(null);
   const [engagementLoading, setEngagementLoading] = useState(false);
   const [engagementNotFound, setEngagementNotFound] = useState(false);
   const { sidebarData, loading: sidebarLoading } = useGlobalDashboard();
@@ -300,9 +302,22 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
       setEngagementNotFound(false);
 
       // Find metadata key for this slug
-      const metadataKey = Object.keys(SERVICE_METADATA).find(key => 
+      let metadataKey = Object.keys(SERVICE_METADATA).find(key => 
         SERVICE_METADATA[key].href.endsWith(`/${serviceSlug}`)
       );
+
+      // If no standard metadata matches, check if it's a custom service in sidebarData
+      const sidebarItem = sidebarData.find(s => {
+        const itemSlug = s.serviceName.toLowerCase().replace(/\s+/g, "-");
+        return itemSlug === serviceSlug;
+      });
+
+      if (!metadataKey && sidebarItem?.customServiceCycleId) {
+        metadataKey = "CUSTOM";
+        setResolvedCustomServiceId(sidebarItem.customServiceCycleId);
+      }
+
+      setResolvedMetadataKey(metadataKey || null);
 
       if (!metadataKey) {
         setEngagementNotFound(true);
@@ -313,24 +328,29 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
       const metadata = SERVICE_METADATA[metadataKey];
       
       // Find matching item in sidebarData
-      const sidebarItem = sidebarData.find(s => {
+      const sidebarItemToUse = sidebarData.find(s => {
         const normalizedItem = s.serviceName.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-        const normalizedKey = metadataKey.replace(/[^A-Z0-9]+/g, "_");
+        const itemSlug = s.serviceName.toLowerCase().replace(/\s+/g, "-");
+        
+        // Match by slug (for custom services) or by metadata normalization
+        if (itemSlug === serviceSlug) return true;
+
+        const normalizedKey = metadataKey!.replace(/[^A-Z0-9]+/g, "_");
         const normalizedLabel = metadata.label.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
 
         return normalizedItem === normalizedKey || normalizedItem === normalizedLabel;
       });
 
-      if (!sidebarItem || !sidebarItem.activeEngagements || sidebarItem.activeEngagements.length === 0) {
+      if (!sidebarItemToUse || !sidebarItemToUse.activeEngagements || sidebarItemToUse.activeEngagements.length === 0) {
         setEngagementNotFound(true);
         setEngagementLoading(false);
         return;
       }
 
-      setMatchingEngagements(sidebarItem.activeEngagements);
+      setMatchingEngagements(sidebarItemToUse.activeEngagements);
 
-      if (sidebarItem.activeEngagements.length === 1) {
-        const matchId = sidebarItem.activeEngagements[0].id;
+      if (sidebarItemToUse.activeEngagements.length === 1) {
+        const matchId = sidebarItemToUse.activeEngagements[0].id;
         setActiveEngagementId(matchId);
         // Replace current URL with the specific engagement URL
         // Structure: /dashboard/services/[slug]/[id]
@@ -340,7 +360,7 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
         if (pathname !== targetUrl) {
           router.replace(targetUrl);
         }
-      } else if (sidebarItem.activeEngagements.length > 1 && !pathname.includes('/engagements')) {
+      } else if (sidebarItemToUse.activeEngagements.length > 1 && !pathname.includes('/engagements')) {
         // Redirection to list page if multiple and not already there
         const targetUrl = activeCompanyId
           ? `/dashboard/${activeCompanyId}/services/${serviceSlug}/engagements`
@@ -401,7 +421,7 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
                 Go Back
               </button>
               <Link
-                href={`/dashboard/${activeCompanyId}/services/request?service=${SLUG_TO_SERVICE_TYPE[serviceSlug] || ''}${serviceSlug === 'custom' && searchParams.get('customServiceId') ? `&customServiceId=${searchParams.get('customServiceId')}` : ''}`}
+                href={`/dashboard/${activeCompanyId}/services/request?service=${resolvedMetadataKey || ''}${resolvedCustomServiceId ? `&customServiceId=${resolvedCustomServiceId}` : ''}`}
                 className="w-full sm:flex-1 h-12 inline-flex items-center justify-center rounded-xl bg-primary text-white font-semibold shadow-lg shadow-primary/25 hover:bg-primary/90 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 active:scale-95"
               >
                 Request service
