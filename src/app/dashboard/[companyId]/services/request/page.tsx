@@ -73,6 +73,7 @@ export default function ServiceRequestPage() {
   }, [searchParams]);
 
   const [pendingServiceCode, setPendingServiceCode] = useState<ServiceCode | "">("");
+  const [pendingCustomServiceId, setPendingCustomServiceId] = useState<string>("");
   const [isFormDirty, setIsFormDirty] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [onSuccessModal, setOnSuccessModal] = useState(false);
@@ -109,45 +110,57 @@ export default function ServiceRequestPage() {
 
   // Main dropdown items (Standard + Custom)
   const mainDropdownItems = useMemo(() => {
-    return Object.entries(serviceLabels).map(([code, label]) => ({
-      id: code,
-      label,
+    const standardItems = Object.entries(serviceLabels)
+      .filter(([code]) => code !== "CUSTOM")
+      .map(([code, label]) => ({
+        id: code,
+        label,
+        onClick: () => {
+          handleServiceChange(code as ServiceCode);
+        }
+      }));
+
+    const customItems = customTemplates.map((t) => ({
+      id: t.customServiceCycleId,
+      label: t.customServiceCycle?.title || "Untitled Custom Service",
       onClick: () => {
-        handleServiceChange(code as ServiceCode);
+        handleServiceChange(t.customServiceCycleId);
       }
     }));
-  }, []);
+
+    return [...standardItems, ...customItems];
+  }, [customTemplates]);
 
   const selectedMainLabel = useMemo(() => {
-    return serviceCode ? serviceLabels[serviceCode as ServiceCode] : "Select a service to get started";
-  }, [serviceCode]);
-
-  const selectedCustomLabel = useMemo(() => {
-    if (customServiceId) {
+    if (serviceCode === "CUSTOM" && customServiceId) {
       const template = customTemplates.find(t => t.customServiceCycleId === customServiceId);
-      return template?.customServiceCycle?.title || "Select specific custom service";
+      return template?.customServiceCycle?.title || "Custom Service";
     }
-    return "Select specific custom service";
-  }, [customServiceId, customTemplates]);
+    return serviceCode ? serviceLabels[serviceCode as ServiceCode] : "Select a service to get started";
+  }, [serviceCode, customServiceId, customTemplates]);
 
 
 
   const activeCompanyName = companies.find(c => c.id === activeCompanyId)?.name;
 
-  const handleServiceChange = (code: ServiceCode | "CUSTOM" | "") => {
+  const handleServiceChange = (id: string) => {
+    const isStandard = id in serviceLabels && id !== "CUSTOM";
+    const newServiceCode = isStandard ? (id as ServiceCode) : "CUSTOM";
+    const newCustomServiceId = isStandard ? "" : id;
+
     if (isFormDirty) {
-      setPendingServiceCode(code as any);
+      setPendingServiceCode(newServiceCode);
+      setPendingCustomServiceId(newCustomServiceId);
       setShowConfirmModal(true);
     } else {
-      setServiceCode(code as any);
-      if (code !== "CUSTOM") {
-        setCustomServiceId("");
-      }
+      setServiceCode(newServiceCode);
+      setCustomServiceId(newCustomServiceId);
     }
   };
 
   const confirmServiceChange = () => {
     setServiceCode(pendingServiceCode);
+    setCustomServiceId(pendingCustomServiceId);
     setShowConfirmModal(false);
     setIsFormDirty(false);
   };
@@ -284,41 +297,6 @@ export default function ServiceRequestPage() {
             />
           </div>
 
-          {/* Custom Service Sub-Selection */}
-          {serviceCode === "CUSTOM" && (
-            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-              <label className="text-sm font-semibold">
-                Custom Service Type <span className="text-destructive">*</span>
-              </label>
-              <Dropdown
-                className="w-full"
-                fullWidth
-                searchable
-                searchPlaceholder="Search custom services..."
-                trigger={
-                  <Button
-                    variant="outline"
-                    className="w-full h-11 px-4 justify-between border-gray-200 bg-gray-50/50 hover:bg-white hover:border-primary/40 focus:ring-2 focus:ring-primary/5 rounded-xl transition-all"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className={customServiceId ? "text-gray-900 font-semibold" : "text-gray-400 font-medium"}>
-                        {selectedCustomLabel}
-                      </span>
-                    </div>
-                    <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-300 ${customServiceId ? "opacity-100" : "opacity-50"}`} />
-                  </Button>
-                }
-                items={customTemplates.map((t) => ({
-                  id: t.customServiceCycleId,
-                  label: t.customServiceCycle?.title || "Untitled Custom Service",
-                  onClick: () => {
-                    setCustomServiceId(t.customServiceCycleId);
-                    setIsFormDirty(false);
-                  },
-                }))}
-              />
-            </div>
-          )}
 
 
           {/* Form area wrapped in logic */}
@@ -333,7 +311,7 @@ export default function ServiceRequestPage() {
                   onDirtyChange={setIsFormDirty}
                   onSuccess={handleSuccess}
                   onDraftSave={handleDraftSave}
-                  serviceLabel={serviceCode === "CUSTOM" ? selectedCustomLabel : selectedMainLabel}
+                  serviceLabel={selectedMainLabel}
                 />
               </div>
             ) : (
