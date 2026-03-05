@@ -106,7 +106,7 @@ const serviceData: Record<
     actions: [{ type: "schedule", label: "Change Payroll Details" }],
   },
   cfo: {
-    name: "CFO Services",
+    name: "CFO",
     description:
       "Strategic financial advisory, budgeting, and performance analysis.",
     status: "on_track",
@@ -117,7 +117,7 @@ const serviceData: Record<
     actions: [{ type: "schedule", label: "Strategy Meeting" }],
   },
   audit: {
-    name: "Statutory Audit",
+    name: "Audit",
     description:
       "Independent examination of financial statements to ensure accuracy and compliance.",
     status: "action_required",
@@ -130,7 +130,7 @@ const serviceData: Record<
     ],
   },
   "csp-mbr": {
-    name: "Corporate Services",
+    name: " CSP",
     description:
       "Support with company secretarial, registry filings, and corporate governance.",
     status: "on_track",
@@ -140,7 +140,7 @@ const serviceData: Record<
   },
 
   "mbr-filing": {
-    name: "Filings",
+    name: "MBR",
     description:
       "Preparation and submission of statutory filings with the Malta Business Registry.",
     status: "action_required",

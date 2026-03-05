@@ -144,6 +144,7 @@ export interface Engagement {
   clientId: string;
   companyId: string;
   organizationId?: string;
+  organizationName?: string;
   documentRequests?: Array<any>;
   procedures?: Array<any>;
   trialBalanceDoc?: any;

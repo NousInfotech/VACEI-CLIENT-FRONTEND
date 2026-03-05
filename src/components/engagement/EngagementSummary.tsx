@@ -774,24 +774,35 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2" />
 
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-4">
-                <h2 className="text-3xl font-medium text-white tracking-tight">
-                  {serviceName}
-                </h2>
-                {engagementLoading ? (
-                  <Skeleton className="h-6 w-28 rounded-0" />
-                ) : (
-                  <Badge
-                    className={cn(
-                      "rounded-0 border px-3 py-1 text-xs font-bold uppercase tracking-widest bg-transparent",
-                      statusInfo.color,
+              <div className="space-y-4">
+                <div className="flex flex-col gap-3">
+                  {engagementLoading ? (
+                    <Skeleton className="h-4 w-32 rounded-0 bg-white/5" />
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-white uppercase tracking-[0.2em] bg-white/5 px-2.5 py-1 border border-white/10">
+                        Organization: {engagementData?.organizationName || "Professional Service"}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex flex-wrap items-center gap-4">
+                    <h2 className="text-3xl font-medium text-white tracking-tight">
+                      {serviceName}
+                    </h2>
+                    {engagementLoading ? (
+                      <Skeleton className="h-6 w-28 rounded-0 bg-white/5" />
+                    ) : (
+                      <Badge
+                        className={cn(
+                          "rounded-0 border px-3 py-1 text-xs font-bold uppercase tracking-widest bg-transparent",
+                          statusInfo.color,
+                        )}
+                      >
+                        {statusInfo.label}
+                      </Badge>
                     )}
-                  >
-                    {statusInfo.label}
-                  </Badge>
-                )}
-              </div>
+                  </div>
+                </div>
               <p className="text-white/60 text-sm max-w-2xl leading-relaxed">
                 {isBankingPayments ? "Manage bank documents, approvals, and payment workflows." :
                   isRegulatedLicenses ? "Manage license applications, renewals, and ongoing regulatory compliance." : description}
