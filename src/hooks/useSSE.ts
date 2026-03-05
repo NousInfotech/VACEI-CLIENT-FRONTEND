@@ -57,7 +57,30 @@ export const useSSE = (shouldConnect: boolean = true) => {
                         description: newNotification.content,
                         action: {
                             label: 'View',
-                            onClick: () => window.location.href = getPortalRedirectUrl(newNotification.redirectUrl) || '#',
+                            onClick: () => {
+                                const baseUrl = getPortalRedirectUrl(newNotification.redirectUrl) || '#';
+
+                                // For client portal: add companyId into path for everything
+                                // except chat and compliance notifications when we are in a company dashboard.
+                                try {
+                                    const isGlobalType =
+                                        newNotification.type === 'chat_message' ||
+                                        newNotification.type === 'compliance_deadline';
+
+                                    if (!isGlobalType && typeof window !== 'undefined') {
+                                        const match = window.location.pathname.match(/^\/dashboard\/([^/]+)\//);
+                                        const companyId = match?.[1];
+                                        if (companyId) {
+                                            window.location.href = constructCompanyNotificationUrl(baseUrl, companyId);
+                                            return;
+                                        }
+                                    }
+                                } catch {
+                                    // Fallback to baseUrl on any error
+                                }
+
+                                window.location.href = baseUrl;
+                            },
                         },
                     });
                 } catch (e) {

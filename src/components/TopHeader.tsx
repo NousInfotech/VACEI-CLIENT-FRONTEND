@@ -113,13 +113,17 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
     const params = useParams();
 
     const redirectionUrlDecider = useCallback((redirectUrl: string, type: string) => {
-        const isCompanyNotificationType = type === 'chat_message' || type === 'compliance_deadline';
-        if (!isCompanyNotificationType) return redirectUrl || '#';
-        if (pathname.includes('global-dashboard')) return redirectUrl || '#';
+        // Chat + compliance stay global (no company scoping)
+        const isGlobalType = type === 'chat_message' || type === 'compliance_deadline';
+        if (isGlobalType) return redirectUrl || '#';
+
+        // For all other client notifications, when inside a company dashboard,
+        // rewrite to include the active companyId in the path.
         const companyId = params?.companyId as string | undefined;
         if (pathname.includes('/dashboard/') && companyId) {
             return constructCompanyNotificationUrl(redirectUrl, companyId);
         }
+
         return redirectUrl || '#';
     }, [pathname, params?.companyId]);
 

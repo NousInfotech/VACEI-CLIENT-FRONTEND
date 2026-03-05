@@ -45,10 +45,9 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onMar
     const pathname = usePathname() ?? '';
 
     const redirectionUrlDecider = (redirectUrl: string, type: string) => {
-        const isCompanyNotificationType = type === 'chat_message' || type === 'compliance_deadline';
-        if (!isCompanyNotificationType) return redirectUrl;
-
-        if (pathname.includes('global-dashboard')) return redirectUrl;
+        // Chat + compliance stay global; everything else should be scoped by companyId when in dashboard
+        const isGlobalType = type === 'chat_message' || type === 'compliance_deadline';
+        if (isGlobalType) return redirectUrl;
 
         const companyId = params?.companyId as string | undefined;
         if (pathname.includes('/dashboard/') && companyId) {
