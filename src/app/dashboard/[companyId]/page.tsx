@@ -741,6 +741,18 @@ export default function DashboardPage() {
     );
   }
 
+  // Final URL for the Workspace card (Analytics section)
+  const workspaceUrl = (() => {
+    if (!activeFocus || !activeFocus.engagementId) return `/dashboard/${activeCompanyId}/todo-list`;
+    
+    const serviceBase = resolveServiceEngagementBase(activeFocus.service);
+    if (!serviceBase) return `/dashboard/${activeCompanyId}/todo-list`;
+    
+    // Construct path: /dashboard/[companyId]/services/[slug]/engagements/[id]
+    const base = serviceBase.replace('/dashboard/', `/dashboard/${activeCompanyId}/`);
+    return `${base}/engagements/${activeFocus.engagementId}?tab=workFlow`;
+  })();
+
   return (
     <div className="min-h-screen bg-brand-body p-4">
       <div className=" mx-auto space-y-8">
@@ -850,71 +862,89 @@ export default function DashboardPage() {
         } : null} />
 
         {/* Notice Board and Stats Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-stretch">
           {/* Notice Board */}
           <NoticeBoard />
 
           {/* Performance Indicators / Compliance Overview - Clickable Status Cards */}
-          <div>
-            <div className="flex items-center justify-between mb-5 px-1 pt-2 h-[34px]">
+          <div className="h-full flex flex-col">
+            <div className="flex items-center justify-between mb-5 px-1 pt-2 h-[34px] shrink-0">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-5 w-5 text-gray-700" />
                 <h2 className="text-lg font-semibold text-gray-900 uppercase tracking-widest">Analytics</h2>
               </div>
             </div>
 
-            <div className="flex flex-col gap-6">
-              <Link href={`/dashboard/${activeCompanyId}/todo-list?filter=due-today`}>
-                <ShadowCard className="group p-4 h-full flex items-start gap-4 hover:border-info/50 cursor-pointer overflow-hidden relative border-none shadow-sm hover:shadow-xl transition-all duration-300 bg-white">
-                  <div className="p-4 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0 relative z-10 group-hover:scale-110 transition-transform duration-300">
-                    <AlertCircle className="h-8 w-8" />
+            <div className="grid grid-rows-3 gap-6 flex-1">
+              {/* Workspace (big + action-first) */}
+              <Link href={workspaceUrl} className="block h-full">
+                <ShadowCard className="group p-5 h-full flex items-center justify-between gap-4 hover:border-primary/50 cursor-pointer overflow-hidden relative border-none shadow-sm hover:shadow-xl transition-all duration-300 bg-white">
+                  <div className="flex items-center gap-5 relative z-10 w-full">
+                    <div className="p-3.5 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
+                      <Briefcase className="h-7 w-7" />
+                    </div>
+                    <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                      <div>
+                        <p className="text-lg font-bold text-gray-900 leading-tight">Workspace</p>
+                        <p className="text-sm font-medium text-gray-500 mt-1">Requests & tasks</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
+                         {todoCounts.overdue > 0 && <span className="bg-destructive/10 text-destructive text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide border border-destructive/20">{todoCounts.overdue} Overdue</span>}
+                         {todoCounts.waiting > 0 && <span className="bg-info/10 text-info text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide border border-info/20">{todoCounts.waiting} Due Today</span>}
+                      </div>
+                    </div>
+                    <Button className="h-10 px-5 rounded-xl font-medium bg-primary text-white hover:bg-primary/90 text-sm gap-2 whitespace-nowrap hidden md:flex shrink-0">
+                      Open Workspace <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
                   </div>
-                  <div className="relative z-10">
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Due Today</p>
-                    <p className="text-3xl font-medium text-gray-900 mt-1">{todoCounts.waiting}</p>
-                  </div>
-                  <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-info/10 opacity-[0.5] rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
+                  <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-primary/5 opacity-[0.5] rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
                 </ShadowCard>
               </Link>
               
-              <Link href={`/dashboard/${activeCompanyId}/todo-list?filter=due-soon`}>
-                <ShadowCard className="group p-4 h-full flex items-center gap-4 hover:border-warning/50 cursor-pointer overflow-hidden relative border-none shadow-sm hover:shadow-xl transition-all duration-300 bg-white">
-                  <div className="p-4 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0 relative z-10 group-hover:scale-110 transition-transform duration-300">
-                    <Clock className="h-8 w-8" />
+              {/* Drafts (approval-focused) */}
+              <Link href={`/dashboard/${activeCompanyId}/documents`} className="block h-full">
+                <ShadowCard className="group p-5 h-full flex items-center justify-between gap-4 hover:border-indigo-500/50 cursor-pointer overflow-hidden relative border-none shadow-sm hover:shadow-xl transition-all duration-300 bg-white">
+                  <div className="flex items-center gap-5 relative z-10 w-full">
+                    <div className="p-3.5 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
+                      <FileText className="h-7 w-7" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-lg font-bold text-gray-900 leading-tight">Drafts</p>
+                      <p className="text-xs font-medium text-gray-500 mt-1">Review & approve</p>
+                    </div>
+                    <span className="text-indigo-600 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 rounded-lg px-4 py-2 font-bold text-xs whitespace-nowrap hidden sm:flex items-center gap-1 shrink-0 transition-colors">
+                      Open Drafts <ArrowRight className="w-3 h-3 ml-0.5" />
+                    </span>
                   </div>
-                  <div className="relative z-10">
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Due Soon</p>
-                    <p className="text-3xl font-medium text-gray-900 mt-1">{todoCounts.dueSoon}</p>
-                  </div>
-                  <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-warning/10 opacity-[0.5] rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
+                  <div className="absolute -right-4 -bottom-4 w-28 h-28 bg-indigo-50 opacity-[0.5] rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
                 </ShadowCard>
               </Link>
               
-              <Link href={`/dashboard/${activeCompanyId}/todo-list?filter=overdue`}>
-                <ShadowCard className="group p-4 h-full flex items-center gap-4 hover:border-destructive/50 cursor-pointer overflow-hidden relative border-none shadow-sm hover:shadow-xl transition-all duration-300 bg-white">
-                  <div className="p-4 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center shrink-0 relative z-10 group-hover:scale-110 transition-transform duration-300">
-                    <AlertCircle className="h-8 w-8" />
+              {/* Deadlines (summary + status chips) */}
+              <Link href={`/dashboard/${activeCompanyId}/compliance`} className="block h-full">
+                <ShadowCard className="group p-5 h-full flex items-center justify-between gap-4 hover:border-emerald-500/50 cursor-pointer overflow-hidden relative border-none shadow-sm hover:shadow-xl transition-all duration-300 bg-white">
+                  <div className="flex items-center gap-5 relative z-10 w-full">
+                    <div className="p-3.5 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
+                      <Calendar className="h-7 w-7" />
+                    </div>
+                    <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                      <div>
+                        <p className="text-lg font-bold text-gray-900 leading-tight">Deadlines</p>
+                        <p className="text-xs font-medium text-gray-500 mt-1">Upcoming filings</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
+                         {todoCounts.overdue > 0 && <span className="bg-destructive/10 text-destructive text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide border border-destructive/20">{todoCounts.overdue} Overdue</span>}
+                         {todoCounts.dueSoon > 0 && <span className="bg-warning/10 text-warning text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide border border-warning/20">{todoCounts.dueSoon} Due Soon</span>}
+                         {todoCounts.waiting > 0 && <span className="bg-info/10 text-info text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide border border-info/20">{todoCounts.waiting} Due Today</span>}
+                      </div>
+                    </div>
+                    <span className="text-emerald-600 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 rounded-lg px-4 py-2 font-bold text-xs whitespace-nowrap hidden sm:flex items-center gap-1 shrink-0 transition-colors">
+                      View Calendar <ArrowRight className="w-3 h-3 ml-0.5" />
+                    </span>
                   </div>
-                  <div className="relative z-4">
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Overdue</p>
-                    <p className="text-3xl font-medium text-gray-900 mt-1">{todoCounts.overdue}</p>
-                  </div>
-                  <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-destructive/10 opacity-[0.5] rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
+                  <div className="absolute -right-4 -bottom-4 w-28 h-28 bg-emerald-50 opacity-[0.5] rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
                 </ShadowCard>
               </Link>
-              
-              {/* <Link href={`/dashboard/${activeCompanyId}/todo-list`}>
-                <ShadowCard className="group p-4 h-full flex items-center gap-4 hover:border-success/50 cursor-pointer overflow-hidden relative border-none shadow-sm hover:shadow-xl transition-all duration-300 bg-white">
-                  <div className="p-4 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0 relative z-10 group-hover:scale-110 transition-transform duration-300">
-                    <CheckCircle className="h-8 w-8" />
-                  </div>
-                  <div className="relative z-10">
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Pending</p>
-                    <p className="text-3xl font-medium text-gray-900 mt-1">{todoCounts.done}</p>
-                  </div>
-                  <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-success/10 opacity-[0.5] rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
-                </ShadowCard>
-              </Link> */}
             </div>
           </div>
         </div>

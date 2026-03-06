@@ -101,7 +101,7 @@ export default function WorkFlowSplitTab({
                     <ClipboardList className="h-5 w-5" />
                 </div>
                 <div>
-                    <h3 className="text-xs font-bold text-gray-900 tracking-tight leading-none uppercase">Tasks & Todo</h3>
+                    <h3 className="text-xs font-bold text-gray-900 tracking-tight leading-none uppercase">Tasks & To-do</h3>
                     <p className="text-[8px] uppercase font-black tracking-widest text-gray-400 mt-1">Actions Required</p>
                 </div>
             </div>

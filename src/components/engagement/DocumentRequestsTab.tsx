@@ -87,23 +87,31 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
         setExpandedRequests(prev => new Set(prev).add(targetRequestId));
         
         // Ensure the "Single Request" tab is selected so the target item is visible
-        setRequestTabs(prev => ({ ...prev, [targetRequestId]: 'single' }));
+        if (requestTabs[targetRequestId] !== 'single') {
+          setRequestTabs(prev => ({ ...prev, [targetRequestId]: 'single' }));
+        }
         
         // Wait for expansion animation/render
         setTimeout(() => {
           const element = document.getElementById(scrollToId);
           if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Re-trigger blink animation smoothly
+            element.classList.remove('blink-item');
+            void (element as HTMLElement).offsetWidth; // Force reflow
             element.classList.add('blink-item');
+            
             setTimeout(() => {
               element.classList.remove('blink-item');
             }, 3000);
+            
             lastScrolledIdRef.current = scrollKey;
           }
-        }, 500);
+        }, 600);
       }
     }
-  }, [scrollToId, documentRequests]);
+  }, [scrollToId, scrollKey, documentRequests]);
 
   const reqId = (r: any) => r.id ?? r._id
 

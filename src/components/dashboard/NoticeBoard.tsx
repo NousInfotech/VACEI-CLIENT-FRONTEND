@@ -229,7 +229,7 @@ export const NoticeBoard = () => {
   }
 
   return (
-    <div className="relative pt-2">
+    <div className="relative pt-2 pb-10 h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between mb-5 px-1">
         <div className="flex items-center gap-2">
@@ -266,7 +266,7 @@ export const NoticeBoard = () => {
 
       {/* Main Notice Card - VISA Card Style with Parallax Carousel */}
       <div 
-        className="relative w-full overflow-hidden rounded-2xl min-h-[180px]" 
+        className="relative w-full overflow-hidden rounded-2xl min-h-[180px] flex-1" 
 
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
@@ -321,7 +321,7 @@ export const NoticeBoard = () => {
               key={notice.id}
               className={cn(
                 "transition-all duration-500 ease-out",
-                isCurrent ? "relative w-full h-auto" : "absolute inset-0 w-full h-full"
+                isCurrent ? "relative w-full h-full" : "absolute inset-0 w-full h-full"
               )}
               style={{
                 transform,

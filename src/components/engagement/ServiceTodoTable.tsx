@@ -51,19 +51,22 @@ export const ServiceTodoTable = ({
       return;
     } 
 
+    const base = todo.engagementId ? (
+      serviceBase 
+        ? `${serviceBase.replace('/dashboard/', `/dashboard/${activeCompanyId}/`)}/engagements/${todo.engagementId}` 
+        : `/dashboard/${activeCompanyId}/engagements/${todo.engagementId}`
+    ) : null;
+
     if (
       (type === "DOCUMENT_REQUEST" || type === "REQUESTED_DOCUMENT") &&
-      todo.engagementId
+      base
     ) {
-      const base = serviceBase 
-        ? `${serviceBase.replace('/dashboard/', `/dashboard/${activeCompanyId}/`)}/engagements/${todo.engagementId}` 
-        : `/dashboard/${activeCompanyId}/engagements/${todo.engagementId}`;
       router.push(
         `${base}?tab=workFlow${
           todo.moduleId ? `&scrollTo=${todo.moduleId}&t=${Date.now()}` : ""
         }`
       );
-    } else if (type === "CHAT" && todo.engagementId) {
+    } else if (type === "CHAT" && base) {
       // Instant status update for chat todos
       try {
         await updateTodoStatus(todo.id, "ACTION_TAKEN");
@@ -72,18 +75,12 @@ export const ServiceTodoTable = ({
         console.error("Failed to auto-update chat todo status", e);
       }
 
-      const base = serviceBase 
-        ? `${serviceBase}/engagements/${todo.engagementId}` 
-        : `/dashboard/engagements/${todo.engagementId}`;
       router.push(
         `${base}?tab=chat${
           todo.moduleId ? `&messageId=${todo.moduleId}` : ""
         }`
       );
-    } else if (todo.engagementId) {
-      const base = serviceBase 
-        ? `${serviceBase}/engagements/${todo.engagementId}` 
-        : `/dashboard/engagements/${todo.engagementId}`;
+    } else if (base) {
       router.push(base);
     } else {
       router.push(`/dashboard/todo-list/todo-list-view?taskId=${btoa(todo.id)}`);
