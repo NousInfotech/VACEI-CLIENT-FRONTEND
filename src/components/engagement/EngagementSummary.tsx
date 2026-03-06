@@ -388,7 +388,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
     serviceName.toLowerCase().includes("legal");
   const isCFO = sCat === "CFO" || serviceName === "CFO Services";
   const isAccounting = sCat === "ACCOUNTING" || serviceName === "Accounting & Bookkeeping";
-  const isAudit = sCat === "AUDITING" || serviceName === "Statutory Audit";
+  const isAudit = sCat === "AUDITING" || serviceName === "Statutory Audit" || serviceName === "Audit" || serviceName.toLowerCase().includes("audit");
   const engagementId = engagementData?._id || engagementData?.id;
   const engagementLibraryFolderId =
     engagementData?.libraryFolderId ||
@@ -736,6 +736,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           !isPayroll && !isCorporate && !isCFO &&
           serviceName !== "Tax" &&
           serviceName !== "Statutory Audit" &&
+          serviceName !== "Audit" &&
           serviceName !== "Accounting & Bookkeeping" &&
           serviceName !== "Incorporation" &&
           serviceName !== "Business Plans" &&
