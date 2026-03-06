@@ -290,6 +290,15 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
 
   const finalEngagementId = propEngagementId || urlEngagementId || activeEngagementId;
 
+  const sidebarItem = React.useMemo(() => {
+    return sidebarData.find(s => {
+      const itemSlug = s.serviceName.toLowerCase().replace(/\s+/g, "-");
+      return itemSlug === serviceSlug;
+    });
+  }, [sidebarData, serviceSlug]);
+
+  const displayServiceName = sidebarItem?.serviceName || data.name;
+
   useEffect(() => {
     if (propEngagementId || urlEngagementId || ENGAGEMENT_CONFIG.USE_MOCK_DATA || !activeCompanyId || sidebarLoading) {
       if (sidebarLoading) setEngagementLoading(true);
@@ -457,7 +466,7 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
     <div className="w-full">
       <EngagementProvider engagementId={engagementIdToUse} serviceSlug={serviceSlug}>
         <EngagementSummary
-          serviceName={data.name}
+          serviceName={displayServiceName}
           serviceSlug={serviceSlug}
           description={data.description}
           status={data.status}

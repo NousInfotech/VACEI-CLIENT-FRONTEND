@@ -56,8 +56,8 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
     businessActivity: '',
     registeredAddress: '',
     legalType: 'LTD',
-    authorizedShares: 1000,
-    issuedShares: 1000,
+    authorizedShares: 0,
+    issuedShares: 0,
     companyStartDate: new Date().toISOString().split('T')[0], // Today's date as default
     industry: [],
     summary: '',
@@ -86,7 +86,7 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
       address: '',
     },
     legalType: 'LTD',
-    authorizedShares: 1000,
+    authorizedShares: 0,
     industry: [],
     summary: '',
     expectedStartDate: '',
@@ -305,15 +305,6 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
         const judicialRepOption = existingDetails.judicialRepresentative?.option || 'own'; // Default to 'own' if undefined
         
         if (judicialRepOption === 'own') {
-          // Get user information from onboarding data
-          const onboardingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
-          const userFirstName = onboardingData.firstName || '';
-          const userLastName = onboardingData.lastName || '';
-          const userEmail = onboardingData.email || '';
-          const userFullName = `${userFirstName} ${userLastName}`.trim();
-          
-          let judicialRepAdded = false;
-          
           if (existingDetails.judicialRepresentative.person) {
             const rep = existingDetails.judicialRepresentative.person;
             if (rep.fullName?.trim() && rep.address?.trim() && rep.nationality?.trim()) {
@@ -324,30 +315,7 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
                 role: ['JUDICIAL_REPRESENTATIVE'] as const,
                 ordinary: 0,
               });
-              judicialRepAdded = true;
             }
-          }
-          
-          // If person not provided or incomplete, use user information
-          if (!judicialRepAdded) {
-            // Use user information if person not provided
-            const userAddress = existingDetails.registeredAddress || '';
-            const userNationality = onboardingData.nationality || 'Unknown';
-            
-            // Always add judicial representative - use user info if available, otherwise use company address
-            // Backend requires address, so use registered address or a placeholder
-            const finalName = userFullName || 'Judicial Representative';
-            const finalAddress = userAddress.trim() || 'Address to be provided';
-            const finalNationality = userNationality.trim() || 'Unknown';
-            
-            involvementDetails.push({
-              personName: finalName,
-              personAddress: finalAddress,
-              personNationality: finalNationality,
-              role: ['JUDICIAL_REPRESENTATIVE'] as const,
-              ordinary: 0,
-            });
-            judicialRepAdded = true;
           }
         }
 
@@ -476,15 +444,6 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
         const judicialRepOption = newDetails.judicialRepresentative?.option || 'own'; // Default to 'own' if undefined
         
         if (judicialRepOption === 'own') {
-          // Get user information from onboarding data
-          const onboardingData = JSON.parse(localStorage.getItem('onboarding-data') || '{}');
-          const userFirstName = onboardingData.firstName || '';
-          const userLastName = onboardingData.lastName || '';
-          const userEmail = onboardingData.email || '';
-          const userFullName = `${userFirstName} ${userLastName}`.trim();
-          
-          let judicialRepAdded = false;
-          
           if (newDetails.judicialRepresentative.person) {
             const rep = newDetails.judicialRepresentative.person;
             if (rep.fullName?.trim() && rep.address?.trim() && rep.nationality?.trim()) {
@@ -495,30 +454,7 @@ export default function CompanyDetailsScreen({ onComplete, onSaveExit, onBack }:
                 role: ['JUDICIAL_REPRESENTATIVE'] as const, // Array of roles as per API spec
                 ordinary: 0,
               });
-              judicialRepAdded = true;
             }
-          }
-          
-          // If person not provided or incomplete, use user information
-          if (!judicialRepAdded) {
-            // Use user information if person not provided
-            const userAddress = newDetails.registeredAddress.address || '';
-            const userNationality = onboardingData.nationality || 'Unknown';
-            
-            // Always add judicial representative - use user info if available, otherwise use company address
-            // Backend requires address, so use registered address or a placeholder
-            const finalName = userFullName || 'Judicial Representative';
-            const finalAddress = userAddress.trim() || newDetails.registeredAddress.address || 'Address to be provided';
-            const finalNationality = userNationality.trim() || 'Unknown';
-            
-            involvementDetails.push({
-              personName: finalName,
-              personAddress: finalAddress,
-              personNationality: finalNationality,
-              role: ['JUDICIAL_REPRESENTATIVE'] as const, // Array of roles as per API spec
-              ordinary: 0,
-            });
-            judicialRepAdded = true;
           }
         }
 
