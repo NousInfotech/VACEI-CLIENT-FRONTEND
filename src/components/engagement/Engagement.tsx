@@ -30,8 +30,8 @@ import EngagementSummary from './EngagementSummary';
 
 const Engagement = () => {
   const [activeTab, setActiveTab] = useTabQuery('etb');
-  // Handle 'requests' -> 'document_requests' legacy migration or direct mapping
-  const actualTab = activeTab === 'requests' ? 'document_requests' : activeTab;
+  // Handle 'requests' -> 'workFlow' legacy migration or direct mapping
+  const actualTab = activeTab === 'requests' ? 'workFlow' : activeTab;
   const { engagement, loading: engagementLoading, error: engagementError } = useEngagement();
   const { etb, loading: etbLoading, error: etbError } = useEtb(engagement?._id || null);
   
@@ -70,7 +70,7 @@ const Engagement = () => {
     { id: 'income_statement', label: 'Income Statement', icon: BarChart3 },
     { id: 'balance_sheet', label: 'Balance Sheet', icon: Scale },
     { id: 'classification', label: 'Classification', icon: PieChart },
-    { id: 'document_requests', label: 'Document Requests', icon: FolderOpen },
+    { id: 'workFlow', label: 'WorkFlow', icon: FolderOpen },
     { id: 'chat', label: 'Chat', icon: MessageSquare },
     { id: 'mbr', label: 'MBR', icon: Building2 },
     { id: 'tax', label: 'TAX', icon: Receipt },
@@ -85,7 +85,7 @@ const Engagement = () => {
       case 'income_statement': return extractedData ? <IncomeStatement data={extractedData} /> : null;
       case 'balance_sheet': return extractedData ? <BalanceSheet data={extractedData} /> : null;
       case 'classification': return extractedData ? <Classification data={extractedData} /> : null;
-      case 'document_requests': return <Suspense fallback={<div className="p-8 text-center text-gray-500 font-medium">Loading document requests...</div>}><DocumentRequestsTab /></Suspense>;
+      case 'workFlow': return <Suspense fallback={<div className="p-8 text-center text-gray-500 font-medium">Loading workFlow...</div>}><DocumentRequestsTab /></Suspense>;
       case 'chat': return <EngagementChatTab />;
       case 'mbr': return <MBRTab />;
       case 'tax': return <TaxTab />;

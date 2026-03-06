@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useActiveCompany } from "@/context/ActiveCompanyContext";
 import StatCard from "@/components/StatCard";
 import DashboardCard from "@/components/DashboardCard";
+import { ShadowCard } from "@/components/ui/ShadowCard";
 import DashboardActionButton from "@/components/DashboardActionButton";
 import PageHeader from "@/components/shared/PageHeader";
 import CashFlowChart from "@/components/CashFlowChart";
@@ -817,7 +818,7 @@ export default function DashboardPage() {
                 ? `${serviceBase.replace('/dashboard/', `/dashboard/${activeCompanyId}/`)}/engagements/${engagementId}`
                 : `/dashboard/${activeCompanyId}/engagements/${engagementId}`;
               const scrollQuery = moduleId ? `&scrollTo=${moduleId}` : "";
-              return `${base}?tab=document_requests${scrollQuery}`;
+              return `${base}?tab=workFlow${scrollQuery}`;
             }
 
             // Default redirection logic for other types
@@ -862,39 +863,58 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6" style={{ height: '280px' }}>
-              <Link href={`/dashboard/${activeCompanyId}/todo-list?filter=due-today`} className="h-[128px]">
-                <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Due Today</span>
-                    <span className="text-3xl font-semibold text-info tabular-nums">{todoCounts.waiting}</span>
+            <div className="flex flex-col gap-6">
+              <Link href={`/dashboard/${activeCompanyId}/todo-list?filter=due-today`}>
+                <ShadowCard className="group p-4 h-full flex items-start gap-4 hover:border-info/50 cursor-pointer overflow-hidden relative border-none shadow-sm hover:shadow-xl transition-all duration-300 bg-white">
+                  <div className="p-4 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0 relative z-10 group-hover:scale-110 transition-transform duration-300">
+                    <AlertCircle className="h-8 w-8" />
                   </div>
-                </DashboardCard>
-              </Link>
-              <Link href={`/dashboard/${activeCompanyId}/todo-list?filter=due-soon`} className="h-[128px]">
-                <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Due soon</span>
-                    <span className="text-3xl font-semibold text-warning tabular-nums">{todoCounts.dueSoon}</span>
+                  <div className="relative z-10">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Due Today</p>
+                    <p className="text-3xl font-medium text-gray-900 mt-1">{todoCounts.waiting}</p>
                   </div>
-                </DashboardCard>
+                  <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-info/10 opacity-[0.5] rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
+                </ShadowCard>
               </Link>
-              <Link href={`/dashboard/${activeCompanyId}/todo-list?filter=overdue`} className="h-[128px]">
-                <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Overdue</span>
-                    <span className="text-3xl font-semibold text-destructive tabular-nums">{todoCounts.overdue}</span>
+              
+              <Link href={`/dashboard/${activeCompanyId}/todo-list?filter=due-soon`}>
+                <ShadowCard className="group p-4 h-full flex items-center gap-4 hover:border-warning/50 cursor-pointer overflow-hidden relative border-none shadow-sm hover:shadow-xl transition-all duration-300 bg-white">
+                  <div className="p-4 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0 relative z-10 group-hover:scale-110 transition-transform duration-300">
+                    <Clock className="h-8 w-8" />
                   </div>
-                </DashboardCard>
-              </Link>
-              <Link href={`/dashboard/${activeCompanyId}/todo-list`} className="h-[128px]">
-                <DashboardCard animate className="p-5 cursor-pointer hover:shadow-lg transition-all h-full flex flex-col justify-center">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-gray-700 tracking-widest uppercase">Pending</span>
-                    <span className="text-3xl font-semibold text-success tabular-nums">{todoCounts.done}</span>
+                  <div className="relative z-10">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Due Soon</p>
+                    <p className="text-3xl font-medium text-gray-900 mt-1">{todoCounts.dueSoon}</p>
                   </div>
-                </DashboardCard>
+                  <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-warning/10 opacity-[0.5] rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
+                </ShadowCard>
               </Link>
+              
+              <Link href={`/dashboard/${activeCompanyId}/todo-list?filter=overdue`}>
+                <ShadowCard className="group p-4 h-full flex items-center gap-4 hover:border-destructive/50 cursor-pointer overflow-hidden relative border-none shadow-sm hover:shadow-xl transition-all duration-300 bg-white">
+                  <div className="p-4 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center shrink-0 relative z-10 group-hover:scale-110 transition-transform duration-300">
+                    <AlertCircle className="h-8 w-8" />
+                  </div>
+                  <div className="relative z-4">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Overdue</p>
+                    <p className="text-3xl font-medium text-gray-900 mt-1">{todoCounts.overdue}</p>
+                  </div>
+                  <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-destructive/10 opacity-[0.5] rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
+                </ShadowCard>
+              </Link>
+              
+              {/* <Link href={`/dashboard/${activeCompanyId}/todo-list`}>
+                <ShadowCard className="group p-4 h-full flex items-center gap-4 hover:border-success/50 cursor-pointer overflow-hidden relative border-none shadow-sm hover:shadow-xl transition-all duration-300 bg-white">
+                  <div className="p-4 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0 relative z-10 group-hover:scale-110 transition-transform duration-300">
+                    <CheckCircle className="h-8 w-8" />
+                  </div>
+                  <div className="relative z-10">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Pending</p>
+                    <p className="text-3xl font-medium text-gray-900 mt-1">{todoCounts.done}</p>
+                  </div>
+                  <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-success/10 opacity-[0.5] rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
+                </ShadowCard>
+              </Link> */}
             </div>
           </div>
         </div>
@@ -987,43 +1007,72 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-6 items-stretch">
+          <div className="gap-6 items-stretch p-4">
             {/* Quick Actions - Bottom Left */}
-            <DashboardCard className="overflow-hidden h-full flex flex-col">
-              <div className="px-6 py-4 border-b border-gray-300 flex items-center gap-4">
-                <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                <h3 className="text-lg font-medium text-gray-900">Quick Actions</h3>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-medium text-gray-900 flex items-center gap-3">
+                  <div className="w-1 h-6 bg-primary rounded-full" />
+                  Quick Actions
+                </h2>
               </div>
-              <div className="flex flex-col gap-2 p-3 flex-1">
-                <Link href={`/dashboard/${activeCompanyId}/todo-list`}>
-                  <Button variant="outline" className="w-full justify-start gap-3 h-11 border-gray-100 hover:bg-gray-50 transition-colors">
-                    <CheckSquare className="w-4 h-4" />
-                    <span>Todo</span>
-                  </Button>
-                </Link>
-                <Link href={`/dashboard/${activeCompanyId}/messages`}>
-                  <Button variant="outline" className="w-full justify-start gap-3 h-11 border-gray-100 hover:bg-gray-50 transition-colors">
-                    <MessageCircle className="w-4 h-4" />
-                    <span>Messages</span>
-                  </Button>
-                </Link>
-                <Link href={`/dashboard/${activeCompanyId}/compliance`}>
-                  <Button variant="outline" className="w-full justify-start gap-3 h-11 border-gray-100 hover:bg-gray-50 transition-colors">
-                    <FileText className="w-4 h-4" />
-                    <span>Compliance</span>
-                  </Button>
-                </Link>
-                <Link href={`/dashboard/${activeCompanyId}/settings`}>
-                  <Button variant="outline" className="w-full justify-start gap-3 h-11 border-gray-100 hover:bg-gray-50 transition-colors">
-                    <User className="w-4 h-4" />
-                    <span>Settings</span>
-                  </Button>
-                </Link>
+              <div className="flex flex-col gap-4">
+                {[
+                  { 
+                    title: "Todo", 
+                    description: "Manage tasks", 
+                    icon: CheckSquare, 
+                    path: `/dashboard/${activeCompanyId}/todo-list`,
+                    color: "bg-primary"
+                  },
+                  { 
+                    title: "Messages", 
+                    description: "Team chat", 
+                    icon: MessageCircle, 
+                    path: `/dashboard/${activeCompanyId}/messages`,
+                    color: "bg-indigo-600"
+                  },
+                  { 
+                    title: "Compliance", 
+                    description: "Regulatory tracking", 
+                    icon: FileText, 
+                    path: `/dashboard/${activeCompanyId}/compliance`,
+                    color: "bg-emerald-600"
+                  },
+                  { 
+                    title: "Settings", 
+                    description: "Company settings", 
+                    icon: User, 
+                    path: `/dashboard/${activeCompanyId}/settings`,
+                    color: "bg-gray-700"
+                  }
+                ].map((action, index) => (
+                  <ShadowCard 
+                    key={index} 
+                    className="group p-5 hover:border-primary/50 cursor-pointer overflow-hidden relative border-none shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col justify-between bg-white"
+                    onClick={() => router.push(action.path)}
+                  >
+                    <div className="space-y-3 relative z-10 flex items-center gap-5 h-full">
+                      <div className={`w-10 h-10 rounded-xl ${action.color} flex items-center justify-center text-white shadow-xl group-hover:scale-110 transition-transform duration-300`}>
+                        <action.icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-base text-gray-900">{action.title}</h3>
+                        <p className="text-xs text-gray-500 leading-relaxed mt-1">{action.description}</p>
+                      </div>
+                      <div className="flex items-center text-primary font-bold text-xs group-hover:translate-x-1 transition-all duration-300 mt-2">
+                        View <ArrowRight className="h-3 w-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </div>
+                    {/* Decorative background element */}
+                    <div className={`absolute -right-4 -bottom-4 w-24 h-24 ${action.color} opacity-[0.05] rounded-full group-hover:scale-150 transition-transform duration-700`} />
+                  </ShadowCard>
+                ))}
               </div>
-            </DashboardCard>
+            </div>
 
             {/* Refined Compliance Snapshot - Bottom Right */}
-            <DashboardCard className="overflow-hidden h-full flex flex-col">
+            {/* <DashboardCard className="overflow-hidden h-full flex flex-col">
               <div className="px-6 py-4 border-b border-gray-300 flex items-center gap-4">
                 <div className="w-1 h-6 bg-gray-900 rounded-full" />
                 <h3 className="text-lg font-medium text-gray-900">Compliance Snapshot</h3>
@@ -1066,7 +1115,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
-            </DashboardCard>
+            </DashboardCard> */}
           </div>
         </div>
 

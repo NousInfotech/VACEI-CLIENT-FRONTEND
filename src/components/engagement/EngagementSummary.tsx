@@ -57,6 +57,7 @@ import ComplianceCalendarTab from "./ComplianceCalendarTab";
 import StatCard from "@/components/StatCard";
 import CashFlowChart from "@/components/CashFlowChart";
 import PLSummaryChart from "@/components/PLSummaryChart";
+import WorkFlowSplitTab from "./WorkFlowSplitTab";
 import {
   fetchDashboardSummary,
   ProcessedDashboardStat,
@@ -241,7 +242,7 @@ export const ServiceTodoTable = ({
         ? `${serviceBase}/engagements/${todo.engagementId}` 
         : `/dashboard/engagements/${todo.engagementId}`;
       router.push(
-        `${base}?tab=document_requests${
+        `${base}?tab=workFlow${
           todo.moduleId ? `&scrollTo=${todo.moduleId}` : ""
         }`
       );
@@ -704,8 +705,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
   const tabs: Tab[] = isMBRFilings
     ? [
       { id: "dashboard", label: "Overview", icon: LayoutDashboard },
-      { id: "todo", label: "Todo", icon: ClipboardList },
-      { id: "document_requests", label: "Document Requests", icon: FileText },
+      { id: "workFlow", label: "WorkFlow", icon: ClipboardList },
       { id: "milestones", label: "Milestones", icon: Flag },
       { id: "library", label: "Library", icon: Library },
       { id: "compliance_calendar", label: "Compliance Calendar", icon: Calendar },
@@ -716,8 +716,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
     : isVAT
       ? [
         { id: "dashboard", label: "Overview", icon: LayoutDashboard },
-        { id: "todo", label: "Todo", icon: ClipboardList },
-        { id: "document_requests", label: "Document Requests", icon: FileText },
+        { id: "workFlow", label: "WorkFlow", icon: ClipboardList },
         { id: "milestones", label: "Milestones", icon: Flag },
         { id: "library", label: "Library", icon: Library },
         { id: "compliance_calendar", label: "Compliance Calendar", icon: Calendar },
@@ -727,8 +726,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
       ]
       : [
         { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { id: "todo", label: "Todo", icon: ClipboardList },
-        { id: "document_requests", label: "Document Requests", icon: FileText },
+        { id: "workFlow", label: "WorkFlow", icon: ClipboardList },
         { id: "milestones", label: "Milestones", icon: Flag },
         { id: "library", label: "Library", icon: Library },
         { id: "compliance_calendar", label: "Compliance Calendar", icon: Calendar },
@@ -3446,9 +3444,9 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                             const isTodo = !documentRequests.some((r: any) => (r.id || r._id) === itemId);
 
                             if (isTodo) {
-                              setActiveTab("todo");
+                              setActiveTab("workFlow");
                             } else {
-                              setActiveTab("document_requests");
+                              setActiveTab("workFlow");
                               const params = new URLSearchParams(window.location.search);
                               params.set('scrollTo', itemId);
                               router.push(`?${params.toString()}`, { scroll: false });
@@ -3491,7 +3489,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                                     onClick={() => {
                                       const itemId = topDoc.id || topDoc._id;
                                       const isTodo = !documentRequests.some((r: any) => (r.id || r._id) === itemId);
-                                      setActiveTab(isTodo ? "todo" : "document_requests");
+                                      setActiveTab("workFlow");
                                     }}
                                   >
                                     View All ({allPendingItems.length})
@@ -4800,10 +4798,13 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           <LibraryExplorer rootFolderId={engagementLibraryFolderId} />
         </div>
 
-        {activeTab === "document_requests" && (
-          <Suspense fallback={<div className="p-8 text-center text-gray-500 font-medium">Loading document requests...</div>}>
-            <DocumentRequestsTab refreshKey={refreshTick} />
-          </Suspense>
+        {activeTab === "workFlow" && (
+          <WorkFlowSplitTab
+            engagementId={engagementId}
+            todos={engagementTodos}
+            todosLoading={todosLoading}
+            refreshKey={refreshTick}
+          />
         )}
 
         <div className={cn(activeTab === "milestones" ? "" : "hidden")}>
@@ -4960,51 +4961,6 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           </div>
         )}
 
-        {activeTab === "todo" && (
-          <DashboardCard className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                <h3 className="text-lg font-medium tracking-tight">Todos</h3>
-              </div>
-              <ServiceTodoTable
-                todos={engagementTodos}
-                loading={todosLoading}
-                onOpen={(todo) => {
-                  const type = (todo.type || "").toUpperCase();
-
-                  // Document requests → Document Requests tab
-                  if (
-                    (type === "DOCUMENT_REQUEST" || type === "REQUESTED_DOCUMENT") &&
-                    todo.engagementId
-                  ) {
-                    setActiveTab("document_requests");
-                    const params = new URLSearchParams(searchParams.toString());
-                    params.set("tab", "document_requests");
-                    if (todo.moduleId) params.set("scrollTo", todo.moduleId);
-                    const qs = params.toString();
-                    router.push(qs ? `?${qs}` : "?", { scroll: false });
-                    return;
-                  }
-
-                  // Chat todos → Chat tab
-                  if (type === "CHAT") {
-                    setActiveTab("chat");
-                    const params = new URLSearchParams(searchParams.toString());
-                    params.set("tab", "chat");
-                    if (todo.moduleId) params.set("messageId", todo.moduleId);
-                    const qs = params.toString();
-                    router.push(qs ? `?${qs}` : "?", { scroll: false });
-                    return;
-                  }
-
-                  // Fallback: open todo detail
-                  router.push(`/dashboard/todo-list/todo-list-view?taskId=${btoa(todo.id)}`);
-                }}
-              />
-            </div>
-          </DashboardCard>
-        )}
 
         <div className={cn(activeTab === "messages" ? "" : "hidden")}>
           <UpdatesTab />

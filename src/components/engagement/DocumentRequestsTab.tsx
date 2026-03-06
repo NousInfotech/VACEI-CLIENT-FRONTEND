@@ -49,7 +49,9 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
   )
   const searchParams = useSearchParams()
   const scrollToId = searchParams.get('scrollTo')
-  const scrolledRef = useRef(false)
+  const timestamp = searchParams.get('t')
+  const scrollKey = scrollToId ? `${scrollToId}-${timestamp || ''}` : null
+  const lastScrolledIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (refreshKey !== undefined) {
@@ -58,7 +60,11 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
   }, [refreshKey, refetch]);
 
   useEffect(() => {
-    if (scrollToId && documentRequests.length > 0 && !scrolledRef.current) {
+    // When URL scrollToId changes, check if we've already scrolled to it recently to avoid infinite loops,
+    // but we DO want to scroll again if the user clicks a new task, so we track the exact ID.
+    // If they click the exact same ID, they can achieve blinking by a tiny timeout reset if needed,
+    // but tracking the last scrolled ID handles switching back and forth perfectly.
+    if (scrollToId && documentRequests.length > 0 && lastScrolledIdRef.current !== scrollKey) {
       // Find which request contains this ID (can be the request itself or a doc inside it)
       const targetRequest = documentRequests.find(r => {
         const requestId = r.id ?? r._id;
@@ -92,7 +98,7 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
             setTimeout(() => {
               element.classList.remove('blink-item');
             }, 3000);
-            scrolledRef.current = true;
+            lastScrolledIdRef.current = scrollKey;
           }
         }, 500);
       }
@@ -280,8 +286,8 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
     <div className="space-y-3 animate-in fade-in duration-700">
         <div className="flex items-center justify-between bg-white/40 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md mb-5 p-6">
           <div>
-            <h2 className="text-3xl font-semibold">Document Requests</h2>
-            <p className="text-sm text-gray-500 mt-1 font-medium">Manage document requests and track progress</p>
+            <h2 className="text-xl font-semibold">Document Requests</h2>
+            <p className="text-xs text-gray-500 mt-0.5 font-medium">Manage document requests and track progress</p>
           </div>
         </div>
 
@@ -318,7 +324,7 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
                           {(request.category || request.title || 'D').charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <h4 className="text-lg font-semibold text-gray-900">
+                          <h4 className="text-sm font-semibold text-gray-900">
                             {request.title || request.name || 'Document Request'}
                           </h4>
                           {request.deadline && (() => {
@@ -343,7 +349,7 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
                             }
 
                             return (
-                              <p className={cn("text-xs mt-0.5 uppercase tracking-wider", colorClass)}>
+                              <p className={cn("text-[10px] mt-0.5 uppercase tracking-wider", colorClass)}>
                                 {label} {diffDays >= 0 && diffDays <= 1 ? `(${format(deadline, 'MMM d')})` : ''}
                               </p>
                             );
@@ -370,13 +376,13 @@ const DocumentRequestsTab = ({ refreshKey }: { refreshKey?: number }) => {
                             style={{ width: `${percentage}%` }}
                           />
                         </div>
-                        <span className="text-[14px] font-medium text-emerald-600 tracking-tight">
+                        <span className="text-[12px] font-medium text-emerald-600 tracking-tight">
                           {percentage}%
                         </span>
                       </div>
 
                       {request.description && (
-                         <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">
+                         <p className="text-xs text-gray-600 leading-relaxed max-w-2xl">
                             {request.description}
                          </p>
                       )}

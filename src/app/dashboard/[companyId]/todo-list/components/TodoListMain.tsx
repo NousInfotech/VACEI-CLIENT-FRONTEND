@@ -158,9 +158,9 @@ export default function TodoList() {
         if ((type === 'DOCUMENT_REQUEST' || type === 'REQUESTED_DOCUMENT') && task.engagementId) {
             const scrollQuery = task.moduleId ? `&scrollTo=${task.moduleId}` : "";
             if (serviceBase) {
-                router.push(`${serviceBase.replace('/dashboard/', `/dashboard/${activeCompanyId}/`)}/engagements/${task.engagementId}?tab=document_requests${scrollQuery}`);
+                router.push(`${serviceBase.replace('/dashboard/', `/dashboard/${activeCompanyId}/`)}/engagements/${task.engagementId}?tab=workFlow${scrollQuery}`);
             } else {
-                router.push(`/dashboard/${activeCompanyId}/engagements/${task.engagementId}?tab=document_requests${scrollQuery}`);
+                router.push(`/dashboard/${activeCompanyId}/engagements/${task.engagementId}?tab=workFlow${scrollQuery}`);
             }
             return;
         }
