@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Building2,
   FileText,
@@ -11,7 +12,9 @@ import {
   CheckCircle2,
   Loader2,
   Clock,
-  Eye
+  Eye,
+  AlertCircle,
+  Plus
 } from "lucide-react";
 import { ListSkeleton } from "../../shared/CommonSkeletons";
 import { Card, CardContent } from '@/components/ui/card2'
@@ -23,6 +26,7 @@ import DocumentRequestSingle from '../kyc/SingleDocumentRequest'
 import DocumentRequestDouble from '../kyc/DoubleDocumentRequest'
 import EmptyState from '../../shared/EmptyState'
 import { clearRequestedDocument, uploadRequestedDocument } from '@/api/auditService'
+import { listServiceRequests } from '@/api/serviceRequestService'
 import BulkUploadZone from '../../engagement/BulkUploadZone'
 import { cn } from '@/lib/utils'
 import { TruncatedTooltip } from '@/components/ui/TruncatedTooltip'
@@ -31,8 +35,31 @@ import UnassignedFilesSection from '../shared/UnassignedFilesSection'
 const IncorporationSection = () => {
   const [expandedRequests, setExpandedRequests] = useState<Set<string>>(new Set())
   const [uploadMode, setUploadMode] = useState<Record<string, 'single' | 'bulk'>>({})
+  const router = useRouter()
   const { company } = useCompany()
   const { incorporation, refetch, loading, error } = useIncorporation(company?._id || company?.id || null)
+  const [serviceRequest, setServiceRequest] = useState<any>(null)
+  const [srLoading, setSrLoading] = useState(false)
+
+  React.useEffect(() => {
+    const fetchSR = async () => {
+      if (!company?.id && !company?._id) return;
+      setSrLoading(true)
+      try {
+        const res = await listServiceRequests({ service: 'INCORPORATION' });
+        const list = res.data || res || [];
+        const sr = list
+          .filter((r: any) => (r.companyId?._id || r.companyId?.id || r.companyId) === (company?.id || company?._id))
+          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+        setServiceRequest(sr)
+      } catch (err) {
+        console.error("Failed to fetch service request:", err)
+      } finally {
+        setSrLoading(false)
+      }
+    }
+    fetchSR()
+  }, [company?.id, company?._id])
 
   const toggleExpand = (id: string) => {
     setExpandedRequests(prev => {
@@ -158,6 +185,31 @@ const IncorporationSection = () => {
             title="Incorporation Not Started"
             description="Incorporation is not created by the admin wait for the incorporation kyc"
         />
+        {serviceRequest?.status === 'REJECTED' && (
+          <div className="bg-rose-50 border border-rose-100 rounded-2xl p-6 mt-6 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-rose-100 rounded-xl text-rose-600">
+                <AlertCircle size={24} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-rose-900">Service Request Rejected</h3>
+                <p className="text-rose-700 mt-1 font-medium">
+                  Reason: {serviceRequest.rejectionReason || serviceRequest.reason || "No reason provided."}
+                </p>
+                <div className="mt-4">
+                  <Button 
+                    variant="outline" 
+                    className="bg-white border-rose-200 text-rose-700 hover:bg-rose-100 rounded-xl font-bold"
+                    onClick={() => router.push(`/global-dashboard/companies/incorporation-request`)}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Request Service Again
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }

@@ -30,6 +30,7 @@ interface Company {
     incorporationStatus?: boolean;
     kycStatus?: boolean;
     serviceRequestStatus?: string;
+    serviceRequestRejectionReason?: string;
 }
 
 export default function CompanyListTable() {
@@ -76,7 +77,8 @@ export default function CompanyListTable() {
                             dueSoonCount: c.dueSoonComplianceCount || 0,
                             incorporationStatus: c.incorporationStatus ?? false,
                             kycStatus: c.kycStatus ?? false,
-                            serviceRequestStatus: sr?.status || null
+                            serviceRequestStatus: sr?.status || null,
+                            serviceRequestRejectionReason: sr?.rejectionReason || sr?.reason || null
                         };
                     }));
                 }
@@ -218,8 +220,33 @@ export default function CompanyListTable() {
                                             <Eye className="h-4 w-4 mr-2" />
                                             View
                                         </Button>
+                                    ) : company.serviceRequestStatus === 'REJECTED' ? (
+                                        /* SR rejected → status badge with reason + Service Request button */
+                                        <div className="flex flex-col items-end gap-2">
+                                            <span className="bg-rose-50 text-rose-600 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider border border-rose-100 flex items-center gap-1.5">
+                                                <div className="w-1 h-1 bg-rose-600 rounded-full" />
+                                                Rejected
+                                            </span>
+                                            {company.serviceRequestRejectionReason && (
+                                                <p className="text-[10px] text-rose-500 font-medium max-w-[350px] text-right">
+                                                    Reason: {company.serviceRequestRejectionReason}
+                                                </p>
+                                            )}
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="rounded-xl h-8 border-rose-200 text-rose-600 hover:bg-rose-50 text-[10px] font-bold uppercase"
+                                                onClick={() => {
+                                                    setActiveCompanyId(company.id);
+                                                    router.push(`/global-dashboard/companies/incorporation-request`);
+                                                }}
+                                            >
+                                                <Building2 className="h-3.5 w-3.5 mr-1" />
+                                                Service Request
+                                            </Button>
+                                        </div>
                                     ) : company.serviceRequestStatus ? (
-                                        /* Any other SR status (PENDING, IN_REVIEW, REJECTED…) → status badge only */
+                                        /* Any other SR status (PENDING, IN_REVIEW…) → status badge only */
                                         <div className="flex justify-end">
                                             <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider border border-blue-100 flex items-center gap-1.5">
                                                 <div className="w-1 h-1 bg-blue-600 rounded-full animate-pulse" />
