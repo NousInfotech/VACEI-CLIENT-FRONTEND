@@ -19,9 +19,7 @@ export function useFilings(engagementId: string | null) {
         setError(null)
         try {
             const data = await getFilings(engagementId)
-            // Only show FILED data for client portal as requested
-            const filedData = Array.isArray(data) ? data.filter(f => f.status === 'FILED') : []
-            setFilings(filedData)
+            setFilings(Array.isArray(data) ? data : [])
         } catch (e: any) {
             setError(e?.message || "Failed to fetch filings")
             setFilings([])
