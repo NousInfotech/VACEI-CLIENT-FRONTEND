@@ -121,7 +121,7 @@ export const ServiceTodoTable = ({
   }
 
   return (
-    <div className={cn("space-y-6 pb-20 font-inter", hideHeader && "pb-4")}>
+    <div className={cn("space-y-6 p-2 pb-20 font-inter", hideHeader && "pb-4")}>
         {/* Header & Stats */}
         {!hideHeader && (
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

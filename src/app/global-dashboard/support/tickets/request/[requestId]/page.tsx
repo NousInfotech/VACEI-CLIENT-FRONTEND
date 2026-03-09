@@ -73,7 +73,7 @@ export default function RequestDetailPage() {
         <PageHeader title="Support request" subtitle="Invalid request." icon={HelpCircle} />
         <p className="text-slate-500">Missing request ID.</p>
         <Link href="/global-dashboard/support/tickets">
-          <Button variant="outline">Back to my requests</Button>
+          <Button variant="header">Back to my requests</Button>
         </Link>
       </div>
     );
@@ -90,7 +90,7 @@ export default function RequestDetailPage() {
         )}
         {error && !loading && (
           <Link href="/global-dashboard/support/tickets">
-            <Button variant="outline">Back to my requests</Button>
+            <Button variant="header">Back to my requests</Button>
           </Link>
         )}
       </div>

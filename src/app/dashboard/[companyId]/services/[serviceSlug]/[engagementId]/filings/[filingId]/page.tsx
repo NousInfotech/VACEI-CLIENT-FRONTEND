@@ -656,16 +656,16 @@ export default function ClientFilingDetailView() {
             
             {(docRequest.documents?.length ?? 0) > 0 || (docRequest.multipleDocuments?.length ?? 0) > 0 ? (
               <Tabs 
-                value={requestTabs[docRequest.id] || 'single'} 
+                value={requestTabs[docRequest.id] || 'bulk'} 
                 onValueChange={(val) => setRequestTabs(prev => ({ ...prev, [docRequest.id]: val }))}
                 className="w-full mt-2"
               >
                 <TabsList className="bg-slate-100 p-1 rounded-xl w-fit">
-                  <TabsTrigger value="single" className="rounded-lg px-6 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white">
-                    Individual Items
-                  </TabsTrigger>
                   <TabsTrigger value="bulk" className="rounded-lg px-6 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white">
-                    Bulk Upload
+                     Bulk Upload
+                  </TabsTrigger>
+                  <TabsTrigger value="single" className="rounded-lg px-6 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white">
+                   Individual Items 
                   </TabsTrigger>
                 </TabsList>
                 

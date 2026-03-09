@@ -51,7 +51,7 @@ export default function TicketDetailPage() {
         <PageHeader title="Ticket" subtitle="Invalid ticket." icon={HelpCircle} />
         <p className="text-slate-500">Missing ticket ID.</p>
         <Link href="/global-dashboard/support/tickets">
-          <Button variant="outline" className="border-slate-200 text-slate-700">
+          <Button variant="header" className="border-slate-200 text-slate-700">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to My Requests
           </Button>
@@ -73,7 +73,7 @@ export default function TicketDetailPage() {
           <>
             <p className="text-red-600">{error}</p>
             <Link href="/global-dashboard/support/tickets">
-              <Button variant="outline">Back to My Requests</Button>
+              <Button variant="header">Back to My Requests</Button>
             </Link>
           </>
         )}
