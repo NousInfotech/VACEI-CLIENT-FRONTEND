@@ -111,7 +111,7 @@ export const ServiceTodoTable = ({
           </Badge>
         </div>
       )}
-      <div className="overflow-x-auto">
+      <div className="overflow-auto h-[509px]">
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50/50">

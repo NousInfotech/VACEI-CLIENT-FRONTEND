@@ -2921,9 +2921,11 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
                               <div className="w-1 h-6 bg-gray-900 rounded-full" />
                               <h3 className="text-lg font-medium tracking-tight">Updates</h3>
                             </div>
-                            <Button variant="ghost" size="sm" className="text-xs font-bold text-blue-600 hover:text-blue-800 uppercase tracking-widest p-0 h-auto" onClick={() => setActiveTab("messages")}>
-                              View All
-                            </Button>
+                            {updates.length > 0 && (
+                              <Button variant="ghost" size="sm" className="text-xs font-bold text-blue-600 hover:text-blue-800 uppercase tracking-widest p-0 h-auto" onClick={() => setActiveTab("messages")}>
+                                View All
+                              </Button>
+                            )}
                           </div>
                           <div className="space-y-3">
                             {updatesLoading ? (

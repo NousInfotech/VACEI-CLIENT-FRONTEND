@@ -106,7 +106,7 @@ export default function WorkFlowSplitTab({
                 </div>
             </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
           <ServiceTodoTable 
             todos={todos} 
             loading={todosLoading} 
