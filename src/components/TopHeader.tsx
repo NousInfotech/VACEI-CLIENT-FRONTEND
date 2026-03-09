@@ -577,7 +577,7 @@ export default function TopHeader({ onSidebarToggle, isSidebarCollapsed = false 
                             )}
                         </div>
                         <div className="p-3 border-t border-gray-100 bg-gray-50/50">
-                            <Link href={activeCompanyId ? `/dashboard/${activeCompanyId}/notifications` : '/dashboard/notifications'} passHref className="block">
+                            <Link href="/global-dashboard/alerts" passHref className="block">
                                 <Button
                                     variant="ghost"
                                     className="w-full text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-gray-900 hover:bg-white rounded-xl h-10 transition-all"
