@@ -32,6 +32,7 @@ export interface FilingItem {
   files: FilingFileView[];
   comments?: FilingCommentItem[];
   signOffs?: FilingSignOffItem[];
+  documentRequestId?: string | null;
 }
 
 export interface FilingCommentItem {

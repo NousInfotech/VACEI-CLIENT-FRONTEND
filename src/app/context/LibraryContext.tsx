@@ -119,6 +119,7 @@ function mapApiFileToItem(f: LibraryFileItem, folderId: string): LibraryItem {
     uploaderId: "",
     isDeleted: false,
     createdAt: f.createdAt ?? "",
+    updatedAt: (f as any).updatedAt || f.createdAt || "",
     name: filename,
   } as LibraryItem
 }
@@ -138,6 +139,22 @@ const getStoredDecoded = (key: string): string | null => {
     return stored
   }
 }
+
+const formatLibraryDate = (dateString?: string) => {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return '';
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'pm' : 'am';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const strHours = String(hours).padStart(2, '0');
+  return `${day}-${month}-${year} ${strHours}:${minutes}${ampm}`;
+};
 
 export const LibraryProvider: React.FC<{
   children: React.ReactNode
@@ -386,16 +403,23 @@ export const LibraryProvider: React.FC<{
     })
 
     const normalized = filtered.map((item) => {
-      const name = item.type === "folder" ? (item as any).folder_name : (item as any).file_name
-      const fileType = item.type === "file" ? (item as any).file_type : "Folder"
-      const size = item.type === "file" ? formatFileSize((item as any).file_size || 0) : ""
-      const updatedAtStr = item.type === "folder" ? (item as any).updatedAt : (item as any).createdAt
+      const name = item.type === "folder" ? (item as any).folder_name : (item as any).file_name || ""
+      const isFile = item.type === "file"
+      let fileType = isFile ? (item as any).file_type : "Folder"
+      
+      if (isFile && (!fileType || fileType === "File")) {
+        const n = String(name || "")
+        fileType = n.includes(".") ? n.split(".").pop()?.toUpperCase() : "File"
+      }
+
+      const size = isFile ? formatFileSize((item as any).file_size || 0) : ""
+      const updatedAtStr = item.type === "folder" ? (item as any).updatedAt : ((item as any).updatedAt || (item as any).createdAt)
       return {
         ...item,
         name: (item as any).name || name,
         fileType,
         size,
-        updatedAt: updatedAtStr ? new Date(updatedAtStr).toLocaleDateString() : "",
+        updatedAt: formatLibraryDate(updatedAtStr),
         parentId: item.type === "folder" ? (item as any).parentId : (item as any).folderId,
       }
     })

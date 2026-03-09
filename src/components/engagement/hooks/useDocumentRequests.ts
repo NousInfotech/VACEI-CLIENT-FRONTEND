@@ -12,10 +12,15 @@ interface UseDocumentRequestsReturn {
   refetch: () => Promise<void>
 }
 
-export const useDocumentRequests = (engagementId: string | null): UseDocumentRequestsReturn => {
+export const useDocumentRequests = (
+  engagementId: string | null,
+  options: { includeFilings?: boolean } = {}
+): UseDocumentRequestsReturn => {
   const [documentRequests, setDocumentRequests] = useState<DocumentRequest[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
+
+  const { includeFilings = false } = options
 
   const fetchDocumentRequests = useCallback(async () => {
     if (!engagementId) {
@@ -28,19 +33,19 @@ export const useDocumentRequests = (engagementId: string | null): UseDocumentReq
     try {
       if (ENGAGEMENT_CONFIG.USE_MOCK_DATA) {
         // Mock loading delay
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // If we have an engagement object from context, it might already have the specific mock documents
-        // However, the hook is usually called with engagementId.
-        // For simplicity in mock mode, we'll try to find the service mock if engagementId looks like our mock format
-        const serviceSlug = engagementId.startsWith('mock-engagement-') 
-          ? engagementId.replace('mock-engagement-', '') 
-          : null;
-        
-        const mockServiceData = serviceSlug ? (require('../../services/mockData').ALL_SERVICE_MOCKS[serviceSlug]) : null;
-        
+        await new Promise((resolve) => setTimeout(resolve, 300))
+
+        const serviceSlug = engagementId.startsWith('mock-engagement-')
+          ? engagementId.replace('mock-engagement-', '')
+          : null
+
+        const mockServiceData = serviceSlug
+          ? require('../../services/mockData').ALL_SERVICE_MOCKS[serviceSlug]
+          : null
+
         const raw = mockServiceData?.documentRequests ?? MOCK_ENGAGEMENT_DATA.documentRequests
-        setDocumentRequests((Array.isArray(raw) ? raw : [raw]) as DocumentRequest[])
+        const items = (Array.isArray(raw) ? raw : [raw]) as DocumentRequest[]
+        setDocumentRequests(items)
       } else {
         const data = await getDocumentRequests(engagementId)
         const normalized = (data ?? []).map((dr) => {
@@ -77,16 +82,34 @@ export const useDocumentRequests = (engagementId: string | null): UseDocumentReq
                 status: cfull?.status ?? c?.status,
               }
             })
-            return { ...d, id, _id: id, name, url, uploadedFileName: full?.file?.file_name ?? full?.file_name ?? d?.file?.file_name, rejectionReason, status, children }
+            return {
+              ...d,
+              id,
+              _id: id,
+              name,
+              url,
+              uploadedFileName:
+                full?.file?.file_name ?? full?.file_name ?? d?.file?.file_name,
+              rejectionReason,
+              status,
+              children,
+            }
           }
           const merged = docs.map(merge)
           const singleDocs = merged.filter((d: any) => d.count !== 'MULTIPLE')
-          const multipleGroups = merged.filter((d: any) => d.count === 'MULTIPLE').map((d: any) => ({
-            ...d,
-            _id: d.id,
-            multiple: d.children ?? [],
-          }))
-          return { ...dr, _id: dr.id ?? dr._id, documents: singleDocs, multipleDocuments: multipleGroups }
+          const multipleGroups = merged
+            .filter((d: any) => d.count === 'MULTIPLE')
+            .map((d: any) => ({
+              ...d,
+              _id: d.id,
+              multiple: d.children ?? [],
+            }))
+          return {
+            ...dr,
+            _id: dr.id ?? dr._id,
+            documents: singleDocs,
+            multipleDocuments: multipleGroups,
+          }
         })
         setDocumentRequests(normalized)
       }
@@ -96,7 +119,7 @@ export const useDocumentRequests = (engagementId: string | null): UseDocumentReq
     } finally {
       setLoading(false)
     }
-  }, [engagementId])
+  }, [engagementId, includeFilings])
 
   useEffect(() => {
     fetchDocumentRequests()

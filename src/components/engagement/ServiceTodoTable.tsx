@@ -1,16 +1,17 @@
 "use client";
 
-import React from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { ClipboardList } from "lucide-react";
+import { Filter, Calendar, CheckCircle2, Clock, AlertCircle, User, ExternalLink, Plus } from "lucide-react";
+import { ShadowCard } from "@/components/ui/ShadowCard";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { TodoItem, updateTodoStatus } from "@/api/todoService";
 import { useGlobalDashboard } from "@/context/GlobalDashboardContext";
 import { useActiveCompany } from "@/context/ActiveCompanyContext";
 import { SERVICE_METADATA } from "@/lib/menuData";
+import { format } from "date-fns";
 
 const resolveServiceEngagementBase = (service?: string) => {
   if (!service) return "";
@@ -36,6 +37,7 @@ export const ServiceTodoTable = ({
   const router = useRouter();
   const { refreshSidebar } = useGlobalDashboard();
   const { activeCompanyId } = useActiveCompany();
+  const [filter, setFilter] = useState<'all' | 'ACTION_REQUIRED' | 'ACTION_TAKEN' | 'COMPLETED'>('all');
 
   const handleOpen = async (todo: TodoItem) => {
     if (onOpen) {
@@ -67,7 +69,6 @@ export const ServiceTodoTable = ({
         }`
       );
     } else if (type === "CHAT" && base) {
-      // Instant status update for chat todos
       try {
         await updateTodoStatus(todo.id, "ACTION_TAKEN");
         refreshSidebar().catch(console.error);
@@ -87,76 +88,166 @@ export const ServiceTodoTable = ({
     }
   };
 
-  if (loading) return <Skeleton className="h-64 w-full" />;
-  
-  if (todos.length === 0) {
+  const filteredTodos = useMemo(() => {
+    if (!todos) return [];
+    if (filter === 'all') return todos;
+    return todos.filter((t) => (t.status || '').toUpperCase() === filter);
+  }, [todos, filter]);
+
+  const getStatusIcon = (status?: string) => {
+    const s = (status || '').toUpperCase();
+    switch (s) {
+      case 'COMPLETED': return <CheckCircle2 size={16} className="text-green-500" />;
+      case 'ACTION_TAKEN': return <Clock size={16} className="text-blue-500" />;
+      default: return <AlertCircle size={16} className="text-amber-500" />;
+    }
+  };
+
+  const getStatusLabel = (status?: string) => {
+    const s = (status || '').toUpperCase();
+    switch (s) {
+        case 'COMPLETED': return "Completed";
+        case 'ACTION_TAKEN': return "Action Taken";
+        default: return "Action Required";
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-gray-50/50 border border-dashed border-gray-200 rounded-xl">
-        <ClipboardList className="w-12 h-12 text-gray-300 mb-4" />
-        <p className="text-gray-500 font-medium">No todos found for this engagement.</p>
-      </div>
+        <div className="space-y-4">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full rounded-3xl" />)}
+        </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-      {!hideHeader && (
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h4 className="text-sm font-bold text-gray-900 uppercase tracking-widest flex items-center gap-2">
-            <ClipboardList className="w-4 h-4 text-blue-500" />
-            Todo List
-          </h4>
-          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100 uppercase tracking-widest text-[10px] font-bold">
-            {todos.length} Items
-          </Badge>
-        </div>
-      )}
-      <div className="overflow-auto h-[509px]">
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="border-b border-gray-200 bg-gray-50/50">
-              <th className="text-left py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Task Title</th>
-              <th className="text-left py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Status</th>
-              <th className="text-left py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Deadline</th>
-              <th className="text-right py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {todos.map((todo) => (
-              <tr key={todo.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                <td className="py-4 px-6">
-                  <p className="font-bold text-gray-900 text-[13px]">{todo.title}</p>
-                  <p className="text-[9px] text-gray-500 uppercase font-bold tracking-wider mt-0.5">{todo.type || 'Engagement Task'}</p>
-                </td>
-                <td className="py-4 px-6">
-                  <Badge
+    <div className={cn("space-y-6 pb-20 font-inter", hideHeader && "pb-4")}>
+        {/* Header & Stats */}
+        {!hideHeader && (
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Engagement Todos</h2>
+                    <p className="text-sm text-gray-500">Manage and track tasks for this engagement</p>
+                </div>
+            </div>
+        )}
+
+        {hideHeader && (
+            <div className="flex items-center justify-between h-10">
+                <div>
+                    <h3 className="text-lg font-bold text-gray-900 leading-none">Tasks</h3>
+                    <p className="text-[10px] uppercase font-black tracking-widest text-gray-400 mt-1">To-do list for this workspace</p>
+                </div>
+            </div>
+        )}
+
+        {/* Filters */}
+        <div className={cn("flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none", hideHeader && "gap-1.5")}>
+            <Filter size={hideHeader ? 14 : 16} className="text-gray-400 shrink-0" />
+            {(['all', 'ACTION_REQUIRED', 'ACTION_TAKEN', 'COMPLETED'] as const).map(f => (
+                <button
+                    key={f}
+                    onClick={() => setFilter(f)}
                     className={cn(
-                      "rounded-0 border px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest bg-transparent",
-                      (todo.status?.toUpperCase() === 'COMPLETED' || todo.status?.toUpperCase() === 'ACTION_TAKEN') ? "text-emerald-500 border-emerald-500/20" :
-                      todo.status?.toUpperCase() === 'ACTION_REQUIRED' ? "text-amber-500 border-amber-500/20" : "text-gray-400 border-gray-200"
+                        "px-4 py-2 rounded-full text-xs font-bold capitalize transition-all shrink-0 border",
+                        hideHeader && "px-3 py-1 text-[10px]",
+                        filter === f 
+                            ? "bg-gray-900 text-white border-gray-900 shadow-md" 
+                            : "bg-white text-gray-500 border-gray-100 hover:bg-gray-50"
                     )}
-                  >
-                    {todo.status || 'Pending'}
-                  </Badge>
-                </td>
-                <td className="py-4 px-6 text-gray-600 font-medium">
-                  {todo.deadline && todo.status?.toUpperCase() !== 'COMPLETED' && todo.status?.toUpperCase() !== 'ACTION_TAKEN' ? new Date(todo.deadline).toLocaleDateString('en-GB') : '—'}
-                </td>
-                <td className="py-4 px-6 text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 text-[10px] font-bold uppercase tracking-widest h-8 px-3 rounded-lg border border-transparent hover:border-blue-100"
-                    onClick={() => handleOpen(todo)}
-                  >
-                    {todo.cta ? (todo.cta.charAt(0).toUpperCase() + todo.cta.slice(1)) : 'Open'}
-                  </Button>
-                </td>
-              </tr>
+                >
+                    {f === 'all' ? 'All Tasks' : getStatusLabel(f)}
+                </button>
             ))}
-          </tbody>
-        </table>
-      </div>
+        </div>
+
+        {/* Todo List */}
+        <div className={cn("grid grid-cols-1 gap-4", hideHeader && "gap-3")}>
+            {filteredTodos.length > 0 ? (
+                filteredTodos.map((todo) => (
+                    <ShadowCard key={todo.id} className={cn(
+                        "group relative overflow-hidden bg-white border border-gray-100 rounded-4xl hover:shadow-xl transition-all duration-300",
+                        hideHeader && "rounded-2xl"
+                    )}>
+                        <div className={cn("p-6", hideHeader && "p-4")}>
+                            <div className="flex justify-between items-start gap-4">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className={cn(
+                                            "p-1.5 rounded-lg flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider",
+                                            hideHeader && "p-1 text-[8px]",
+                                            (todo.status || '').toUpperCase() === 'COMPLETED' ? "bg-green-50 text-green-600" :
+                                            (todo.status || '').toUpperCase() === 'ACTION_TAKEN' ? "bg-blue-50 text-blue-600" :
+                                            "bg-amber-50 text-amber-600"
+                                        )}>
+                                            {getStatusIcon(todo.status)}
+                                            {getStatusLabel(todo.status)}
+                                        </div>
+                                        {/* {todo.type !== 'CUSTOM' && todo.moduleId && (
+                                            <button 
+                                                onClick={() => handleOpen(todo)}
+                                                className={cn(
+                                                    "px-2 py-1 bg-primary/5 text-primary hover:bg-primary/10 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all",
+                                                    hideHeader && "text-[8px] px-1.5 py-0.5"
+                                                )}
+                                            >
+                                                Next
+                                                <ExternalLink size={hideHeader ? 8 : 10} />
+                                            </button>
+                                        )} */}
+                                    </div>
+                                    <h3 className={cn("text-lg font-bold text-gray-900 truncate mb-1", hideHeader && "text-base")}>{todo.title}</h3>
+                                    <p className={cn("text-sm text-gray-500 line-clamp-2 mb-4", hideHeader && "text-xs mb-3")}>{todo.description || 'No description provided'}</p>
+                                    
+                                    <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-gray-400">
+                                        {todo.deadline && (
+                                            <div className={cn("flex items-center gap-1.5", hideHeader && "gap-1 text-[10px]")}>
+                                                <Calendar size={hideHeader ? 12 : 14} />
+                                                Due {format(new Date(todo.deadline), 'MMM dd, yyyy')}
+                                            </div>
+                                        )}
+                                        {(todo as any).createdBy && (
+                                            <div className={cn("flex items-center gap-1.5", hideHeader && "gap-1 text-[10px]")}>
+                                                <User size={hideHeader ? 12 : 14} />
+                                                By {(todo as any).createdBy.user?.firstName} {(todo as any).createdBy.user?.lastName}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col items-end gap-3">
+                                    {(todo.status || '').toUpperCase() !== 'COMPLETED' && (
+                                        <Button
+                                            onClick={() => handleOpen(todo)}
+                                            className={cn(
+                                                "h-9 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                                                hideHeader && "h-7 px-3 text-[9px]",
+                                                "bg-primary text-white hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20"
+                                            )}
+                                        >
+                                            {todo.cta ? (todo.cta.charAt(0).toUpperCase() + todo.cta.slice(1)) : "Open Task"}
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </ShadowCard>
+                ))
+            ) : (
+                <ShadowCard className={cn(
+                    "p-12 text-center rounded-[2.5rem] bg-gray-50/50 border-dashed border-2 border-gray-200",
+                    hideHeader && "p-8 rounded-3xl"
+                )}>
+                    <div className="mb-4 flex justify-center">
+                        <div className="p-4 bg-white rounded-full text-gray-300">
+                            <Plus size={32} />
+                        </div>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">No Todos Found</h3>
+                    <p className="text-gray-500 max-w-sm mx-auto">There are no tasks assigned to this engagement {filter !== 'all' && 'matching the current filter'}.</p>
+                </ShadowCard>
+            )}
+        </div>
     </div>
   );
 };

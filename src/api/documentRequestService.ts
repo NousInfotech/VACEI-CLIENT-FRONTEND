@@ -74,6 +74,7 @@ export interface DocumentRequest {
   multipleDocuments?: DocumentRequestDocumentMultiple[];
   unassignedFiles?: DocumentFile[];
   createdAt?: string;
+  isFilingRequest?: boolean;
 }
 
 /**
@@ -104,6 +105,32 @@ export async function getDocumentRequests(
   const result = await response.json();
   const data = result.data ?? result;
   return Array.isArray(data) ? data : [];
+}
+
+/**
+ * GET /document-requests/{id}
+ */
+export async function getDocumentRequestById(
+  id: string,
+  signal?: AbortSignal
+): Promise<DocumentRequest> {
+  const response = await fetch(`${backendUrl}document-requests/${id}`, {
+    method: "GET",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    signal,
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    const msg = err.message || err.error || getErrorMessage(response.status, "fetch document request");
+    throw new Error(msg);
+  }
+
+  const result = await response.json();
+  return result.data ?? result;
 }
 
 /**

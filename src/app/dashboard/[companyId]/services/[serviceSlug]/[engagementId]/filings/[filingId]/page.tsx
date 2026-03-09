@@ -38,6 +38,21 @@ import {
   type FilingItem,
   type FilingCommentItem
 } from "@/api/filingService";
+import { 
+  getDocumentRequestById, 
+  uploadDocumentRequestFile, 
+  clearDocumentRequestFile,
+  bulkUploadDocumentRequestFiles,
+  type DocumentRequest 
+} from "@/api/documentRequestService";
+import DocumentRequestSingle from "@/components/company/kyc/SingleDocumentRequest";
+import DocumentRequestDouble from "@/components/company/kyc/DoubleDocumentRequest";
+import BulkUploadZone from "@/components/engagement/BulkUploadZone";
+import UnassignedFilesSection from "@/components/company/shared/UnassignedFilesSection";
+import { SuccessModal } from "@/components/ui/SuccessModal";
+import { ClearReasonModal } from "@/components/ui/ClearReasonModal";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { PageHeader } from "@/components/shared/PageHeader";
 
 function formatTs(ts: string) {
   const d = new Date(ts);
@@ -64,6 +79,16 @@ export default function ClientFilingDetailView() {
   const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
+  // Document Request state
+  const [docRequest, setDocRequest] = useState<DocumentRequest | null>(null);
+  const [isDocReqLoading, setIsDocReqLoading] = useState(false);
+  const [requestTabs, setRequestTabs] = useState<Record<string, string>>({});
+  const [uploadingState, setUploadingState] = useState<{requestId: string, documentId: string} | null>(null);
+  const [uploadSuccessOpen, setUploadSuccessOpen] = useState(false);
+  const [clearSuccessOpen, setClearSuccessOpen] = useState(false);
+  const [bulkUploadSuccessOpen, setBulkUploadSuccessOpen] = useState(false);
+  const [clearModal, setClearModal] = useState<{ isOpen: boolean; onConfirm: (reason: string) => Promise<void>; title?: string; message?: string } | null>(null);
+
   useEffect(() => {
     if (engagementId && filingId) {
       loadData();
@@ -79,11 +104,90 @@ export default function ClientFilingDetailView() {
       ]);
       setFiling(filingData);
       setComments(commentsData);
+
+      if (filingData.documentRequestId) {
+        await loadDocRequest(filingData.documentRequestId);
+      } else {
+        setDocRequest(null);
+      }
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Failed to load filing details");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadDocRequest = async (docReqId: string) => {
+    setIsDocReqLoading(true);
+    try {
+      const dr = await getDocumentRequestById(docReqId);
+      
+      // Normalization logic similar to useDocumentRequests hook
+      const docs = dr.documents ?? dr.requestedDocuments ?? [];
+      const byId = new Map<string, any>();
+      function collectById(obj: any) {
+        const id = obj.id ?? obj._id;
+        if (id) byId.set(id, obj);
+        (obj.children ?? []).forEach(collectById);
+      }
+      docs.forEach(collectById);
+      
+      function getUrl(obj: any): string | undefined {
+        return obj?.file?.url ?? obj?.file_url ?? obj?.templateFile?.url ?? obj?.url;
+      }
+      
+      function merge(d: any): any {
+        const id = d.id ?? d._id;
+        const full = byId.get(id) ?? d;
+        const url = getUrl(full) ?? getUrl(d);
+        const name = d.name ?? d.documentName;
+        const rejectionReason = full?.rejectionReason ?? d?.rejectionReason;
+        const status = full?.status ?? d?.status;
+        const children = d.children?.map((c: any) => {
+          const cid = c.id ?? c._id;
+          const cfull = byId.get(cid) ?? c;
+          const curl = getUrl(cfull) ?? getUrl(c);
+          return {
+            ...c,
+            id: cid,
+            _id: cid,
+            label: c.documentName ?? c.label ?? c.name,
+            documentName: c.documentName ?? c.name,
+            url: curl,
+            uploadedFileName: cfull?.file?.file_name ?? c?.file?.file_name,
+            rejectionReason: cfull?.rejectionReason ?? c?.rejectionReason,
+            status: cfull?.status ?? c?.status,
+          };
+        });
+        return { 
+          ...d, 
+          id, 
+          _id: id, 
+          documentName: name, 
+          url, 
+          uploadedFileName: full?.file?.file_name ?? full?.file_name ?? d?.file?.file_name, 
+          rejectionReason, 
+          status, 
+          children 
+        };
+      }
+      
+      const merged = docs.map(merge);
+      const singleDocs = merged.filter((d: any) => d.count !== 'MULTIPLE');
+      const multipleGroups = merged.filter((d: any) => d.count === 'MULTIPLE');
+      
+      setDocRequest({ 
+        ...dr, 
+        id: dr.id ?? dr._id,
+        _id: dr.id ?? dr._id, 
+        documents: singleDocs, 
+        multipleDocuments: multipleGroups as any
+      });
+    } catch (error) {
+      console.error("Failed to load document request:", error);
+    } finally {
+      setIsDocReqLoading(false);
     }
   };
 
@@ -231,27 +335,90 @@ export default function ClientFilingDetailView() {
     );
   };
 
+  const handleUpload = async (requestId: string, documentId: string, file: File) => {
+    setUploadingState({ requestId, documentId });
+    try {
+      await uploadDocumentRequestFile(requestId, documentId, [file]);
+      if (filing?.documentRequestId) await loadDocRequest(filing.documentRequestId);
+      setUploadSuccessOpen(true);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to upload document');
+    } finally {
+      setUploadingState(null);
+    }
+  };
+
+  const handleUploadMultiple = async (requestId: string, documentId: string, files: FileList) => {
+    setUploadingState({ requestId, documentId });
+    try {
+      await uploadDocumentRequestFile(requestId, documentId, Array.from(files));
+      if (filing?.documentRequestId) await loadDocRequest(filing.documentRequestId);
+      setUploadSuccessOpen(true);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to upload documents');
+    } finally {
+      setUploadingState(null);
+    }
+  };
+
+  const handleClear = (requestId: string, documentId: string) => {
+    setClearModal({
+      isOpen: true,
+      title: 'Clear Document',
+      message: 'Please provide a reason for clearing this document.',
+      onConfirm: async (reason) => {
+        await clearDocumentRequestFile(requestId, documentId, reason);
+        if (filing?.documentRequestId) await loadDocRequest(filing.documentRequestId);
+        setClearSuccessOpen(true);
+      },
+    });
+  };
+
+  const handleClearMultipleItem = (requestId: string, documentId: string) => {
+    handleClear(requestId, documentId);
+  };
+
+  const handleClearMultipleGroup = (requestId: string, multipleId: string, _groupName: string) => {
+    const group = (docRequest?.multipleDocuments ?? []).find((g) => ((g as any).id ?? g._id) === multipleId);
+    const children = (group as any)?.children ?? [];
+    const itemsToClear = children.filter((m: any) => m.url);
+    if (itemsToClear.length === 0) return;
+    
+    setClearModal({
+      isOpen: true,
+      title: 'Clear All Documents in Group',
+      message: 'Please provide a reason for clearing all documents in this group.',
+      onConfirm: async (reason) => {
+        for (const item of itemsToClear) {
+          const requestedDocumentId = item.id ?? item._id;
+          if (requestedDocumentId) {
+            await clearDocumentRequestFile(requestId, requestedDocumentId, reason);
+          }
+        }
+        if (filing?.documentRequestId) await loadDocRequest(filing.documentRequestId);
+        setClearSuccessOpen(true);
+      },
+    });
+  };
+
+  const handleDownloadMultipleGroup = (requestId: string, _multipleId: string, _groupName: string, items: any[]) => {
+    items.forEach((item) => {
+      if (item?.url) window.open(item.url, '_blank');
+    });
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-12">
-      {/* Header */}
-      <div className="flex items-start justify-between bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-        <div className="flex flex-col gap-4">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleBack}
-            className="w-fit text-slate-500 hover:text-slate-900 gap-2 h-8 px-3 rounded-full hover:bg-slate-100 -ml-2 text-[10px] font-black uppercase tracking-widest transition-colors"
-          >
-            <ArrowLeft size={14} /> Back to Filings
-          </Button>
-          
-          <div className="space-y-1 pl-1">
-            <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">{filing.name}</h1>
-            <p className="text-xs font-medium text-slate-400">Created on {formatTs(filing.createdAt)}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
+      <PageHeader
+        title={filing.name}
+        subtitle={`Created on ${formatTs(filing.createdAt)}`}
+        onBack={handleBack}
+        badge={
+          <Badge variant="outline" className={cn("px-4 py-1.5 text-xs font-black uppercase tracking-widest rounded-xl shadow-sm", statusCfg.className)}>
+            {statusCfg.icon} {statusCfg.label}
+          </Badge>
+        }
+        actions={
           <Button
             variant="outline"
             size="sm"
@@ -262,12 +429,8 @@ export default function ClientFilingDetailView() {
             <RefreshCw size={14} className={cn(isLoading && "animate-spin")} />
             Refresh
           </Button>
-
-          <Badge variant="outline" className={cn("px-4 py-1.5 text-xs font-black uppercase tracking-widest rounded-xl shadow-sm", statusCfg.className)}>
-            {statusCfg.icon} {statusCfg.label}
-          </Badge>
-        </div>
-      </div>
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column: Files */}
@@ -472,6 +635,137 @@ export default function ClientFilingDetailView() {
           </div>
         </div>
       </div>
+
+      {docRequest && docRequest.status === 'ACTIVE' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-6 animate-in slide-in-from-bottom-4 duration-500">
+          <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-4">
+            <div className="flex items-center gap-4 justify-between">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center text-orange-600 font-bold text-lg">
+                  <FileIcon size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">{docRequest.title || "Document Request"}</h3>
+                  <p className="text-xs font-medium text-slate-500 mt-0.5">Please provide all the necessary documents required for completing this filing process. Ensure that the submitted documents are accurate, valid, and up to date. The documents should include any relevant identification records, supporting financial or legal documents, and any additional paperwork that may be required to verify the details associated with this filing. Submitting complete and correct documentation will help us review and process the filing efficiently without delays. If any documents are missing or unclear, the filing may be rejected or additional information may be requested.</p>
+                </div>
+              </div>
+              <Badge variant="outline" className="px-3 py-1 bg-blue-50 text-blue-700 border-blue-100 font-black uppercase tracking-widest text-[10px]">
+                {docRequest.status}
+              </Badge>
+            </div>
+            
+            {(docRequest.documents?.length ?? 0) > 0 || (docRequest.multipleDocuments?.length ?? 0) > 0 ? (
+              <Tabs 
+                value={requestTabs[docRequest.id] || 'single'} 
+                onValueChange={(val) => setRequestTabs(prev => ({ ...prev, [docRequest.id]: val }))}
+                className="w-full mt-2"
+              >
+                <TabsList className="bg-slate-100 p-1 rounded-xl w-fit">
+                  <TabsTrigger value="single" className="rounded-lg px-6 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white">
+                    Individual Items
+                  </TabsTrigger>
+                  <TabsTrigger value="bulk" className="rounded-lg px-6 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white">
+                    Bulk Upload
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="single" className="mt-6">
+                  <div className="space-y-6">
+                    <DocumentRequestSingle 
+                      requestId={docRequest.id}
+                      documents={(docRequest.documents || []) as any}
+                      onUpload={handleUpload}
+                      onClearDocument={handleClear}
+                      uploadingDocument={
+                        uploadingState?.documentId
+                          ? { documentId: uploadingState.documentId }
+                          : undefined
+                      }
+                    />
+
+                    <DocumentRequestDouble 
+                      requestId={docRequest.id}
+                      multipleDocuments={(docRequest.multipleDocuments || []) as any}
+                      onUploadMultiple={handleUploadMultiple}
+                      onClearMultipleItem={handleClearMultipleItem}
+                      onClearMultipleGroup={handleClearMultipleGroup}
+                      onDownloadMultipleGroup={handleDownloadMultipleGroup}
+                      uploadingState={
+                        uploadingState?.documentId
+                          ? { documentId: uploadingState.documentId }
+                          : undefined
+                      }
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="bulk" className="mt-6">
+                  <div className="space-y-6">
+                    <BulkUploadZone 
+                      requestId={docRequest.id}
+                      onSuccess={() => {
+                        loadDocRequest(docRequest.id);
+                        setBulkUploadSuccessOpen(true);
+                      }}
+                      onClear={handleClear}
+                      documents={[
+                        ...(docRequest.documents || []),
+                        ...(docRequest.multipleDocuments || [])
+                      ]}
+                    />
+
+                    {docRequest.unassignedFiles && docRequest.unassignedFiles.length > 0 && (
+                      <div className="mt-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                        <UnassignedFilesSection 
+                          files={docRequest.unassignedFiles as any}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            ) : (
+              <div className="p-12 text-center bg-white rounded-2xl border border-dashed border-slate-200">
+                <p className="text-sm font-semibold text-slate-500">No document requirements found for this request.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <SuccessModal
+        isOpen={uploadSuccessOpen}
+        onClose={() => setUploadSuccessOpen(false)}
+        title="Upload Successful"
+        message="Your document has been uploaded successfully."
+        buttonText="Got it"
+      />
+
+      <SuccessModal
+        isOpen={clearSuccessOpen}
+        onClose={() => setClearSuccessOpen(false)}
+        title="Document Cleared"
+        message="The document has been cleared successfully."
+        buttonText="Got it"
+      />
+
+      <SuccessModal
+        isOpen={bulkUploadSuccessOpen}
+        onClose={() => setBulkUploadSuccessOpen(false)}
+        title="Upload Successful"
+        message="Files have been uploaded to the bulk section."
+        buttonText="Got it"
+      />
+
+      {clearModal && (
+        <ClearReasonModal
+          isOpen={clearModal.isOpen}
+          onClose={() => setClearModal(null)}
+          onConfirm={clearModal.onConfirm}
+          title={clearModal.title}
+          message={clearModal.message}
+        />
+      )}
     </div>
   );
 }
