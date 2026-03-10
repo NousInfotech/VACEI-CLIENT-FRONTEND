@@ -4797,9 +4797,11 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           </div>
         )}
 
-        <div className={cn(activeTab === "library" ? "" : "hidden" , "flex flex-col h-[calc(100vh-100px)] overflow-hidden gap-5")}>
-          <LibraryExplorer rootFolderId={engagementLibraryFolderId} />
-        </div>
+        {activeTab === "library" && (
+          <div className="flex flex-col h-[calc(100vh-100px)] overflow-hidden gap-5">
+            <LibraryExplorer rootFolderId={engagementLibraryFolderId} />
+          </div>
+        )}
 
         {activeTab === "workFlow" && (
           <WorkFlowSplitTab
@@ -4810,13 +4812,13 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           />
         )}
 
-        <div className={cn(activeTab === "milestones" ? "" : "hidden")}>
+        {activeTab === "milestones" && (
           <MilestonesTab refreshKey={refreshTick} />
-        </div>
+        )}
 
-        <div className={cn(activeTab === "compliance_calendar" ? "" : "hidden")}>
+        {activeTab === "compliance_calendar" && (
           <ComplianceCalendarTab serviceName={serviceName} refreshKey={refreshTick} />
-        </div>
+        )}
 
         {activeTab === "filings" && isMBRFilings && (
           <div className="space-y-6">
@@ -4965,17 +4967,17 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
         )}
 
 
-        <div className={cn(activeTab === "messages" ? "" : "hidden")}>
+        {activeTab === "messages" && (
           <UpdatesTab />
-        </div>
+        )}
 
-        <div className={cn(activeTab === "chat" ? "" : "hidden")}>
+        {activeTab === "chat" && (
           <EngagementChatTab />
-        </div>
+        )}
 
-        <div className={cn(activeTab === "filings" ? "" : "hidden")}>
+        {activeTab === "filings" && (
           <FilingsTab />
-        </div>
+        )}
       </div>
     </TooltipProvider>
   );
