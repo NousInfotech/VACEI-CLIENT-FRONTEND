@@ -126,9 +126,9 @@ export default function FilingsTab() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Document</th>
-                <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
-                <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Document</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-widest text-center">Status</th>
+                <th className="px-6 py-4 text-[11px] font-semibold text-slate-400 uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

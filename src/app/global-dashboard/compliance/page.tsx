@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import PillTabs from "@/components/shared/PillTabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import ComplianceMonthView from "@/components/engagement/ComplianceMonthView";
+import { Modal } from "@/components/ui/modal";
 
 export type ComplianceStatus = 'filed' | 'upcoming' | 'due_today' | 'overdue'
 
@@ -168,6 +169,8 @@ export default function GlobalCompliancePage() {
     const [loadingEntries, setLoadingEntries] = useState(false);
     const [viewMode, setViewMode] = useState<'list' | 'month'>('list')
     const [activeFilter, setActiveFilter] = useState<ComplianceStatus | 'all'>('all')
+    const [selectedItem, setSelectedItem] = useState<ComplianceItem | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const selectedCompany = companies.find(c => c.id === selectedCompanyId);
     
@@ -381,8 +384,15 @@ export default function GlobalCompliancePage() {
                                             </div>
 
                                             <div className="shrink-0 flex items-center md:justify-end gap-3 mt-4 md:mt-0">
-                                                <Badge variant="outline" className="text-xs font-medium text-gray-500 border-gray-200">
-                                                    View Details
+                                                <Badge 
+                                                    variant="outline" 
+                                                    className="text-xs font-medium text-gray-500 border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                                                    onClick={() => {
+                                                        setSelectedItem(item);
+                                                        setIsModalOpen(true);
+                                                    }}
+                                                >
+                                                    View
                                                 </Badge>
                                             </div>
                                         </div>
@@ -392,11 +402,92 @@ export default function GlobalCompliancePage() {
                         </div>
                     ) : (
                         <div className="bg-white border border-gray-100 p-6 overflow-hidden">
-                            <ComplianceMonthView items={allItems} />
+                            <ComplianceMonthView 
+                                items={allItems} 
+                                onSelectEvent={(item) => {
+                                    setSelectedItem(item as ComplianceItem);
+                                    setIsModalOpen(true);
+                                }}
+                            />
                         </div>
                     )}
                 </div>
             </div>
+
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title="Compliance Details"
+                size="wide"
+            >
+                {selectedItem && (
+                    <div className="space-y-6">
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                                <h3 className="text-xl font-bold text-gray-900 tracking-tight">{selectedItem.title}</h3>
+                                {selectedItem.companyName && (
+                                    <div className="flex items-center gap-2">
+                                        <Building2 className="w-3.5 h-3.5 text-gray-400" />
+                                        <p className="text-sm text-gray-500 font-medium">{selectedItem.companyName}</p>
+                                    </div>
+                                )}
+                            </div>
+                            <Badge className={cn("rounded-0 px-3 py-1 text-[10px] font-bold uppercase tracking-widest border", statusConfig[selectedItem.status]?.color)}>
+                                {statusConfig[selectedItem.status]?.label}
+                            </Badge>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-6 bg-slate-50 border border-slate-100 rounded-xl">
+                            <div className="space-y-1.5">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Due Date</p>
+                                <div className="flex items-center gap-2">
+                                    <CalendarDays className="w-4 h-4 text-primary" />
+                                    <p className="text-sm font-semibold text-slate-900">
+                                        {format(new Date(selectedItem.dueDate), "dd MMMM yyyy")}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Authority</p>
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="bg-white text-slate-900 border-slate-200 font-medium">
+                                        {selectedItem.authority}
+                                    </Badge>
+                                </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Frequency</p>
+                                <p className="text-sm font-semibold text-slate-900">{selectedItem.type}</p>
+                            </div>
+                            <div className="space-y-1.5">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Service Category</p>
+                                <p className="text-sm font-semibold text-slate-900">{selectedItem.serviceCategory}</p>
+                            </div>
+                        </div>
+
+                        {selectedItem.description && (
+                            <div className="space-y-3">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Filing Description</p>
+                                <div className="p-4 bg-white border border-slate-100 rounded-xl">
+                                    <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+                                        {selectedItem.description}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                        
+                        <div className="pt-4 flex justify-end">
+                            <Button 
+                                variant="outline" 
+                                onClick={() => setIsModalOpen(false)}
+                                className="rounded-xl px-6"
+                            >
+                                Close
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 }

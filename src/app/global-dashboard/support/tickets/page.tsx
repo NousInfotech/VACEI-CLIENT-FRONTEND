@@ -15,8 +15,8 @@ function RequestStatusBadge({ status }: { status: string }) {
     REJECTED: "bg-red-100 text-red-800",
   };
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status] ?? "bg-slate-100 text-slate-700"}`}>
-      {status}
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full capitalize text-xs font-medium ${styles[status] ?? "bg-slate-100 text-slate-700"}`}>
+      {status.replace(/_/g, " ").toLowerCase()}
     </span>
   );
 }
@@ -30,8 +30,8 @@ function TicketStatusBadge({ status }: { status: string }) {
     CLOSED: "bg-slate-100 text-slate-700",
   };
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status] ?? "bg-slate-100 text-slate-700"}`}>
-      {status}
+    <span className={`inline-flex items-center px-2.5 py-0.5 capitalize rounded-full text-xs font-medium ${styles[status] ?? "bg-slate-100 text-slate-700"}`}>
+      {status.replace(/_/g, " ").toLowerCase()}
     </span>
   );
 }
@@ -68,7 +68,7 @@ export default function SupportTicketsPage() {
         icon={HelpCircle}
         actions={
           <Link href="/global-dashboard/support">
-            <Button className="bg-slate-900 hover:bg-black text-white">
+            <Button variant="header">
               <Send className="w-4 h-4 mr-2" />
               New support request
             </Button>
