@@ -192,7 +192,19 @@ export default function GlobalCompliancePage() {
     }, [selectedCompanyId]);
 
     const allItems: ComplianceItem[] = useMemo(
-        () => calendarEntries.map(mapApiToComplianceItem),
+        () => {
+            const items = calendarEntries.map(mapApiToComplianceItem);
+            
+            // Custom sort order: due_today > upcoming > overdue > filed
+            const priority: Record<ComplianceStatus, number> = {
+                due_today: 0,
+                upcoming: 1,
+                overdue: 2,
+                filed: 3
+            };
+
+            return [...items].sort((a, b) => priority[a.status] - priority[b.status]);
+        },
         [calendarEntries]
     )
     
@@ -355,10 +367,12 @@ export default function GlobalCompliancePage() {
 
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-3 mb-2">
-                                                    <Badge className={cn("rounded-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest border", config.color)}>
-                                                        <StatusIcon className="w-3 h-3 mr-1.5" />
-                                                        {config.label}
-                                                    </Badge>
+                                                    {item.status !== 'overdue' && (
+                                                        <Badge className={cn("rounded-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest border", config.color)}>
+                                                            <StatusIcon className="w-3 h-3 mr-1.5" />
+                                                            {config.label}
+                                                        </Badge>
+                                                    )}
                                                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{item.type}</span>
                                                     {selectedCompanyId === "all" && (
                                                         <span className="text-[10px] font-bold text-primary border border-primary/20 bg-primary/5 px-2 py-0.5 uppercase tracking-widest">
@@ -432,9 +446,11 @@ export default function GlobalCompliancePage() {
                                     </div>
                                 )}
                             </div>
-                            <Badge className={cn("rounded-0 px-3 py-1 text-[10px] font-bold uppercase tracking-widest border", statusConfig[selectedItem.status]?.color)}>
-                                {statusConfig[selectedItem.status]?.label}
-                            </Badge>
+                            {selectedItem.status !== 'overdue' && (
+                                <Badge className={cn("rounded-0 px-3 py-1 text-[10px] font-bold uppercase tracking-widest border", statusConfig[selectedItem.status]?.color)}>
+                                    {statusConfig[selectedItem.status]?.label}
+                                </Badge>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 p-6 bg-slate-50 border border-slate-100 rounded-xl">

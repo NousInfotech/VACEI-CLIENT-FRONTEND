@@ -16,6 +16,7 @@ export const ListView: React.FC = () => {
         <tr className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">
           <th className="pb-2 pl-4">Name</th>
           <th className="pb-2 hidden sm:table-cell">Type</th>
+          <th className="pb-2 hidden lg:table-cell">Size</th>
           <th className="pb-2 hidden md:table-cell">Date Modified</th>
           <th className="pb-2 text-right pr-4">Actions</th>
         </tr>
@@ -39,17 +40,20 @@ export const ListView: React.FC = () => {
               <td className="py-1 pl-3 rounded-l-xl">
                 <div className="flex items-center gap-3">
                   <div className={cn(
-                    "w-10 h-10 rounded-xl flex items-center justify-center transition-colors border border-transparent",
+                    "w-10 h-10 rounded-xl flex items-center justify-center transition-colors border border-transparent shrink-0",
                     isSelected ? "border-primary/20" : "border-gray-100",
                     item.type === 'folder' ? "bg-amber-50" : "bg-blue-50"
                   )}>
                     <Icon className={cn("w-5 h-5", item.type === 'folder' ? "text-amber-500 fill-amber-500/10" : "text-blue-500")} />
                   </div>
-                  <span className="text-sm text-gray-700 font-medium">{item.name}</span>
+                  <span className="text-sm text-gray-700 font-medium truncate max-w-[200px] md:max-w-[400px] inline-block">{item.name}</span>
                 </div>
               </td>
               <td className="py-3 hidden sm:table-cell">
                 <span className="text-xs text-gray-500 uppercase font-medium">{item.fileType || 'Folder'}</span>
+              </td>
+              <td className="py-3 hidden lg:table-cell">
+                <span className="text-xs text-gray-500">{item.type === 'file' ? item.size : '—'}</span>
               </td>
               <td className="py-3 hidden md:table-cell">
                 <span className="text-xs text-gray-500">{item.updatedAt}</span>

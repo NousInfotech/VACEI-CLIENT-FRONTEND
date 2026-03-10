@@ -69,17 +69,20 @@ export default function GlobalOverviewCards() {
 
   const getComplianceContent = () => {
     // Calculate real data from entries
-    const overdueEntries = calendarEntries.filter(e => isPast(new Date(e.dueDate)) && !isToday(new Date(e.dueDate)));
+    // Calculate real data from entries - Ignoring Overdue as per user request
     const dueSoonEntries = calendarEntries.filter(e => {
       const due = new Date(e.dueDate);
-      return !isPast(due) && due <= addDays(new Date(), 7);
+      // Include today and anything in the next 7 days
+      return (isToday(due) || !isPast(due)) && due <= addDays(new Date(), 7);
     });
     
-    // Most urgent item
-    const urgentEntry = overdueEntries.length > 0 ? overdueEntries[0] : 
-                        dueSoonEntries.length > 0 ? dueSoonEntries[0] : 
-                        calendarEntries.length > 0 ? [...calendarEntries].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0] : 
-                        null;
+    // Most urgent item (Only looking at upcoming/due today items)
+    const upcomingEntries = calendarEntries.filter(e => isToday(new Date(e.dueDate)) || !isPast(new Date(e.dueDate)));
+    const urgentEntry = dueSoonEntries.length > 0 
+                        ? dueSoonEntries[0] 
+                        : upcomingEntries.length > 0 
+                          ? [...upcomingEntries].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0] 
+                          : null;
 
     let statusBadge = (
       <div className="flex items-center gap-3 text-emerald-400 font-semibold bg-emerald-950/30 w-fit px-4 py-1.5 rounded-full border border-emerald-500/30">
@@ -88,22 +91,11 @@ export default function GlobalOverviewCards() {
       </div>
     );
     let description = "No immediate actions required.";
-    let deadlineLabel = "Next deadline";
+    let deadlineLabel = "Upcoming";
     let deadlineValue = urgentEntry ? `${urgentEntry.company?.name || 'Global'} – ${urgentEntry.title} – ${format(new Date(urgentEntry.dueDate), "dd MMM")}` : "No upcoming deadlines";
     let buttonLabel = "View Deadlines";
 
-    if (overdueEntries.length > 0) {
-      statusBadge = (
-        <div className="flex items-center gap-3 text-red-400 font-semibold bg-red-950/30 w-fit px-4 py-1.5 rounded-full border border-red-500/30">
-          <AlertCircle size={18} />
-          <span>{overdueEntries.length} {overdueEntries.length === 1 ? 'filing is' : 'filings are'} overdue.</span>
-        </div>
-      );
-      description = "Immediate action is required.";
-      deadlineLabel = "Overdue: " + (urgentEntry?.company?.name || 'Global');
-      deadlineValue = urgentEntry ? `${urgentEntry.title} – ${format(new Date(urgentEntry.dueDate), "dd MMM")}` : "";
-      buttonLabel = "Resolve Now";
-    } else if (dueSoonEntries.length > 0) {
+    if (dueSoonEntries.length > 0) {
       statusBadge = (
         <div className="flex items-center gap-3 text-amber-400 font-semibold bg-amber-950/30 w-fit px-4 py-1.5 rounded-full border border-amber-500/30">
           <AlertTriangle size={18} />
@@ -111,7 +103,7 @@ export default function GlobalOverviewCards() {
         </div>
       );
       description = "Please review upcoming filings.";
-      deadlineLabel = "Next deadline";
+      deadlineLabel = "Upcoming";
       deadlineValue = urgentEntry ? `${urgentEntry.company?.name || 'Global'} – ${urgentEntry.title} – ${format(new Date(urgentEntry.dueDate), "dd MMM")}` : "";
       buttonLabel = "Review Deadlines";
     }

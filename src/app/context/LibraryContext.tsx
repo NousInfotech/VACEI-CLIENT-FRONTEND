@@ -311,15 +311,29 @@ export const LibraryProvider: React.FC<{
     }
   }, [useApi, rootType, companyId])
 
+  // Cache for folder contents to prevent flickering on navigation
+  const [contentCache, setContentCache] = useState<Record<string, LibraryItem[]>>({});
+
   // Load folder content when currentFolderId changes (API mode)
   useEffect(() => {
     if (!useApi || !currentFolderId) {
       setApiCurrentContent([])
       return
     }
+
+    // Check cache first for instant feedback
+    if (contentCache[currentFolderId]) {
+      setApiCurrentContent(contentCache[currentFolderId]);
+      // We still fetch in background to keep it fresh, but don't set global isLoading if we have cached data
+    }
+
     let cancelled = false
     const load = async () => {
-      setIsLoading(true)
+      // Only show full loading if we have nothing in cache
+      if (!contentCache[currentFolderId]) {
+        setIsLoading(true)
+      }
+      
       setError(null)
       try {
         const content = await getFolderContent(currentFolderId)
@@ -328,7 +342,10 @@ export const LibraryProvider: React.FC<{
         const foldersRaw = content.folders ?? content.childFolders ?? []
         const childFolders = foldersRaw.map((f) => mapApiFolderToItem(f, parentId))
         const files = (content.files ?? []).map((f) => mapApiFileToItem(f, parentId))
-        setApiCurrentContent([...childFolders, ...files])
+        const combined = [...childFolders, ...files];
+        
+        setApiCurrentContent(combined)
+        setContentCache(prev => ({ ...prev, [currentFolderId]: combined }));
 
         // Auto-initialize folderPath if we jumped directly into a folder (initial load)
         if (folderPath.length === 0 && currentFolderId) {
@@ -474,11 +491,37 @@ export const LibraryProvider: React.FC<{
         setFolderPath((prev) => {
           // If the clicked folder is a root folder, reset the path
           const isRoot = rootFolders.some((rf) => rf.id === id)
+          const isSidebarItem = sidebarFolders.some((sf) => sf.id === id)
+
+          // If it's a root folder, always reset to just that root
           if (isRoot) {
             const name = opts?.name ?? rootFolders.find((rf) => rf.id === id)?.name ?? "Folder"
             return [{ id, name }]
           }
 
+          // If it's a sidebar item, we want to reset the path starting from the sidebar's parent
+          if (isSidebarItem) {
+            const sidebarItem = sidebarFolders.find(sf => sf.id === id);
+            const parentId = (sidebarItem as any)?.parentId;
+            
+            // Find where this parent exists in our current breadcrumb path
+            const parentIdx = prev.findIndex(p => p.id === parentId);
+            
+            if (parentIdx >= 0) {
+              // Found the parent! Keep path up to parent and append the selected item.
+              const newPath = prev.slice(0, parentIdx + 1);
+              const name = opts?.name ?? sidebarItem?.name ?? "Folder";
+              return [...newPath, { id, name }];
+            } else if (prev.length > 0) {
+              // Fallback: If parent not found but we have a path, 
+              // check if the first item (absolute root) should be preserved
+              const firstItem = prev[0];
+              const name = opts?.name ?? sidebarItem?.name ?? "Folder";
+              return [firstItem, { id, name }];
+            }
+          }
+
+          // Normal navigation (opening a subfolder in the main view)
           const idx = prev.findIndex((p) => p.id === id)
           if (idx >= 0) {
             return prev.slice(0, idx + 1)

@@ -4797,7 +4797,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
           </div>
         )}
 
-        <div className={cn(activeTab === "library" ? "" : "hidden")}>
+        <div className={cn(activeTab === "library" ? "" : "hidden" , "flex flex-col h-[calc(100vh-100px)] overflow-hidden gap-5")}>
           <LibraryExplorer rootFolderId={engagementLibraryFolderId} />
         </div>
 

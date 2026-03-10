@@ -34,7 +34,7 @@ export default function CompanyLibraryPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col h-[calc(100vh-100px)] overflow-hidden gap-5">
       <PageHeader
         title={activeCompany ? `${activeCompany.name} – Library` : "Library"}
         subtitle={
@@ -45,10 +45,10 @@ export default function CompanyLibraryPage() {
         icon={Library}
       />
 
-      <div className="bg-white rounded-2xl overflow-hidden border border-white/10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex-1 rounded-2xl min-h-0 bg-white border-t border-gray-200">
         <LibraryExplorer useApi={true} companyId={activeCompanyId} />
       </div>
-    </div>
+    </div> 
   );
 }
 
