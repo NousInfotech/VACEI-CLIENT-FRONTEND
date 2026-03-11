@@ -10,6 +10,7 @@ export interface ServiceRequestPayload {
   companyId: string;
   service: string;
   customServiceCycleId?: string;
+  organizationId?: string | null;
 }
 
 export interface ServiceRequestUpdatePayload {

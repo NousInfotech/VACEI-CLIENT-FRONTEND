@@ -18,6 +18,8 @@ import { Spinner } from "@/components/ui/spinner";
 import Link from "next/link";
 import EngagementSelectionCards from "./EngagementSelectionCards";
 import { SERVICE_METADATA } from "@/lib/menuData";
+import { getCompanyById } from "@/api/auditService";
+import { getOrganizationById } from "@/api/organizationService";
 
 interface ServiceEngagementProps {
   serviceSlug: string;
@@ -285,6 +287,7 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
   const [resolvedCustomServiceId, setResolvedCustomServiceId] = useState<string | null>(null);
   const [engagementLoading, setEngagementLoading] = useState(false);
   const [engagementNotFound, setEngagementNotFound] = useState(false);
+  const [isServiceLocallyAvailable, setIsServiceLocallyAvailable] = useState<boolean>(true);
   const { sidebarData, loading: sidebarLoading } = useGlobalDashboard();
   const hasFetchedRef = useRef(false);
 
@@ -306,9 +309,10 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
       return;
     }
 
-    const findMatchingEngagements = () => {
+    const findMatchingEngagements = async () => {
       setEngagementLoading(true);
       setEngagementNotFound(false);
+      setIsServiceLocallyAvailable(true);
 
       // Find metadata key for this slug
       let metadataKey = Object.keys(SERVICE_METADATA).find(key => 
@@ -324,9 +328,40 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
       if (!metadataKey && sidebarItem?.customServiceCycleId) {
         metadataKey = "CUSTOM";
         setResolvedCustomServiceId(sidebarItem.customServiceCycleId);
+        setResolvedMetadataKey("CUSTOM");
+      } else {
+        setResolvedMetadataKey(metadataKey || null);
       }
 
-      setResolvedMetadataKey(metadataKey || null);
+      // Check organization availability
+      try {
+        const company = await getCompanyById(activeCompanyId);
+        console.log("ServiceEngagement - Company Data:", company);
+        
+        if (company.organizationId) {
+          const organization = await getOrganizationById(company.organizationId);
+          console.log("ServiceEngagement - Organization Data:", organization);
+          
+          const availableStandard = organization.availableServices || [];
+          const availableCustom = (organization.customServiceCycles || []).map((c: any) => c.id);
+
+          let isAvailable = false;
+          if (metadataKey === "CUSTOM") {
+            const customId = sidebarItem?.customServiceCycleId || resolvedCustomServiceId;
+            isAvailable = customId ? availableCustom.includes(customId) : false;
+          } else if (metadataKey) {
+            isAvailable = availableStandard.includes(metadataKey);
+          }
+          
+          console.log(`ServiceEngagement - Is ${metadataKey} available?`, isAvailable);
+          setIsServiceLocallyAvailable(isAvailable);
+        } else {
+          console.log("ServiceEngagement - No organizationId found for company.");
+          setIsServiceLocallyAvailable(false);
+        }
+      } catch (err) {
+        console.error("Failed to check organization availability:", err);
+      }
 
       if (!metadataKey) {
         setEngagementNotFound(true);
@@ -381,7 +416,7 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
     };
 
     findMatchingEngagements();
-  }, [propEngagementId, urlEngagementId, serviceSlug, activeCompanyId, sidebarData, sidebarLoading, router, pathname]);
+  }, [propEngagementId, urlEngagementId, serviceSlug, activeCompanyId, sidebarData, sidebarLoading, router, pathname, resolvedCustomServiceId]);
 
   const engagementIdToUse = finalEngagementId || (ENGAGEMENT_CONFIG.USE_MOCK_DATA ? `mock-engagement-${serviceSlug}` : "");
 
@@ -414,11 +449,22 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
 
             <div className="space-y-4 relative z-10">
               <h2 className="text-2xl font-semibold tracking-tight text-gray-900 drop-shadow-sm">
-                No active engagement for <span className="text-primary">{data.name}</span>
+                No active engagement for <span className="text-primary">{displayServiceName}</span>
               </h2>
               <p className="text-base text-gray-500 leading-relaxed max-w-xs mx-auto">
                 You haven&apos;t started an engagement for this service yet. Request it now to begin your journey with us.
               </p>
+              {!isServiceLocallyAvailable && (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-100">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    Service not available in the organization
+                  </div>
+                  <p className="text-xs text-amber-600 font-medium italic">
+                    Note: This request will be forwarded to the VACEI platform
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-4 w-full pt-4 relative z-10">
@@ -430,7 +476,7 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
                 Go Back
               </button>
               <Link
-                href={`/dashboard/${activeCompanyId}/services/request?service=${resolvedMetadataKey || ''}${resolvedCustomServiceId ? `&customServiceId=${resolvedCustomServiceId}` : ''}`}
+                href={`/dashboard/${activeCompanyId}/services/request?service=${resolvedMetadataKey || ''}${resolvedCustomServiceId ? `&customServiceId=${resolvedCustomServiceId}` : ''}${!isServiceLocallyAvailable ? '&toPlatform=true' : ''}`}
                 className="w-full sm:flex-1 h-12 inline-flex items-center justify-center rounded-xl bg-primary text-white font-semibold shadow-lg shadow-primary/25 hover:bg-primary/90 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 active:scale-95"
               >
                 Request service
