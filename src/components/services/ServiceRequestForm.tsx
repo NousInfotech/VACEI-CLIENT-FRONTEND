@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import DynamicServiceRequestForm from "./DynamicServiceRequestForm";
 import {
   getActiveServiceTemplate,
@@ -11,6 +12,7 @@ import {
   submitRequest,
   listServiceRequests,
 } from "@/api/serviceRequestService";
+import { getCompanyById } from "@/api/auditService";
 import { FormField } from "@/types/serviceTemplate";
 import { Button } from "@/components/ui/button";
 import ServiceFormSkeleton from "./ServiceFormSkeleton";
@@ -37,7 +39,12 @@ export default function ServiceRequestForm({
   onDraftSave,
   serviceLabel,
 }: Props) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const toPlatform = searchParams.get("toPlatform") === "true";
+  
   const [requestId, setRequestId] = useState<string | null>(null);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
   
   // Templates
   const [serviceFields, setServiceFields] = useState<FormField[]>([]);
@@ -65,8 +72,8 @@ export default function ServiceRequestForm({
       try {
         setLoading(true);
         
-        // Parallel fetching of SPECIFIC template and existing drafts
-        const [specRes, listRes] = await Promise.all([
+        // Parallel fetching
+        const [specRes, listRes, companyRes] = await Promise.all([
           getActiveServiceTemplate(service, customServiceId),
           listServiceRequests({
             companyId,
@@ -74,10 +81,12 @@ export default function ServiceRequestForm({
             customServiceCycleId: customServiceId,
             status: "DRAFT",
             limit: 1,
-          })
+          }),
+          getCompanyById(companyId)
         ]);
 
         setServiceFields(specRes?.data?.formFields || []);
+        setOrganizationId(companyRes.organizationId || null);
 
         if (listRes?.data?.length > 0) {
           const draft = listRes.data[0];
@@ -145,7 +154,8 @@ export default function ServiceRequestForm({
         })),
         companyId,
         service,
-        customServiceCycleId: customServiceId 
+        customServiceCycleId: customServiceId,
+        organizationId: toPlatform ? undefined : (organizationId || undefined) 
       };
 
       let response;
@@ -195,10 +205,11 @@ export default function ServiceRequestForm({
       };
 
       if (!rid) {
-        const newDraft = await createDraft({ 
-          companyId, 
-          service, 
-          customServiceCycleId: customServiceId 
+        const newDraft = await createDraft({
+          companyId,
+          service,
+          customServiceCycleId: customServiceId,
+          organizationId: toPlatform ? undefined : (organizationId || undefined),
         });
         rid = newDraft.data.id;
         setRequestId(rid);
@@ -236,7 +247,7 @@ export default function ServiceRequestForm({
           fields={serviceFields}
           values={serviceValues}
           errors={errors}
-          onChange={(key, value) => {
+          onChange={(key: string, value: any) => {
             setServiceValues((prev) => ({
               ...prev,
               [key]: value,
