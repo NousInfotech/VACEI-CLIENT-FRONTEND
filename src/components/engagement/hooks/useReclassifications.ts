@@ -12,13 +12,16 @@ interface UseReclassificationsReturn {
   refetch: () => Promise<void>
 }
 
-export const useReclassifications = (etbId: string | null): UseReclassificationsReturn => {
+/**
+ * @param engagementId - Engagement ID (used to fetch audit-entries filtered by RECLASSIFICATION; same as VACEI_PARTNER_PORTAL)
+ */
+export const useReclassifications = (engagementId: string | null): UseReclassificationsReturn => {
   const [reclassifications, setReclassifications] = useState<Reclassification[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
   const fetchReclassifications = async () => {
-    if (!etbId) {
+    if (!engagementId) {
       setLoading(false)
       return
     }
@@ -31,11 +34,11 @@ export const useReclassifications = (etbId: string | null): UseReclassifications
         await new Promise(resolve => setTimeout(resolve, 500));
         setReclassifications(MOCK_ENGAGEMENT_DATA.reclassifications as any[]);
       } else {
-        const data = await getReclassifications(etbId)
+        const data = await getReclassifications(engagementId)
         setReclassifications(data)
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch reclassifications')
+      setError(err?.message || 'Failed to fetch reclassifications')
       setReclassifications([])
     } finally {
       setLoading(false)
@@ -44,7 +47,7 @@ export const useReclassifications = (etbId: string | null): UseReclassifications
 
   useEffect(() => {
     fetchReclassifications()
-  }, [etbId])
+  }, [engagementId])
 
   const refetch = async () => {
     await fetchReclassifications()

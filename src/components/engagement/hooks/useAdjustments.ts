@@ -12,13 +12,16 @@ interface UseAdjustmentsReturn {
   refetch: () => Promise<void>
 }
 
-export const useAdjustments = (etbId: string | null): UseAdjustmentsReturn => {
+/**
+ * @param engagementId - Engagement ID (used to fetch audit-entries filtered by ADJUSTMENT; same as VACEI_PARTNER_PORTAL)
+ */
+export const useAdjustments = (engagementId: string | null): UseAdjustmentsReturn => {
   const [adjustments, setAdjustments] = useState<Adjustment[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
   const fetchAdjustments = async () => {
-    if (!etbId) {
+    if (!engagementId) {
       setLoading(false)
       return
     }
@@ -31,11 +34,11 @@ export const useAdjustments = (etbId: string | null): UseAdjustmentsReturn => {
         await new Promise(resolve => setTimeout(resolve, 500));
         setAdjustments(MOCK_ENGAGEMENT_DATA.adjustments as any[]);
       } else {
-        const data = await getAdjustments(etbId)
+        const data = await getAdjustments(engagementId)
         setAdjustments(data)
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch adjustments')
+      setError(err?.message || 'Failed to fetch adjustments')
       setAdjustments([])
     } finally {
       setLoading(false)
@@ -44,7 +47,7 @@ export const useAdjustments = (etbId: string | null): UseAdjustmentsReturn => {
 
   useEffect(() => {
     fetchAdjustments()
-  }, [etbId])
+  }, [engagementId])
 
   const refetch = async () => {
     await fetchAdjustments()

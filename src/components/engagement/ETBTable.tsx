@@ -2,7 +2,7 @@ import React from 'react';
 import { ETBRow } from './mockEngagementData';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { PieChart, AlertCircle, TableProperties } from 'lucide-react';
+import { TableProperties } from 'lucide-react';
 import EmptyState from '../shared/EmptyState';
 
 interface ETBTableProps {
@@ -39,103 +39,80 @@ const ETBTable: React.FC<ETBTableProps> = ({ data }) => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Aggregate Summary Ribbon matching Classification.tsx */}
-      <div className="bg-gray-50/50 border border-gray-200 rounded-0 p-8">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="h-10 w-10 bg-white border border-gray-200 rounded-0 flex items-center justify-center shadow-sm">
-            <PieChart className="h-5 w-5 text-gray-600" />
+      {/* Aggregate Summary – match VACEI_PARTNER_PORTAL ExtendedTB */}
+      <div className="grid grid-cols-4 gap-4">
+        {[
+          { label: "Current Year", value: totals.currentYear },
+          { label: "Prior Year", value: totals.priorYear },
+          { label: "Adjustments", value: totals.adjustments },
+          { label: "Final Balance", value: totals.finalBalance },
+        ].map((item) => (
+          <div
+            key={item.label}
+            className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm"
+          >
+            <p className="text-sm font-medium text-gray-500 mb-1">{item.label}</p>
+            <p className="text-2xl font-bold text-gray-900">{formatNumber(item.value)}</p>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Extended Trial Balance Summary
-            </h2>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-4 gap-4">
-          {[
-            { label: 'Current Year', value: totals.currentYear },
-            { label: 'Prior Year', value: totals.priorYear },
-            { label: 'Adjustments', value: totals.adjustments },
-            { label: 'Final Balance', value: totals.finalBalance }
-          ].map((item) => (
-            <div 
-              key={item.label} 
-              className="bg-white p-4 border border-gray-200 rounded-0 shadow-sm transition-all duration-300"
-            >
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                {item.label}
-              </p>
-              <span className="text-2xl font-medium tracking-tight">
-                {formatNumber(item.value)}
-              </span>
-            </div>
-          ))}
-        </div>
+        ))}
       </div>
 
-      <div className="bg-white rounded-0 border border-gray-100 overflow-hidden shadow-sm">
-        <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
+      <div className="w-full max-w-full rounded-xl border border-gray-200 bg-white shadow-sm overflow-x-auto overflow-y-visible">
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50/50">
           <div>
-          <h3 className="text-xl font-bold text-gray-900">Extended Trial Balance</h3>
-          <p className="text-sm text-gray-500 mt-0.5">Summary of all account balances and adjustments</p>
+            <h3 className="text-xl font-bold text-gray-900">Extended Trial Balance</h3>
+            <p className="text-sm text-gray-500 mt-0.5">Summary of all account balances and adjustments</p>
+          </div>
+          <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200 px-3 py-1 font-medium">
+            {data.length} Accounts
+          </Badge>
         </div>
-        <Badge variant="outline" className="bg-white text-indigo-700 border-indigo-100 px-3 py-1 font-medium">
-          {data.length} Accounts
-        </Badge>
-      </div>
-      
-      <div className="overflow-x-auto">
-        <Table className="border-collapse">
-          <TableHeader className="bg-gray-50/50">
-            <TableRow className="border-b border-t border-gray-300">
-              <TableHead className="w-[80px] font-bold text-gray-900 border-r border-gray-300 p-3">Code</TableHead>
-              <TableHead className="min-w-[200px] font-bold text-gray-900 border-r border-gray-300 p-3">Account Name</TableHead>             
-              <TableHead className="text-right font-bold text-gray-900 border-r border-gray-300 p-3">Current Year</TableHead>
-              <TableHead className="text-right font-bold text-gray-900 border-r border-gray-300 p-3">Re-classification</TableHead>
-              <TableHead className="text-right font-bold text-gray-900 border-r border-gray-300 p-3">Adjustments</TableHead>
-              <TableHead className="text-right font-bold text-gray-900 border-r border-gray-300 p-3">Final Balance</TableHead>
-              <TableHead className="text-right font-bold text-gray-900 last:border-r-0 p-3">Prior Year</TableHead>
+        <Table className="border-collapse w-full min-w-[700px]">
+          <TableHeader>
+            <TableRow className="bg-gray-50/50 border-b border-gray-200">
+              <TableHead className="w-[80px] font-semibold text-gray-600 border-r border-gray-200 p-3">Code</TableHead>
+              <TableHead className="min-w-[200px] font-semibold text-gray-600 border-r border-gray-200 p-3">Account Name</TableHead>
+              <TableHead className="text-right font-semibold text-gray-600 border-r border-gray-200 p-3">Current Year</TableHead>
+              <TableHead className="text-right font-semibold text-gray-600 border-r border-gray-200 p-3">Re-classification</TableHead>
+              <TableHead className="text-right font-semibold text-gray-600 border-r border-gray-200 p-3">Adjustments</TableHead>
+              <TableHead className="text-right font-semibold text-gray-600 border-r border-gray-200 p-3">Final Balance</TableHead>
+              <TableHead className="text-right font-semibold text-gray-600 p-3">Prior Year</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="divide-y divide-gray-100">
             {data.map((row) => (
-              <TableRow key={row._id} className="hover:bg-gray-50/50 transition-colors border-b border-gray-200 last:border-b-0">
+              <TableRow key={row._id} className="hover:bg-gray-50/80 transition-colors border-b border-gray-200">
                 <TableCell className="font-mono text-xs text-gray-500 border-r border-gray-200 p-3">{row.code}</TableCell>
                 <TableCell className="font-medium text-gray-900 border-r border-gray-200 p-3">{row.accountName}</TableCell>
                 <TableCell className="text-right font-mono text-sm border-r border-gray-200 p-3">
                   {formatNumber(row.currentYear)}
                 </TableCell>
-                <TableCell className={`text-right font-mono text-sm border-r border-gray-200 p-3 ${row.reclassification !== 0 ? 'text-orange-600 font-semibold' : 'text-gray-400'}`}>
+                <TableCell className={`text-right font-mono text-sm border-r border-gray-200 p-3 ${row.reclassification !== 0 ? "text-gray-700 font-semibold" : "text-gray-400"}`}>
                   {formatNumber(row.reclassification)}
                 </TableCell>
-                <TableCell className={`text-right font-mono text-sm border-r border-gray-200 p-3 ${row.adjustments !== 0 ? 'text-indigo-600 font-semibold' : 'text-gray-400'}`}>
+                <TableCell className={`text-right font-mono text-sm border-r border-gray-200 p-3 ${row.adjustments !== 0 ? "text-gray-700 font-semibold" : "text-gray-400"}`}>
                   {formatNumber(row.adjustments)}
                 </TableCell>
                 <TableCell className="text-right font-mono text-sm font-bold bg-gray-50/10 border-r border-gray-200 p-3">
                   {formatNumber(row.finalBalance)}
                 </TableCell>
-                <TableCell className="text-right font-mono text-sm last:border-r-0 p-3">
+                <TableCell className="text-right font-mono text-sm p-3">
                   {formatNumber(row.priorYear)}
                 </TableCell>
               </TableRow>
             ))}
-            {/* Total Row matching Classification.tsx style */}
-            <TableRow className="bg-slate-50 border-t-2 border-black h-12">
-              <TableCell colSpan={2} className="pl-4 border-r border-gray-300">
-                <span className="font-medium text-xl">Total</span>
-              </TableCell>
-              <TableCell className="text-right border-r border-gray-300 font-bold p-3">{formatNumber(totals.currentYear)}</TableCell>
-              <TableCell className="text-right border-r border-gray-300 p-3">{formatNumber(totals.reclassification)}</TableCell>
-              <TableCell className="text-right border-r border-gray-300 p-3">{formatNumber(totals.adjustments)}</TableCell>
-              <TableCell className="text-right border-r border-gray-300 font-bold p-3">{formatNumber(totals.finalBalance)}</TableCell>
-              <TableCell className="text-right last:border-r-0 font-bold p-3">{formatNumber(totals.priorYear)}</TableCell>
+            <TableRow className="bg-gray-50/50 border-t border-gray-200 font-bold">
+              <TableCell colSpan={2} className="pl-4 border-r border-gray-200 p-3 text-gray-900">Total</TableCell>
+              <TableCell className="text-right border-r border-gray-200 p-3">{formatNumber(totals.currentYear)}</TableCell>
+              <TableCell className="text-right border-r border-gray-200 p-3">{formatNumber(totals.reclassification)}</TableCell>
+              <TableCell className="text-right border-r border-gray-200 p-3">{formatNumber(totals.adjustments)}</TableCell>
+              <TableCell className="text-right border-r border-gray-200 p-3">{formatNumber(totals.finalBalance)}</TableCell>
+              <TableCell className="text-right p-3">{formatNumber(totals.priorYear)}</TableCell>
             </TableRow>
           </TableBody>
         </Table>
       </div>
     </div>
-  </div>
   );
 };
 

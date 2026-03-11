@@ -3,18 +3,16 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card2";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar, FileText, CheckCircle2 } from "lucide-react";
+import { FileText } from "lucide-react";
 import { useReclassifications } from './hooks/useReclassifications';
-import { useEtb } from './hooks/useEtb';
 import { useEngagement } from './hooks/useEngagement';
-import { format } from 'date-fns';
 import { formatAmount } from '@/lib/utils';
 import { TableSkeleton } from "../shared/CommonSkeletons";
 
 const Reclassification = () => {
   const { engagement } = useEngagement();
-  const { reclassifications, loading, error } = useReclassifications(engagement?._id || null);
-  const { etb } = useEtb(engagement?._id || null);
+  const engagementId = engagement?.id ?? engagement?._id ?? null;
+  const { reclassifications, loading, error } = useReclassifications(engagementId);
 
   if (loading) {
     return <TableSkeleton rows={8} />;
@@ -22,17 +20,17 @@ const Reclassification = () => {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-slate-500">
+      <div className="flex flex-col items-center justify-center h-64 text-gray-500">
         <FileText className="w-12 h-12 mb-4 opacity-20" />
         <p>{error}</p>
       </div>
     );
   }
 
-  // Transform API reclassifications to match the expected format
+  // Transform API reclassifications to match the expected format (use backend code when present)
   const transformedReclassifications = reclassifications.map((rc, index) => ({
     _id: rc._id,
-    reclassificationNo: `RC${String(index + 1).padStart(3, '0')}`, // Generate reclassification number if not provided
+    reclassificationNo: rc.code || `RC${String(index + 1).padStart(3, '0')}`,
     description: rc.refs?.join(', ') || `Reclassification ${index + 1}`,
     createdAt: new Date().toISOString(), // Use current date if not provided
     status: rc.status || 'active',
@@ -47,7 +45,7 @@ const Reclassification = () => {
 
   if (!sortedReclassifications || sortedReclassifications.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-slate-500">
+      <div className="flex flex-col items-center justify-center h-64 text-gray-500">
         <FileText className="w-12 h-12 mb-4 opacity-20" />
         <p>No reclassifications found for this engagement.</p>
       </div>
@@ -55,78 +53,69 @@ const Reclassification = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-800">Reclassification Entries</h2>
-        <Badge variant="outline" className="px-3 py-1 bg-orange-50 text-orange-700 border-orange-200">
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Reclassifications</h2>
+          <p className="text-gray-500 mt-1">Manage audit reclassifications for this engagement</p>
+        </div>
+        <Badge variant="outline" className="px-3 py-1 bg-gray-100 text-gray-600 border-gray-200">
           {sortedReclassifications.length} Total Reclassifications
         </Badge>
       </div>
 
       <div className="grid gap-6">
         {sortedReclassifications.map((rc) => (
-          <Card key={rc._id} className="overflow-hidden border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="bg-slate-50/50 border-b border-gray-300 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center px-5 py-2 rounded-lg bg-orange-100 text-orange-700 font-bold">
+          <Card key={rc._id} className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm overflow-hidden">
+            <CardHeader className="bg-gray-50/50 border-b border-gray-200 py-4 px-0">
+              <div className="flex justify-between items-start gap-6">
+                <div className="flex items-center gap-3">
+                  <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium">
                     {rc.reclassificationNo}
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg font-bold text-slate-800">
-                      {rc.description || `Reclassification ${rc.reclassificationNo}`}
-                    </CardTitle>
-                    <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
-                      <span className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {rc.createdAt ? format(new Date(rc.createdAt), "MMM d, yyyy") : 'N/A'}
-                      </span>
-                      <span className="w-1 h-1 rounded-full bg-slate-300" />
-                      <span className="flex items-center gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
-                        {rc.status.charAt(0).toUpperCase() + rc.status.slice(1)}
-                      </span>
-                    </div>
-                  </div>
+                  </span>
+                  <span className={`px-3 py-1 rounded-lg text-xs font-bold ${(rc.status || "").toUpperCase() === "POSTED" ? "bg-gray-900 text-white" : "bg-yellow-100 text-yellow-800"}`}>
+                    {rc.status?.charAt(0).toUpperCase() + rc.status?.slice(1) || "Draft"}
+                  </span>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">Total</div>
-                  <div className="text-xl font-bold text-slate-900">
-                     {formatAmount(rc.totalDr)}
-                  </div>
+                  <div className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Total</div>
+                  <div className="text-xl font-bold text-gray-900">{formatAmount(rc.totalDr)}</div>
                 </div>
               </div>
+              <p className="text-gray-500 text-sm mt-2">{rc.description || `Reclassification ${rc.reclassificationNo}`}</p>
             </CardHeader>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b border-gray-300">
-                    <TableHead className="w-[100px] py-3 text-md font-bold uppercase tracking-wider pl-6 border-r border-gray-300">Code</TableHead>
-                    <TableHead className="py-3 text-md font-bold uppercase tracking-wider border-r border-gray-300">Account</TableHead>
-                    <TableHead className="py-3 text-md font-bold uppercase tracking-wider text-right border-r border-gray-300">Debit</TableHead>
-                    <TableHead className="py-3 text-md font-bold uppercase tracking-wider text-right pr-6">Credit</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(rc.entries || []).map((entry: any, idx: number) => (
-                    <TableRow key={idx} className="border-gray-300 hover:bg-slate-50/50 transition-colors">
-                      <TableCell className="font-medium text-slate-700 pl-6 py-3 border-r border-gray-300">{entry.code || entry.rowId || '-'}</TableCell>
-                      <TableCell className="text-slate-600 py-3 border-r border-gray-300">{entry.accountName || '-'}</TableCell>
-                      <TableCell className="text-right py-3 text-indigo-600 font-medium border-r border-gray-300">
-                        {entry.dr > 0 ? formatAmount(entry.dr) : '-'}
-                      </TableCell>
-                      <TableCell className="text-right py-3 text-rose-600 font-medium pr-6">
-                        {entry.cr > 0 ? formatAmount(entry.cr) : '-'}
-                      </TableCell>
+              <div className="overflow-hidden rounded-lg border border-gray-100">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50/50 border-b border-gray-200">
+                      <TableHead className="w-16 px-4 py-3 text-left font-medium text-gray-500 border-r border-gray-200">Code</TableHead>
+                      <TableHead className="px-4 py-3 text-left font-medium text-gray-500 border-r border-gray-200">Account</TableHead>
+                      <TableHead className="w-32 px-4 py-3 text-right font-medium text-gray-500 border-r border-gray-200">DR</TableHead>
+                      <TableHead className="w-32 px-4 py-3 text-right font-medium text-gray-500">CR</TableHead>
                     </TableRow>
-                  ))}
-                  <TableRow className="bg-slate-50/50 border-t-2 border-slate-100 font-bold hover:bg-slate-50/50">
-                    <TableCell colSpan={2} className="py-4 text-slate-800 pl-6 border-r border-gray-300">Cumulative Balance</TableCell>
-                    <TableCell className="text-right py-4 text-indigo-700 border-r border-gray-300">{formatAmount(rc.totalDr)}</TableCell>
-                    <TableCell className="text-right py-4 text-rose-700 pr-6">{formatAmount(rc.totalCr)}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody className="divide-y divide-gray-50">
+                    {(rc.entries || []).map((entry: any, idx: number) => (
+                      <TableRow key={idx} className="border-b border-gray-100">
+                        <TableCell className="px-4 py-3 text-gray-900 font-mono text-sm border-r border-gray-200">{entry.code || entry.rowId || "-"}</TableCell>
+                        <TableCell className="px-4 py-3 text-gray-900 border-r border-gray-200">{entry.accountName || "-"}</TableCell>
+                        <TableCell className="px-4 py-3 text-right text-gray-900 font-medium border-r border-gray-200">
+                          {entry.dr > 0 ? formatAmount(entry.dr) : "-"}
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-right text-gray-900 font-medium">
+                          {entry.cr > 0 ? formatAmount(entry.cr) : "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow className="bg-gray-50/50 font-bold border-t border-gray-200">
+                      <TableCell colSpan={2} className="px-4 py-3 text-gray-900 border-r border-gray-200">Total</TableCell>
+                      <TableCell className="px-4 py-3 text-right text-gray-900 border-r border-gray-200">{formatAmount(rc.totalDr)}</TableCell>
+                      <TableCell className="px-4 py-3 text-right text-gray-900">{formatAmount(rc.totalCr)}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         ))}

@@ -51,6 +51,7 @@ import PillTabs, { Tab } from "../shared/PillTabs";
 import EngagementChatTab from "./EngagementChatTab";
 import ServiceMessages from "./ServiceMessages";
 import { LibraryExplorer } from "../library/LibraryExplorer";
+import ClientAuditTab from "./ClientAuditTab";
 import DocumentRequestsTab from "./DocumentRequestsTab";
 import MilestonesTab from "./MilestonesTab";
 import ComplianceCalendarTab from "./ComplianceCalendarTab";
@@ -728,6 +729,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
         { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
         { id: "workFlow", label: "WorkFlow", icon: ClipboardList },
         { id: "milestones", label: "Milestones", icon: Flag },
+        ...(isAudit ? [{ id: "audit", label: "Audit", icon: FileText }] : []),
         { id: "library", label: "Library", icon: Library },
         { id: "compliance_calendar", label: "Compliance Calendar", icon: Calendar },
         { id: "messages", label: "Updates", icon: UpdateIcon },
@@ -4795,6 +4797,10 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
               </div>
             )} 
           </div>
+        )}
+
+        {activeTab === "audit" && isAudit && (
+          <ClientAuditTab />
         )}
 
         {activeTab === "library" && (

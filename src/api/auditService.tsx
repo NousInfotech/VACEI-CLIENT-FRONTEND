@@ -1,4 +1,4 @@
-// Use VACEI backend URL for company data
+// ETB and audit-related data: use NEXT_PUBLIC_VACEI_BACKEND_URL (e.g. http://localhost:5000/api/v1)
 const apiUrl = process.env.NEXT_PUBLIC_VACEI_BACKEND_URL?.replace(/\/?$/, "/") || "http://localhost:5000/api/v1/";
 const backendUrl = apiUrl;
 
@@ -174,7 +174,7 @@ export interface ExtendedTrialBalance {
   }>;
 }
 
-// Adjustment Types
+// Adjustment Types (mapped from audit-entries type=ADJUSTMENT)
 export interface Adjustment {
   _id: string;
   engagementId: string;
@@ -186,9 +186,11 @@ export interface Adjustment {
   refs: string[];
   status?: string;
   entries?: Array<any>;
+  /** Adjustment code from backend (e.g. AJ001) */
+  code?: string;
 }
 
-// Reclassification Types
+// Reclassification Types (mapped from audit-entries type=RECLASSIFICATION)
 export interface Reclassification {
   _id: string;
   engagementId: string;
@@ -200,6 +202,8 @@ export interface Reclassification {
   refs: string[];
   status?: string;
   entries?: Array<any>;
+  /** Reclassification code from backend (e.g. RC001) */
+  code?: string;
 }
 
 // ----------------------------------------------------------------------------
@@ -507,13 +511,27 @@ export async function getEngagementById(id: string, signal?: AbortSignal): Promi
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to fetch engagement");
+    let message = "Failed to fetch engagement";
+    try {
+      const error = await response.json();
+      message = error.message || error.error || message;
+    } catch {
+      message = response.status === 403
+        ? "Not authorized to access this engagement"
+        : response.status === 404
+          ? "Engagement not found"
+          : message;
+    }
+    throw new Error(message);
   }
 
   const result = await response.json();
-  // Backend returns { success: true, data: {...} }
-  return result.data || result;
+  // Backend returns { success: true, data: {...} }; API uses "id", UI often expects "_id"
+  const raw = result.data || result;
+  if (raw && typeof raw.id === "string" && raw._id === undefined) {
+    return { ...raw, _id: raw.id };
+  }
+  return raw;
 }
 
 // ============================================================================
@@ -821,52 +839,213 @@ export async function updateComplianceStatus(
 // 5. EXTENDED TRIAL BALANCE APIs
 // ============================================================================
 
-/**
- * Get Extended Trial Balance by engagement ID
- * @param engagementId - Engagement ID (query parameter)
- * @returns Promise<ExtendedTrialBalance>
- */
-export async function getEtb(engagementId: string): Promise<ExtendedTrialBalance> {
-  const response = await fetch(`${backendUrl}etb?engagementId=${engagementId}`, {
-    method: "GET",
+const authFetch = (url: string, init?: RequestInit) =>
+  fetch(url, {
+    ...init,
     headers: {
       ...getAuthHeaders(),
       "Content-Type": "application/json",
+      ...init?.headers,
     },
   });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to fetch Extended Trial Balance");
+/**
+ * Get Extended Trial Balance by engagement ID.
+ * Uses the same backend flow as VACEI_PARTNER_PORTAL: audit-cycles → trial-balances → with-accounts.
+ * All requests use NEXT_PUBLIC_VACEI_BACKEND_URL (e.g. http://localhost:5000/api/v1).
+ */
+export async function getEtb(engagementId: string): Promise<ExtendedTrialBalance> {
+  const base = backendUrl;
+
+  // 1) Get audit cycles for this engagement (same as partner useETBData)
+  const cyclesRes = await authFetch(
+    `${base}audit-cycles?engagementId=${encodeURIComponent(engagementId)}`
+  );
+  if (!cyclesRes.ok) {
+    const err = await cyclesRes.json().catch(() => ({}));
+    throw new Error(err.error || err.message || "Failed to fetch audit cycles");
+  }
+  const cyclesPayload = await cyclesRes.json();
+  const cycles = cyclesPayload?.data ?? cyclesPayload;
+  const cyclesList = Array.isArray(cycles) ? cycles : [];
+  const auditCycle = cyclesList[0] ?? null;
+  const auditCycleId = auditCycle?.id;
+  if (!auditCycleId) {
+    return {
+      _id: "",
+      engagement: engagementId,
+      rows: [],
+    };
   }
 
-  return response.json();
+  // 2) Get trial balances for this audit cycle
+  const tbRes = await authFetch(`${base}audit-cycles/${auditCycleId}/trial-balances`);
+  if (!tbRes.ok) {
+    const err = await tbRes.json().catch(() => ({}));
+    throw new Error(err.error || err.message || "Failed to fetch trial balances");
+  }
+  const tbPayload = await tbRes.json();
+  const trialBalances = tbPayload?.data ?? tbPayload;
+  const tbList = Array.isArray(trialBalances) ? trialBalances : [];
+  const currentTb =
+    tbList.find((tb: { role?: string }) => tb.role === "CURRENT") ?? tbList[0] ?? null;
+  const trialBalanceId = currentTb?.id;
+  if (!trialBalanceId) {
+    return {
+      _id: auditCycleId,
+      engagement: engagementId,
+      rows: [],
+    };
+  }
+
+  // 3) Get trial balance with accounts (ETB rows)
+  const withAccountsRes = await authFetch(
+    `${base}audit-cycles/${auditCycleId}/trial-balances/${trialBalanceId}/with-accounts`
+  );
+  if (!withAccountsRes.ok) {
+    const err = await withAccountsRes.json().catch(() => ({}));
+    throw new Error(err.error || err.message || "Failed to fetch trial balance with accounts");
+  }
+  const withAccountsPayload = await withAccountsRes.json();
+  const data = withAccountsPayload?.data ?? withAccountsPayload;
+  const accounts = data?.accounts ?? [];
+  if (!Array.isArray(accounts) || accounts.length === 0) {
+    return {
+      _id: trialBalanceId,
+      engagement: engagementId,
+      rows: [],
+    };
+  }
+
+  const parseAmount = (value: unknown): number => {
+    if (value === null || value === undefined || value === "-") return 0;
+    if (typeof value === "number") return value;
+    const parsed = parseFloat(String(value));
+    return Number.isNaN(parsed) ? 0 : parsed;
+  };
+
+  const rows = accounts.map((account: Record<string, unknown>, index: number) => {
+    const parts = [
+      account.group1,
+      account.group2,
+      account.group3,
+      account.group4,
+    ].filter(Boolean) as string[];
+    const classification = parts.join(" > ") || "";
+    return {
+      _id: String(account.id ?? index),
+      rowId: String(account.id ?? index),
+      code: String(account.code ?? ""),
+      accountName: String(account.accountName ?? ""),
+      currentYear: parseAmount(account.currentYear),
+      priorYear: parseAmount(account.priorYear),
+      adjustments: parseAmount(account.adjustmentAmount),
+      reclassifications: parseAmount(account.reclassificationAmount),
+      finalBalance: parseAmount(account.finalBalance),
+      classification,
+    };
+  });
+
+  return {
+    _id: trialBalanceId,
+    engagement: engagementId,
+    rows,
+  };
 }
 
 // ============================================================================
-// 6. ADJUSTMENT APIs
+// 6. ADJUSTMENT APIs (use audit-entries like VACEI_PARTNER_PORTAL)
 // ============================================================================
 
 /**
- * Get adjustments by ETB ID
- * @param etbId - Extended Trial Balance ID (query parameter)
+ * Resolve auditCycleId and trialBalanceId for an engagement (same flow as getEtb).
+ */
+async function resolveAuditCycleAndTrialBalance(
+  engagementId: string
+): Promise<{ auditCycleId: string; trialBalanceId: string } | null> {
+  const base = backendUrl;
+  const cyclesRes = await authFetch(
+    `${base}audit-cycles?engagementId=${encodeURIComponent(engagementId)}`
+  );
+  if (!cyclesRes.ok) return null;
+  const cyclesPayload = await cyclesRes.json();
+  const cycles = cyclesPayload?.data ?? cyclesPayload;
+  const cyclesList = Array.isArray(cycles) ? cycles : [];
+  const auditCycle = cyclesList[0] ?? null;
+  const auditCycleId = auditCycle?.id;
+  if (!auditCycleId) return null;
+
+  const tbRes = await authFetch(`${base}audit-cycles/${auditCycleId}/trial-balances`);
+  if (!tbRes.ok) return null;
+  const tbPayload = await tbRes.json();
+  const trialBalances = tbPayload?.data ?? tbPayload;
+  const tbList = Array.isArray(trialBalances) ? trialBalances : [];
+  const currentTb =
+    tbList.find((tb: { role?: string }) => tb.role === "CURRENT") ?? tbList[0] ?? null;
+  const trialBalanceId = currentTb?.id;
+  if (!trialBalanceId) return null;
+
+  return { auditCycleId, trialBalanceId };
+}
+
+/**
+ * Get adjustments for an engagement.
+ * Uses the same backend as VACEI_PARTNER_PORTAL: audit-cycles → trial-balances → audit-entries, filtered by type ADJUSTMENT.
+ * @param engagementId - Engagement ID (not etbId)
  * @returns Promise<Adjustment[]>
  */
-export async function getAdjustments(etbId: string): Promise<Adjustment[]> {
-  const response = await fetch(`${backendUrl}adjustments?etbId=${etbId}`, {
-    method: "GET",
-    headers: {
-      ...getAuthHeaders(),
-      "Content-Type": "application/json",
-    },
-  });
+export async function getAdjustments(engagementId: string): Promise<Adjustment[]> {
+  const resolved = await resolveAuditCycleAndTrialBalance(engagementId);
+  if (!resolved) return [];
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to fetch adjustments");
+  const { auditCycleId, trialBalanceId } = resolved;
+  const base = backendUrl;
+  const res = await authFetch(
+    `${base}audit-cycles/${auditCycleId}/trial-balances/${trialBalanceId}/audit-entries`
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || err.error || "Failed to fetch audit entries");
   }
+  const payload = await res.json();
+  const list = payload?.data ?? payload;
+  const entries = Array.isArray(list) ? list : [];
 
-  return response.json();
+  const adjustments = entries
+    .filter((entry: { type?: string }) => entry.type === "ADJUSTMENT")
+    .map((entry: Record<string, unknown>) => {
+      const lines = (entry.lines as Array<Record<string, unknown>>) ?? [];
+      let dr = 0;
+      let cr = 0;
+      const entriesMapped = lines.map((line: Record<string, unknown>) => {
+        const value = Number(line.value) ?? 0;
+        const isDebit = line.type === "DEBIT";
+        if (isDebit) dr += value;
+        else cr += value;
+        const account = (line.trialBalanceAccount as Record<string, unknown>) ?? {};
+        return {
+          code: String(account.code ?? ""),
+          accountName: String(account.accountName ?? ""),
+          dr: isDebit ? value : 0,
+          cr: isDebit ? 0 : value,
+        };
+      });
+      return {
+        _id: String(entry.id ?? entry._id ?? ""),
+        engagementId,
+        etbId: trialBalanceId,
+        rowId: "",
+        dr,
+        cr,
+        value: dr - cr,
+        refs: entry.description ? [String(entry.description)] : [],
+        status: (entry.status as string) ?? "DRAFT",
+        entries: entriesMapped,
+        code: entry.code != null ? String(entry.code) : undefined,
+      } as Adjustment;
+    });
+
+  return adjustments;
 }
 
 /**
@@ -892,29 +1071,67 @@ export async function getAdjustmentById(id: string): Promise<Adjustment> {
 }
 
 // ============================================================================
-// 7. RECLASSIFICATION APIs
+// 7. RECLASSIFICATION APIs (use audit-entries like VACEI_PARTNER_PORTAL)
 // ============================================================================
 
 /**
- * Get reclassifications by ETB ID
- * @param etbId - Extended Trial Balance ID (query parameter)
+ * Get reclassifications for an engagement.
+ * Uses the same backend as VACEI_PARTNER_PORTAL: audit-cycles → trial-balances → audit-entries, filtered by type RECLASSIFICATION.
+ * @param engagementId - Engagement ID (not etbId)
  * @returns Promise<Reclassification[]>
  */
-export async function getReclassifications(etbId: string): Promise<Reclassification[]> {
-  const response = await fetch(`${backendUrl}reclassifications?etbId=${etbId}`, {
-    method: "GET",
-    headers: {
-      ...getAuthHeaders(),
-      "Content-Type": "application/json",
-    },
-  });
+export async function getReclassifications(engagementId: string): Promise<Reclassification[]> {
+  const resolved = await resolveAuditCycleAndTrialBalance(engagementId);
+  if (!resolved) return [];
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to fetch reclassifications");
+  const { auditCycleId, trialBalanceId } = resolved;
+  const base = backendUrl;
+  const res = await authFetch(
+    `${base}audit-cycles/${auditCycleId}/trial-balances/${trialBalanceId}/audit-entries`
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || err.error || "Failed to fetch audit entries");
   }
+  const payload = await res.json();
+  const list = payload?.data ?? payload;
+  const entries = Array.isArray(list) ? list : [];
 
-  return response.json();
+  const reclassifications = entries
+    .filter((entry: { type?: string }) => entry.type === "RECLASSIFICATION")
+    .map((entry: Record<string, unknown>) => {
+      const lines = (entry.lines as Array<Record<string, unknown>>) ?? [];
+      let dr = 0;
+      let cr = 0;
+      const entriesMapped = lines.map((line: Record<string, unknown>) => {
+        const value = Number(line.value) ?? 0;
+        const isDebit = line.type === "DEBIT";
+        if (isDebit) dr += value;
+        else cr += value;
+        const account = (line.trialBalanceAccount as Record<string, unknown>) ?? {};
+        return {
+          code: String(account.code ?? ""),
+          accountName: String(account.accountName ?? ""),
+          dr: isDebit ? value : 0,
+          cr: isDebit ? 0 : value,
+        };
+      });
+      return {
+        _id: String(entry.id ?? entry._id ?? ""),
+        engagementId,
+        etbId: trialBalanceId,
+        rowId: "",
+        dr,
+        cr,
+        value: dr - cr,
+        refs: entry.description ? [String(entry.description)] : [],
+        status: (entry.status as string) ?? "DRAFT",
+        entries: entriesMapped,
+        code: entry.code != null ? String(entry.code) : undefined,
+      } as Reclassification;
+    });
+
+  return reclassifications;
 }
 
 /**

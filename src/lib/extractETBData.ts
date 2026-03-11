@@ -225,8 +225,33 @@ const buildLeadSheetTree = (rows: ETBRow[]): LeadSheetNode[] => {
 };
 
 // -------------------------
-// INCOME STATEMENT
+// INCOME STATEMENT (match VACEI_PARTNER_PORTAL etbDataProcessor)
+// Partner breakdown keys: Revenue, Cost of sales, Sales and marketing expenses,
+// Administrative expenses, Other operating income, Investment income,
+// Other Gains/Losses, Finance costs, Income tax expense.
+// Partner formula: grossProfit = revenue - |costOfSales|, operatingProfit = ...,
+// net = profitBeforeTax - |taxExpense|.
 // -------------------------
+
+const PARTNER_INCOME_KEY_MAP: Record<string, string> = {
+  revenue: "Revenue",
+  "cost of sales": "Cost of sales",
+  "sales and marketing expenses": "Sales and marketing expenses",
+  "selling & marketing expenses": "Sales and marketing expenses",
+  "administrative expenses": "Administrative expenses",
+  "other operating income": "Other operating income",
+  "investment income": "Investment income",
+  "investment losses": "Other Gains/Losses",
+  "other gains/losses": "Other Gains/Losses",
+  "finance costs": "Finance costs",
+  "income tax expense": "Income tax expense",
+  taxation: "Income tax expense",
+  "share of profit of subsidiary": "Other Gains/Losses",
+  "pbt expenses": "Other Gains/Losses",
+};
+
+const normalizeToPartnerKey = (group: string): string =>
+  PARTNER_INCOME_KEY_MAP[group.trim().toLowerCase()] || group;
 
 const deriveIncomeStatement = (
   tree: LeadSheetNode[],
@@ -257,43 +282,69 @@ const deriveIncomeStatement = (
   const collect = (field: keyof LeadSheetTotals) => {
     const totals: Record<string, number> = {};
     for (const g3 of pl.children || []) {
-      totals[g3.group] = g3.totals?.[field] || 0;
+      const raw = g3.totals?.[field] || 0;
+      const partnerKey = normalizeToPartnerKey(g3.group);
+      totals[partnerKey] = (totals[partnerKey] || 0) + raw;
     }
     return totals;
   };
 
+  const partnerKeyToAccounts: Record<string, string[]> = {};
+  for (const g3 of pl.children || []) {
+    const k = normalizeToPartnerKey(g3.group);
+    if (!partnerKeyToAccounts[k]) partnerKeyToAccounts[k] = [];
+    if (g3.id) partnerKeyToAccounts[k].push(g3.id);
+  }
+
   const calculate = (totals: Record<string, number>) => {
-    const grossProfit =
-      (totals["Revenue"] || 0) + (totals["Cost of sales"] || 0);
+    const revenue = totals["Revenue"] || 0;
+    const costOfSales = totals["Cost of sales"] || 0;
+    const salesMarketing = totals["Sales and marketing expenses"] || 0;
+    const adminExpenses = totals["Administrative expenses"] || 0;
+    const otherOperatingIncome = totals["Other operating income"] || 0;
+    const investmentIncome = totals["Investment income"] || 0;
+    const otherGainsLosses = totals["Other Gains/Losses"] || 0;
+    const financeCosts = totals["Finance costs"] || 0;
+    const taxExpense = totals["Income tax expense"] || 0;
 
+    const grossProfit = revenue - Math.abs(costOfSales);
     const operatingProfit =
-      grossProfit +
-      (totals["Sales and marketing expenses"] || 0) +
-      (totals["Administrative expenses"] || 0) +
-      (totals["Other operating income"] || 0);
-
-    const netProfitBeforeTax =
+      grossProfit -
+      Math.abs(salesMarketing) -
+      Math.abs(adminExpenses) +
+      otherOperatingIncome;
+    const profitBeforeTax =
       operatingProfit +
-      (totals["Investment income"] || 0) +
-      (totals["Investment losses"] || 0) +
-      (totals["Finance costs"] || 0) +
-      (totals["Share of profit of subsidiary"] || 0) +
-      (totals["PBT Expenses"] || 0);
+      investmentIncome +
+      otherGainsLosses -
+      Math.abs(financeCosts);
+    const net = profitBeforeTax - Math.abs(taxExpense);
 
-    const net = netProfitBeforeTax + (totals["Income tax expense"] || 0);
+    const partnerKeys = [
+      "Revenue",
+      "Cost of sales",
+      "Sales and marketing expenses",
+      "Administrative expenses",
+      "Other operating income",
+      "Investment income",
+      "Other Gains/Losses",
+      "Finance costs",
+      "Income tax expense",
+    ];
+    const breakdowns: Record<string, { value: number; accounts: string[] }> = {};
+    for (const k of partnerKeys) {
+      const raw = totals[k];
+      if (raw === undefined) continue;
+      breakdowns[k] = {
+        value: Math.abs(raw),
+        accounts: partnerKeyToAccounts[k] || [],
+      };
+    }
 
     return {
       net_result: net,
       resultType: net >= 0 ? "net_profit" : "net_loss",
-      breakdowns: Object.fromEntries(
-        Object.entries(totals).map(([k, v]) => [
-          k,
-          {
-            value: Math.abs(v),
-            accounts: leadIndex[k] ? [leadIndex[k]] : [],
-          },
-        ])
-      ),
+      breakdowns,
     };
   };
 
@@ -411,6 +462,16 @@ const deriveBalanceSheet = (
       grouping3: ["Retained earnings"],
     }) + retainedEarnings.prior_year.value;
 
+  const totalAssetsCY = assetsCY;
+  const totalEquityAndLiabilitiesCY = equityCY + liabilitiesCY;
+  const totalAssetsPY = assetsPY;
+  const totalEquityAndLiabilitiesPY = equityPY + liabilitiesPY;
+
+  const equityAccountsSkip = {
+    grouping2: ["Current Year Profits & Losses"],
+    grouping3: ["Retained earnings"],
+  };
+
   return {
     prior_year: {
       year: priorYear,
@@ -425,10 +486,18 @@ const deriveBalanceSheet = (
         },
         equity: {
           value: equityPY,
-          accounts: collectGroupAccounts(tree, "Equity", {
-            grouping2: ["Current Year Profits & Losses"],
-            grouping3: ["Retained earnings"],
-          }),
+          accounts: collectGroupAccounts(tree, "Equity", equityAccountsSkip),
+        },
+        total_assets: {
+          value: totalAssetsPY,
+          accounts: collectGroupAccounts(tree, "Assets"),
+        },
+        total_equity_and_liabilities: {
+          value: totalEquityAndLiabilitiesPY,
+          accounts: [
+            ...collectGroupAccounts(tree, "Equity", equityAccountsSkip),
+            ...collectGroupAccounts(tree, "Liabilities"),
+          ],
         },
       },
       balanced: Math.abs(assetsPY - (liabilitiesPY + equityPY)) < 1,
@@ -446,10 +515,18 @@ const deriveBalanceSheet = (
         },
         equity: {
           value: equityCY,
-          accounts: collectGroupAccounts(tree, "Equity", {
-            grouping2: ["Current Year Profits & Losses"],
-            grouping3: ["Retained earnings"],
-          }),
+          accounts: collectGroupAccounts(tree, "Equity", equityAccountsSkip),
+        },
+        total_assets: {
+          value: totalAssetsCY,
+          accounts: collectGroupAccounts(tree, "Assets"),
+        },
+        total_equity_and_liabilities: {
+          value: totalEquityAndLiabilitiesCY,
+          accounts: [
+            ...collectGroupAccounts(tree, "Equity", equityAccountsSkip),
+            ...collectGroupAccounts(tree, "Liabilities"),
+          ],
         },
       },
       balanced: Math.abs(assetsCY - (liabilitiesCY + equityCY)) < 1,
