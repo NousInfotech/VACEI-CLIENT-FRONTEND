@@ -10,6 +10,7 @@ import {
   Calendar,
   LayoutDashboard,
   Library,
+  BookMarked,
   ClipboardList,
   Flag,
   History,
@@ -81,6 +82,7 @@ import {
 import { useEngagement } from "./hooks/useEngagement";
 import UpdatesTab from "./UpdatesTab";
 import FilingsTab from "./FilingsTab";
+import ClientBookkeepingContent from "./bookkeeping/ClientBookkeepingContent";
 import { ENGAGEMENT_CONFIG } from "@/config/engagementConfig";
 
 export type EngagementStatus =
@@ -622,13 +624,15 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
   const workflowInfo =
     workflowStatusConfig[displayWorkflowStatus] || workflowStatusConfig.in_progress;
 
-  // Handle deep-linking from query params
+  // Handle deep-linking from query params; default to bookkeeping tab when on Accounting & Bookkeeping service
   useEffect(() => {
     const tab = searchParams.get("tab");
     if (tab) {
       setActiveTab(tab);
+    } else if (isAccounting) {
+      setActiveTab("bookkeeping");
     }
-  }, [searchParams]);
+  }, [searchParams, isAccounting]);
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -730,6 +734,7 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
         { id: "workFlow", label: "WorkFlow", icon: ClipboardList },
         { id: "milestones", label: "Milestones", icon: Flag },
         ...(isAudit ? [{ id: "audit", label: "Audit", icon: FileText }] : []),
+        ...(isAccounting ? [{ id: "bookkeeping", label: "BOOKKEEPING", icon: BookMarked }] : []),
         { id: "library", label: "Library", icon: Library },
         { id: "compliance_calendar", label: "Compliance Calendar", icon: Calendar },
         { id: "messages", label: "Updates", icon: UpdateIcon },
@@ -4801,6 +4806,13 @@ const EngagementSummary: React.FC<EngagementSummaryProps> = ({
 
         {activeTab === "audit" && isAudit && (
           <ClientAuditTab />
+        )}
+
+        {activeTab === "bookkeeping" && isAccounting && (
+          <ClientBookkeepingContent
+            engagementId={engagementId ?? undefined}
+            companyId={engagementData?.companyId ?? engagementData?.company?.id ?? undefined}
+          />
         )}
 
         {activeTab === "library" && (
