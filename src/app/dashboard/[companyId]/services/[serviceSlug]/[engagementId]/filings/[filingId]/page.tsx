@@ -17,8 +17,11 @@ import {
   X,
   Send, 
   Lock,
-  RefreshCw
+  RefreshCw,
+  Archive
 } from "lucide-react";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -72,6 +75,7 @@ export default function ClientFilingDetailView() {
   const [filing, setFiling] = useState<FilingItem | null>(null);
   const [comments, setComments] = useState<FilingCommentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
 
   // Comment state
   const [newComment, setNewComment] = useState("");
@@ -197,6 +201,30 @@ export default function ClientFilingDetailView() {
       setComments(commentsData);
     } catch (error: any) {
       console.error(error);
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    if (!filing || filing.files.length === 0) return;
+    setIsDownloadingAll(true);
+    try {
+      const zip = new JSZip();
+      
+      const promises = filing.files.map(async (fv) => {
+        const response = await fetch(fv.file.url);
+        const blob = await response.blob();
+        zip.file(fv.file.file_name, blob);
+      });
+      
+      await Promise.all(promises);
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, `${filing.name.replace(/\s+/g, '_')}_documents.zip`);
+      toast.success("Download started");
+    } catch (error) {
+      console.error("ZIP Error:", error);
+      toast.error("Failed to generate ZIP folder");
+    } finally {
+      setIsDownloadingAll(false);
     }
   };
 
@@ -440,9 +468,23 @@ export default function ClientFilingDetailView() {
               <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                 <FileIcon size={14} /> Attached Documents
               </h3>
-              <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 transition-colors uppercase font-black text-[10px] tracking-widest px-2 py-0 border-none">
-                {filing.files.length} Files
-              </Badge>
+              <div className="flex items-center gap-3">
+                {filing.files.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 gap-1.5"
+                    onClick={handleDownloadAll}
+                    disabled={isDownloadingAll}
+                  >
+                    {isDownloadingAll ? <RefreshCw size={12} className="animate-spin" /> : <Archive size={12} />}
+                    Download All
+                  </Button>
+                )}
+                <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 transition-colors uppercase font-black text-[10px] tracking-widest px-2 py-0 border-none">
+                  {filing.files.length} Files
+                </Badge>
+              </div>
             </div>
             <div className="divide-y divide-slate-100 bg-white overflow-y-auto custom-scrollbar flex-1">
               {filing.files.length === 0 ? (

@@ -288,6 +288,7 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
   const [engagementLoading, setEngagementLoading] = useState(false);
   const [engagementNotFound, setEngagementNotFound] = useState(false);
   const [isServiceLocallyAvailable, setIsServiceLocallyAvailable] = useState<boolean>(true);
+  const [companyOrganizationId, setCompanyOrganizationId] = useState<string | null>(null);
   const { sidebarData, loading: sidebarLoading } = useGlobalDashboard();
   const hasFetchedRef = useRef(false);
 
@@ -313,6 +314,7 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
       setEngagementLoading(true);
       setEngagementNotFound(false);
       setIsServiceLocallyAvailable(true);
+      setCompanyOrganizationId(null);
 
       // Find metadata key for this slug
       let metadataKey = Object.keys(SERVICE_METADATA).find(key => 
@@ -337,6 +339,7 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
       try {
         const company = await getCompanyById(activeCompanyId);
         console.log("ServiceEngagement - Company Data:", company);
+        setCompanyOrganizationId(company.organizationId || null);
         
         if (company.organizationId) {
           const organization = await getOrganizationById(company.organizationId);
@@ -454,7 +457,7 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
               <p className="text-base text-gray-500 leading-relaxed max-w-xs mx-auto">
                 You haven&apos;t started an engagement for this service yet. Request it now to begin your journey with us.
               </p>
-              {!isServiceLocallyAvailable && (
+              {companyOrganizationId && !isServiceLocallyAvailable && (
                 <div className="flex flex-col items-center gap-2">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-100">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -465,6 +468,7 @@ const ServiceEngagement = ({ serviceSlug, engagementId: propEngagementId }: Serv
                   </p>
                 </div>
               )}
+
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-4 w-full pt-4 relative z-10">
