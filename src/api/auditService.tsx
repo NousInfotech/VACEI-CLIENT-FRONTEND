@@ -12,6 +12,44 @@ function getAuthHeaders(): Record<string, string> {
 // TYPES
 // ============================================================================
 
+export type ShareClass = 'CLASS_A' | 'CLASS_B' | 'CLASS_C' | 'ORDINARY' | 'A' | 'B' | 'C' | string;
+export type RepresentationRole = 'DIRECTOR' | 'SHAREHOLDER' | 'LEGAL_REPRESENTATIVE' | 'JUDICIAL_REPRESENTATIVE' | 'SECRETARY';
+
+export interface CompanyShareClass {
+  id: string;
+  class: ShareClass;
+  issued: number;
+  perShareValue?: number;
+}
+
+export interface CompanyInvolvement {
+  id: string;
+  partyType?: 'PERSON' | 'COMPANY';
+  role: RepresentationRole[];
+  classA: number;
+  classB: number;
+  classC: number;
+  ordinary: number;
+  classAPaidUpPercentage?: number;
+  classBPaidUpPercentage?: number;
+  classCPaidUpPercentage?: number;
+  ordinaryPaidUpPercentage?: number;
+  person?: {
+    id: string;
+    name: string;
+    address: string;
+    nationality: string;
+    email?: string;
+    phone?: string;
+  } | null;
+  holderCompany?: {
+    id: string;
+    name: string;
+    address: string;
+    registrationNumber: string;
+  } | null;
+}
+
 
 
 export interface PersonDetails {
@@ -19,6 +57,8 @@ export interface PersonDetails {
   name: string;
   nationality: string;
   address: string;
+  email?: string;
+  phone?: string;
   supportingDocuments: any[];
   id: string;
 }
@@ -32,6 +72,8 @@ export interface ShareClassData {
   totalShares: number;
   class: string;
   type: string;
+  perShareValue?: number;
+  paidUpPercentage?: number;
 }
 
 export interface Shareholder {
@@ -91,6 +133,8 @@ export interface Company {
   shareHolders: Shareholder[];
   representationalSchema: RepresentationalSchema[];
   representationalCompany: RepresentationalCompany[];
+  shareClasses?: CompanyShareClass[];
+  involvements?: CompanyInvolvement[];
   createdAt: string;
   updatedAt: string;
   __v: number;

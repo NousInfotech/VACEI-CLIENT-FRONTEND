@@ -40,7 +40,7 @@ const CompanyDetail = () => {
       </div>
 
       {/* Share Information Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
           <div className="flex items-center space-x-2 text-blue-600 mb-2">
             <PieIcon size={20} />
@@ -49,19 +49,6 @@ const CompanyDetail = () => {
           <p className="text-2xl font-medium">{(data.authorizedShares || 0).toLocaleString()}</p>
           <p className="text-gray-500 text-sm mt-1">Total shares authorized</p>
         </div>
-
-        {data.perShareValue && (
-          <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-            <div className="flex items-center space-x-2 text-indigo-600 mb-2">
-              <Euro size={20} />
-              <h3 className="font-semibold">Per Share Value</h3>
-            </div>
-            <p className="text-2xl font-medium">
-              {typeof data.perShareValue === 'object' ? `${data.perShareValue.value} ${data.perShareValue.currency}` : data.perShareValue}
-            </p>
-            <p className="text-gray-500 text-sm mt-1">Nominal value per share</p>
-          </div>
-        )}
 
         <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
           <div className="flex items-center space-x-2 text-violet-600 mb-2">
@@ -74,15 +61,24 @@ const CompanyDetail = () => {
       </div>
       
       {/* Shares Breakdown Section */}
-      {data.totalShares && data.totalShares.length > 0 && (
+      {data.shareClasses && data.shareClasses.length > 0 && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {data.totalShares.map((share: any, index: number) => (
-            <div key={index} className="bg-gray-50 p-2 rounded-xl border-gray-200 flex items-center justify-center gap-2 border">
-              <p className="text-sm font-medium ">
-                {share.class === 'Ordinary' ? 'Ordinary' : `Class ${share.class}`}:
-              </p>
-              <p className="text-sm font-medium ">{share.totalShares.toLocaleString()}</p>
+            {data.shareClasses.map((share: any, index: number) => (
+            <div key={index} className="bg-gray-50 p-2 rounded-xl border-gray-200 flex flex-col items-center justify-center gap-1 border min-w-[120px]">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium ">
+                  {share.class.startsWith('CLASS_') 
+                      ? share.class.replace('CLASS_', 'Class ') 
+                      : (share.class.length === 1 
+                          ? `Class ${share.class}` 
+                          : share.class.charAt(0).toUpperCase() + share.class.slice(1).toLowerCase())}:
+                </p>
+                <p className="text-sm font-medium ">{(share.issued || 0).toLocaleString()}</p>
+              </div>
+              {share.perShareValue != null && Number(share.perShareValue) > 0 && (
+                <p className="text-[12px] text-gray-400 font-medium border border-gray-300 rounded-md px-2 py-0.5">€{Number(share.perShareValue).toFixed(2)} / share</p>
+              )}
             </div> 
             ))}
           </div>
@@ -90,8 +86,8 @@ const CompanyDetail = () => {
       )}
 
       {/* Additional Details Section */}
-      <div className="flex flex-col gap-12">
-          <div className="space-y-4">
+      <div className="flex flex-col gap-5">
+          <div className="space-y-4 grid grid-cols-3 gap-5">
                 <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
                   <MapPin className="h-5 w-5 text-gray-600 mt-0.5" />
                   <div>
@@ -119,15 +115,16 @@ const CompanyDetail = () => {
                     </div>
                   </div>
                 )}
-                {data.description && (
+              
+          </div>
+            {data.description && (
                   <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
                     <div>
                       <p className="text-sm text-gray-500 font-medium">Description</p>
                       <p className="text-gray-900 text-xl font-light">{data.description}</p>
                     </div>
                   </div>
-                )}
-          </div>
+             )}
         </div>
       </div>
     
