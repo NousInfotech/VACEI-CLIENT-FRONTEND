@@ -360,7 +360,7 @@ const IncorporationSection = () => {
                                       onClick={() => setUploadMode(prev => ({ ...prev, [request.id]: 'single' }))}
                                       className={cn(
                                         "px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all duration-200",
-                                        uploadMode[request.id] !== 'bulk' 
+                                        uploadMode[request.id] === 'single' 
                                           ? "bg-white text-primary shadow-sm" 
                                           : "text-gray-400 hover:text-gray-600"
                                       )}
@@ -371,7 +371,7 @@ const IncorporationSection = () => {
                                       onClick={() => setUploadMode(prev => ({ ...prev, [request.id]: 'bulk' }))}
                                       className={cn(
                                         "px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all duration-200",
-                                        uploadMode[request.id] === 'bulk' 
+                                        uploadMode[request.id] !== 'single' 
                                           ? "bg-white text-primary shadow-sm" 
                                           : "text-gray-400 hover:text-gray-600"
                                       )}
@@ -402,6 +402,7 @@ const IncorporationSection = () => {
                                         }}
                                         onClear={handleClear}
                                         documents={docs}
+                                        isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
                                       />
                                         <UnassignedFilesSection files={request.unassignedFiles || []} />
                                       </div>
@@ -412,6 +413,7 @@ const IncorporationSection = () => {
                                         documents={singleDocs}
                                         onUpload={handleUpload}
                                         onClearDocument={handleClear}
+                                        isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
                                       />
 
                                       <DocumentRequestDouble
@@ -421,6 +423,7 @@ const IncorporationSection = () => {
                                         onClearMultipleItem={handleClearMultipleItem}
                                         onClearMultipleGroup={handleClearMultipleGroup}
                                         onDownloadMultipleGroup={handleDownloadMultipleGroup}
+                                        isDisabled={request.status?.toUpperCase() === 'COMPLETED'}
                                       />
                                     </>
                                   )}
