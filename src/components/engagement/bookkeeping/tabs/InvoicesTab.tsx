@@ -54,6 +54,8 @@ interface InvoicesTabProps {
   onLinkFile?: (qbInvoiceId: string, fileId: string) => Promise<void>;
   viewInvoice: QBInvoiceDetail | Record<string, unknown> | null;
   onViewInvoice: (inv: InvoiceRow | null) => void;
+  /** When true, Link to cycle buttons are disabled (e.g. read-only client view). */
+  linkToCycleDisabled?: boolean;
 }
 
 export interface LinkedFileInfo {
@@ -82,6 +84,7 @@ export function InvoicesTab({
   onLinkFile,
   viewInvoice,
   onViewInvoice,
+  linkToCycleDisabled = false,
 }: InvoicesTabProps) {
   const [linkFileForId, setLinkFileForId] = useState<string | null>(null);
   const [linkFileError, setLinkFileError] = useState<string | null>(null);
@@ -335,8 +338,8 @@ export function InvoicesTab({
                         variant="outline"
                         size="sm"
                         className="gap-1 h-8"
-                        disabled={mapInvoiceLoading === inv.Id}
-                        onClick={() => inv.Id && onMapInvoice(inv.Id)}
+                        disabled={linkToCycleDisabled || mapInvoiceLoading === inv.Id}
+                        onClick={() => !linkToCycleDisabled && inv.Id && onMapInvoice(inv.Id)}
                       >
                         {mapInvoiceLoading === inv.Id ? (
                           <RefreshCw className="h-4 w-4 animate-spin" />

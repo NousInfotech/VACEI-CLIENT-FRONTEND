@@ -42,6 +42,8 @@ interface BillsTabProps {
   onCreateClick?: () => void;
   viewBill: QBBillDetail | Record<string, unknown> | null;
   onViewBill: (bill: BillRow | null) => void;
+  /** When true, Link to cycle buttons are disabled (e.g. read-only client view). */
+  linkToCycleDisabled?: boolean;
 }
 
 export function BillsTab({
@@ -54,6 +56,7 @@ export function BillsTab({
   onCreateClick,
   viewBill,
   onViewBill,
+  linkToCycleDisabled = false,
 }: BillsTabProps) {
   const {
     page,
@@ -206,8 +209,8 @@ export function BillsTab({
                         variant="outline"
                         size="sm"
                         className="gap-1 h-8"
-                        disabled={!bill.Id || mapBillLoading === bill.Id}
-                        onClick={() => bill.Id && onMapBill(bill.Id)}
+                        disabled={linkToCycleDisabled || !bill.Id || mapBillLoading === bill.Id}
+                        onClick={() => !linkToCycleDisabled && bill.Id && onMapBill(bill.Id)}
                       >
                         {mapBillLoading === bill.Id ? (
                           <RefreshCw className="h-4 w-4 animate-spin" />

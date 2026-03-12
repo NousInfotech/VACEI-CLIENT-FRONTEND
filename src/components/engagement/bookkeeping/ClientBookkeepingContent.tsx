@@ -45,7 +45,7 @@ import { SyncHistoryTab, InvoicesTab, BillsTab, AgingTab } from "./tabs";
 import { flattenReportRows, currencyCodeFromRef } from "./utils";
 
 const BOOKKEEPING_TABS = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
+  // { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "transactions", label: "Transactions", icon: FileText },
   { id: "chart-of-accounts", label: "Chart of accounts", icon: ListTree },
   { id: "invoices", label: "Invoices", icon: Receipt },
@@ -68,7 +68,7 @@ export default function ClientBookkeepingContent({
   engagementId,
   companyId,
 }: ClientBookkeepingContentProps) {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("transactions");
   const [cycle, setCycle] = useState<AccountingCycle | null>(null);
   const [cycleLoading, setCycleLoading] = useState(true);
   const [cycleError, setCycleError] = useState(false);
@@ -907,16 +907,11 @@ export default function ClientBookkeepingContent({
             isOrgAdmin={isOrgAdmin}
             mapInvoiceLoading={mapInvoiceLoading}
             onMapInvoice={handleMapInvoiceToTransaction}
-            onCreateClick={() => setIsCreateInvoiceModalOpen(true)}
-            cycleId={cycleId}
-            onUploadInvoice={handleUploadInvoice}
-            uploadInvoiceLoading={uploadInvoiceLoading}
-            uploadInvoiceError={uploadInvoiceError}
-            onClearUploadError={() => setUploadInvoiceError(null)}
             companyIdForQb={qbCompanyId}
             engagementId={engagementId}
             viewInvoice={viewInvoice}
             onViewInvoice={(inv) => setViewInvoice(inv as Record<string, unknown> | null)}
+            linkToCycleDisabled={true}
           />
         )}
 
@@ -928,9 +923,9 @@ export default function ClientBookkeepingContent({
             isOrgAdmin={isOrgAdmin}
             mapBillLoading={mapBillLoading}
             onMapBill={handleMapBillToTransaction}
-            onCreateClick={() => setIsCreateBillModalOpen(true)}
             viewBill={viewBill}
             onViewBill={(bill) => setViewBill(bill as Record<string, unknown> | null)}
+            linkToCycleDisabled={true}
           />
         )}
 
