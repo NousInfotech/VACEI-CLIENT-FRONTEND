@@ -51,7 +51,7 @@ const serviceLabels: Record<ServiceCode, string> = {
   CUSTOM: "Custom",
 };
 
-export default function ServiceRequestPage() {
+function ServiceRequestContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { activeCompanyId, companies } = useActiveCompany();
@@ -354,5 +354,20 @@ export default function ServiceRequestPage() {
         onAction={modalConfig.onAction}
       />
     </section>
+  );
+}
+
+import { Suspense } from "react";
+
+export default function ServiceRequestPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Loading service request...</p>
+      </div>
+    }>
+      <ServiceRequestContent />
+    </Suspense>
   );
 }

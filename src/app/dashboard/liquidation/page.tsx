@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import DashboardCard from "@/components/DashboardCard";
 import DashboardActionButton from "@/components/DashboardActionButton";
@@ -37,7 +37,7 @@ const steps = [
   { key: "deregistration", label: "Deregistration" },
 ];
 
-export default function LiquidationPage() {
+function LiquidationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { activeCompanyId } = useActiveCompany();
@@ -735,5 +735,18 @@ export default function LiquidationPage() {
         </div>
       )}
     </section>
+  );
+}
+
+export default function LiquidationPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Loading liquidation details...</p>
+      </div>
+    }>
+      <LiquidationContent />
+    </Suspense>
   );
 }

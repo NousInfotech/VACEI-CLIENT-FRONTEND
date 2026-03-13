@@ -184,10 +184,18 @@ function KycPageContent() {
   )
 }
 
-export default function KycPage() {
+function KycPageWrapper() {
   const searchParams = useSearchParams()
   const token = searchParams.get('token') || ''
 
+  return (
+    <KycProvider token={token}>
+      <KycPageContent />
+    </KycProvider>
+  )
+}
+
+export default function KycPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-slate-50 to-blue-50">
@@ -198,9 +206,7 @@ export default function KycPage() {
         <p className="text-sm text-gray-500 mt-1">Please wait while we fetch your details...</p>
       </div>
     }>
-      <KycProvider token={token}>
-        <KycPageContent />
-      </KycProvider>
+      <KycPageWrapper />
     </Suspense>
   )
 }
