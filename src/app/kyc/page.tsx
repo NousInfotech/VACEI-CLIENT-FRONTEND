@@ -16,40 +16,14 @@ import {
 } from '@/api/kycService'
 import CompanyDetailTab from './components/CompanyDetailTab'
 import KycSectionTab from './components/KycSectionTab'
+import { KycProvider, useKyc } from './context/KycContext'
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 function KycPageContent() {
-  const searchParams = useSearchParams()
-  const token = searchParams.get('token') || ''
-
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [expired, setExpired] = useState(false)
-  const [details, setDetails] = useState<KycDetails | null>(null)
+  const { details, loading, error, expired, token, refreshKyc } = useKyc()
   const [activeTab, setActiveTab] = useState('kyc')
   const [resending, setResending] = useState(false)
   const [resendMsg, setResendMsg] = useState<{ text: string; ok: boolean } | null>(null)
-
-  const load = useCallback(async () => {
-    if (!token) {
-      setError('No KYC token found in URL.')
-      setLoading(false)
-      return
-    }
-    setLoading(true)
-    setError(null)
-    const result = await fetchKycDetails(token)
-    if (result.ok) {
-      setDetails(result.data)
-      setExpired(false)
-    } else {
-      setExpired(result.expired)
-      setError(result.message)
-    }
-    setLoading(false)
-  }, [token])
-
-  useEffect(() => { load() }, [load])
 
   const handleResend = async () => {
     setResending(true)
@@ -60,9 +34,8 @@ function KycPageContent() {
   }
 
   const tabs = [
-        { id: 'company', label: 'Company Details', icon: Building2 },
+    { id: 'company', label: 'Company Details', icon: Building2 },
     { id: 'kyc', label: 'KYC Documents', icon: Shield },
-
   ]
 
   // ── Loading ──────────────────────────────────────────────────────────────
@@ -190,12 +163,10 @@ function KycPageContent() {
             {activeTab === 'kyc' && (
               <KycSectionTab
                 docRequest={documentRequest}
-                kycToken={token}
                 clientName={details.involvementKyc.person?.name || `${details.clientUserDetails?.firstName} ${details.clientUserDetails?.lastName}`}
                 roles={details.involvementKyc.role}
                 involvementStatus={details.involvementKyc.status}
                 requestStatus={details.documentRequest.status}
-                onUploaded={load}
               />
             )}
           </div>
@@ -214,6 +185,9 @@ function KycPageContent() {
 }
 
 export default function KycPage() {
+  const searchParams = useSearchParams()
+  const token = searchParams.get('token') || ''
+
   return (
     <Suspense fallback={
       <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-slate-50 to-blue-50">
@@ -224,7 +198,9 @@ export default function KycPage() {
         <p className="text-sm text-gray-500 mt-1">Please wait while we fetch your details...</p>
       </div>
     }>
-      <KycPageContent />
+      <KycProvider token={token}>
+        <KycPageContent />
+      </KycProvider>
     </Suspense>
   )
 }

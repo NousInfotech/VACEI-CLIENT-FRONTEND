@@ -213,6 +213,15 @@ export const menuData: MenuItem[] = [
     description: "Company overview & status",
   },
   {
+    slug: "organization",
+    icon: Building01Icon,
+    label: "Organization",
+    href: "/dashboard/organization",
+    children: [],
+    section: "primary",
+    description: "Manage your organizations",
+  },
+  {
     slug: "company",
     icon: Building01Icon,
     label: "Company",

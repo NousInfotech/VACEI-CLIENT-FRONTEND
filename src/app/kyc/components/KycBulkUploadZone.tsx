@@ -1,26 +1,24 @@
 "use client"
 
 import React, { useState, useCallback } from 'react'
-import { Upload, X, File as FileIcon, Loader2, AlertCircle, CheckCircle2, CloudDownload, Info } from 'lucide-react'
+import { Upload, X, File as FileIcon, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { bulkUploadKycDocuments, type RequestedDocument } from '@/api/kycService'
+import { useKyc } from '../context/KycContext'
 
 interface KycBulkUploadZoneProps {
   requestId: string
-  kycToken: string
   documents: RequestedDocument[]
-  onSuccess: () => void
   isDisabled?: boolean
 }
 
 const KycBulkUploadZone: React.FC<KycBulkUploadZoneProps> = ({
   requestId,
-  kycToken,
   documents,
-  onSuccess,
   isDisabled = false,
 }) => {
+  const { token: kycToken, refreshKyc: onSuccess } = useKyc()
   const [dragActive, setDragActive] = useState(false)
   const [files, setFiles] = useState<File[]>([])
   const [isUploading, setIsUploading] = useState(false)

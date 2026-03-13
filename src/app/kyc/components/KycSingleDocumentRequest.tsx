@@ -16,6 +16,8 @@ import {
 } from "lucide-react"
 import { downloadFile } from "@/api/kycService"
 
+import { useKyc } from "../context/KycContext"
+
 export interface DocumentFile {
   id: string
   file_name: string

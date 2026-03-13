@@ -11,12 +11,9 @@ import {
   RefreshCw, 
   Info,
   FileText,
-  Trash2,
   Eraser
 } from "lucide-react"
-import { type RequestedDocument } from "./KycSingleDocumentRequest"
-import { downloadFile } from "@/api/kycService"
-
+import { downloadFile, type RequestedDocument } from "@/api/kycService"
 interface KycDoubleDocumentRequestProps {
   requestId: string
   multipleDocuments: RequestedDocument[]

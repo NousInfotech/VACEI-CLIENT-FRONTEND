@@ -14,32 +14,31 @@ import {
   ExternalLink,
   Info
 } from "lucide-react"
-import { type DocumentRequest, uploadKycDocument, clearKycDocument } from '@/api/kycService'
+import { type DocumentRequest } from '@/api/kycService'
 import KycSingleDocumentRequest from './KycSingleDocumentRequest'
 import KycDoubleDocumentRequest from './KycDoubleDocumentRequest'
 import KycBulkUploadZone from './KycBulkUploadZone'
 import { ConfirmationModal } from "@/components/ui/ConfirmationModal"
 import UnassignedFilesSection from '@/components/company/shared/UnassignedFilesSection'
 
+import { useKyc } from '../context/KycContext'
+
 interface KycSectionTabProps {
   docRequest: DocumentRequest
-  kycToken: string
   clientName: string
   roles?: string[]
   involvementStatus?: string
   requestStatus?: string
-  onUploaded: () => void
 }
 
 const KycSectionTab: React.FC<KycSectionTabProps> = ({
   docRequest,
-  kycToken,
   clientName,
   roles,
   involvementStatus,
   requestStatus,
-  onUploaded
 }) => {
+  const { uploadDocument, clearDocument } = useKyc()
   const [isExpanded, setIsExpanded] = useState(true)
   const [uploadMode, setUploadMode] = useState<'bulk' | 'single'>('bulk')
   const [uploadingId, setUploadingId] = useState<string | null>(null)
@@ -59,10 +58,8 @@ const KycSectionTab: React.FC<KycSectionTabProps> = ({
 
   const handleUpload = async (reqId: string, docId: string, file: File) => {
     setUploadingId(docId)
-    const res = await uploadKycDocument(docId, reqId, kycToken, [file])
-    if (res.success) {
-      onUploaded()
-    } else {
+    const res = await uploadDocument(reqId, docId, file)
+    if (!res.success) {
       alert(res.message)
     }
     setUploadingId(null)
@@ -75,10 +72,8 @@ const KycSectionTab: React.FC<KycSectionTabProps> = ({
   const executeClear = async () => {
     if (!confirmClear) return
     const { reqId, docId } = confirmClear
-    const res = await clearKycDocument(docId, reqId, kycToken)
-    if (res.success) {
-      onUploaded()
-    } else {
+    const res = await clearDocument(reqId, docId)
+    if (!res.success) {
       alert(res.message)
     }
     setConfirmClear(null)
@@ -179,9 +174,7 @@ const KycSectionTab: React.FC<KycSectionTabProps> = ({
                 <>
                   <KycBulkUploadZone 
                     requestId={docRequest.id}
-                    kycToken={kycToken}
                     documents={docs}
-                    onSuccess={onUploaded}
                     isDisabled={isGlobalDisabled}
                   />
                   {/* Since this is a new page, we might not have unassignedFiles in details yet, 
