@@ -86,7 +86,7 @@ export default function ClientAuditTab() {
     }
     switch (activeSection) {
       case "extended-tb":
-        return <ETBTable data={transformedEtbRows} />;
+        return <ETBTable data={transformedEtbRows} engagementId={engagementId} />;
       case "adjustments":
         return <AdjustmentsTab />;
       case "reclassifications":
@@ -96,7 +96,7 @@ export default function ClientAuditTab() {
       case "balance-sheet":
         return extractedData ? <BalanceSheet data={extractedData} /> : null;
       default:
-        return <ETBTable data={transformedEtbRows} />;
+        return <ETBTable data={transformedEtbRows} engagementId={engagementId} />;
     }
   };
 
@@ -118,7 +118,7 @@ export default function ClientAuditTab() {
             {loading ? (
               <DetailsSkeleton />
             ) : (
-              <ETBTable data={transformedEtbRows} />
+              <ETBTable data={transformedEtbRows} engagementId={engagementId} />
             )}
           </div>
         ) : (

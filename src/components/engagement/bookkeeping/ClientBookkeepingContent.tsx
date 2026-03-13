@@ -46,17 +46,17 @@ import { flattenReportRows, currencyCodeFromRef } from "./utils";
 
 const BOOKKEEPING_TABS = [
   // { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "transactions", label: "Transactions", icon: FileText },
-  { id: "chart-of-accounts", label: "Chart of accounts", icon: ListTree },
-  { id: "invoices", label: "Invoices", icon: Receipt },
-  { id: "bills", label: "Bills", icon: FileText },
-  { id: "journal", label: "Journal", icon: BookOpen },
-  { id: "recurring-expenses", label: "Recurring expenses", icon: Repeat },
+  // { id: "transactions", label: "Transactions", icon: FileText },
+  // { id: "chart-of-accounts", label: "Chart of accounts", icon: ListTree },
+  { id: "invoices", label: "Sales", icon: Receipt },
+  { id: "bills", label: "Expenses", icon: FileText },
+  // { id: "journal", label: "Journal", icon: BookOpen },
+  // { id: "recurring-expenses", label: "Recurring expenses", icon: Repeat },
   { id: "bank-accounts", label: "Bank accounts", icon: Landmark },
   { id: "ap-ar-aging", label: "AP/AR Aging", icon: Wallet },
   { id: "reports", label: "Reports", icon: BarChart2 },
-  { id: "sync-history", label: "Sync history", icon: History },
-  { id: "tax", label: "Tax", icon: Percent },
+  // { id: "sync-history", label: "Sync history", icon: History },
+  // { id: "tax", label: "Tax", icon: Percent },
 ];
 
 interface ClientBookkeepingContentProps {
@@ -68,7 +68,7 @@ export default function ClientBookkeepingContent({
   engagementId,
   companyId,
 }: ClientBookkeepingContentProps) {
-  const [activeTab, setActiveTab] = useState("transactions");
+  const [activeTab, setActiveTab] = useState("invoices");
   const [cycle, setCycle] = useState<AccountingCycle | null>(null);
   const [cycleLoading, setCycleLoading] = useState(true);
   const [cycleError, setCycleError] = useState(false);

@@ -174,6 +174,15 @@ export interface ExtendedTrialBalance {
   }>;
 }
 
+// Entry line shape for adjustments/reclassifications (mirrors partner portal line.reason as Details)
+export interface AuditEntryLine {
+  code: string;
+  accountName: string;
+  dr: number;
+  cr: number;
+  reason?: string;
+}
+
 // Adjustment Types (mapped from audit-entries type=ADJUSTMENT)
 export interface Adjustment {
   _id: string;
@@ -185,7 +194,7 @@ export interface Adjustment {
   value: number;
   refs: string[];
   status?: string;
-  entries?: Array<any>;
+  entries?: AuditEntryLine[];
   /** Adjustment code from backend (e.g. AJ001) */
   code?: string;
 }
@@ -201,7 +210,7 @@ export interface Reclassification {
   value: number;
   refs: string[];
   status?: string;
-  entries?: Array<any>;
+  entries?: AuditEntryLine[];
   /** Reclassification code from backend (e.g. RC001) */
   code?: string;
 }
@@ -1028,6 +1037,7 @@ export async function getAdjustments(engagementId: string): Promise<Adjustment[]
           accountName: String(account.accountName ?? ""),
           dr: isDebit ? value : 0,
           cr: isDebit ? 0 : value,
+          reason: String(line.reason ?? ""),
         };
       });
       return {
@@ -1114,6 +1124,7 @@ export async function getReclassifications(engagementId: string): Promise<Reclas
           accountName: String(account.accountName ?? ""),
           dr: isDebit ? value : 0,
           cr: isDebit ? 0 : value,
+          reason: String(line.reason ?? ""),
         };
       });
       return {

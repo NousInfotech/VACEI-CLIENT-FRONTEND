@@ -79,7 +79,7 @@ const Engagement = () => {
 
   const renderContent = () => {
     switch (actualTab) {
-      case 'etb': return <ETBTable data={transformedEtbRows} />;
+      case 'etb': return <ETBTable data={transformedEtbRows} engagementId={engagement?.id ?? engagement?._id ?? null} />;
       case 'adjustments': return <AdjustmentsTab />;
       case 'reclassification': return <Reclassification />;
       case 'income_statement': return extractedData ? <IncomeStatement data={extractedData} /> : null;
@@ -90,7 +90,7 @@ const Engagement = () => {
       case 'mbr': return <MBRTab />;
       case 'tax': return <TaxTab />;
       case 'library': return <LibrarySharedFolderTab />;
-      default: return <ETBTable data={transformedEtbRows} />;
+      default: return <ETBTable data={transformedEtbRows} engagementId={engagement?.id ?? engagement?._id ?? null} />;
     }
   };
 
