@@ -1,25 +1,38 @@
 // extractETBData.ts
+// Mirror of VACEI_PARTNER_PORTAL audit/utils/etbDataProcessor.ts so Income Statement and Balance Sheet match exactly.
 
 // -------------------------
 // TYPES
 // -------------------------
 
 type ClassificationParts = {
-  grouping1?: string;
-  grouping2?: string;
-  grouping3?: string;
-  grouping4?: string;
+  grouping1: string | null;
+  grouping2: string | null;
+  grouping3: string | null;
+  grouping4: string | null;
 };
 
+/** ETB row shape accepted by extractETBData (compatible with mockEngagementData.ETBRow) */
 export interface ETBRow {
   _id: string;
   classification?: string;
+  code?: string;
+  accountName?: string;
   currentYear?: number;
   priorYear?: number;
   adjustments?: number;
   reclassification?: number;
+  reClassification?: number;
   finalBalance?: number;
-  [key: string]: any;
+  grouping1?: string | null;
+  grouping2?: string | null;
+  grouping3?: string | null;
+  grouping4?: string | null;
+  group1?: string | null;
+  group2?: string | null;
+  group3?: string | null;
+  group4?: string | null;
+  linkedExcelFiles?: unknown[];
 }
 
 interface LeadSheetTotals {
@@ -58,21 +71,27 @@ interface BalanceSheetTotals {
 }
 
 // -------------------------
-// CLASSIFICATION PARSER
+// HELPERS (match partner)
 // -------------------------
 
+const normalizeGroupKey = (s: string): string => s.trim().toLowerCase();
+
+const toNumber = (v: unknown): number =>
+  Number.isFinite(Number(v)) ? Number(v) : 0;
+
+// Parse classification string – trim, filter empty; return null for missing (match partner)
 const parseClassification = (classification: string = ""): ClassificationParts => {
-  const parts = classification.split(" > ");
+  const parts = classification.split(" > ").map((p) => p.trim()).filter(Boolean);
   return {
-    grouping1: parts[0],
-    grouping2: parts[1],
-    grouping3: parts[2],
-    grouping4: parts[3],
+    grouping1: parts[0] || null,
+    grouping2: parts[1] || null,
+    grouping3: parts[2] || null,
+    grouping4: parts[3] || null,
   };
 };
 
 // -------------------------
-// NORMALIZE ETB (CORRECT)
+// NORMALIZE ETB (mirror partner: sign flip Equity/Liabilities, round, finalBalance)
 // -------------------------
 
 const normalizeETB = (rows: ETBRow[]): ETBRow[] => {
@@ -80,16 +99,18 @@ const normalizeETB = (rows: ETBRow[]): ETBRow[] => {
     typeof v === "number" ? Math.round(v) : 0;
 
   return rows.map((row) => {
-    const { grouping1 } = parseClassification(row.classification);
-
+    const parsed = parseClassification(row.classification);
+    const grouping1 =
+      row.group1 ?? row.grouping1 ?? parsed.grouping1;
     const sign =
       grouping1 === "Equity" || grouping1 === "Liabilities" ? -1 : 1;
 
+    const reclass =
+      row.reclassification ?? row.reClassification ?? 0;
     const currentYear = round(row.currentYear) * sign;
     const priorYear = round(row.priorYear) * sign;
     const adjustments = round(row.adjustments) * sign;
-    const reclassification = round(row.reclassification) * sign;
-
+    const reclassification = round(reclass) * sign;
     const finalBalance = currentYear + adjustments + reclassification;
 
     return {
@@ -104,246 +125,281 @@ const normalizeETB = (rows: ETBRow[]): ETBRow[] => {
 };
 
 // -------------------------
-// LEAD SHEET INDEX
+// LEAD SHEET TREE (4-level; only g4 has totals; use normalized keys for merge – match partner)
 // -------------------------
 
-const buildLeadSheetIndex = (tree: LeadSheetNode[]): Record<string, string> => {
-  const index: Record<string, string> = {};
-
-  for (const g1 of tree) {
-    for (const g2 of g1.children || []) {
-      for (const g3 of g2.children || []) {
-        if (g3.group && g3.id) {
-          index[g3.group] = g3.id;
-        }
-      }
-    }
-  }
-
-  return index;
-};
-
-// -------------------------
-// LEAD SHEETS
-// -------------------------
-
-const getOrCreate = <T extends LeadSheetNode>(
-  arr: T[],
-  key: string,
-  factory: () => T
-): T => {
-  let node = arr.find((n) => n.group === key);
-  if (!node) {
-    node = factory();
-    arr.push(node);
-  }
-  return node;
-};
-
-const rollupTotals = (node: LeadSheetNode) => {
-  if (!node.children || node.children.length === 0) return;
-
-  const totals: LeadSheetTotals = {
-    currentYear: 0,
-    priorYear: 0,
-    adjustments: 0,
-    reclassification: 0,
-    finalBalance: 0,
-  };
-
-  for (const child of node.children) {
-    if (child.children) rollupTotals(child);
-    if (child.totals) {
-      totals.currentYear += child.totals.currentYear;
-      totals.priorYear += child.totals.priorYear;
-      totals.adjustments += child.totals.adjustments;
-      totals.reclassification += child.totals.reclassification;
-      totals.finalBalance += child.totals.finalBalance;
-    }
-  }
-
-  node.totals = totals;
-};
+interface TreeNodeWithMap extends LeadSheetNode {
+  _map?: Map<string, TreeNodeWithMap>;
+}
 
 const buildLeadSheetTree = (rows: ETBRow[]): LeadSheetNode[] => {
-  const tree: LeadSheetNode[] = [];
+  const tree: TreeNodeWithMap[] = [];
   let idCounter = 1;
+  const normalize = normalizeGroupKey;
+
+  const g1Map = new Map<string, TreeNodeWithMap>();
 
   for (const row of rows) {
-    const { grouping1, grouping2, grouping3, grouping4 } = parseClassification(
-      row.classification
-    );
+    const parsed = parseClassification(row.classification);
+    const grouping1 = row.group1 ?? row.grouping1 ?? parsed.grouping1;
+    const grouping2 = row.group2 ?? row.grouping2 ?? parsed.grouping2;
+    const grouping3 = row.group3 ?? row.grouping3 ?? parsed.grouping3;
+    const grouping4 = row.group4 ?? row.grouping4 ?? parsed.grouping4;
 
     if (!grouping1 || !grouping2 || !grouping3) continue;
 
-    const g1 = getOrCreate(tree, grouping1, () => ({
-      level: "grouping1",
-      group: grouping1,
-      children: [],
-    }));
+    const k1 = normalize(grouping1);
+    const k2 = normalize(grouping2);
+    const k3 = normalize(grouping3);
+    const k4 = normalize(grouping4 ?? "");
 
-    const g2 = getOrCreate(g1.children!, grouping2, () => ({
-      level: "grouping2",
-      group: grouping2,
-      children: [],
-    }));
+    let g1 = g1Map.get(k1);
+    if (!g1) {
+      g1 = {
+        level: "grouping1",
+        group: grouping1,
+        children: [],
+        _map: new Map(),
+      };
+      g1Map.set(k1, g1);
+      tree.push(g1);
+    }
 
-    const g3 = getOrCreate(g2.children!, grouping3, () => ({
-      level: "grouping3",
-      group: grouping3,
-      children: [],
-    }));
+    let g2 = g1._map!.get(k2);
+    if (!g2) {
+      g2 = {
+        level: "grouping2",
+        group: grouping2,
+        children: [],
+        _map: new Map(),
+      };
+      g1._map!.set(k2, g2);
+      g1.children!.push(g2);
+    }
 
-    const g4 = getOrCreate(g3.children!, grouping4 || "_direct_", () => ({
-      level: "grouping4",
-      id: `LS_${idCounter++}`,
-      group: grouping4 || "_direct_",
-      totals: {
-        currentYear: 0,
-        priorYear: 0,
-        adjustments: 0,
-        reclassification: 0,
-        finalBalance: 0,
-      },
-      rows: [],
-    }));
+    let g3 = g2._map!.get(k3);
+    if (!g3) {
+      g3 = {
+        level: "grouping3",
+        group: grouping3,
+        children: [],
+        _map: new Map(),
+      };
+      g2._map!.set(k3, g3);
+      g2.children!.push(g3);
+    }
 
-    g4.totals!.currentYear += row.currentYear || 0;
-    g4.totals!.priorYear += row.priorYear || 0;
-    g4.totals!.adjustments += row.adjustments || 0;
-    g4.totals!.reclassification += row.reclassification || 0;
-    g4.totals!.finalBalance += row.finalBalance || 0;
+    const leafKey = k4 || `__unnamed_${idCounter}`;
+    let g4 = g3._map!.get(leafKey);
+    if (!g4) {
+      g4 = {
+        level: "grouping4",
+        id: `LS_${idCounter++}`,
+        group: grouping4 || "",
+        children: [],
+        totals: {
+          currentYear: 0,
+          priorYear: 0,
+          adjustments: 0,
+          reclassification: 0,
+          finalBalance: 0,
+        },
+        rows: [],
+      };
+      g3._map!.set(leafKey, g4);
+      g3.children!.push(g4);
+    }
+
+    g4.totals!.currentYear += toNumber(row.currentYear);
+    g4.totals!.priorYear += toNumber(row.priorYear);
+    g4.totals!.adjustments += toNumber(row.adjustments);
+    g4.totals!.reclassification += toNumber(row.reclassification);
+    g4.totals!.finalBalance += toNumber(row.finalBalance);
     g4.rows!.push(row._id);
   }
 
-  // Roll up totals from bottom to top
-  for (const g1 of tree) {
-    rollupTotals(g1);
-  }
+  const cleanup = (nodes: TreeNodeWithMap[]): void => {
+    for (const n of nodes) {
+      delete n._map;
+      if (n.children?.length) cleanup(n.children as TreeNodeWithMap[]);
+    }
+  };
+  cleanup(tree);
 
   return tree;
 };
 
 // -------------------------
-// INCOME STATEMENT (match VACEI_PARTNER_PORTAL etbDataProcessor)
-// Partner breakdown keys: Revenue, Cost of sales, Sales and marketing expenses,
-// Administrative expenses, Other operating income, Investment income,
-// Other Gains/Losses, Finance costs, Income tax expense.
-// Partner formula: grossProfit = revenue - |costOfSales|, operatingProfit = ...,
-// net = profitBeforeTax - |taxExpense|.
+// BRANCH TOTALS (single tree scan – match partner buildBranchTotals)
 // -------------------------
 
-const PARTNER_INCOME_KEY_MAP: Record<string, string> = {
-  revenue: "Revenue",
-  "cost of sales": "Cost of sales",
-  "sales and marketing expenses": "Sales and marketing expenses",
-  "selling & marketing expenses": "Sales and marketing expenses",
-  "administrative expenses": "Administrative expenses",
-  "other operating income": "Other operating income",
-  "investment income": "Investment income",
-  "investment losses": "Other Gains/Losses",
-  "other gains/losses": "Other Gains/Losses",
-  "finance costs": "Finance costs",
-  "income tax expense": "Income tax expense",
-  taxation: "Income tax expense",
-  "share of profit of subsidiary": "Other Gains/Losses",
-  "pbt expenses": "Other Gains/Losses",
+export type BranchTotals = {
+  priorYear: Record<string, number>;
+  finalBalance: Record<string, number>;
+  nodeIndex: Record<string, LeadSheetNode>;
 };
 
-const normalizeToPartnerKey = (group: string): string =>
-  PARTNER_INCOME_KEY_MAP[group.trim().toLowerCase()] || group;
+export const buildBranchTotals = (tree: LeadSheetNode[]): BranchTotals => {
+  const priorYearMap: Record<string, number> = {};
+  const finalBalanceMap: Record<string, number> = {};
+  const nodeIndex: Record<string, LeadSheetNode> = {};
+
+  const traverse = (
+    node: LeadSheetNode
+  ): { priorYear: number; finalBalance: number } => {
+    if (!node) return { priorYear: 0, finalBalance: 0 };
+
+    if (!node.children?.length) {
+      const priorYear = node.totals?.priorYear ?? 0;
+      const finalBalance = node.totals?.finalBalance ?? 0;
+      const key = normalizeGroupKey(node.group);
+      if (key) {
+        priorYearMap[key] = (priorYearMap[key] ?? 0) + priorYear;
+        finalBalanceMap[key] = (finalBalanceMap[key] ?? 0) + finalBalance;
+        nodeIndex[key] = node;
+      }
+      return { priorYear, finalBalance };
+    }
+
+    let priorYear = 0;
+    let finalBalance = 0;
+    for (const child of node.children) {
+      const sub = traverse(child);
+      priorYear += sub.priorYear;
+      finalBalance += sub.finalBalance;
+    }
+    const key = normalizeGroupKey(node.group);
+    if (key) {
+      priorYearMap[key] = (priorYearMap[key] ?? 0) + priorYear;
+      finalBalanceMap[key] = (finalBalanceMap[key] ?? 0) + finalBalance;
+      nodeIndex[key] = node;
+    }
+    return { priorYear, finalBalance };
+  };
+
+  for (const root of tree) traverse(root);
+
+  return {
+    priorYear: priorYearMap,
+    finalBalance: finalBalanceMap,
+    nodeIndex,
+  };
+};
+
+// Find first node whose group matches name (case-insensitive)
+const findNodeByGroup = (
+  nodes: LeadSheetNode[],
+  name: string
+): LeadSheetNode | null => {
+  const n = normalizeGroupKey(name);
+  for (const node of nodes) {
+    if (normalizeGroupKey(node.group) === n) return node;
+    const found = findNodeByGroup(node.children || [], name);
+    if (found) return found;
+  }
+  return null;
+};
+
+// Collect all leaf (g4) IDs under a node
+const collectLeafIdsUnder = (node: LeadSheetNode): string[] => {
+  if (node.id) return [node.id];
+  const ids: string[] = [];
+  for (const child of node.children || [])
+    ids.push(...collectLeafIdsUnder(child));
+  return ids;
+};
+
+const getBranch = (
+  totals: { priorYear: Record<string, number>; finalBalance: Record<string, number> },
+  groupName: string,
+  field: "priorYear" | "finalBalance"
+) => totals[field][normalizeGroupKey(groupName)] ?? 0;
+
+// -------------------------
+// INCOME STATEMENT (mirror partner deriveIncomeStatement)
+// -------------------------
 
 const deriveIncomeStatement = (
   tree: LeadSheetNode[],
-  currentYear: number
+  currentYear: number,
+  branchTotals?: BranchTotals
 ) => {
   const priorYear = currentYear - 1;
-  const leadIndex = buildLeadSheetIndex(tree);
+  const totalsMap = branchTotals ?? buildBranchTotals(tree);
+  const { priorYear: priorYearMap, finalBalance: finalBalanceMap, nodeIndex } = totalsMap;
+  const totals = { priorYear: priorYearMap, finalBalance: finalBalanceMap };
 
-  const equity = tree.find((n) => n.group === "Equity");
-  const pl = equity?.children?.find(
-    (n) => n.group === "Current Year Profits & Losses"
-  );
-
-  const empty = (year: number): IncomeStatementResult => ({
-    year,
-    net_result: 0,
-    resultType: "net_profit",
-    breakdowns: {},
-  });
-
-  if (!pl) {
-    return {
-      prior_year: empty(priorYear),
-      current_year: empty(currentYear),
-    };
-  }
-
-  const collect = (field: keyof LeadSheetTotals) => {
-    const totals: Record<string, number> = {};
-    for (const g3 of pl.children || []) {
-      const raw = g3.totals?.[field] || 0;
-      const partnerKey = normalizeToPartnerKey(g3.group);
-      totals[partnerKey] = (totals[partnerKey] || 0) + raw;
-    }
-    return totals;
-  };
-
-  const partnerKeyToAccounts: Record<string, string[]> = {};
-  for (const g3 of pl.children || []) {
-    const k = normalizeToPartnerKey(g3.group);
-    if (!partnerKeyToAccounts[k]) partnerKeyToAccounts[k] = [];
-    if (g3.id) partnerKeyToAccounts[k].push(g3.id);
-  }
-
-  const calculate = (totals: Record<string, number>) => {
-    const revenue = totals["Revenue"] || 0;
-    const costOfSales = totals["Cost of sales"] || 0;
-    const salesMarketing = totals["Sales and marketing expenses"] || 0;
-    const adminExpenses = totals["Administrative expenses"] || 0;
-    const otherOperatingIncome = totals["Other operating income"] || 0;
-    const investmentIncome = totals["Investment income"] || 0;
-    const otherGainsLosses = totals["Other Gains/Losses"] || 0;
-    const financeCosts = totals["Finance costs"] || 0;
-    const taxExpense = totals["Income tax expense"] || 0;
-
+  const calculate = (field: "priorYear" | "finalBalance") => {
+    const revenue = getBranch(totals, "Revenue", field);
+    const costOfSales = getBranch(totals, "Cost of Sales", field);
     const grossProfit = revenue - Math.abs(costOfSales);
+
+    const salesMarketing = getBranch(totals, "Selling & Marketing Expenses", field);
+    const adminExpenses = getBranch(totals, "Administrative Expenses", field);
+    const otherOperatingIncome = getBranch(totals, "Other Operating Income", field);
     const operatingProfit =
       grossProfit -
-      Math.abs(salesMarketing) -
-      Math.abs(adminExpenses) +
+      Math.abs(adminExpenses) -
+      Math.abs(salesMarketing) +
       otherOperatingIncome;
+
+    const investmentIncome = getBranch(totals, "Investment Income", field);
+    const otherGainsLosses = getBranch(totals, "Other Gains/Losses", field);
+    const financeCosts = getBranch(totals, "Finance Costs", field);
     const profitBeforeTax =
       operatingProfit +
       investmentIncome +
       otherGainsLosses -
       Math.abs(financeCosts);
+
+    const taxExpense = getBranch(totals, "Taxation", field);
     const net = profitBeforeTax - Math.abs(taxExpense);
 
-    const partnerKeys = [
-      "Revenue",
-      "Cost of sales",
-      "Sales and marketing expenses",
-      "Administrative expenses",
-      "Other operating income",
-      "Investment income",
-      "Other Gains/Losses",
-      "Finance costs",
-      "Income tax expense",
-    ];
-    const breakdowns: Record<string, { value: number; accounts: string[] }> = {};
-    for (const k of partnerKeys) {
-      const raw = totals[k];
-      if (raw === undefined) continue;
-      breakdowns[k] = {
-        value: Math.abs(raw),
-        accounts: partnerKeyToAccounts[k] || [],
-      };
-    }
+    const accountsFor = (groupName: string) => {
+      const node =
+        nodeIndex[normalizeGroupKey(groupName)] ?? findNodeByGroup(tree, groupName);
+      return node ? collectLeafIdsUnder(node) : [];
+    };
+
+    const breakdowns: Record<string, { value: number; accounts: string[] }> = {
+      Revenue: { value: Math.abs(revenue), accounts: accountsFor("Revenue") },
+      "Cost of sales": {
+        value: Math.abs(costOfSales),
+        accounts: accountsFor("Cost of Sales"),
+      },
+      "Sales and marketing expenses": {
+        value: Math.abs(salesMarketing),
+        accounts: accountsFor("Selling & Marketing Expenses"),
+      },
+      "Administrative expenses": {
+        value: Math.abs(adminExpenses),
+        accounts: accountsFor("Administrative Expenses"),
+      },
+      "Other operating income": {
+        value: Math.abs(otherOperatingIncome),
+        accounts: accountsFor("Other Operating Income"),
+      },
+      "Investment income": {
+        value: Math.abs(investmentIncome),
+        accounts: accountsFor("Investment Income"),
+      },
+      "Other Gains/Losses": {
+        value: Math.abs(otherGainsLosses),
+        accounts: accountsFor("Other Gains/Losses"),
+      },
+      "Finance costs": {
+        value: Math.abs(financeCosts),
+        accounts: accountsFor("Finance Costs"),
+      },
+      "Income tax expense": {
+        value: Math.abs(taxExpense),
+        accounts: accountsFor("Taxation"),
+      },
+    };
 
     return {
       net_result: net,
-      resultType: net >= 0 ? "net_profit" : "net_loss",
+      resultType: net >= 0 ? ("net_profit" as const) : ("net_loss" as const),
       breakdowns,
     };
   };
@@ -351,31 +407,50 @@ const deriveIncomeStatement = (
   return {
     prior_year: {
       year: priorYear,
-      ...calculate(collect("priorYear")),
+      ...calculate("priorYear"),
     },
     current_year: {
       year: currentYear,
-      ...calculate(collect("finalBalance")),
+      ...calculate("finalBalance"),
     },
   };
 };
 
 // -------------------------
-// RETAINED EARNINGS
+// RETAINED EARNINGS (mirror partner: Equity > Retained Earnings > Accumulated Profits > Retained Earnings B/F)
 // -------------------------
 
 const deriveRetainedEarnings = (
   tree: LeadSheetNode[],
-  incomeStatement: any,
+  incomeStatement: ReturnType<typeof deriveIncomeStatement>,
   currentYear: number
 ) => {
   const priorYear = currentYear - 1;
 
-  const equity = tree.find((n) => n.group === "Equity");
-  const eqBlock = equity?.children?.find((n) => n.group === "Equity");
-  const re = eqBlock?.children?.find((n) => n.group === "Retained earnings");
+  const equity = tree.find(
+    (n) => normalizeGroupKey(n.group) === normalizeGroupKey("Equity")
+  );
+  const retainedEarnings = equity?.children?.find(
+    (n) => normalizeGroupKey(n.group) === normalizeGroupKey("Retained Earnings")
+  );
+  const accumulatedProfits = retainedEarnings?.children?.find(
+    (n) =>
+      normalizeGroupKey(n.group) === normalizeGroupKey("Accumulated Profits")
+  );
 
-  const priorValue = re?.totals?.priorYear || 0;
+  let priorValue = 0;
+  if (accumulatedProfits?.children) {
+    for (const g4 of accumulatedProfits.children) {
+      if (
+        normalizeGroupKey(g4.group) ===
+        normalizeGroupKey("Retained Earnings B/F")
+      ) {
+        priorValue += g4.totals?.priorYear || 0;
+        break;
+      }
+    }
+  }
+
   const net = incomeStatement.current_year.net_result;
 
   return {
@@ -388,25 +463,42 @@ const deriveRetainedEarnings = (
 };
 
 // -------------------------
-// COLLECT GROUP ACCOUNTS
+// COLLECT GROUP ACCOUNTS (mirror partner: support grouping4 skip; iterate to g4)
 // -------------------------
 
 const collectGroupAccounts = (
   tree: LeadSheetNode[],
   groupName: string,
-  skip: { grouping2?: string[]; grouping3?: string[] } = {}
+  skip: {
+    grouping2?: string[];
+    grouping3?: string[];
+    grouping4?: string[];
+  } = {}
 ): string[] => {
-  const node = tree.find((n) => n.group === groupName);
+  const node = tree.find(
+    (n) => normalizeGroupKey(n.group) === normalizeGroupKey(groupName)
+  );
   if (!node) return [];
 
   const ids: string[] = [];
 
   for (const g2 of node.children || []) {
-    if (skip.grouping2?.includes(g2.group)) continue;
-
+    if (
+      skip.grouping2?.some((s) => normalizeGroupKey(s) === normalizeGroupKey(g2.group))
+    )
+      continue;
     for (const g3 of g2.children || []) {
-      if (skip.grouping3?.includes(g3.group)) continue;
-      if (g3.id) ids.push(g3.id);
+      if (
+        skip.grouping3?.some((s) => normalizeGroupKey(s) === normalizeGroupKey(g3.group))
+      )
+        continue;
+      for (const g4 of g3.children || []) {
+        if (
+          skip.grouping4?.some((s) => normalizeGroupKey(s) === normalizeGroupKey(g4.group))
+        )
+          continue;
+        if (g4.id) ids.push(g4.id);
+      }
     }
   }
 
@@ -414,63 +506,103 @@ const collectGroupAccounts = (
 };
 
 // -------------------------
-// BALANCE SHEET
+// BALANCE SHEET (mirror partner: exclude grouping4 "Current Year Profit / Loss", use branchTotals)
 // -------------------------
 
 const deriveBalanceSheet = (
   tree: LeadSheetNode[],
-  retainedEarnings: any,
-  currentYear: number
+  retainedEarnings: ReturnType<typeof deriveRetainedEarnings>,
+  currentYear: number,
+  branchTotals?: BranchTotals
 ) => {
   const priorYear = currentYear - 1;
+  const key = normalizeGroupKey;
+  const currentYearProfitLossKey = key("Current Year Profit / Loss");
 
-  const sum = (
-    group: string,
-    field: keyof LeadSheetTotals,
-    skip: {
-      grouping2?: string[];
-      grouping3?: string[];
-    } = {}
-  ): number => {
-    const node = tree.find((n) => n.group === group);
-    if (!node) return 0;
+  let assetsCY: number;
+  let liabilitiesCY: number;
+  let equityCY: number;
+  let assetsPY: number;
+  let liabilitiesPY: number;
+  let equityPY: number;
 
-    let total = 0;
-    for (const g2 of node.children || []) {
-      if (skip.grouping2?.includes(g2.group)) continue;
-      for (const g3 of g2.children || []) {
-        if (skip.grouping3?.includes(g3.group)) continue;
-        total += g3.totals?.[field] || 0;
+  if (branchTotals) {
+    const py = branchTotals.priorYear;
+    const cy = branchTotals.finalBalance;
+    assetsCY = cy[key("Assets")] ?? 0;
+    liabilitiesCY = cy[key("Liabilities")] ?? 0;
+    assetsPY = py[key("Assets")] ?? 0;
+    liabilitiesPY = py[key("Liabilities")] ?? 0;
+    const equityFromTreeCY = cy[key("Equity")] ?? 0;
+    const equityFromTreePY = py[key("Equity")] ?? 0;
+    const currentYearProfitLossCY = cy[currentYearProfitLossKey] ?? 0;
+    const currentYearProfitLossPY = py[currentYearProfitLossKey] ?? 0;
+    equityCY =
+      equityFromTreeCY -
+      currentYearProfitLossCY +
+      retainedEarnings.current_year.value;
+    equityPY =
+      equityFromTreePY -
+      currentYearProfitLossPY +
+      retainedEarnings.prior_year.value;
+  } else {
+    const sum = (
+      group: string,
+      field: "priorYear" | "finalBalance",
+      skip: {
+        grouping2?: string[];
+        grouping3?: string[];
+        grouping4?: string[];
+      } = {}
+    ): number => {
+      const node = tree.find(
+        (n) => normalizeGroupKey(n.group) === normalizeGroupKey(group)
+      );
+      if (!node) return 0;
+      let total = 0;
+      for (const g2 of node.children || []) {
+        if (
+          skip.grouping2?.some((s) => normalizeGroupKey(s) === normalizeGroupKey(g2.group))
+        )
+          continue;
+        for (const g3 of g2.children || []) {
+          if (
+            skip.grouping3?.some((s) => normalizeGroupKey(s) === normalizeGroupKey(g3.group))
+          )
+            continue;
+          for (const g4 of g3.children || []) {
+            if (
+              skip.grouping4?.some(
+                (s) => normalizeGroupKey(s) === normalizeGroupKey(g4.group)
+              )
+            )
+              continue;
+            total += g4.totals?.[field] || 0;
+          }
+        }
       }
-    }
-    return total;
-  };
-
-  const assetsCY = sum("Assets", "finalBalance");
-  const liabilitiesCY = sum("Liabilities", "finalBalance");
-  const equityCY =
-    sum("Equity", "finalBalance", {
-      grouping2: ["Current Year Profits & Losses"],
-      grouping3: ["Retained earnings"],
-    }) + retainedEarnings.current_year.value;
-
-  const assetsPY = sum("Assets", "priorYear");
-  const liabilitiesPY = sum("Liabilities", "priorYear");
-  const equityPY =
-    sum("Equity", "priorYear", {
-      grouping2: ["Current Year Profits & Losses"],
-      grouping3: ["Retained earnings"],
-    }) + retainedEarnings.prior_year.value;
+      return total;
+    };
+    assetsCY = sum("Assets", "finalBalance");
+    liabilitiesCY = sum("Liabilities", "finalBalance");
+    equityCY =
+      sum("Equity", "finalBalance", {
+        grouping4: ["Current Year Profit / Loss"],
+      }) + retainedEarnings.current_year.value;
+    assetsPY = sum("Assets", "priorYear");
+    liabilitiesPY = sum("Liabilities", "priorYear");
+    equityPY =
+      sum("Equity", "priorYear", {
+        grouping4: ["Current Year Profit / Loss"],
+      }) + retainedEarnings.prior_year.value;
+  }
 
   const totalAssetsCY = assetsCY;
   const totalEquityAndLiabilitiesCY = equityCY + liabilitiesCY;
   const totalAssetsPY = assetsPY;
   const totalEquityAndLiabilitiesPY = equityPY + liabilitiesPY;
 
-  const equityAccountsSkip = {
-    grouping2: ["Current Year Profits & Losses"],
-    grouping3: ["Retained earnings"],
-  };
+  const equityAccountsSkip = { grouping4: ["Current Year Profit / Loss"] };
 
   return {
     prior_year: {
@@ -535,13 +667,18 @@ const deriveBalanceSheet = (
 };
 
 // -------------------------
-// EXPORT
+// EXPORT (single pipeline – match partner extractETBData)
 // -------------------------
 
 export const extractETBData = (etbRows: ETBRow[], year: number) => {
   const normalized = normalizeETB(etbRows);
   const leadSheets = buildLeadSheetTree(normalized);
-  const incomeStatement = deriveIncomeStatement(leadSheets, year);
+  const branchTotals = buildBranchTotals(leadSheets);
+  const incomeStatement = deriveIncomeStatement(
+    leadSheets,
+    year,
+    branchTotals
+  );
   const retainedEarnings = deriveRetainedEarnings(
     leadSheets,
     incomeStatement,
@@ -550,38 +687,15 @@ export const extractETBData = (etbRows: ETBRow[], year: number) => {
   const balanceSheet = deriveBalanceSheet(
     leadSheets,
     retainedEarnings,
-    year
+    year,
+    branchTotals
   );
-
-  // Inject Net Profit/Loss into visual tree for Balance Sheet consistency
-  // Important: We do this AFTER summaries are derived so we don't double count in formulas
-  // const equityG1 = leadSheets.find((n) => n.group === "Equity");
-  // if (equityG1) {
-  //   const pnlG2 = getOrCreate(equityG1.children!, "Current Year Profits & Losses", () => ({
-  //     level: "grouping2",
-  //     group: "Current Year Profits & Losses",
-  //     children: [],
-  //   }));
-
-  //   getOrCreate(pnlG2.children!, "Current Year Profit / (Loss)", () => ({
-  //     level: "grouping3",
-  //     group: "Current Year Profit / (Loss)",
-  //     totals: {
-  //       currentYear: incomeStatement.current_year.net_result,
-  //       priorYear: incomeStatement.prior_year.net_result,
-  //       adjustments: 0,
-  //       reclassification: 0,
-  //       finalBalance: incomeStatement.current_year.net_result,
-  //     },
-  //     rows: [],
-  //   }));
-  // }
 
   return {
     etb: normalized,
     lead_sheets: leadSheets,
     income_statement: incomeStatement,
     balance_sheet: balanceSheet,
-    // retained_earnings: retainedEarnings,
+    normalized_rows: normalized,
   };
 };

@@ -12,7 +12,7 @@ interface ModalProps {
   children: ReactNode;
   showCloseButton?: boolean;
   footer?: ReactNode;
-  size?: "default" | "wide";
+  size?: "default" | "wide" | "xl";
 }
 
 export function Modal({
@@ -59,7 +59,7 @@ export function Modal({
         className={`relative z-10 w-full h-fit max-h-[calc(100vh-2rem)]
         bg-card border border-border rounded-lg shadow-2xl
         flex flex-col overflow-hidden
-        ${size === "wide" ? "max-w-2xl" : "max-w-md"}`}
+        ${size === "xl" ? "max-w-4xl" : size === "wide" ? "max-w-2xl" : "max-w-md"}`}
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}

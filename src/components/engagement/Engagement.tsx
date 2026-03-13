@@ -35,10 +35,14 @@ const Engagement = () => {
   const { engagement, loading: engagementLoading, error: engagementError } = useEngagement();
   const { etb, loading: etbLoading, error: etbError } = useEtb(engagement?._id || null);
   
-  // Transform ETB rows to match ETBRow interface (reclassifications -> reclassification)
+  /** Numeric-aware code comparison – match VACEI_PARTNER_PORTAL useETBData */
+  const compareCodeNumeric = (a: unknown, b: unknown) =>
+    String(a ?? '').localeCompare(String(b ?? ''), undefined, { numeric: true });
+
+  // Transform ETB rows to match ETBRow interface; sort by Code (mirror partner portal order)
   const transformedEtbRows = useMemo((): ETBRow[] => {
     if (!etb?.rows) return [];
-    return etb.rows.map(row => ({
+    const rows = etb.rows.map(row => ({
       _id: row._id || row.rowId || '',
       code: row.code || '',
       accountName: row.accountName || '',
@@ -49,6 +53,8 @@ const Engagement = () => {
       finalBalance: row.finalBalance ?? 0,
       classification: row.classification || '',
     }));
+    rows.sort((a, b) => compareCodeNumeric(a.code, b.code));
+    return rows;
   }, [etb]);
 
   const extractedData = useMemo(() => {
@@ -79,7 +85,7 @@ const Engagement = () => {
 
   const renderContent = () => {
     switch (actualTab) {
-      case 'etb': return <ETBTable data={transformedEtbRows} />;
+      case 'etb': return <ETBTable data={transformedEtbRows} engagementId={engagement?.id ?? engagement?._id ?? null} />;
       case 'adjustments': return <AdjustmentsTab />;
       case 'reclassification': return <Reclassification />;
       case 'income_statement': return extractedData ? <IncomeStatement data={extractedData} /> : null;
@@ -90,7 +96,7 @@ const Engagement = () => {
       case 'mbr': return <MBRTab />;
       case 'tax': return <TaxTab />;
       case 'library': return <LibrarySharedFolderTab />;
-      default: return <ETBTable data={transformedEtbRows} />;
+      default: return <ETBTable data={transformedEtbRows} engagementId={engagement?.id ?? engagement?._id ?? null} />;
     }
   };
 
