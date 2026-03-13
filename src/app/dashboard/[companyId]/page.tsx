@@ -22,7 +22,7 @@ import { useGlobalDashboard } from "@/context/GlobalDashboardContext";
 import type { Task } from "@/interfaces";
 import { fetchPayrollData, transformPayrollSubmissionsToComplianceItems } from "@/lib/payrollComplianceIntegration";
 import { listComplianceCalendars, type ComplianceCalendarEntry } from "@/api/complianceCalendarService";
-import { isPast, isToday } from "date-fns";
+import { format, isPast, isToday } from "date-fns";
 import { HugeiconsIcon } from '@hugeicons/react';
 import { AddressBookIcon, Alert02Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,13 @@ import CurrentFocus, { FocusItem } from "@/components/dashboard/CurrentFocus";
 import NextComplianceDeadline from "@/components/dashboard/NextComplianceDeadline";
 import { DashboardSkeleton } from "@/components/shared/CommonSkeletons";
 import { SERVICE_METADATA } from "@/lib/menuData";
+import AttentionBanner from "@/components/dashboard/company/AttentionBanner";
+import CompanyNoticeBoard from "@/components/dashboard/company/CompanyNoticeBoard";
+import CompanyAnalytics from "@/components/dashboard/company/CompanyAnalytics";
+import ComplianceDeadlineCard from "@/components/dashboard/company/ComplianceDeadlineCard";
+import ActiveEngagementsList from "@/components/dashboard/company/ActiveEngagementsList";
+import AIOptionsSuggestions from "@/components/dashboard/company/AIOptionsSuggestions";
+
 
 // Company interface
 interface Company {
@@ -107,7 +114,7 @@ export default function DashboardPage() {
   const router = useRouter();
   // Use context instead of local state first, since we read it for lazy init
   const { activeCompanyId, companies, setCompanies } = useActiveCompany();
-  const { refreshSidebar } = useGlobalDashboard();
+  const { sidebarData } = useGlobalDashboard();
 
   const [uploadSummary, setUploadSummary] = useState<UploadStatusSummary | null>(null);
 
@@ -138,6 +145,20 @@ export default function DashboardPage() {
 
   const loadingCompanies = false; // Context handles loading implicitely or we can add it if needed
   const [stats, setStats] = useState<ProcessedDashboardStat[]>(() => dashboardCache.stats);
+
+  const engagementComplianceMap = useMemo(() => {
+    const map: Record<string, any> = {};
+    if (sidebarData) {
+      sidebarData.forEach(s => {
+        if (s.activeEngagements) {
+          s.activeEngagements.forEach(e => {
+            map[e.id] = s.worstCompliance;
+          });
+        }
+      });
+    }
+    return map;
+  }, [sidebarData]);
 
   // CRITICAL: Verify authentication on mount (before loading any data)
   // This prevents page flash by showing loading state while verifying
@@ -495,7 +516,7 @@ export default function DashboardPage() {
           return dlDate.getTime() >= normalizedToday.getTime();
         }).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
 
-        const nextEntry = overdueEntries[0] || upcomingEntries[0] || null;
+        const nextEntry = upcomingEntries[0] || null;
         setNextCalendarDeadline(nextEntry || null);
         
         // Also set a list of upcoming calendar deadlines (top 3)
@@ -677,6 +698,7 @@ export default function DashboardPage() {
     const slug = serviceSlugMap[e.serviceCategory] || e.serviceCategory.toLowerCase();
 
     return {
+      id: e.id,
       name: e.name || e.serviceCategory,
       category: e.serviceCategory,
       status: e.status,
@@ -687,6 +709,15 @@ export default function DashboardPage() {
       href: `/dashboard/${activeCompanyId}/services/${slug}/${e.id}`
     };
   }) || [];
+
+  const mappedEngagements = activeServices.map(s => ({
+    id: s.id || Math.random().toString(),
+    name: s.name,
+    status: s.status, // Internal workflow status (e.g. "Waiting for Information")
+    complianceStatus: (engagementComplianceMap[s.id] || "ON_TRACK") as any,
+    href: s.href
+  }));
+
   const recentlyCompleted = [
     { text: "VAT Q1 submitted", action: "View receipt", href: `/dashboard/${activeCompanyId}/services/vat` },
     { text: "Payroll May filed", action: "View confirmation", href: `/dashboard/${activeCompanyId}/services/payroll` },
@@ -732,14 +763,8 @@ export default function DashboardPage() {
     return `${timeGreeting}!`;
   };
 
-  // Show loading state while verifying authentication or fetching data
-  if (authLoading || loading || !dashboardSummary) {
-    return (
-      <div className="min-h-screen bg-brand-body">
-        <DashboardSkeleton />
-      </div>
-    );
-  }
+  const isLoadingDashboard = authLoading || !dashboardSummary;
+  const isFinancialLoading = loading;
 
   // Final URL for the Workspace card (Analytics section)
   const workspaceUrl = (() => {
@@ -754,401 +779,62 @@ export default function DashboardPage() {
   })();
 
   return (
-    <div className="min-h-screen bg-brand-body p-4">
-      <div className=" mx-auto space-y-8">
-        {/* Premium Dashboard Header */}
+    <div className="min-h-screen">
+      <div className="mx-auto space-y-5">
+        {/* Header Section */}
         <PageHeader
           title={getGreeting()}
           subtitle={username ? "Here's your business tasks and what's happening today." : "Welcome back! Here's what's happening with your business today."}
           activeCompany={companies.find(c => c.id === activeCompanyId)?.name || "ACME LTD"}
           todoStats={{
-            total: todoCounts.done, // total items considered
+            total: todoCounts.done,
             completed: 0,
             healthStatus: healthStatus as 'Action Required' | 'Healthy'
           }}
           todoStatsHref={`/dashboard/${activeCompanyId}/todo-list`}
+          isLoading={isLoadingDashboard}
         />
 
-        {/* 🔴 Priority Actions (Only if needed) */}
-        {/* {complianceCounts.overdue > 0 && (
-          <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-            <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-              🔴 Priority Actions
-            </h2>
-            <DashboardCard className="bg-red-50 border-red-100 p-6 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold">
-                  <AlertCircle size={24} />
-                </div>
-                <div>
-                  <h4 className="text-lg font-bold text-red-900">Your attention is required</h4>
-                  <p className="text-red-700">{complianceCounts.overdue} overdue filings need action.</p>
-                </div>
-              </div>
-              <Link href="/dashboard/todo-list?filter=overdue">
-                <Button className="bg-red-600 hover:bg-red-700 text-white rounded-xl px-8 py-6 h-auto text-lg font-semibold shadow-lg shadow-red-200">
-                  Review Now
-                </Button>
-              </Link>
-            </DashboardCard>
-          </div>
-        )} */}
-
-        <CurrentFocus item={activeFocus ? {
-          serviceName: activeFocus.serviceName,
-          taskDescription: activeFocus.taskDescription,
-          status: (() => {
-            const s = (activeFocus.status || '').toUpperCase();
-            if (['ACTION_TAKEN', 'COMPLETED', 'UPLOADED', 'PENDING_REVIEW', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'DONE'].includes(s)) {
-              return 'handled';
-            }
-            if (s === 'OVERDUE') return 'overdue';
-            if (s === 'DUE_SOON') return 'due_soon';
-            return (activeFocus.status as any) || 'waiting_on_you';
-          })(),
-          primaryActionType: 'view',
-          primaryActionLink: (() => {
-            if (!activeFocus) return '';
-            const type = (activeFocus.type || '').toUpperCase();
-            const engagementId = activeFocus.engagementId;
-            const moduleId = activeFocus.moduleId;
-            const serviceBase = resolveServiceEngagementBase(activeFocus.service);
-
-            // Chat handled specifically
-            if (type === 'CHAT' && engagementId) {
-              const base = serviceBase 
-                ? `${serviceBase.replace('/dashboard/', `/dashboard/${activeCompanyId}/`)}/engagements/${engagementId}`
-                : `/dashboard/${activeCompanyId}/engagements/${engagementId}`;
-              const messageQuery = moduleId ? `&messageId=${moduleId}` : "";
-              const todoQuery = `&todoId=${activeFocus.todoId}`;
-              return `${base}?tab=chat${messageQuery}${todoQuery}`;
-            }
-
-            // Document requests handled specifically
-            if ((type === 'DOCUMENT_REQUEST' || type === 'REQUESTED_DOCUMENT') && engagementId) {
-              const base = serviceBase 
-                ? `${serviceBase.replace('/dashboard/', `/dashboard/${activeCompanyId}/`)}/engagements/${engagementId}`
-                : `/dashboard/${activeCompanyId}/engagements/${engagementId}`;
-              const scrollQuery = moduleId ? `&scrollTo=${moduleId}` : "";
-              return `${base}?tab=workFlow${scrollQuery}`;
-            }
-
-            // Default redirection logic for other types
-            if (engagementId) {
-              const base = serviceBase 
-                ? `${serviceBase.replace('/dashboard/', `/dashboard/${activeCompanyId}/`)}/engagements/${engagementId}`
-                : `/dashboard/${activeCompanyId}/engagements/${engagementId}`;
-              return base;
-            }
-
-            // Fallback for tasks without engagement (custom tasks, general tasks)
-            return `/dashboard/${activeCompanyId}/todo-list/todo-list-view?taskId=${btoa(String(activeFocus.todoId))}`;
-          })(),
-          primaryActionLabel: activeFocus.primaryActionLabel || 'Take Action',
-          onPrimaryActionClick: async () => {
-            if (activeFocus && activeFocus.type === 'CHAT' && activeFocus.todoId) {
-                try {
-                    // Update status on backend
-                    await updateTodoStatus(activeFocus.todoId, 'ACTION_TAKEN');
-                    
-                    // Refresh data across the app
-                    refreshSidebar().catch(console.error);
-                    loadDashboardSummary(true).catch(console.error);
-                } catch (e) {
-                    console.error("Failed to update focus status on click", e);
-                }
-            }
-          }
-        } : null} />
-
-        {/* Notice Board and Stats Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-stretch">
-          {/* Notice Board */}
-          <NoticeBoard />
-
-          {/* Performance Indicators / Compliance Overview - Clickable Status Cards */}
-          <div className="h-full flex flex-col">
-            <div className="flex items-center justify-between mb-5 px-1 pt-2 h-[34px] shrink-0">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-gray-700" />
-                <h2 className="text-lg font-semibold text-gray-900 uppercase tracking-widest">Analytics</h2>
-              </div>
-            </div>
-
-            <div className="grid grid-rows-3 gap-6 flex-1">
-              {/* Workspace (big + action-first) */}
-              <Link href={workspaceUrl} className="block h-full">
-                <ShadowCard className="group p-5 h-full flex items-center justify-between gap-4 hover:border-primary/50 cursor-pointer overflow-hidden relative border-none shadow-sm hover:shadow-xl transition-all duration-300 bg-white">
-                  <div className="flex items-center gap-5 relative z-10 w-full">
-                    <div className="p-3.5 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
-                      <Briefcase className="h-7 w-7" />
-                    </div>
-                    <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                      <div>
-                        <p className="text-lg font-bold text-gray-900 leading-tight">Workspace</p>
-                        <p className="text-sm font-medium text-gray-500 mt-1">Requests & tasks</p>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
-                         {todoCounts.overdue > 0 && <span className="bg-destructive/10 text-destructive text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide border border-destructive/20">{todoCounts.overdue} Overdue</span>}
-                         {todoCounts.waiting > 0 && <span className="bg-info/10 text-info text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide border border-info/20">{todoCounts.waiting} Due Today</span>}
-                      </div>
-                    </div>
-                    <Button className="h-10 px-5 rounded-xl font-medium bg-primary text-white hover:bg-primary/90 text-sm gap-2 whitespace-nowrap hidden md:flex shrink-0">
-                      Open Workspace <ArrowRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  </div>
-                  <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-primary/5 opacity-[0.5] rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
-                </ShadowCard>
-              </Link>
-              
-              {/* Drafts (approval-focused) */}
-              <Link href={`/dashboard/${activeCompanyId}/documents`} className="block h-full">
-                <ShadowCard className="group p-5 h-full flex items-center justify-between gap-4 hover:border-indigo-500/50 cursor-pointer overflow-hidden relative border-none shadow-sm hover:shadow-xl transition-all duration-300 bg-white">
-                  <div className="flex items-center gap-5 relative z-10 w-full">
-                    <div className="p-3.5 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
-                      <FileText className="h-7 w-7" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-lg font-bold text-gray-900 leading-tight">Drafts</p>
-                      <p className="text-xs font-medium text-gray-500 mt-1">Review & approve</p>
-                    </div>
-                    <span className="text-indigo-600 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 rounded-lg px-4 py-2 font-bold text-xs whitespace-nowrap hidden sm:flex items-center gap-1 shrink-0 transition-colors">
-                      Open Drafts <ArrowRight className="w-3 h-3 ml-0.5" />
-                    </span>
-                  </div>
-                  <div className="absolute -right-4 -bottom-4 w-28 h-28 bg-indigo-50 opacity-[0.5] rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
-                </ShadowCard>
-              </Link>
-              
-              {/* Deadlines (summary + status chips) */}
-              <Link href={`/dashboard/${activeCompanyId}/compliance`} className="block h-full">
-                <ShadowCard className="group p-5 h-full flex items-center justify-between gap-4 hover:border-emerald-500/50 cursor-pointer overflow-hidden relative border-none shadow-sm hover:shadow-xl transition-all duration-300 bg-white">
-                  <div className="flex items-center gap-5 relative z-10 w-full">
-                    <div className="p-3.5 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
-                      <Calendar className="h-7 w-7" />
-                    </div>
-                    <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                      <div>
-                        <p className="text-lg font-bold text-gray-900 leading-tight">Deadlines</p>
-                        <p className="text-xs font-medium text-gray-500 mt-1">Upcoming filings</p>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
-                         {todoCounts.overdue > 0 && <span className="bg-destructive/10 text-destructive text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide border border-destructive/20">{todoCounts.overdue} Overdue</span>}
-                         {todoCounts.dueSoon > 0 && <span className="bg-warning/10 text-warning text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide border border-warning/20">{todoCounts.dueSoon} Due Soon</span>}
-                         {todoCounts.waiting > 0 && <span className="bg-info/10 text-info text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide border border-info/20">{todoCounts.waiting} Due Today</span>}
-                      </div>
-                    </div>
-                    <span className="text-emerald-600 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 rounded-lg px-4 py-2 font-bold text-xs whitespace-nowrap hidden sm:flex items-center gap-1 shrink-0 transition-colors">
-                      View Calendar <ArrowRight className="w-3 h-3 ml-0.5" />
-                    </span>
-                  </div>
-                  <div className="absolute -right-4 -bottom-4 w-28 h-28 bg-emerald-50 opacity-[0.5] rounded-full group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
-                </ShadowCard>
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* Your Current Focus */}
-
-
-        <div className="mt-6 mb-8">
-          <NextComplianceDeadline />
-        </div>
-
-        <div className="flex flex-col gap-6 bg-gray-100 rounded-[10px]">
-          {/* Redesigned Active Services - Top Full Width */}
-          <div className="space-y-4 bg-white/50 p-4 rounded-2xl">
-            <PageHeader
-              title="Active Engagements"
-              subtitle="Manage your ongoing accounting and tax services"
-              animate={false}
-              className="p-6"
+        {/* 1. Attention Banner */}
+        <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+            <AttentionBanner 
+                title={activeFocus?.serviceName || "Action Required"}
+                subtitle={`Follow up: ${activeFocus?.taskDescription || "compliance-status"}`}
+                onAction={() => router.push(workspaceUrl)}
+                isLoading={isLoadingDashboard}
             />
-            <div className="grid grid-cols-1 gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-              {activeServices.length > 0 ? (
-                activeServices.map((service, idx) => {
-                  const getIcon = (category: string) => {
-                    if (category === "Bookkeeping") return <FileText className="text-blue-600" size={24} />;
-                    if (category === "VAT") return <Briefcase className="text-amber-600" size={24} />;
-                    if (category === "Audit") return <Search className="text-rose-600" size={24} />;
-                    return <CheckCircle className="text-emerald-600" size={24} />;
-                  };
-
-                  const getIconBg = (category: string) => {
-                    if (category === "Bookkeeping") return "bg-blue-50";
-                    if (category === "VAT") return "bg-amber-50";
-                    if (category === "Audit") return "bg-rose-50";
-                    return "bg-emerald-50";
-                  };
-
-                  return (
-                    <div key={idx} className="bg-white rounded-2xl border border-gray-100 p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center shrink-0", getIconBg(service.category))}>
-                          {getIcon(service.category)}
-                        </div>
-                        <div className="space-y-1">
-                          <h4 className="text-xl font-bold text-gray-900">{service.name}</h4>
-                          <div className="flex items-center gap-3">
-                            {service.category === "Bookkeeping" && (
-                              <span className="text-sm font-semibold text-gray-500">REG NO: REG#87777448</span>
-                            )}
-                            {service.nextDeadline && !['COMPLETED', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'ACTION_TAKEN', 'UPLOADED', 'PENDING_REVIEW', 'DONE'].includes(service.status.toUpperCase()) && (
-                              <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
-                                Due {new Date(service.nextDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                              </span>
-                            )}
-                            {service.status.toUpperCase().includes("WAITING") && !['COMPLETED', 'HANDLED', 'SUBMITTED', 'PROCESSED', 'ACTION_TAKEN', 'UPLOADED', 'PENDING_REVIEW', 'DONE'].includes(service.status.toUpperCase()) && (
-                              <div className="flex items-center gap-1.5 text-rose-600 font-semibold text-sm">
-                                <AlertCircle size={14} />
-                                Action Required
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <Link href={service.href}>
-                        <Button variant="default" size="icon" className="rounded-full hover:bg-gray-50">
-                          <ArrowRight size={20} className="text-white" />
-                        </Button>
-                      </Link>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="bg-white rounded-3xl border border-dashed border-gray-200 p-12 col-span-full flex flex-col items-center justify-center text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center">
-                    <Briefcase className="text-gray-300" size={32} />
-                  </div>
-                  <div className="space-y-1">
-                    <h4 className="text-lg font-semibold text-gray-900">No active engagements</h4>
-                    <p className="text-sm text-gray-500 max-w-[280px]">
-                      You don&apos;t have any ongoing services at the moment. Explore our service library to get started.
-                    </p>
-                  </div>
-                  <Link href={`/dashboard/${activeCompanyId}/library`}>
-                    <Button variant="outline" className="rounded-xl px-6">
-                      Explore Services
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="gap-6 items-stretch p-4">
-            {/* Quick Actions - Bottom Left */}
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium text-gray-900 flex items-center gap-3">
-                  <div className="w-1 h-6 bg-primary rounded-full" />
-                  Quick Actions
-                </h2>
-              </div>
-              <div className="flex flex-col gap-4">
-                {[
-                  { 
-                    title: "Todo", 
-                    description: "Manage tasks", 
-                    icon: CheckSquare, 
-                    path: `/dashboard/${activeCompanyId}/todo-list`,
-                    color: "bg-primary"
-                  },
-                  { 
-                    title: "Messages", 
-                    description: "Team chat", 
-                    icon: MessageCircle, 
-                    path: `/dashboard/${activeCompanyId}/messages`,
-                    color: "bg-indigo-600"
-                  },
-                  { 
-                    title: "Compliance", 
-                    description: "Regulatory tracking", 
-                    icon: FileText, 
-                    path: `/dashboard/${activeCompanyId}/compliance`,
-                    color: "bg-emerald-600"
-                  },
-                  { 
-                    title: "Settings", 
-                    description: "Company settings", 
-                    icon: User, 
-                    path: `/dashboard/${activeCompanyId}/settings`,
-                    color: "bg-gray-700"
-                  }
-                ].map((action, index) => (
-                  <ShadowCard 
-                    key={index} 
-                    className="group p-5 hover:border-primary/50 cursor-pointer overflow-hidden relative border-none shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col justify-between bg-white"
-                    onClick={() => router.push(action.path)}
-                  >
-                    <div className="space-y-3 relative z-10 flex items-center gap-5 h-full">
-                      <div className={`w-10 h-10 rounded-xl ${action.color} flex items-center justify-center text-white shadow-xl group-hover:scale-110 transition-transform duration-300`}>
-                        <action.icon className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-base text-gray-900">{action.title}</h3>
-                        <p className="text-xs text-gray-500 leading-relaxed mt-1">{action.description}</p>
-                      </div>
-                      <div className="flex items-center text-primary font-bold text-xs group-hover:translate-x-1 transition-all duration-300 mt-2">
-                        View <ArrowRight className="h-3 w-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </div>
-                    {/* Decorative background element */}
-                    <div className={`absolute -right-4 -bottom-4 w-24 h-24 ${action.color} opacity-[0.05] rounded-full group-hover:scale-150 transition-transform duration-700`} />
-                  </ShadowCard>
-                ))}
-              </div>
-            </div>
-
-            {/* Refined Compliance Snapshot - Bottom Right */}
-            {/* <DashboardCard className="overflow-hidden h-full flex flex-col">
-              <div className="px-6 py-4 border-b border-gray-300 flex items-center gap-4">
-                <div className="w-1 h-6 bg-gray-900 rounded-full" />
-                <h3 className="text-lg font-medium text-gray-900">Compliance Snapshot</h3>
-              </div>
-              <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <Link href={`/dashboard/${activeCompanyId}/compliance`}>
-                      <Kpi label="Due Today" value={complianceCounts.waiting} tone="info" />
-                    </Link>
-                    <Link href={`/dashboard/${activeCompanyId}/compliance`}>
-                      <Kpi label="Upcoming" value={complianceCounts.upcoming || 0} tone="warning" />
-                    </Link>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest px-1">Next Deadlines</p>
-                    {nextCalendarDeadline || calendarDeadlines.length > 0 ? (
-                      <div className="space-y-2">
-                        {nextCalendarDeadline && (
-                          <DashboardCard className="border border-info/30 bg-info/5 px-4 py-3">
-                            <p className="text-sm font-bold text-gray-900">
-                              {nextCalendarDeadline.company?.name ? `${nextCalendarDeadline.company.name} – ` : ""}
-                              {nextCalendarDeadline.title}
-                              {nextCalendarDeadline.dueDate
-                                ? ` – ${new Date(nextCalendarDeadline.dueDate).toLocaleDateString('en-GB', {
-                                    day: 'numeric',
-                                    month: 'short',
-                                  })}`
-                                : ''}
-                            </p>
-                            <span className="text-[10px] text-info font-bold uppercase mt-1 inline-block">Next Calendar Entry</span>
-                          </DashboardCard>
-                        )}
-                      </div>
-                    ) : (
-                      <DashboardCard className="border border-gray-200 bg-gray-50 px-4 py-6 text-center">
-                        <p className="text-sm font-bold text-gray-400 italic">No upcoming compliance deadlines</p>
-                      </DashboardCard>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </DashboardCard> */}
-          </div>
         </div>
 
+        {/* 2. Main content area (Split into rows for explicit alignment) */}
+        
+        {/* Top Row: Notice Board & Deadlines | Analytics */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+            <div className="lg:col-span-8 space-y-5">
+                <CompanyNoticeBoard isLoading={isLoadingDashboard} />
+                <ComplianceDeadlineCard 
+                    title={nextCalendarDeadline?.title}
+                    dueDate={nextCalendarDeadline?.dueDate ? format(new Date(nextCalendarDeadline.dueDate), "MMM dd, yyyy") : undefined}
+                    description={nextCalendarDeadline?.description || ""}
+                    category={nextCalendarDeadline?.serviceCategory}
+                    frequency={nextCalendarDeadline?.frequency}
+                    startDate={nextCalendarDeadline?.startDate}
+                    isLoading={isLoadingDashboard}
+                />
+            </div>
+            <div className="lg:col-span-4">
+                <CompanyAnalytics isLoading={isFinancialLoading || isLoadingDashboard} />
+            </div>
+        </div>
+
+        {/* Bottom Row: Active Engagements & AI Suggestions | Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+            <div className="lg:col-span-8">
+                <ActiveEngagementsList engagements={mappedEngagements} isLoading={isLoadingDashboard} />
+            </div>
+            <div className="lg:col-span-4">
+                <AIOptionsSuggestions isLoading={isLoadingDashboard} />
+            </div>
+        </div>
       </div>
     </div>
   );

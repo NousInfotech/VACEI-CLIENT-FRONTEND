@@ -5,6 +5,7 @@ import Link from "next/link";
 import DashboardCard from "@/components/DashboardCard";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
+import { Skeleton } from "../ui/skeleton";
 
 interface PageHeaderProps {
   title: React.ReactNode;
@@ -29,6 +30,7 @@ interface PageHeaderProps {
     healthStatus: 'Action Required' | 'Healthy';
   };
   todoStatsHref?: string;
+  isLoading?: boolean;
 }
 
 export const PageHeader = ({
@@ -47,6 +49,7 @@ export const PageHeader = ({
   animate = true,
   todoStats,
   todoStatsHref,
+  isLoading = false,
 }: PageHeaderProps) => {
   const hasStatusBar = !!(activeCompany || badge || riskLevel || todoStats);
   const isLight = variant === "light";
@@ -73,28 +76,38 @@ export const PageHeader = ({
             )}
             <div className="space-y-1">
               <h1 className={cn("text-3xl font-semibold tracking-tight", isLight ? "text-slate-900" : "text-white")}>
-                {title}
+                {isLoading ? <Skeleton className="h-9 w-64 bg-white/10" /> : title}
               </h1>
-              {subtitle && <p className={isLight ? "text-slate-500 font-medium" : "text-white/60 font-medium"}>{subtitle}</p>}
-              {description && (
-                <p className={cn("text-sm max-w-2xl pt-2 leading-relaxed", isLight ? "text-slate-500" : "text-white/50")}>
-                  {description}
-                </p>
+              {isLoading ? (
+                <Skeleton className="h-5 w-80 bg-white/10 mt-2" />
+              ) : (
+                <>
+                  {subtitle && <p className={isLight ? "text-slate-500 font-medium" : "text-white/60 font-medium"}>{subtitle}</p>}
+                  {description && (
+                    <p className={cn("text-sm max-w-2xl pt-2 leading-relaxed", isLight ? "text-slate-500" : "text-white/50")}>
+                      {description}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           </div>
           
           {hasStatusBar && (
             <div className="flex flex-wrap items-center gap-4">
-              {activeCompany && (
-                <div className={cn(
-                  "border rounded-xl px-4 py-2 flex items-center gap-3 shadow-sm",
-                  isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/10"
-                )}>
-                  <span className={cn("text-xs font-medium uppercase tracking-widest", isLight ? "text-slate-400" : "text-white/80")}>Company</span>
-                  <div className={cn("h-4 w-px", isLight ? "bg-slate-200" : "bg-white/10")} />
-                  <span className={cn("text-sm font-bold", isLight ? "text-slate-900" : "text-white")}>{activeCompany}</span>
-                </div>
+              {isLoading ? (
+                <Skeleton className="h-10 w-40 bg-white/5 rounded-xl" />
+              ) : (
+                activeCompany && (
+                  <div className={cn(
+                    "border rounded-xl px-4 py-2 flex items-center gap-3 shadow-sm",
+                    isLight ? "bg-slate-50 border-slate-200" : "bg-white/5 border-white/10"
+                  )}>
+                    <span className={cn("text-xs font-medium uppercase tracking-widest", isLight ? "text-slate-400" : "text-white/80")}>Company</span>
+                    <div className={cn("h-4 w-px", isLight ? "bg-slate-200" : "bg-white/10")} />
+                    <span className={cn("text-sm font-bold", isLight ? "text-slate-900" : "text-white")}>{activeCompany}</span>
+                  </div>
+                )
               )}
               
               {badge && (
@@ -129,13 +142,17 @@ export const PageHeader = ({
                 </Link>
               )}
 
-              {todoStats && (
-                todoStatsHref ? (
-                  <Link href={todoStatsHref} className="cursor-pointer hover:opacity-80 transition-opacity">
+              {isLoading ? (
+                <Skeleton className="h-8 w-32 bg-white/5 rounded-full" />
+              ) : (
+                todoStats && (
+                  todoStatsHref ? (
+                    <Link href={todoStatsHref} className="cursor-pointer hover:opacity-80 transition-opacity">
+                      <TodoStatsContent todoStats={todoStats} isLight={isLight} />
+                    </Link>
+                  ) : (
                     <TodoStatsContent todoStats={todoStats} isLight={isLight} />
-                  </Link>
-                ) : (
-                  <TodoStatsContent todoStats={todoStats} isLight={isLight} />
+                  )
                 )
               )}
             </div>

@@ -4,307 +4,149 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Building2, 
-  CheckCircle2, 
   AlertTriangle, 
-  AlertCircle, 
   BarChart3, 
   MessageSquare, 
-  ArrowRight
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useGlobalDashboard } from "@/context/GlobalDashboardContext";
 import { listComplianceCalendars, ComplianceCalendarEntry } from "@/api/complianceCalendarService";
-import { format, isPast, isToday, addDays } from "date-fns";
+import { getTodos, TodoItem } from "@/api/todoService";
+import { fetchNotificationsAPI, Notification } from "@/api/notificationService";
+import { isPast, isToday, addDays, format } from "date-fns";
+
+// Modular Components
+import AttentionRequiredBanner from "./global/AttentionRequiredBanner";
+import GlobalOverviewCard from "./global/GlobalOverviewCard";
+import GlobalTasks from "./global/GlobalTasks";
+import AlertsNotifications from "./global/AlertsNotifications";
+import AIAssistant from "./global/AIAssistant";
+import ShadowCard from "../ui/ShadowCard";
 
 export default function GlobalOverviewCards() {
   const router = useRouter();
   const { 
     companies, 
-    loading, 
-    complianceState, 
-    hasMessages, 
-    pendingDocs 
+    loading: dashboardLoading
   } = useGlobalDashboard();
 
   const [calendarEntries, setCalendarEntries] = useState<ComplianceCalendarEntry[]>([]);
-  const [loadingEntries, setLoadingEntries] = useState(true);
+  const [todos, setTodos] = useState<TodoItem[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchEntries = async () => {
+    const fetchData = async () => {
       try {
-        const data = await listComplianceCalendars();
-        setCalendarEntries(data);
+        const [complianceData, todosData, notificationsData] = await Promise.all([
+          listComplianceCalendars(),
+          getTodos(),
+          fetchNotificationsAPI({ page: 1, limit: 5 })
+        ]);
+        
+        setCalendarEntries(complianceData);
+        setTodos(todosData);
+        setNotifications(Array.isArray(notificationsData) ? notificationsData : (notificationsData?.items || []));
       } catch (error) {
-        console.error("Failed to fetch dashboard compliance data:", error);
+        console.error("Failed to fetch dashboard data:", error);
       } finally {
-        setLoadingEntries(false);
+        setLoading(false);
       }
     };
-    fetchEntries();
+    fetchData();
   }, []);
 
-  const CardWrapper = ({ children, bgImage, title, button }: { children: React.ReactNode, bgImage: string, title: string, button: React.ReactNode }) => (
-    <div className="relative group overflow-hidden rounded-4xl h-[280px] border border-white/20 shadow-2xl transition-all duration-500">
-      {/* Background Image with Overlay */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${bgImage})` }}
-      />
-      <div className="absolute inset-0 bg-black/20" />
-      
-      {/* Content Layer */}
-      <div className="relative h-full w-full p-8 flex flex-col">
-        <h3 className="text-2xl font-bold text-white mb-4 tracking-tight drop-shadow-md">
-          {title}
-        </h3>
-        <div className="grow space-y-3">
-          {children}
-        </div>
-        <div className="mt-4">
-          {button}
-        </div>
-      </div>
-    </div>
-  );
+  const overdueCompliance = calendarEntries.filter(e => isPast(new Date(e.dueDate)) && !isToday(new Date(e.dueDate)));
+  const upcomingCompliance = calendarEntries.filter(e => isToday(new Date(e.dueDate)) || (!isPast(new Date(e.dueDate)) && new Date(e.dueDate) <= addDays(new Date(), 30)));
+  const urgentTodo = todos.find(t => t.status !== 'COMPLETED') || todos[0];
 
-  const getComplianceContent = () => {
-    // Calculate real data from entries
-    // Calculate real data from entries - Ignoring Overdue as per user request
-    const dueSoonEntries = calendarEntries.filter(e => {
-      const due = new Date(e.dueDate);
-      // Include today and anything in the next 7 days
-      return (isToday(due) || !isPast(due)) && due <= addDays(new Date(), 7);
-    });
-    
-    // Most urgent item (Only looking at upcoming/due today items)
-    const upcomingEntries = calendarEntries.filter(e => isToday(new Date(e.dueDate)) || !isPast(new Date(e.dueDate)));
-    const urgentEntry = dueSoonEntries.length > 0 
-                        ? dueSoonEntries[0] 
-                        : upcomingEntries.length > 0 
-                          ? [...upcomingEntries].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0] 
-                          : null;
-
-    let statusBadge = (
-      <div className="flex items-center gap-3 text-emerald-400 font-semibold bg-emerald-950/30 w-fit px-4 py-1.5 rounded-full border border-emerald-500/30">
-        <CheckCircle2 size={18} />
-        <span>All companies fully compliant.</span>
-      </div>
-    );
-    let description = "No immediate actions required.";
-    let deadlineLabel = "Upcoming";
-    let deadlineValue = urgentEntry ? `${urgentEntry.company?.name || 'Global'} – ${urgentEntry.title} – ${format(new Date(urgentEntry.dueDate), "dd MMM")}` : "No upcoming deadlines";
-    let buttonLabel = "View Deadlines";
-
-    if (dueSoonEntries.length > 0) {
-      statusBadge = (
-        <div className="flex items-center gap-3 text-amber-400 font-semibold bg-amber-950/30 w-fit px-4 py-1.5 rounded-full border border-amber-500/30">
-          <AlertTriangle size={18} />
-          <span>{dueSoonEntries.length} {dueSoonEntries.length === 1 ? 'deadline' : 'deadlines'} coming up soon.</span>
-        </div>
-      );
-      description = "Please review upcoming filings.";
-      deadlineLabel = "Upcoming";
-      deadlineValue = urgentEntry ? `${urgentEntry.company?.name || 'Global'} – ${urgentEntry.title} – ${format(new Date(urgentEntry.dueDate), "dd MMM")}` : "";
-      buttonLabel = "Review Deadlines";
-    }
-
-    if (loadingEntries) {
-        return {
-            content: (
-                <div className="animate-pulse space-y-4">
-                    <div className="h-8 bg-white/10 rounded-full w-48" />
-                    <div className="h-4 bg-white/10 rounded w-32" />
-                    <div className="space-y-2 pt-2">
-                        <div className="h-2 bg-white/10 rounded w-20" />
-                        <div className="h-4 bg-white/10 rounded w-full" />
-                    </div>
-                </div>
-            ),
-            button: <div className="h-10 bg-white/10 rounded-xl w-32 animate-pulse" />
-        };
-    }
-
-    return {
-      content: (
-        <>
-          {statusBadge}
-          <p className="text-white/90 text-sm mt-2">{description}</p>
-          <div className="flex flex-col gap-0.5 mt-2">
-            <span className="text-white/60 text-[10px] uppercase tracking-widest font-bold">{deadlineLabel}</span>
-            <span className="text-white font-medium truncate">{deadlineValue}</span>
-          </div>
-        </>
-      ),
-      button: (
-        <Button 
-          variant="outline" 
-          className="bg-white/10 border-none text-white hover:bg-white hover:text-black rounded-xl backdrop-blur-xl group/btn transition-all duration-300"
-          onClick={() => router.push('/global-dashboard/compliance')}
-        >
-          {buttonLabel}
-          <ArrowRight size={16} className="ml-2 group-hover/btn:translate-x-1 transition-transform" />
-        </Button>
-      )
-    };
-  };
-
-  const getCompaniesContent = () => {
-    const hasAttention = companies.some(c => c.overdueCount > 0 || c.dueSoonCount > 0);
-    return {
-      content: (
-        <>
-          <div className="flex items-center gap-3 text-blue-300 font-semibold">
-            <Building2 size={24} className="text-white/70" />
-            <span className="text-xl">{companies.length} Active Companies</span>
-          </div>
-          <p className="text-white/80 text-sm leading-relaxed mt-2">
-            {hasAttention 
-              ? "One company requires your attention. Please review pending items."
-              : "All your companies are in good standing managed efficiently."}
-          </p>
-        </>
-      ),
-      button: (
-        <Button 
-          variant="outline" 
-          className="bg-white/10 border-none text-white hover:bg-white hover:text-black rounded-xl backdrop-blur-xl group/btn transition-all duration-300"
-          onClick={() => router.push('/global-dashboard/companies')}
-        >
-          {hasAttention ? "View Companies" : "Manage Companies"}
-          <ArrowRight size={16} className="ml-2 group-hover/btn:translate-x-1 transition-transform" />
-        </Button>
-      )
-    };
-  };
-
-  const getResellerAnalyticsContent = () => {
-    return {
-      content: (
-        <>
-          <div className="flex items-center gap-3 text-white/90 font-semibold">
-            <BarChart3 size={24} className="text-white/70" />
-            <span className="text-xl">Reseller Analytics</span>
-          </div>
-          <p className="text-white/80 text-sm leading-relaxed mt-2">
-            Track your signups, referrals, and earnings in real-time. 
-            Monitor your reseller performance across all companies.
-          </p>
-        </>
-      ),
-      button: (
-        <Button 
-          variant="outline" 
-          className="bg-white/10 border-none text-white hover:bg-white hover:text-black rounded-xl backdrop-blur-xl group/btn transition-all duration-300"
-          onClick={() => router.push('/global-dashboard/analytics')}
-        >
-          View Analytics
-          <ArrowRight size={16} className="ml-2 group-hover/btn:translate-x-1 transition-transform" />
-        </Button>
-      )
-    };
-  };
-
-  const getSupportContent = () => {
-    return {
-      content: (
-        <>
-          <div className="flex items-center gap-3 text-white/90 font-semibold">
-            <MessageSquare size={24} className="text-white/70" />
-            <span className="text-xl">{hasMessages ? "New Message" : "Support Center"}</span>
-          </div>
-          <p className="text-white/80 text-sm leading-relaxed mt-2">
-            {hasMessages 
-              ? "You have 1 new message from your advisor regarding your filings."
-              : "Need assistance? Our dedicated support team is here to help you."}
-          </p>
-        </>
-      ),
-      button: (
-        <Button 
-          variant="outline" 
-          className="bg-white/10 border-none text-white hover:bg-white hover:text-black rounded-xl backdrop-blur-xl group/btn transition-all duration-300"
-          onClick={() => router.push('/global-dashboard/support')}
-        >
-          {hasMessages ? "Open Messages" : "Contact Support"}
-          <ArrowRight size={16} className="ml-2 group-hover/btn:translate-x-1 transition-transform" />
-        </Button>
-      )
-    };
-  };
-
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {[1, 2, 3, 4].map(i => (
-          <div key={i} className="h-[280px] rounded-4xl bg-gray-200 animate-pulse" />
-        ))}
-      </div>
-    );
-  }
-
-  const compliance = getComplianceContent();
-  const companiesData = getCompaniesContent();
-  const analytics = getResellerAnalyticsContent();
-  const support = getSupportContent();
-
-  // Logic: Show all cards only if at least one company has both incorporationStatus and kycStatus as true
-  const hasActiveCompany = companies.some(c => c.incorporationStatus === true && c.kycStatus === true);
-
-  if (!hasActiveCompany) {
-    return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <CardWrapper 
-          title="My Companies" 
-          bgImage="/global-dashboard/companies.png"
-          button={companiesData.button}
-        >
-          {companiesData.content}
-        </CardWrapper>
-
-        <CardWrapper 
-          title="Support" 
-          bgImage="/global-dashboard/supports.png"
-          button={support.button}
-        >
-          {support.content}
-        </CardWrapper>
-      </div>
-    );
-  }
+  const isLoadingDashboard = loading || dashboardLoading;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <CardWrapper 
-        title="Compliance Status" 
-        bgImage="/global-dashboard/compliance-status.png"
-        button={compliance.button}
-      >
-        {compliance.content}
-      </CardWrapper>
+    <div className="space-y-8">
+      {/* 1. Attention Required Banner */}
+      {/* <AttentionRequiredBanner urgentTodo={urgentTodo || null} isLoading={isLoadingDashboard} /> */}
 
-      <CardWrapper 
-        title="My Companies" 
-        bgImage="/global-dashboard/companies.png"
-        button={companiesData.button}
-      >
-        {companiesData.content}
-      </CardWrapper>
+      {/* 2. Overview Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Compliance Status */}
+        <GlobalOverviewCard 
+          title="Compliance Status" 
+          bgImage="/global-dashboard/compliance-status.png"
+          buttonLabel="Review Deadlines"
+          onClick={() => router.push('/global-dashboard/compliance')}
+          isLoading={isLoadingDashboard}
+        >
+          <div className="bg-black/20 rounded-full px-3 py-1 flex items-center gap-2 text-white text-xs font-semibold w-fit backdrop-blur-md">
+            <AlertTriangle size={14} /> {upcomingCompliance.length} deadline{upcomingCompliance.length !== 1 ? 's' : ''} coming up soon.
+          </div>
+          <p className="text-white/90 text-sm mt-3 font-medium drop-shadow-sm">Please review upcoming filings.</p>
+          <div className="mt-4">
+            <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">Upcoming</p>
+            <p className="text-white text-sm font-semibold truncate drop-shadow-sm">
+              {upcomingCompliance.length > 0 ? `${upcomingCompliance[0].title} - ${format(new Date(upcomingCompliance[0].dueDate), "dd MMM")}` : 'No upcoming deadlines'}
+            </p>
+          </div>
+        </GlobalOverviewCard>
 
-      <CardWrapper 
-        title="Reseller Analytics" 
-        bgImage="/global-dashboard/document-requests.png"
-        button={analytics.button}
-      >
-        {analytics.content}
-      </CardWrapper>
+        {/* My Companies */}
+        <GlobalOverviewCard 
+          title="My Companies" 
+          bgImage="/global-dashboard/companies.png"
+          buttonLabel="Manage Companies"
+          onClick={() => router.push('/global-dashboard/companies')}
+          isLoading={isLoadingDashboard}
+        >
+          <div className="flex items-center gap-2 text-white font-bold text-lg mb-2 drop-shadow-sm">
+            <Building2 size={24} className="text-white/80" /> {companies.length} Active Companies
+          </div>
+          <p className="text-white/90 text-sm leading-relaxed drop-shadow-sm">
+            All your companies are in good standing, efficiently managed.
+          </p>
+        </GlobalOverviewCard>
 
-      <CardWrapper 
-        title="Support" 
-        bgImage="/global-dashboard/supports.png"
-        button={support.button}
-      >
-        {support.content}
-      </CardWrapper>
+        {/* Reseller Analytics */}
+        <GlobalOverviewCard 
+          title="Reseller Analytics" 
+          bgImage="/global-dashboard/document-requests.png"
+          buttonLabel="View Analytics"
+          onClick={() => router.push('/global-dashboard/analytics')}
+          isLoading={isLoadingDashboard}
+        >
+          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-2 backdrop-blur-md">
+            <BarChart3 size={24} className="text-white" />
+          </div>
+          <p className="text-white/90 text-sm leading-relaxed mt-4 drop-shadow-sm">
+            Track your signups, referrals, and earnings in real-time.
+          </p>
+        </GlobalOverviewCard>
+
+        {/* Support */}
+        <GlobalOverviewCard 
+          title="Support" 
+          bgImage="/global-dashboard/supports.png"
+          buttonLabel="Contact Support"
+          onClick={() => router.push('/global-dashboard/support')}
+          isLoading={isLoadingDashboard}
+        >
+          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-2 backdrop-blur-md">
+            <MessageSquare size={24} className="text-white" />
+          </div>
+          <p className="text-white/90 text-sm leading-relaxed drop-shadow-sm">
+            Need assistance? Our dedicated support team is here to help you.
+          </p>
+        </GlobalOverviewCard>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* 3. Global Tasks & Alerts */}
+        <ShadowCard className="lg:col-span-2 space-y-8 p-5">
+          <GlobalTasks calendarEntries={calendarEntries} isLoading={isLoadingDashboard} />
+          <AlertsNotifications notifications={notifications} isLoading={isLoadingDashboard} />
+        </ShadowCard>
+
+        {/* 4. AI Assistant Sidebar */}
+        <AIAssistant isLoading={isLoadingDashboard} />
+      </div>
     </div>
   );
 }
