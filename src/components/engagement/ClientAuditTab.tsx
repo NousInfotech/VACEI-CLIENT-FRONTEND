@@ -40,6 +40,11 @@ const CLIENT_AUDIT_SECTIONS = [
   { id: "balance-sheet", label: "Balance Sheet", icon: Scale },
 ] as const;
 
+/** Numeric-aware code comparison – match VACEI_PARTNER_PORTAL useETBData (0002, 0008, 0010, 0050, …) */
+function compareCodeNumeric(a: unknown, b: unknown): number {
+  return String(a ?? "").localeCompare(String(b ?? ""), undefined, { numeric: true });
+}
+
 export default function ClientAuditTab() {
   const [activeAuditTab, setActiveAuditTab] = useState<"extended-tb" | "sections">("extended-tb");
   const [activeSection, setActiveSection] = useState("extended-tb");
@@ -51,7 +56,7 @@ export default function ClientAuditTab() {
 
   const transformedEtbRows = useMemo((): ETBRow[] => {
     if (!etb?.rows) return [];
-    return etb.rows.map((row) => ({
+    const rows = etb.rows.map((row) => ({
       _id: row._id || row.rowId || "",
       code: row.code || "",
       accountName: row.accountName || "",
@@ -62,6 +67,8 @@ export default function ClientAuditTab() {
       finalBalance: row.finalBalance ?? 0,
       classification: row.classification || "",
     }));
+    rows.sort((a, b) => compareCodeNumeric(a.code, b.code));
+    return rows;
   }, [etb]);
 
   const extractedData = useMemo(() => {
@@ -86,7 +93,19 @@ export default function ClientAuditTab() {
     }
     switch (activeSection) {
       case "extended-tb":
-        return <ETBTable data={transformedEtbRows} engagementId={engagementId} />;
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Extended Trial Balance</h2>
+              <p className="text-sm text-gray-500 mt-1">Manage your financial data and adjustments</p>
+            </div>
+            <ETBTable
+              data={transformedEtbRows}
+              engagementId={engagementId}
+              isSectionsView
+            />
+          </div>
+        );
       case "adjustments":
         return <AdjustmentsTab />;
       case "reclassifications":
@@ -133,10 +152,10 @@ export default function ClientAuditTab() {
                 <div>
                   <h3 className="font-bold text-gray-900 flex items-center gap-2">
                     <FolderOpen className="h-4 w-4 text-primary shrink-0" />
-                    Audit (read-only)
+                    Sections
                   </h3>
                   <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider font-semibold">
-                    Extended TB, adjustments &amp; statements
+                    Quick views and classifications
                   </p>
                 </div>
                 <button

@@ -1,8 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { ETBRow } from './mockEngagementData';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { TableProperties, Info, Loader2 } from 'lucide-react';
+import { TableProperties, Info, Loader2, Eye } from 'lucide-react';
 import EmptyState from '../shared/EmptyState';
 import { Modal } from '@/components/ui/modal';
 import { getAdjustments, getReclassifications } from '@/api/auditService';
@@ -11,9 +9,11 @@ import type { Adjustment, Reclassification } from '@/api/auditService';
 interface ETBTableProps {
   data: ETBRow[];
   engagementId?: string | null;
+  /** When true, matches VACEI_PARTNER_PORTAL Sections view: no inner title bar, add Linked files column */
+  isSectionsView?: boolean;
 }
 
-const ETBTable: React.FC<ETBTableProps> = ({ data, engagementId }) => {
+const ETBTable: React.FC<ETBTableProps> = ({ data, engagementId, isSectionsView = false }) => {
   const [showAdjustmentDetails, setShowAdjustmentDetails] = useState(false);
   const [selectedRowForAdjustments, setSelectedRowForAdjustments] = useState<ETBRow | null>(null);
   const [adjustmentsForRow, setAdjustmentsForRow] = useState<Adjustment[]>([]);
@@ -25,14 +25,14 @@ const ETBTable: React.FC<ETBTableProps> = ({ data, engagementId }) => {
   const [loadingReclassifications, setLoadingReclassifications] = useState(false);
 
   const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('en-GB', {
+    return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(num);
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-GB', {
+    return new Intl.NumberFormat('en-US', {
       style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
@@ -107,7 +107,7 @@ const ETBTable: React.FC<ETBTableProps> = ({ data, engagementId }) => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Aggregate Summary – match VACEI_PARTNER_PORTAL ExtendedTB */}
+      {/* Aggregate Summary – match VACEI_PARTNER_PORTAL ExtendedTB (same order and styling) */}
       <div className="grid grid-cols-4 gap-4">
         {[
           { label: "Current Year", value: totals.currentYear },
@@ -125,39 +125,56 @@ const ETBTable: React.FC<ETBTableProps> = ({ data, engagementId }) => {
         ))}
       </div>
 
+      {/* Table wrapper – match VACEI_PARTNER_PORTAL ExtendedTBTable (one box, optional header when !isSectionsView) */}
       <div className="w-full max-w-full rounded-xl border border-gray-200 bg-white shadow-sm overflow-x-auto overflow-y-visible">
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50/50">
-          <div>
-            <h3 className="text-xl font-bold text-gray-900">Extended Trial Balance</h3>
-            <p className="text-sm text-gray-500 mt-0.5">Summary of all account balances and adjustments</p>
+        {!isSectionsView && (
+          <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50/50">
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">Extended Trial Balance</h3>
+              <p className="text-sm text-gray-500 mt-0.5">Summary of all account balances and adjustments</p>
+            </div>
+            <span className="rounded-md border border-gray-200 bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
+              {data.length} Accounts
+            </span>
           </div>
-          <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200 px-3 py-1 font-medium">
-            {data.length} Accounts
-          </Badge>
-        </div>
-        <Table className="border-collapse w-full min-w-[700px]">
-          <TableHeader>
-            <TableRow className="bg-gray-50/50 border-b border-gray-200">
-              <TableHead className="w-[80px] font-semibold text-gray-600 border-r border-gray-200 p-3">Code</TableHead>
-              <TableHead className="min-w-[200px] font-semibold text-gray-600 border-r border-gray-200 p-3">Account Name</TableHead>
-              <TableHead className="text-right font-semibold text-gray-600 border-r border-gray-200 p-3">Current Year</TableHead>
-              <TableHead className="text-right font-semibold text-gray-600 border-r border-gray-200 p-3">Re-classification</TableHead>
-              <TableHead className="text-right font-semibold text-gray-600 border-r border-gray-200 p-3">Adjustments</TableHead>
-              <TableHead className="text-right font-semibold text-gray-600 border-r border-gray-200 p-3">Final Balance</TableHead>
-              <TableHead className="text-right font-semibold text-gray-600 p-3">Prior Year</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody className="divide-y divide-gray-100">
+        )}
+        <style>
+          {`
+            .etb-custom-table { border-collapse: collapse; }
+            .etb-custom-table th, .etb-custom-table td { border: 1px solid #e5e7eb; }
+            input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+            input[type=number] { -moz-appearance: textfield; }
+          `}
+        </style>
+        <table className="w-full text-sm etb-custom-table min-w-[700px]">
+          <thead>
+            <tr className="bg-gray-50/50">
+              <th className="py-4 px-4 font-semibold text-gray-600 w-16 text-center">Code</th>
+              <th className="py-4 px-4 font-semibold text-gray-600 min-w-[240px] text-left">Account Name</th>
+              <th className="py-4 px-4 font-semibold text-gray-600 text-right whitespace-nowrap">Current Year</th>
+              <th className="py-4 px-4 font-semibold text-gray-600 text-right whitespace-nowrap">Re-Classification</th>
+              <th className="py-4 px-4 font-semibold text-gray-600 text-right whitespace-nowrap">Adjustments</th>
+              <th className="py-4 px-4 font-semibold text-gray-600 text-right whitespace-nowrap">Final Balance</th>
+              <th className="py-4 px-4 font-semibold text-gray-600 text-right whitespace-nowrap">Prior Year</th>
+              {isSectionsView && (
+                <th className="py-4 px-4 font-semibold text-gray-600 w-24 text-center">Linked files</th>
+              )}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
             {data.map((row) => (
-              <TableRow key={row._id} className="hover:bg-gray-50/80 transition-colors border-b border-gray-200">
-                <TableCell className="font-mono text-xs text-gray-500 border-r border-gray-200 p-3">{row.code}</TableCell>
-                <TableCell className="font-medium text-gray-900 border-r border-gray-200 p-3">{row.accountName}</TableCell>
-                <TableCell className="text-right font-mono text-sm border-r border-gray-200 p-3">
+              <tr
+                key={row._id}
+                className="hover:bg-gray-50/80 transition-colors group"
+              >
+                <td className="py-3 px-4 font-medium text-center align-middle text-gray-500">{row.code}</td>
+                <td className="py-3 px-4 font-medium text-gray-900 text-left align-middle">{row.accountName}</td>
+                <td className="py-3 px-4 text-right font-medium text-gray-700 align-middle">
                   {formatNumber(row.currentYear)}
-                </TableCell>
-                <TableCell className={`text-right font-mono text-sm border-r border-gray-200 p-3 ${row.reclassification !== 0 ? "text-gray-700 font-semibold" : "text-gray-400"}`}>
+                </td>
+                <td className="py-3 px-4 text-right text-gray-500 align-middle">
                   <div className="flex items-center justify-end gap-2">
-                    <span className="tabular-nums">
+                    <span className="font-medium tabular-nums">
                       {row.reclassification !== 0 ? formatNumber(row.reclassification) : '-'}
                     </span>
                     {row.reclassification !== 0 && row.reclassification != null && engagementId && (
@@ -171,10 +188,10 @@ const ETBTable: React.FC<ETBTableProps> = ({ data, engagementId }) => {
                       </button>
                     )}
                   </div>
-                </TableCell>
-                <TableCell className={`text-right font-mono text-sm border-r border-gray-200 p-3 ${row.adjustments !== 0 ? "text-gray-700 font-semibold" : "text-gray-400"}`}>
+                </td>
+                <td className="py-3 px-4 text-right text-gray-500 align-middle">
                   <div className="flex items-center justify-end gap-2">
-                    <span className="tabular-nums">
+                    <span className="font-medium tabular-nums">
                       {row.adjustments !== 0 ? formatNumber(row.adjustments) : '-'}
                     </span>
                     {row.adjustments !== 0 && row.adjustments != null && engagementId && (
@@ -188,25 +205,52 @@ const ETBTable: React.FC<ETBTableProps> = ({ data, engagementId }) => {
                       </button>
                     )}
                   </div>
-                </TableCell>
-                <TableCell className="text-right font-mono text-sm font-bold bg-gray-50/10 border-r border-gray-200 p-3">
+                </td>
+                <td className="py-3 px-4 text-right font-bold text-gray-900 align-middle">
                   {formatNumber(row.finalBalance)}
-                </TableCell>
-                <TableCell className="text-right font-mono text-sm p-3">
+                </td>
+                <td className="py-3 px-4 text-right text-gray-500 align-middle">
                   {formatNumber(row.priorYear)}
-                </TableCell>
-              </TableRow>
+                </td>
+                {isSectionsView && (
+                  <td className="py-3 px-4 text-center align-middle whitespace-nowrap">
+                    <div className="flex justify-center">
+                      <span
+                        className={
+                          row.linkedExcelFiles && row.linkedExcelFiles.length > 0
+                            ? "flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-medium bg-blue-50 border-blue-100 text-blue-600"
+                            : "flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-medium bg-gray-50 border-gray-200 text-gray-500"
+                        }
+                      >
+                        <Eye size={14} />
+                        {row.linkedExcelFiles?.length ?? 0} files
+                      </span>
+                    </div>
+                  </td>
+                )}
+              </tr>
             ))}
-            <TableRow className="bg-gray-50/50 border-t border-gray-200 font-bold">
-              <TableCell colSpan={2} className="pl-4 border-r border-gray-200 p-3 text-gray-900">Total</TableCell>
-              <TableCell className="text-right border-r border-gray-200 p-3">{formatNumber(totals.currentYear)}</TableCell>
-              <TableCell className="text-right border-r border-gray-200 p-3">{formatNumber(totals.reclassification)}</TableCell>
-              <TableCell className="text-right border-r border-gray-200 p-3">{formatNumber(totals.adjustments)}</TableCell>
-              <TableCell className="text-right border-r border-gray-200 p-3">{formatNumber(totals.finalBalance)}</TableCell>
-              <TableCell className="text-right p-3">{formatNumber(totals.priorYear)}</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
+            <tr className="bg-gray-50 font-bold">
+              <td colSpan={2} className="py-4 px-4 text-center text-gray-900 uppercase text-xs tracking-wider">Total</td>
+              <td className="py-4 px-4 text-right text-gray-900">
+                {formatNumber(totals.currentYear)}
+              </td>
+              <td className="py-4 px-4 text-right text-gray-900">
+                {formatNumber(totals.reclassification)}
+              </td>
+              <td className="py-4 px-4 text-right text-gray-900">
+                {formatNumber(totals.adjustments)}
+              </td>
+              <td className="py-4 px-4 text-right text-gray-900">
+                {formatNumber(totals.finalBalance)}
+              </td>
+              <td className="py-4 px-4 text-right text-gray-900">
+                {formatNumber(totals.priorYear)}
+              </td>
+              {isSectionsView && <td></td>}
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       {/* Adjustment Details Modal – matches VACEI_PARTNER_PORTAL layout */}
